@@ -1,0 +1,31 @@
+name: Daily Digest Cron
+
+on:
+  schedule:
+    # Runs every 15 minutes to catch user's specific digestTime
+    - cron: '*/15 * * * *'
+  # Allow manual trigger from the GitHub Actions tab for testing
+  workflow_dispatch:
+
+jobs:
+  trigger-digest:
+    name: Trigger Digest Push Notification
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Call digest cron endpoint
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "${{ secrets.APP_URL }}/api/cron/digest" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            --retry 3 \
+            --retry-delay 5 \
+            --max-time 30)
+
+          echo "HTTP Status: $response"
+
+          if [ "$response" != "200" ]; then
+            echo "Cron endpoint returned non-200 status: $response"
+            exit 1
+          fi
