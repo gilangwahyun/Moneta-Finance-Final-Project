@@ -42,5 +42,8 @@ next-env.d.ts
 /prisma/migrations/
 .env*
 
+# personal documents (thesis reference, not part of the codebase)
+/docs/
+
 # vercel temp files (contains credentials, do not push)
 .env.vercel*.tmp
