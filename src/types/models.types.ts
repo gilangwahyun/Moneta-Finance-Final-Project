@@ -63,6 +63,15 @@ export interface Category extends SyncMetadata {
   userId: string;
 }
 
+export interface NotificationSettings {
+  id?: string;
+  deliveryMode: string;
+  instantAlerts: boolean;
+  dailyDigest: boolean;
+  dailyReminder: boolean;
+  digestTime: string;
+}
+
 //********** Transaction **********
 
 export interface Transaction extends SyncMetadata {

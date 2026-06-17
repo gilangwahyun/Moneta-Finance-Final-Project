@@ -9,6 +9,7 @@ export interface NotificationSettingsRecord {
   deliveryMode: "INSTANT" | "BATCH" | "NONE";
   instantAlerts: boolean;
   dailyDigest: boolean;
+  dailyReminder: boolean;
   digestTime: string;  // "HH:MM"
   dailyCap?: number;
   syncStatus: "SYNCED" | "PENDING" | "CONFLICT";

@@ -10700,6 +10700,7 @@ export namespace Prisma {
     deliveryMode: string | null
     instantAlerts: boolean | null
     dailyDigest: boolean | null
+    dailyReminder: boolean | null
     digestTime: string | null
     dailyCap: number | null
     updatedAt: Date | null
@@ -10712,6 +10713,7 @@ export namespace Prisma {
     deliveryMode: string | null
     instantAlerts: boolean | null
     dailyDigest: boolean | null
+    dailyReminder: boolean | null
     digestTime: string | null
     dailyCap: number | null
     updatedAt: Date | null
@@ -10724,6 +10726,7 @@ export namespace Prisma {
     deliveryMode: number
     instantAlerts: number
     dailyDigest: number
+    dailyReminder: number
     digestTime: number
     dailyCap: number
     updatedAt: number
@@ -10746,6 +10749,7 @@ export namespace Prisma {
     deliveryMode?: true
     instantAlerts?: true
     dailyDigest?: true
+    dailyReminder?: true
     digestTime?: true
     dailyCap?: true
     updatedAt?: true
@@ -10758,6 +10762,7 @@ export namespace Prisma {
     deliveryMode?: true
     instantAlerts?: true
     dailyDigest?: true
+    dailyReminder?: true
     digestTime?: true
     dailyCap?: true
     updatedAt?: true
@@ -10770,6 +10775,7 @@ export namespace Prisma {
     deliveryMode?: true
     instantAlerts?: true
     dailyDigest?: true
+    dailyReminder?: true
     digestTime?: true
     dailyCap?: true
     updatedAt?: true
@@ -10869,6 +10875,7 @@ export namespace Prisma {
     deliveryMode: string
     instantAlerts: boolean
     dailyDigest: boolean
+    dailyReminder: boolean
     digestTime: string
     dailyCap: number
     updatedAt: Date
@@ -10900,6 +10907,7 @@ export namespace Prisma {
     deliveryMode?: boolean
     instantAlerts?: boolean
     dailyDigest?: boolean
+    dailyReminder?: boolean
     digestTime?: boolean
     dailyCap?: boolean
     updatedAt?: boolean
@@ -10913,6 +10921,7 @@ export namespace Prisma {
     deliveryMode?: boolean
     instantAlerts?: boolean
     dailyDigest?: boolean
+    dailyReminder?: boolean
     digestTime?: boolean
     dailyCap?: boolean
     updatedAt?: boolean
@@ -10926,6 +10935,7 @@ export namespace Prisma {
     deliveryMode?: boolean
     instantAlerts?: boolean
     dailyDigest?: boolean
+    dailyReminder?: boolean
     digestTime?: boolean
     dailyCap?: boolean
     updatedAt?: boolean
@@ -10939,12 +10949,13 @@ export namespace Prisma {
     deliveryMode?: boolean
     instantAlerts?: boolean
     dailyDigest?: boolean
+    dailyReminder?: boolean
     digestTime?: boolean
     dailyCap?: boolean
     updatedAt?: boolean
   }
 
-  export type NotificationSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "isEnabled" | "deliveryMode" | "instantAlerts" | "dailyDigest" | "digestTime" | "dailyCap" | "updatedAt", ExtArgs["result"]["notificationSettings"]>
+  export type NotificationSettingsOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "userId" | "isEnabled" | "deliveryMode" | "instantAlerts" | "dailyDigest" | "dailyReminder" | "digestTime" | "dailyCap" | "updatedAt", ExtArgs["result"]["notificationSettings"]>
   export type NotificationSettingsInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     user?: boolean | UserDefaultArgs<ExtArgs>
   }
@@ -10967,6 +10978,7 @@ export namespace Prisma {
       deliveryMode: string
       instantAlerts: boolean
       dailyDigest: boolean
+      dailyReminder: boolean
       digestTime: string
       dailyCap: number
       updatedAt: Date
@@ -11400,6 +11412,7 @@ export namespace Prisma {
     readonly deliveryMode: FieldRef<"NotificationSettings", 'String'>
     readonly instantAlerts: FieldRef<"NotificationSettings", 'Boolean'>
     readonly dailyDigest: FieldRef<"NotificationSettings", 'Boolean'>
+    readonly dailyReminder: FieldRef<"NotificationSettings", 'Boolean'>
     readonly digestTime: FieldRef<"NotificationSettings", 'String'>
     readonly dailyCap: FieldRef<"NotificationSettings", 'Int'>
     readonly updatedAt: FieldRef<"NotificationSettings", 'DateTime'>
@@ -13279,6 +13292,7 @@ export namespace Prisma {
     deliveryMode: 'deliveryMode',
     instantAlerts: 'instantAlerts',
     dailyDigest: 'dailyDigest',
+    dailyReminder: 'dailyReminder',
     digestTime: 'digestTime',
     dailyCap: 'dailyCap',
     updatedAt: 'updatedAt'
@@ -14268,6 +14282,7 @@ export namespace Prisma {
     deliveryMode?: StringFilter<"NotificationSettings"> | string
     instantAlerts?: BoolFilter<"NotificationSettings"> | boolean
     dailyDigest?: BoolFilter<"NotificationSettings"> | boolean
+    dailyReminder?: BoolFilter<"NotificationSettings"> | boolean
     digestTime?: StringFilter<"NotificationSettings"> | string
     dailyCap?: IntFilter<"NotificationSettings"> | number
     updatedAt?: DateTimeFilter<"NotificationSettings"> | Date | string
@@ -14281,6 +14296,7 @@ export namespace Prisma {
     deliveryMode?: SortOrder
     instantAlerts?: SortOrder
     dailyDigest?: SortOrder
+    dailyReminder?: SortOrder
     digestTime?: SortOrder
     dailyCap?: SortOrder
     updatedAt?: SortOrder
@@ -14297,6 +14313,7 @@ export namespace Prisma {
     deliveryMode?: StringFilter<"NotificationSettings"> | string
     instantAlerts?: BoolFilter<"NotificationSettings"> | boolean
     dailyDigest?: BoolFilter<"NotificationSettings"> | boolean
+    dailyReminder?: BoolFilter<"NotificationSettings"> | boolean
     digestTime?: StringFilter<"NotificationSettings"> | string
     dailyCap?: IntFilter<"NotificationSettings"> | number
     updatedAt?: DateTimeFilter<"NotificationSettings"> | Date | string
@@ -14310,6 +14327,7 @@ export namespace Prisma {
     deliveryMode?: SortOrder
     instantAlerts?: SortOrder
     dailyDigest?: SortOrder
+    dailyReminder?: SortOrder
     digestTime?: SortOrder
     dailyCap?: SortOrder
     updatedAt?: SortOrder
@@ -14330,6 +14348,7 @@ export namespace Prisma {
     deliveryMode?: StringWithAggregatesFilter<"NotificationSettings"> | string
     instantAlerts?: BoolWithAggregatesFilter<"NotificationSettings"> | boolean
     dailyDigest?: BoolWithAggregatesFilter<"NotificationSettings"> | boolean
+    dailyReminder?: BoolWithAggregatesFilter<"NotificationSettings"> | boolean
     digestTime?: StringWithAggregatesFilter<"NotificationSettings"> | string
     dailyCap?: IntWithAggregatesFilter<"NotificationSettings"> | number
     updatedAt?: DateTimeWithAggregatesFilter<"NotificationSettings"> | Date | string
@@ -15336,6 +15355,7 @@ export namespace Prisma {
     deliveryMode?: string
     instantAlerts?: boolean
     dailyDigest?: boolean
+    dailyReminder?: boolean
     digestTime?: string
     dailyCap?: number
     updatedAt?: Date | string
@@ -15349,6 +15369,7 @@ export namespace Prisma {
     deliveryMode?: string
     instantAlerts?: boolean
     dailyDigest?: boolean
+    dailyReminder?: boolean
     digestTime?: string
     dailyCap?: number
     updatedAt?: Date | string
@@ -15360,6 +15381,7 @@ export namespace Prisma {
     deliveryMode?: StringFieldUpdateOperationsInput | string
     instantAlerts?: BoolFieldUpdateOperationsInput | boolean
     dailyDigest?: BoolFieldUpdateOperationsInput | boolean
+    dailyReminder?: BoolFieldUpdateOperationsInput | boolean
     digestTime?: StringFieldUpdateOperationsInput | string
     dailyCap?: IntFieldUpdateOperationsInput | number
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15373,6 +15395,7 @@ export namespace Prisma {
     deliveryMode?: StringFieldUpdateOperationsInput | string
     instantAlerts?: BoolFieldUpdateOperationsInput | boolean
     dailyDigest?: BoolFieldUpdateOperationsInput | boolean
+    dailyReminder?: BoolFieldUpdateOperationsInput | boolean
     digestTime?: StringFieldUpdateOperationsInput | string
     dailyCap?: IntFieldUpdateOperationsInput | number
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15385,6 +15408,7 @@ export namespace Prisma {
     deliveryMode?: string
     instantAlerts?: boolean
     dailyDigest?: boolean
+    dailyReminder?: boolean
     digestTime?: string
     dailyCap?: number
     updatedAt?: Date | string
@@ -15396,6 +15420,7 @@ export namespace Prisma {
     deliveryMode?: StringFieldUpdateOperationsInput | string
     instantAlerts?: BoolFieldUpdateOperationsInput | boolean
     dailyDigest?: BoolFieldUpdateOperationsInput | boolean
+    dailyReminder?: BoolFieldUpdateOperationsInput | boolean
     digestTime?: StringFieldUpdateOperationsInput | string
     dailyCap?: IntFieldUpdateOperationsInput | number
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -15408,6 +15433,7 @@ export namespace Prisma {
     deliveryMode?: StringFieldUpdateOperationsInput | string
     instantAlerts?: BoolFieldUpdateOperationsInput | boolean
     dailyDigest?: BoolFieldUpdateOperationsInput | boolean
+    dailyReminder?: BoolFieldUpdateOperationsInput | boolean
     digestTime?: StringFieldUpdateOperationsInput | string
     dailyCap?: IntFieldUpdateOperationsInput | number
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -16328,6 +16354,7 @@ export namespace Prisma {
     deliveryMode?: SortOrder
     instantAlerts?: SortOrder
     dailyDigest?: SortOrder
+    dailyReminder?: SortOrder
     digestTime?: SortOrder
     dailyCap?: SortOrder
     updatedAt?: SortOrder
@@ -16344,6 +16371,7 @@ export namespace Prisma {
     deliveryMode?: SortOrder
     instantAlerts?: SortOrder
     dailyDigest?: SortOrder
+    dailyReminder?: SortOrder
     digestTime?: SortOrder
     dailyCap?: SortOrder
     updatedAt?: SortOrder
@@ -16356,6 +16384,7 @@ export namespace Prisma {
     deliveryMode?: SortOrder
     instantAlerts?: SortOrder
     dailyDigest?: SortOrder
+    dailyReminder?: SortOrder
     digestTime?: SortOrder
     dailyCap?: SortOrder
     updatedAt?: SortOrder
@@ -17885,6 +17914,7 @@ export namespace Prisma {
     deliveryMode?: string
     instantAlerts?: boolean
     dailyDigest?: boolean
+    dailyReminder?: boolean
     digestTime?: string
     dailyCap?: number
     updatedAt?: Date | string
@@ -17896,6 +17926,7 @@ export namespace Prisma {
     deliveryMode?: string
     instantAlerts?: boolean
     dailyDigest?: boolean
+    dailyReminder?: boolean
     digestTime?: string
     dailyCap?: number
     updatedAt?: Date | string
@@ -18198,6 +18229,7 @@ export namespace Prisma {
     deliveryMode?: StringFieldUpdateOperationsInput | string
     instantAlerts?: BoolFieldUpdateOperationsInput | boolean
     dailyDigest?: BoolFieldUpdateOperationsInput | boolean
+    dailyReminder?: BoolFieldUpdateOperationsInput | boolean
     digestTime?: StringFieldUpdateOperationsInput | string
     dailyCap?: IntFieldUpdateOperationsInput | number
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -18209,6 +18241,7 @@ export namespace Prisma {
     deliveryMode?: StringFieldUpdateOperationsInput | string
     instantAlerts?: BoolFieldUpdateOperationsInput | boolean
     dailyDigest?: BoolFieldUpdateOperationsInput | boolean
+    dailyReminder?: BoolFieldUpdateOperationsInput | boolean
     digestTime?: StringFieldUpdateOperationsInput | string
     dailyCap?: IntFieldUpdateOperationsInput | number
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string

@@ -3,7 +3,7 @@
 // When adding new stores or indexes, bump the DB_VERSION.
 
 export const DB_NAME = "moneta-finance";
-export const DB_VERSION = 11; // v11: Add financial_targets store
+export const DB_VERSION = 12; // v11: Add financial_targets store
 
 export const STORES = {
   CATEGORIES: "categories",

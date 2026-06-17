@@ -5,6 +5,7 @@ export type DeliveryMode = 'INSTANT' | 'BATCH' | 'NONE';
 export interface LocalNotificationPrefs {
   instantAlerts: boolean;
   dailyDigest: boolean;
+  dailyReminder: boolean;
   deliveryMode: DeliveryMode;
   digestTime: string; // "HH:MM"
   dailyCap: number; // 1–5
@@ -59,6 +60,7 @@ export const DEFAULT_DAILY_CAP = 5;
 export const DEFAULT_NOTIF_PREFS: LocalNotificationPrefs = {
   instantAlerts: false,
   dailyDigest: false,
+  dailyReminder: true,
   deliveryMode: 'NONE',
   digestTime: '20:00',
   dailyCap: DEFAULT_DAILY_CAP,
@@ -116,6 +118,7 @@ export async function saveNotifPrefs(prefs: LocalNotificationPrefs, skipSyncQueu
       deliveryMode: prefs.deliveryMode,
       instantAlerts: prefs.instantAlerts,
       dailyDigest: prefs.dailyDigest,
+      dailyReminder: prefs.dailyReminder,
       digestTime: prefs.digestTime,
       dailyCap: prefs.dailyCap,
       syncStatus: 'PENDING',
@@ -129,6 +132,7 @@ export async function saveNotifPrefs(prefs: LocalNotificationPrefs, skipSyncQueu
 export async function syncServerPrefsToLocal(serverPrefs: {
   instantAlerts: boolean;
   dailyDigest: boolean;
+  dailyReminder: boolean;
   digestTime: string;
   dailyCap?: number;
   userId?: string;
@@ -140,6 +144,7 @@ export async function syncServerPrefsToLocal(serverPrefs: {
   const merged: LocalNotificationPrefs = {
     instantAlerts: serverPrefs.instantAlerts,
     dailyDigest: serverPrefs.dailyDigest,
+    dailyReminder: serverPrefs.dailyReminder ?? existing?.dailyReminder ?? true,
     deliveryMode,
     digestTime: serverPrefs.digestTime,
     dailyCap: serverPrefs.dailyCap ?? existing?.dailyCap ?? DEFAULT_DAILY_CAP,

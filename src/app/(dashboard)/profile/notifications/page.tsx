@@ -247,6 +247,7 @@ export default function NotificationSettingsPage() {
 
   // Bug 8: Single notifMode enum replaces two independent booleans
   const [notifMode, setNotifMode] = useState<NotifMode>('NONE');
+  const [dailyReminder, setDailyReminder] = useState<boolean>(true);
   const [digestTime, setDigestTime] = useState('20:00');
   const [dailyCap, setDailyCap] = useState<number>(DEFAULT_NOTIF_PREFS.dailyCap);
   const [todayCount, setTodayCount] = useState(0);
@@ -289,6 +290,7 @@ export default function NotificationSettingsPage() {
           if (s.dailyDigest) setNotifMode('DIGEST');
           else if (s.instantAlerts) setNotifMode('INSTANT');
           else setNotifMode('NONE');
+          setDailyReminder(s.dailyReminder ?? true);
           setDigestTime(s.digestTime || '20:00');
           setDailyCap(s.dailyCap ?? DEFAULT_DAILY_CAP);
         } else {
@@ -359,6 +361,7 @@ export default function NotificationSettingsPage() {
         // If server push failed, we disable it on the server (NONE) so it doesn't try to push,
         // but we preserve the local instantAlerts/dailyDigest flags so local nudges still work.
         deliveryMode: serverPushFailed ? 'NONE' : notifMode === 'INSTANT' ? 'INSTANT' : notifMode === 'DIGEST' ? 'BATCH' : 'NONE',
+        dailyReminder,
         digestTime,
         dailyCap,
         userId: user.id,
@@ -383,7 +386,7 @@ export default function NotificationSettingsPage() {
     } finally {
       setIsSaving(false);
     }
-  }, [notifMode, digestTime, dailyCap]);
+  }, [notifMode, dailyReminder, digestTime, dailyCap]);
 
   return (
     <SecondaryPageLayout
@@ -449,7 +452,39 @@ export default function NotificationSettingsPage() {
           )}
 
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pilih Mode Notifikasi</p>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pengingat Harian</p>
+            <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
+              <div className="flex items-start gap-3">
+                <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${dailyReminder ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'}`}>
+                  <Bell className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Ingatkan Catat Keuangan</p>
+                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                    Kirim notifikasi setiap pukul 20:00 jika belum ada transaksi yang dicatat pada hari ini.
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={dailyReminder}
+                onClick={() => setDailyReminder(!dailyReminder)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900 ${
+                  dailyReminder ? "bg-indigo-600" : "bg-slate-200 dark:bg-slate-600"
+                }`}
+              >
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ease-in-out ${
+                    dailyReminder ? "translate-x-5" : "translate-x-0.5"
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mode Peringatan Anggaran</p>
 
             <div className="space-y-2.5" role="radiogroup" aria-label="Mode notifikasi">
               <ModeCard

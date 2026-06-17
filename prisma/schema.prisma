@@ -185,6 +185,7 @@ model NotificationSettings {
   deliveryMode  String   @default("DIGEST")
   instantAlerts Boolean  @default(false)
   dailyDigest   Boolean  @default(false)
+  dailyReminder Boolean  @default(true)
   digestTime    String   @default("20:00")
   dailyCap      Int      @default(5)
   updatedAt     DateTime @updatedAt

@@ -246,6 +246,7 @@ exports.Prisma.NotificationSettingsScalarFieldEnum = {
   deliveryMode: 'deliveryMode',
   instantAlerts: 'instantAlerts',
   dailyDigest: 'dailyDigest',
+  dailyReminder: 'dailyReminder',
   digestTime: 'digestTime',
   dailyCap: 'dailyCap',
   updatedAt: 'updatedAt'
