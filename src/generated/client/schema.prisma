@@ -1,0 +1,257 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/client"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id                        String                     @id @default(uuid())
+  email                     String                     @unique @db.VarChar(255)
+  username                  String                     @unique @db.VarChar(30)
+  passwordHash              String
+  createdAt                 DateTime                   @default(now())
+  updatedAt                 DateTime                   @updatedAt
+  budgets                   Budget[]
+  categories                Category[]
+  targets                   FinancialTarget[]
+  notificationLogs          NotificationLog[]
+  notificationSettings      NotificationSettings?
+  notificationSubscriptions NotificationSubscription[]
+  transactions              Transaction[]
+  wallets                   Wallet[]
+}
+
+model Wallet {
+  id                String            @id @default(uuid())
+  name              String
+  type              WalletType        @default(TUNAI)
+  initialBalance    Decimal           @default(0) @db.Decimal(15, 2)
+  userId            String
+  clientId          String            @unique
+  syncStatus        SyncStatus        @default(PENDING)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  deletedAt         DateTime?
+  financialTargets  FinancialTarget[]
+  incomingTransfers Transaction[]     @relation("TargetWalletTransactions")
+  transactions      Transaction[]     @relation("WalletTransactions")
+  user              User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_wallet_user")
+  @@index([userId, deletedAt], map: "idx_wallet_user_active")
+  @@index([userId, updatedAt], map: "idx_wallet_user_sync")
+}
+
+model Category {
+  id               String            @id @default(uuid())
+  name             String
+  type             CategoryType
+  icon             String?
+  color            String?
+  isDefault        Boolean           @default(false)
+  userId           String
+  clientId         String            @unique
+  syncStatus       SyncStatus        @default(PENDING)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  deletedAt        DateTime?
+  budgets          Budget[]
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  financialTargets FinancialTarget[]
+  transactions     Transaction[]
+
+  @@index([userId], map: "idx_category_user")
+  @@index([userId, deletedAt], map: "idx_category_user_active")
+  @@index([userId, updatedAt], map: "idx_category_user_sync")
+}
+
+model Transaction {
+  id             String          @id @default(uuid())
+  amount         Decimal         @db.Decimal(15, 2)
+  type           TransactionType
+  description    String?
+  note           String?
+  date           DateTime        @db.Date
+  walletId       String
+  targetWalletId String?
+  categoryId     String?
+  userId         String
+  clientId       String          @unique
+  syncStatus     SyncStatus      @default(PENDING)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  deletedAt      DateTime?
+  category       Category?       @relation(fields: [categoryId], references: [id])
+  targetWallet   Wallet?         @relation("TargetWalletTransactions", fields: [targetWalletId], references: [id])
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet         Wallet          @relation("WalletTransactions", fields: [walletId], references: [id])
+
+  @@index([userId, type, date], map: "idx_txn_user_type_date")
+  @@index([userId, categoryId, date], map: "idx_txn_user_category_date")
+  @@index([userId, walletId, date], map: "idx_txn_user_wallet_date")
+  @@index([userId, date], map: "idx_txn_user_date")
+  @@index([userId, deletedAt], map: "idx_txn_user_active")
+  @@index([userId, updatedAt], map: "idx_txn_user_sync")
+}
+
+model Budget {
+  id         String     @id @default(uuid())
+  amount     Decimal    @db.Decimal(15, 2)
+  period     String
+  categoryId String
+  userId     String
+  clientId   String     @unique
+  syncStatus SyncStatus @default(PENDING)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  deletedAt  DateTime?
+  category   Category   @relation(fields: [categoryId], references: [id])
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, categoryId, period], name: "uq_budget_user_cat_period")
+  @@index([userId, period], map: "idx_budget_user_period")
+  @@index([userId, updatedAt], map: "idx_budget_user_sync")
+}
+
+model NotificationSubscription {
+  id        String   @id @default(uuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userId    String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_notification_user")
+}
+
+model NotificationLog {
+  id                     String    @id @default(uuid())
+  clientId               String    @unique @default(uuid())
+  dedupeKey              String    @unique
+  userId                 String
+  title                  String
+  body                   String
+  type                   String
+  status                 String    @default("sent")
+  severity               String?
+  source                 String?
+  relatedTransactionId   String?
+  relatedCategoryId      String?
+  relatedBudgetId        String?
+  deliveryModeAtCreation String?
+  pushedAt               DateTime?
+  digestSentAt           DateTime?
+  eventType              String?
+  ctaRoute               String?
+  actionType             String?
+  ctaLabel               String?
+  sourceBudgetId         String?
+  targetBudgetId         String?
+  recommendedAmount      Float?
+  readAt                 DateTime?
+  dismissedAt            DateTime?
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @default(now()) @updatedAt
+  deletedAt              DateTime?
+  categoryName           String?
+  usageRatio             Float?
+  budgetLimit            Float?
+  budgetSpent            Float?
+  deficitAmount          Float?
+  todayAmount            Float?
+  comparisonAmount       Float?
+  comparisonLabel        String?
+  sourceCategoryName     String?
+  targetCategoryName     String?
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId], map: "idx_notif_log_user")
+  @@index([userId, status], map: "idx_notif_log_user_status")
+  @@index([userId, createdAt], map: "idx_notif_log_user_time")
+  @@index([userId, type], map: "idx_notif_log_user_type")
+  @@index([userId, updatedAt], map: "idx_notif_log_user_sync")
+}
+
+model NotificationSettings {
+  id            String   @id @default(uuid())
+  userId        String   @unique
+  isEnabled     Boolean  @default(false)
+  deliveryMode  String   @default("DIGEST")
+  instantAlerts Boolean  @default(false)
+  dailyDigest   Boolean  @default(false)
+  digestTime    String   @default("20:00")
+  dailyCap      Int      @default(5)
+  updatedAt     DateTime @updatedAt
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model FinancialTarget {
+  id           String       @id @default(uuid())
+  clientId     String       @unique
+  name         String
+  type         TargetType
+  targetAmount Decimal      @db.Decimal(15, 2)
+  period       TargetPeriod
+  startDate    DateTime     @db.Date
+  endDate      DateTime?    @db.Date
+  categoryId   String?
+  walletId     String?
+  isActive     Boolean      @default(true)
+  note         String?
+  userId       String
+  syncStatus   SyncStatus   @default(PENDING)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  deletedAt    DateTime?
+  category     Category?    @relation(fields: [categoryId], references: [id])
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet       Wallet?      @relation(fields: [walletId], references: [id])
+
+  @@index([userId], map: "idx_target_user")
+  @@index([userId, type], map: "idx_target_user_type")
+  @@index([userId, updatedAt], map: "idx_target_user_sync")
+}
+
+enum SyncStatus {
+  SYNCED
+  PENDING
+  CONFLICT
+}
+
+enum TransactionType {
+  INCOME
+  EXPENSE
+  TRANSFER
+}
+
+enum CategoryType {
+  INCOME
+  EXPENSE
+}
+
+enum WalletType {
+  TUNAI
+  BANK
+  E_WALLET
+  INVESTASI
+  LAINNYA
+}
+
+enum TargetType {
+  INCOME_TARGET
+  SAVING_TARGET
+  BALANCE_TARGET
+}
+
+enum TargetPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+  CUSTOM
+}
