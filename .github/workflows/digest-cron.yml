@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Call digest cron endpoint
         run: |
-          response=$(curl -s -o /dev/null -w "%{http_code}" \
+          response=$(curl -s -L -o /dev/null -w "%{http_code}" \
             -X GET "${{ secrets.APP_URL }}/api/cron/digest" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             --retry 3 \
