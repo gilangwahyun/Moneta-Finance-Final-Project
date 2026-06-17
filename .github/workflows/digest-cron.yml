@@ -16,8 +16,17 @@ jobs:
     steps:
       - name: Call digest cron endpoint
         run: |
+          # Normalisasi URL (hapus trailing slash dan pastikan ada https://)
+          RAW_URL="${{ secrets.APP_URL }}"
+          CLEAN_URL="${RAW_URL%/}"
+          if [[ ! "$CLEAN_URL" =~ ^https?:// ]]; then
+            CLEAN_URL="https://$CLEAN_URL"
+          fi
+          
+          echo "Hitting endpoint: $CLEAN_URL/api/cron/digest"
+
           response=$(curl -s -L -o /dev/null -w "%{http_code}" \
-            -X GET "${{ secrets.APP_URL }}/api/cron/digest" \
+            "$CLEAN_URL/api/cron/digest" \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             --retry 3 \
             --retry-delay 5 \
