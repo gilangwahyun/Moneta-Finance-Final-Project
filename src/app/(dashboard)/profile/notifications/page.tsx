@@ -317,8 +317,8 @@ export default function NotificationSettingsPage() {
 
       let serverPushFailed = false;
 
-      // If user enabled notifications, ensure Web Push subscription is set up
-      if (notifMode !== 'NONE') {
+      // If user enabled notifications or daily reminder, ensure Web Push subscription is set up
+      if (notifMode !== 'NONE' || dailyReminder) {
         if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
           try {
             const registration = await navigator.serviceWorker.ready;
