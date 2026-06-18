@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Push</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+<body style="font-family: sans-serif; padding: 20px;">
+    <h2>Test OS Notification</h2>
+    <p>Klik tombol di bawah untuk meminta Service Worker memunculkan notifikasi langsung dari dalam HP Anda (tanpa lewat Vercel/FCM).</p>
+    
+    <button id="btn" style="padding: 15px; font-size: 16px; background: #4f46e5; color: white; border: none; border-radius: 8px; cursor: pointer;">
+        Munculkan Notifikasi OS
+    </button>
+    <div id="log" style="margin-top: 20px; font-family: monospace; white-space: pre-wrap; background: #f1f5f9; padding: 10px; border-radius: 5px;"></div>
+
+    <script>
+        const btn = document.getElementById('btn');
+        const logEl = document.getElementById('log');
+
+        function log(msg) {
+            logEl.textContent += msg + '\n';
+        }
+
+        btn.addEventListener('click', async () => {
+            log('Mengecek permission browser...');
+            if (Notification.permission !== 'granted') {
+                log('Permission belum granted! Status: ' + Notification.permission);
+                const perm = await Notification.requestPermission();
+                log('Hasil request: ' + perm);
+                if (perm !== 'granted') return;
+            }
+
+            log('Permission OK. Mencari Service Worker...');
+            const registration = await navigator.serviceWorker.ready;
+            
+            if (registration) {
+                log('SW ditemukan. Memanggil showNotification()...');
+                try {
+                    await registration.showNotification('Test Notifikasi Lokal', {
+                        body: 'Jika Anda melihat ini, OS tidak memblokir notifikasi.',
+                        icon: '/icons/icon-192x192.png',
+                        tag: 'test-local-push'
+                    });
+                    log('SUKSES! showNotification() dipanggil tanpa error.');
+                    log('Silakan cek laci notifikasi (Notification Center / Tray) Anda!');
+                } catch (e) {
+                    log('GAGAL memanggil showNotification: ' + e.message);
+                }
+            } else {
+                log('Gagal menemukan Service Worker yang aktif.');
+            }
+        });
+    </script>
+</body>
+</html>
