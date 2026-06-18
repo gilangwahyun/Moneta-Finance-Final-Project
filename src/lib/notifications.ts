@@ -64,8 +64,10 @@ export async function sendAndLogPushNotification(
   userId: string,
   title: string,
   body: string,
-  type: string
+  type: string,
+  dedupeKey?: string
 ) {
+  const finalDedupeKey = dedupeKey || crypto.randomUUID();
   //********** 1. Fetch the user's push subscriptions **********
   const subscriptions = await prisma.notificationSubscription.findMany({
     where: { userId },
@@ -89,6 +91,7 @@ export async function sendAndLogPushNotification(
         body,
         type,
         status: "failed",
+        dedupeKey: finalDedupeKey,
       },
     });
   }
@@ -107,6 +110,7 @@ export async function sendAndLogPushNotification(
       body,
       type,
       status: "sent", //********** Optimistic - patched to 'failed' below if needed
+      dedupeKey: finalDedupeKey,
     },
   });
 

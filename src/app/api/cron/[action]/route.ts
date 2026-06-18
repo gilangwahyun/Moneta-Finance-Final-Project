@@ -159,11 +159,13 @@ async function handleReminder() {
         const title = "Catatan Keuangan";
         const body = "Belum ada transaksi yang dicatat hari ini. Ketuk untuk memperbarui.";
         
+        const dedupeKey = `reminder_${userId}_${dayjs().tz("Asia/Jakarta").format("YYYYMMDD")}`;
         await sendAndLogPushNotification(
           userId,
           title,
           body,
-          "REMINDER"
+          "REMINDER",
+          dedupeKey
         );
 
         sentCount++;
