@@ -264,20 +264,7 @@ export default function NotificationSettingsPage() {
     setNotifPermission(Notification.permission);
   }, []);
 
-  /********** Event Handlers **********/
 
-  const handleRequestPermission = useCallback(async () => {
-    if (typeof Notification === 'undefined') return;
-    setIsRequestingPerm(true);
-    try {
-      const result = await Notification.requestPermission();
-      setNotifPermission(result);
-      if (result === 'granted') toast.success('Izin notifikasi diberikan. Gateway siap aktif.');
-      else toast.error('Izin ditolak. Notifikasi OS tidak akan dikirim.');
-    } finally {
-      setIsRequestingPerm(false);
-    }
-  }, []);
 
   useEffect(() => {
     async function loadSettings() {
@@ -386,7 +373,25 @@ export default function NotificationSettingsPage() {
     } finally {
       setIsSaving(false);
     }
-  }, [notifMode, dailyReminder, digestTime, dailyCap]);
+  }, [notifMode, dailyReminder, digestTime, dailyCap, getUser, scheduleSync]);
+
+  const handleRequestPermission = useCallback(async () => {
+    if (typeof Notification === 'undefined') return;
+    setIsRequestingPerm(true);
+    try {
+      const result = await Notification.requestPermission();
+      setNotifPermission(result);
+      if (result === 'granted') {
+        toast.success('Izin notifikasi diberikan. Gateway siap aktif.');
+        await handleSave(); // Langsung auto-save preferensi (sehingga push subscription terdaftar)
+      }
+      else {
+        toast.error('Izin ditolak. Notifikasi OS tidak akan dikirim.');
+      }
+    } finally {
+      setIsRequestingPerm(false);
+    }
+  }, [handleSave]);
 
   return (
     <SecondaryPageLayout
