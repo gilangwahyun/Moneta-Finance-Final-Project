@@ -137,7 +137,10 @@ export async function sendAndLogPushNotification(
       };
 
       try {
-        await webpush.sendNotification(pushSubscription, payloadString);
+        await webpush.sendNotification(pushSubscription, payloadString, {
+          urgency: "high",
+          TTL: 86400,
+        });
         anySucceeded = true;
         console.log(
           `[Notifications] Sent to subscription ${sub.id} (logId: ${log.id})`
