@@ -457,6 +457,7 @@ async function triggerLocalNotification(title, body, type, logId, tag, gateway, 
 
   // ── Step 3: Build log record ───────────────────────────
   const logRecord = {
+    clientId: logId || crypto.randomUUID(),
     userId,
     title,
     body,
@@ -516,8 +517,8 @@ async function triggerLocalNotification(title, body, type, logId, tag, gateway, 
       clientId: logId || null,
       logId: logId || null,
       type,
-      ctaRoute: type === "DEFICIT" ? "/budgets" : (type === "INSTANT" ? "/budgets" : "/notifications"),
-      url: type === "DEFICIT" ? "/budgets" : "/notifications",
+      ctaRoute: type === "REMINDER" ? "/transactions" : (type === "DEFICIT" ? "/budgets" : (type === "INSTANT" ? "/budgets" : "/notifications")),
+      url: type === "REMINDER" ? "/transactions" : (type === "DEFICIT" ? "/budgets" : "/notifications"),
     },
     actions: actions || [
       { action: "open", title: "Buka Aplikasi" },
