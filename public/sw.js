@@ -456,8 +456,9 @@ async function triggerLocalNotification(title, body, type, logId, tag, gateway, 
   const isOverCap = todayCount >= dailyCap;
 
   // ── Step 3: Build log record ───────────────────────────
+  const finalClientId = logId || crypto.randomUUID();
   const logRecord = {
-    clientId: logId || crypto.randomUUID(),
+    clientId: finalClientId,
     userId,
     title,
     body,
@@ -514,7 +515,7 @@ async function triggerLocalNotification(title, body, type, logId, tag, gateway, 
     renotify: true,
     data: {
       // clientId is the same as logId here — the IDB key for this notification log
-      clientId: logId || null,
+      clientId: finalClientId,
       logId: logId || null,
       type,
       ctaRoute: type === "REMINDER" ? "/transactions" : (type === "DEFICIT" ? "/budgets" : (type === "INSTANT" ? "/budgets" : "/notifications")),
