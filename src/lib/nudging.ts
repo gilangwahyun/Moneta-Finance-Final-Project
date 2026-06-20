@@ -85,6 +85,11 @@ export interface NudgeEngineParams {
   savingsGapShrinking?: { netNow: number; netThen: number; dropPct: number } | null;
   budgetAccuracyAlert?: { categoryName: string; budgetId: string; budgetAmount: number; avgExpense: number } | null;
   categorySpike?: { categoryName: string; categoryId: string; currentAmount: number; avgAmount: number; spikePct: number } | null;
+
+  // Phase 4 — Low Priority / High Complexity Rules
+  budgetRecovery?: { categoryName: string; budgetId: string; savedAmount: number } | null;
+  targetStreak?: { targetName: string; targetId: string; streakCount: number } | null;
+  walletCategoryPattern?: { walletName: string; categoryName: string; percentage: number } | null;
 }
 
 export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
@@ -542,6 +547,46 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       body: `Pengeluaran '${params.categorySpike.categoryName}' bulan ini melonjak tajam (${formatCurrency(params.categorySpike.currentAmount)}), ${params.categorySpike.spikePct}% lebih tinggi dari rata-rata 3 bulan terakhirmu.`,
       ctaLabel: 'Lihat Transaksi',
       ctaRoute: '/transactions',
+    });
+  }
+
+  // ==========================================
+  // PHASE 4 RULES — Pattern & Streak
+  // ==========================================
+
+  // [BG-02] Budget Recovery
+  if (params.budgetRecovery) {
+    insights.push({
+      priority: 3.4,
+      severity: 'positive',
+      title: 'Pemulihan Anggaran Berhasil',
+      body: `Kerja bagus! Bulan lalu kamu berhasil menekan pengeluaran '${params.budgetRecovery.categoryName}' kembali ke batas anggaran (hemat ${formatCurrency(params.budgetRecovery.savedAmount)} dari bulan sebelumnya). Pertahankan!`,
+      ctaLabel: 'Lihat Anggaran',
+      ctaRoute: '/budgets',
+    });
+  }
+
+  // [FT-03] Target Streak
+  if (params.targetStreak) {
+    insights.push({
+      priority: 3.5,
+      severity: 'positive',
+      title: 'Konsistensi Target Terjaga',
+      body: `Luar biasa! Kamu berhasil mencapai target pemasukan '${params.targetStreak.targetName}' selama ${params.targetStreak.streakCount} bulan berturut-turut.`,
+      ctaLabel: 'Lihat Target',
+      ctaRoute: '/targets',
+    });
+  }
+
+  // [WL-04] Wallet-Category Usage Pattern
+  if (params.walletCategoryPattern) {
+    insights.push({
+      priority: 3.8, // Low priority insight
+      severity: 'neutral',
+      title: 'Pola Penggunaan Dompet',
+      body: `Sekadar info: ${params.walletCategoryPattern.percentage}% pengeluaran '${params.walletCategoryPattern.categoryName}'-mu selalu menggunakan dompet '${params.walletCategoryPattern.walletName}'.`,
+      ctaLabel: 'Lihat Dompet',
+      ctaRoute: '/wallets',
     });
   }
 

@@ -881,17 +881,100 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     return null;
   }, [allTxns, currentTxns, allCategories]);
 
+  // =========================================================================
+  // PHASE 4: PATTERNS & STREAKS (Low Priority / High Complexity)
+  // =========================================================================
+
+  const budgetRecovery = useMemo(() => {
+    if (budgets.length === 0 || allTxns.length === 0) return null;
+    const m1 = dayjs().subtract(1, 'month').format('YYYY-MM');
+    const m2 = dayjs().subtract(2, 'month').format('YYYY-MM');
+
+    for (const b of budgets) {
+      const bAmount = Number(b.amount);
+      if (bAmount === 0) continue;
+
+      const expM1 = allTxns.filter(t => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m1).reduce((s,t) => s + Number(t.amount), 0);
+      const expM2 = allTxns.filter(t => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m2).reduce((s,t) => s + Number(t.amount), 0);
+
+      // M-2 was over budget, but M-1 they recovered and stayed under budget
+      if (expM2 > bAmount && expM1 <= bAmount && expM1 < expM2) {
+        const cat = allCategories.find(c => c.clientId === b.categoryId);
+        return { categoryName: cat?.name || 'Kategori', budgetId: b.clientId!, savedAmount: expM2 - expM1 };
+      }
+    }
+    return null;
+  }, [allTxns, budgets, allCategories]);
+
+  const targetStreak = useMemo(() => {
+    if (allTargets.length === 0 || allTxns.length === 0) return null;
+    const m1 = dayjs().subtract(1, 'month').format('YYYY-MM');
+    const m2 = dayjs().subtract(2, 'month').format('YYYY-MM');
+    const m3 = dayjs().subtract(3, 'month').format('YYYY-MM');
+
+    for (const target of allTargets) {
+      if (!target.isActive || target.period !== 'MONTHLY') continue;
+      const tAmount = Number(target.targetAmount);
+
+      const inc1 = allTxns.filter(t => t.categoryId === target.categoryId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m1).reduce((s,t) => s + Number(t.amount), 0);
+      const inc2 = allTxns.filter(t => t.categoryId === target.categoryId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m2).reduce((s,t) => s + Number(t.amount), 0);
+      const inc3 = allTxns.filter(t => t.categoryId === target.categoryId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m3).reduce((s,t) => s + Number(t.amount), 0);
+
+      if (inc1 >= tAmount && inc2 >= tAmount && inc3 >= tAmount) {
+        return { targetName: target.name, targetId: target.clientId!, streakCount: 3 };
+      }
+    }
+    return null;
+  }, [allTargets, allTxns]);
+
+  const walletCategoryPattern = useMemo(() => {
+    if (allTxns.length === 0 || allWallets.length === 0) return null;
+    // Look at past 3 months total
+    const startM3 = dayjs().subtract(3, 'month').startOf('month').valueOf();
+    
+    const categoryTotals: Record<string, number> = {};
+    const categoryWalletTotals: Record<string, Record<string, number>> = {};
+
+    for (const t of allTxns) {
+      if (t.type === 'EXPENSE' && dayjs(t.date).valueOf() >= startM3 && t.walletId && t.categoryId) {
+        categoryTotals[t.categoryId] = (categoryTotals[t.categoryId] || 0) + Number(t.amount);
+        if (!categoryWalletTotals[t.categoryId]) categoryWalletTotals[t.categoryId] = {};
+        categoryWalletTotals[t.categoryId][t.walletId] = (categoryWalletTotals[t.categoryId][t.walletId] || 0) + Number(t.amount);
+      }
+    }
+
+    const topCategories = Object.keys(categoryTotals).sort((a, b) => categoryTotals[b] - categoryTotals[a]).slice(0, 5);
+
+    for (const catId of topCategories) {
+      const totalExp = categoryTotals[catId];
+      if (totalExp < 100000) continue; 
+
+      for (const [walletId, wAmount] of Object.entries(categoryWalletTotals[catId])) {
+        if (wAmount / totalExp >= 0.80) {
+          const cat = allCategories.find(c => c.clientId === catId);
+          const wal = allWallets.find(w => w.clientId === walletId);
+          if (cat && wal) {
+            return { walletName: wal.name, categoryName: cat.name, percentage: Math.round((wAmount / totalExp) * 100) };
+          }
+        }
+      }
+    }
+    return null;
+  }, [allTxns, allWallets, allCategories]);
+
   const rawNudgeInsights = useMemo(
     () => generateNudges({
       current, prev, topExpenseCategory, weeklySavings, frequentTxn, peakDay, wantsProjection, paydayLeak, weekendTrap, nightOwl, subscriptions,
       recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum, lowCashWarning,
       newCategoryEmergence, categoryDominanceShift, expenseConsistency, discretionaryDrift, budgetRunway, targetGapAlert, targetProgressImpact, walletDrainRate,
       categoryCreep, savingsGapShrinking, budgetAccuracyAlert, categorySpike,
+      budgetRecovery, targetStreak, walletCategoryPattern,
     }),
     [current, prev, topExpenseCategory, weeklySavings, frequentTxn, peakDay, wantsProjection, paydayLeak, weekendTrap, nightOwl, subscriptions,
      recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum, lowCashWarning,
      newCategoryEmergence, categoryDominanceShift, expenseConsistency, discretionaryDrift, budgetRunway, targetGapAlert, targetProgressImpact, walletDrainRate,
-     categoryCreep, savingsGapShrinking, budgetAccuracyAlert, categorySpike]
+     categoryCreep, savingsGapShrinking, budgetAccuracyAlert, categorySpike,
+     budgetRecovery, targetStreak, walletCategoryPattern]
   );
 
   const nudgeInsights = useMemo(() => {
