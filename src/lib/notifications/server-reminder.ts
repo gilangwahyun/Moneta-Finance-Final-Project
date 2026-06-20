@@ -42,15 +42,18 @@ export async function getUsersDueForReminder(targetTimeWIB?: string): Promise<st
   const userIds = eligibleSettings.map(s => s.userId);
 
   // 2. Filter out users who HAVE created transactions today.
-  const startOfDayWIB = now.startOf("day").toDate();
-  const endOfDayWIB = now.endOf("day").toDate();
+  // Because Transaction.date is a @db.Date column, we MUST query it using a Date object 
+  // whose UTC date-part exactly matches the local YYYY-MM-DD string.
+  // Using startOfDayWIB / endOfDayWIB causes Prisma to extract the UTC date-part of those bounds, 
+  // which bleeds into the previous day.
+  const localDateString = now.format("YYYY-MM-DD");
+  const targetDateUTC = new Date(`${localDateString}T00:00:00.000Z`);
 
   const transactionsToday = await prisma.transaction.findMany({
     where: {
       userId: { in: userIds },
       date: {
-        gte: startOfDayWIB,
-        lte: endOfDayWIB
+        equals: targetDateUTC
       }
     },
     select: {
