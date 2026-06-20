@@ -87,7 +87,7 @@ export function useTransactions(): UseTransactionsReturn {
       }
 
       const [recent, totals, allCategories] = await Promise.all([
-        getRecentTransactions(user.id, 50),
+        getRecentTransactions(user.id, 500), // Load up to 500 so past-month txns (e.g. May) remain visible when filter changes
         getCurrentMonthTotals(user.id),
         getAllCategoriesIncludingDeleted(user.id),
       ]);

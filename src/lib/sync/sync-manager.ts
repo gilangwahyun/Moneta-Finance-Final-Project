@@ -24,7 +24,7 @@ import {
   bulkUpsertTransactions,
 } from '@/lib/local-db/repositories/transactions';
 import { upsertWallet, getWalletById, bulkUpsertWallets } from '@/lib/local-db/repositories/wallets';
-import { upsertBudget, getBudgetById, getPendingBudgets, deleteBudget, bulkUpsertBudgets } from '@/lib/local-db/repositories/budgets';
+import { upsertBudget, getBudgetById, getPendingBudgets, deleteBudget, bulkUpsertBudgets, deduplicateBudgets } from '@/lib/local-db/repositories/budgets';
 import { upsertTarget, getTargetById, hardDeleteTarget, deleteTarget, bulkUpsertTargets } from '@/lib/local-db/repositories/targets';
 import {
   upsertNotificationLog,
@@ -64,6 +64,15 @@ export async function pushChanges(): Promise<SyncResult> {
   const result: SyncResult = { state: 'idle', pushed: 0, pulled: 0, conflicts: 0 };
 
   try {
+    //********** Step 0: Clean up any duplicate budgets in IDB (same categoryId+period)
+    //********** This prevents server-side unique constraint violations that cause
+    //********** the entire sync push to fail and get stuck.
+    try {
+      await deduplicateBudgets();
+    } catch (dedupeErr) {
+      console.warn('[Sync] deduplicateBudgets failed (non-fatal):', dedupeErr);
+    }
+
     //********** Recover orphaned budgets
     //********** Since previous sync logic omitted budgets, they may have
     //********** been dequeued while still PENDING. Re-enqueue them here safely.

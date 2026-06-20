@@ -15,9 +15,20 @@ export interface UpsertBudgetInput {
 /**
  * Set a budget for a given category and period (UI function).
  * Enqueues the change for synchronization.
+ *
+ * Prevents duplicate budgets: if a budget already exists for the same
+ * categoryId + period, it will be updated instead of creating a new one.
  */
 export async function setBudget(input: UpsertBudgetInput): Promise<Budget> {
-  const existing = input.clientId ? await getBudgetById(input.clientId) : null;
+  // 1. Try to find by explicit clientId (edit mode)
+  let existing = input.clientId ? await getBudgetById(input.clientId) : null;
+
+  // 2. If not found by clientId, check for an existing budget with same category+period
+  //    This prevents creating duplicates when the user clicks "Atur Anggaran" again.
+  if (!existing) {
+    existing = await getBudgetByCategoryAndPeriod(input.userId, input.categoryId, input.period) ?? null;
+  }
+
   const now = new Date().toISOString();
   
   const budget: Budget = existing ? {
@@ -79,6 +90,19 @@ export async function getBudgetsByPeriod(userId: string, period: string): Promis
     };
     request.onerror = () => reject(request.error);
   });
+}
+
+/**
+ * Find an existing (non-deleted) budget by categoryId and period for a user.
+ * Used to prevent creating duplicate budgets.
+ */
+export async function getBudgetByCategoryAndPeriod(
+  userId: string,
+  categoryId: string,
+  period: string
+): Promise<Budget | undefined> {
+  const budgets = await getBudgetsByPeriod(userId, period);
+  return budgets.find((b) => b.categoryId === categoryId);
 }
 
 export async function applyServerBudget(budget: Budget): Promise<void> {
@@ -153,6 +177,69 @@ export async function getPendingBudgets(): Promise<Budget[]> {
     request.onsuccess = () => resolve(request.result as Budget[]);
     request.onerror = () => reject(request.error);
   });
+}
+
+/**
+ * Clean up duplicate budgets that share the same categoryId + period.
+ * Keeps the one with the most recent updatedAt; soft-deletes the rest.
+ * Called during sync startup to prevent constraint violations on the server.
+ */
+export async function deduplicateBudgets(): Promise<number> {
+  const db = await getDB();
+
+  // Read all non-deleted budgets
+  const all = await new Promise<Budget[]>((resolve, reject) => {
+    const tx = db.transaction(STORES.BUDGETS, "readonly");
+    const store = tx.objectStore(STORES.BUDGETS);
+    const req = store.getAll();
+    req.onsuccess = () => resolve((req.result as Budget[]).filter((b) => !b.deletedAt));
+    req.onerror = () => reject(req.error);
+  });
+
+  // Group by userId + period + categoryId
+  const groups = new Map<string, Budget[]>();
+  for (const b of all) {
+    const key = `${b.userId}_${b.period}_${b.categoryId}`;
+    const list = groups.get(key) ?? [];
+    list.push(b);
+    groups.set(key, list);
+  }
+
+  let removed = 0;
+  const now = new Date().toISOString();
+
+  for (const [, list] of groups) {
+    if (list.length <= 1) continue;
+
+    // Sort descending by updatedAt — keep the first (most recent)
+    list.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    const [_keep, ...dupes] = list;
+
+    for (const dupe of dupes) {
+      const softDeleted: Budget = {
+        ...dupe,
+        deletedAt: now,
+        updatedAt: now,
+        syncStatus: "PENDING",
+      };
+
+      await new Promise<void>((resolve, reject) => {
+        const tx = db.transaction(STORES.BUDGETS, "readwrite");
+        tx.objectStore(STORES.BUDGETS).put(softDeleted);
+        tx.oncomplete = () => resolve();
+        tx.onerror = () => reject(tx.error);
+      });
+
+      await enqueueChange("budget", "delete", dupe.clientId, { ...softDeleted });
+      removed++;
+    }
+  }
+
+  if (removed > 0) {
+    console.log(`[BudgetRepo] Removed ${removed} duplicate budget(s) from IDB`);
+  }
+
+  return removed;
 }
 
 // ─── Budget Reallocation (Subsidi Silang) ────────────────
