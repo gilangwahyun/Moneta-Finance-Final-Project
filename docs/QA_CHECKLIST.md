@@ -85,6 +85,11 @@ This document serves as the comprehensive manual verification checklist for Mone
 - [x] **Charts**: SpendingAnalyticsChart and BarTrendChart render without crashing and update dynamically based on filters.
 - [x] **Comparative Analytics Widget**: Displays comparisons between the current period and the previous period (e.g., this month vs last month) correctly.
 - [x] **Category Drilldown Drawer**: Clicking on a section of the Donut Chart or a category in the adjacent list opens a Bottom Sheet / Drawer (`CategoryDrilldownDrawer`) showing the detailed list of individual transactions for that specific category.
+- [ ] **Insights Engine**: Dashboard generates relevant insights based on transaction history (evaluating 30 different rules).
+- [ ] **Insight Priority**: Critical insights (red) always bypass the UI limits and appear at the top.
+- [ ] **Insight Fatigue Mitigation**: The UI limits default visible insights to a maximum of 3 (excluding criticals) to prevent cognitive overload.
+- [ ] **Insight Expansion**: The "Lihat insight lainnya..." button successfully expands the hidden insights and collapses them back smoothly.
+- [ ] **Historical Rules**: Simulating transactions across a 3-month window successfully triggers historical rules (e.g., Target Streak, Category Creep).
 
 ### 3.2. Export Data
 - [x] **Export (XLSX)**: User can export filtered transaction data.
