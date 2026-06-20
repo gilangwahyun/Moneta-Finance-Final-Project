@@ -3,6 +3,7 @@ import { Transaction } from '@/types/models.types';
 import { getAllTransactions } from '@/lib/local-db/repositories/transactions';
 import { getBudgetsByPeriod } from '@/lib/local-db/repositories/budgets';
 import { getAllCategories } from '@/lib/local-db/repositories/categories';
+import { getAllWallets } from '@/lib/local-db/repositories/wallets';
 import { generateNudges, NudgeInsight, findBudgetReallocationRecommendation } from '@/lib/nudging';
 import { upsertNotificationLog, checkDedupeKeyExists } from '@/lib/local-db/repositories/notification-logs';
 import { getNotificationSettings } from '@/lib/local-db/repositories/notification-settings';
@@ -12,6 +13,10 @@ import {
   resolveDeliveryMode,
   normalizeDailyCap,
   isDailyCapReached,
+  readLastPushTsFromLS,
+  setLastPushTsInLS,
+  readWeeklyInfoCountFromLS,
+  incrementWeeklyInfoCountInLS,
 } from '@/lib/local-db/notification-prefs';
 import { formatCurrency, generateClientId } from '@/lib/utils/helpers';
 import { isTargetActiveForDate } from '@/lib/utils/target-helpers';
@@ -89,10 +94,11 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
     const currentPeriodStr = now.format('YYYY-MM');
 
     // Fetch all necessary local data
-    const [allTxns, budgets, allCategories] = await Promise.all([
+    const [allTxns, budgets, allCategories, allWallets] = await Promise.all([
       getAllTransactions(userId),
       getBudgetsByPeriod(userId, currentPeriodStr),
       getAllCategories(userId),
+      getAllWallets(userId),
     ]);
 
     // Current period transactions
@@ -177,21 +183,128 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       return null;
     })();
 
+    // Phase 1 Rules
+    
+    // [SP-08] Recurring Merchant Growth
+    const recurringMerchantGrowth = (() => {
+      const currentExp = currentTxns.filter(t => t.type === 'EXPENSE' && t.description);
+      const prevExp = prevTxns.filter(t => t.type === 'EXPENSE' && t.description);
+      
+      const currentCounts = currentExp.reduce((acc, t) => {
+        acc[t.description!] = (acc[t.description!] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      const prevCounts = prevExp.reduce((acc, t) => {
+        acc[t.description!] = (acc[t.description!] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+      
+      let topMerchant = null;
+      let maxRatio = 0;
+      
+      for (const [desc, currCount] of Object.entries(currentCounts)) {
+        if (currCount >= 3) {
+          const pCount = prevCounts[desc] || 0;
+          if (pCount >= 2) {
+            const ratio = currCount / pCount;
+            if (ratio >= 2.0 && ratio > maxRatio) {
+              maxRatio = ratio;
+              topMerchant = {
+                merchantName: desc,
+                currentCount: currCount,
+                prevCount: pCount,
+                amount: currentExp.filter(t => t.description === desc).reduce((sum, t) => sum + Number(t.amount), 0)
+              };
+            }
+          }
+        }
+      }
+      return topMerchant;
+    })();
+
+    // [BG-03] Zero Budget Category
+    const zeroBudgetCategory = (() => {
+      const expenses = currentTxns.filter(t => t.type === 'EXPENSE' && t.categoryId);
+      const catTotals: Record<string, number> = {};
+      for (const t of expenses) {
+        catTotals[t.categoryId!] = (catTotals[t.categoryId!] || 0) + Number(t.amount);
+      }
+      
+      for (const [catId, amount] of Object.entries(catTotals)) {
+        if (amount > 200_000 && !budgets.find(b => b.categoryId === catId)) {
+          const cat = allCategories.find(c => c.clientId === catId);
+          return { categoryName: cat?.name || 'Lainnya', categoryId: catId, amount };
+        }
+      }
+      return null;
+    })();
+
+    // [AN-08] Income Momentum Alert
+    const incomeMomentum = (() => {
+      const incomes = currentTxns.filter(t => t.type === 'INCOME');
+      const currentIncome = incomes.reduce((s, t) => s + Number(t.amount), 0);
+      
+      const dayOfMonth = dayjs().date();
+      if (dayOfMonth >= 15) {
+        const prevIncomes = prevTxns.filter(t => t.type === 'INCOME');
+        const avgPrevIncome = prevIncomes.reduce((s, t) => s + Number(t.amount), 0);
+        if (avgPrevIncome > 0 && currentIncome < avgPrevIncome * 0.5) {
+          return { currentIncome, avgPrevIncome };
+        }
+      }
+      return null;
+    })();
+
+    // [WL-02] Low Cash Warning
+    const lowCashWarning = (() => {
+      if (allWallets.length === 0) return null;
+      
+      const uniqueMonths = new Set(allTxns.map(t => dayjs(t.date).format('YYYY-MM'))).size;
+      const avgMonthlyExpense = allTxns.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0) / Math.max(1, uniqueMonths);
+        
+      const threshold = Math.max(100_000, avgMonthlyExpense * 0.10);
+      
+      for (const w of allWallets) {
+        if (w.type === 'INVESTASI') continue;
+        let balance = Number(w.initialBalance || 0);
+        for (const t of allTxns) {
+          if (t.walletId === w.clientId) {
+            if (t.type === 'INCOME') balance += Number(t.amount);
+            else if (t.type === 'EXPENSE') balance -= Number(t.amount);
+            else if (t.type === 'TRANSFER') balance -= Number(t.amount);
+          }
+          if (t.type === 'TRANSFER' && t.targetWalletId === w.clientId) {
+            balance += Number(t.amount);
+          }
+        }
+        
+        if (balance < threshold) {
+          return { walletName: w.name, currentBalance: balance, walletId: w.clientId! };
+        }
+      }
+      return null;
+    })();
+
     // We can compute others, but let's keep it robust enough for the ones we need.
     // Pass null for complex ones we skip to save performance unless necessary.
-    const nudgeInsights = generateNudges(
+    const nudgeInsights = generateNudges({
       current,
       prev,
       topExpenseCategory,
-      0, // weeklySavings mock
-      null, // frequentTxn mock
-      null, // peakDay mock
-      null, // wantsProjection mock
+      weeklySavings: 0, // mock
+      frequentTxn: null, // mock
+      peakDay: null, // mock
+      wantsProjection: null, // mock
       paydayLeak,
       weekendTrap,
       nightOwl,
-      null, // subscriptions mock
-    );
+      subscriptions: null, // mock
+      recurringMerchantGrowth,
+      zeroBudgetCategory,
+      incomeMomentum,
+      lowCashWarning,
+    });
 
     // Evaluate Budget Limits
     // Instant budget warnings are scoped to the transaction category
@@ -522,10 +635,36 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
           break;
         }
 
+        // ── STEP 4.5: Global Cooldowns (Inter-rule gap & Info weekly cap) ──
+        const isCritical = insight.priority === BUDGET_CRITICAL_PRIORITY || insight.severity === 'critical';
+        const nowMs = Date.now();
+        
+        // 1. Inter-rule gap (30 minutes) - bypassed for critical
+        if (!isCritical) {
+          const lastPushIso = readLastPushTsFromLS();
+          if (lastPushIso) {
+            const lastPushMs = new Date(lastPushIso).getTime();
+            const gapMinutes = (nowMs - lastPushMs) / 60000;
+            if (gapMinutes < 30) {
+              console.log(`[LocalEngine] Push skipped — reason: inter_rule_gap_active (gap: ${gapMinutes.toFixed(1)}m < 30m)`);
+              break;
+            }
+          }
+        }
+
+        // 2. Info Weekly Cap (Max 2 per week)
+        let currentWeekStr = dayjs().format('YYYY-ww');
+        if (insight.severity === 'info') {
+          const weeklyInfoCount = readWeeklyInfoCountFromLS(currentWeekStr);
+          if (weeklyInfoCount >= 2) {
+            console.log(`[LocalEngine] Push skipped — reason: info_weekly_cap_reached (${weeklyInfoCount}/2)`);
+            break;
+          }
+        }
+
         // ── STEP 5: Execute push via Service Worker ──────────────────────────
         try {
           const reg = await navigator.serviceWorker.ready;
-          const isCritical = insight.priority === BUDGET_CRITICAL_PRIORITY;
 
           console.log(`[LocalEngine] showNotification — logId: ${logId} | ctaRoute: ${insight.ctaRoute} | dedupeKey: ${dedupeKey}`);
 
@@ -554,6 +693,10 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
           // Increment push counter ONLY after successful showNotification.
           // This counter represents device notifications sent, not logs created.
           incrementTodayCountInLS();
+          setLastPushTsInLS(new Date().toISOString());
+          if (insight.severity === 'info') {
+            incrementWeeklyInfoCountInLS(currentWeekStr);
+          }
           const { markLogPushed } = await import('@/lib/local-db/repositories/notification-logs');
           await markLogPushed(logId, new Date().toISOString());
           console.log('[LocalEngine] Push delivered successfully.');

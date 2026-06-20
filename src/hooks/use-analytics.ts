@@ -4,6 +4,7 @@ import { Transaction, Budget } from "@/types/models.types";
 import { getAllTransactions } from "@/lib/local-db/repositories/transactions";
 import { getBudgetsByPeriod } from "@/lib/local-db/repositories/budgets";
 import { getCurrentUser } from "@/lib/local-db/repositories/users";
+import { getAllWallets } from "@/lib/local-db/repositories/wallets";
 import { useTimeFilter } from "@/providers/TimeFilterProvider";
 import { filterByDateRange } from "@/lib/utils/time-filter";
 import { useCategories } from "@/hooks/use-categories";
@@ -36,6 +37,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
   const { comparison } = useTimeFilter();
   const [allTxns, setAllTxns] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [allWallets, setAllWallets] = useState<Wallet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { allCategories } = useCategories();
 
@@ -44,12 +46,14 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     if (!user) return;
     const now = new Date();
     const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    const [txns, bgets] = await Promise.all([
+    const [txns, bgets, wallets] = await Promise.all([
       getAllTransactions(user.id),
       getBudgetsByPeriod(user.id, period),
+      getAllWallets(user.id),
     ]);
     setAllTxns(txns);
     setBudgets(bgets);
+    setAllWallets(wallets);
     setIsLoading(false);
   }, []);
 
@@ -345,9 +349,208 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     return null;
   }, [currentTxns, allCategories, topExpenseCategory]);
 
+  // --- NEW PHASE 1 INDICATORS ---
+
+  const recurringMerchantGrowth = useMemo(() => {
+    const currentExp = currentTxns.filter(t => t.type === 'EXPENSE' && t.description);
+    const prevExp = prevTxns.filter(t => t.type === 'EXPENSE' && t.description);
+    
+    const currentCounts = currentExp.reduce((acc, t) => {
+      acc[t.description!] = (acc[t.description!] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    const prevCounts = prevExp.reduce((acc, t) => {
+      acc[t.description!] = (acc[t.description!] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    
+    let topMerchant = null;
+    let maxRatio = 0;
+    
+    for (const [desc, currCount] of Object.entries(currentCounts)) {
+      if (currCount >= 3) {
+        const pCount = prevCounts[desc] || 0;
+        if (pCount >= 2) {
+          const ratio = currCount / pCount;
+          if (ratio >= 2.0 && ratio > maxRatio) {
+            maxRatio = ratio;
+            topMerchant = {
+              merchantName: desc,
+              currentCount: currCount,
+              prevCount: pCount,
+              amount: currentExp.filter(t => t.description === desc).reduce((sum, t) => sum + Number(t.amount), 0)
+            };
+          }
+        }
+      }
+    }
+    return topMerchant;
+  }, [currentTxns, prevTxns]);
+
+  const morningVsEvening = useMemo(() => {
+    const expenses = currentTxns.filter(t => t.type === 'EXPENSE');
+    if (expenses.length < 10) return null; // T2 minimum data
+    
+    let morningTotal = 0;
+    let eveningTotal = 0;
+    
+    for (const t of expenses) {
+      const hour = dayjs(t.date).hour();
+      if (hour >= 5 && hour <= 11) morningTotal += Number(t.amount);
+      else if (hour >= 17 && hour <= 21) eveningTotal += Number(t.amount);
+    }
+    
+    const total = morningTotal + eveningTotal;
+    if (total >= 200_000) {
+      const morningRatio = morningTotal / total;
+      const eveningRatio = eveningTotal / total;
+      if (morningRatio > 0.6) return { dominantSession: 'pagi' as const, ratio: morningRatio, total: morningTotal };
+      if (eveningRatio > 0.6) return { dominantSession: 'malam' as const, ratio: eveningRatio, total: eveningTotal };
+    }
+    return null;
+  }, [currentTxns]);
+
+  const dayOfMonthClustering = useMemo(() => {
+    const expenses = currentTxns.filter(t => t.type === 'EXPENSE');
+    if (expenses.length < 10) return null; // T2
+    
+    let totalExpense = 0;
+    const dayTotals: Record<number, number> = {};
+    
+    for (const t of expenses) {
+      const amt = Number(t.amount);
+      totalExpense += amt;
+      const day = dayjs(t.date).date();
+      dayTotals[day] = (dayTotals[day] || 0) + amt;
+    }
+    
+    if (totalExpense >= 500_000) {
+      const sortedDays = Object.entries(dayTotals).sort((a, b) => b[1] - a[1]);
+      const topThreeDays = sortedDays.slice(0, 3);
+      const topThreeTotal = topThreeDays.reduce((sum, [, amt]) => sum + amt, 0);
+      const ratio = topThreeTotal / totalExpense;
+      if (ratio > 0.5) {
+        return { ratio, topDays: topThreeDays.map(([day]) => parseInt(day)), totalAmount: topThreeTotal };
+      }
+    }
+    return null;
+  }, [currentTxns]);
+
+  const zeroBudgetCategory = useMemo(() => {
+    const expenses = currentTxns.filter(t => t.type === 'EXPENSE' && t.categoryId);
+    const catTotals: Record<string, number> = {};
+    for (const t of expenses) {
+      catTotals[t.categoryId!] = (catTotals[t.categoryId!] || 0) + Number(t.amount);
+    }
+    
+    for (const [catId, amount] of Object.entries(catTotals)) {
+      if (amount > 200_000 && !budgets.find(b => b.categoryId === catId)) {
+        const cat = allCategories.find(c => c.clientId === catId);
+        return { categoryName: cat?.name || 'Lainnya', categoryId: catId, amount };
+      }
+    }
+    return null;
+  }, [currentTxns, budgets, allCategories]);
+
+  const smartBudgetSuggestion = useMemo(() => {
+    const now = dayjs();
+    const m1Period = now.subtract(1, 'month').format('YYYY-MM');
+    const m2Period = now.subtract(2, 'month').format('YYYY-MM');
+    const m3Period = now.subtract(3, 'month').format('YYYY-MM');
+    
+    const m1Txns = allTxns.filter(t => dayjs(t.date).format('YYYY-MM') === m1Period && t.type === 'EXPENSE');
+    const m2Txns = allTxns.filter(t => dayjs(t.date).format('YYYY-MM') === m2Period && t.type === 'EXPENSE');
+    const m3Txns = allTxns.filter(t => dayjs(t.date).format('YYYY-MM') === m3Period && t.type === 'EXPENSE');
+    
+    for (const cat of allCategories) {
+      if (budgets.find(b => b.categoryId === cat.clientId)) continue; // already has budget this month
+      const m1Amt = m1Txns.filter(t => t.categoryId === cat.clientId).reduce((s, t) => s + Number(t.amount), 0);
+      const m2Amt = m2Txns.filter(t => t.categoryId === cat.clientId).reduce((s, t) => s + Number(t.amount), 0);
+      const m3Amt = m3Txns.filter(t => t.categoryId === cat.clientId).reduce((s, t) => s + Number(t.amount), 0);
+      
+      if (m1Amt > 0 && m2Amt > 0 && m3Amt > 0) {
+        const avg = (m1Amt + m2Amt + m3Amt) / 3;
+        if (avg > 50_000) {
+          return { categoryName: cat.name, categoryId: cat.clientId!, averageAmount: avg };
+        }
+      }
+    }
+    return null;
+  }, [allTxns, allCategories, budgets]);
+
+  const singleWalletUsage = useMemo(() => {
+    if (allWallets.length <= 1) return null;
+    const totalTxns = currentTxns.length;
+    if (totalTxns < 5) return null; // T1
+    
+    const walletCounts: Record<string, number> = {};
+    for (const t of currentTxns) {
+      if (t.walletId) walletCounts[t.walletId] = (walletCounts[t.walletId] || 0) + 1;
+    }
+    
+    for (const [wId, count] of Object.entries(walletCounts)) {
+      const ratio = count / totalTxns;
+      if (ratio > 0.90) {
+        const w = allWallets.find(w => w.clientId === wId);
+        return { walletName: w?.name || 'Dompet Utama', ratio };
+      }
+    }
+    return null;
+  }, [currentTxns, allWallets]);
+
+  const incomeMomentum = useMemo(() => {
+    const incomes = currentTxns.filter(t => t.type === 'INCOME');
+    const currentIncome = incomes.reduce((s, t) => s + Number(t.amount), 0);
+    
+    const dayOfMonth = dayjs().date();
+    if (dayOfMonth >= 15) {
+      const prevIncomes = prevTxns.filter(t => t.type === 'INCOME');
+      const avgPrevIncome = prevIncomes.reduce((s, t) => s + Number(t.amount), 0);
+      if (avgPrevIncome > 0 && currentIncome < avgPrevIncome * 0.5) {
+        return { currentIncome, avgPrevIncome };
+      }
+    }
+    return null;
+  }, [currentTxns, prevTxns]);
+
+  const lowCashWarning = useMemo(() => {
+    if (allWallets.length === 0) return null;
+    
+    // Compute total months we have data for
+    const uniqueMonths = new Set(allTxns.map(t => dayjs(t.date).format('YYYY-MM'))).size;
+    const avgMonthlyExpense = allTxns.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0) / Math.max(1, uniqueMonths);
+      
+    const threshold = Math.max(100_000, avgMonthlyExpense * 0.10);
+    
+    for (const w of allWallets) {
+      if (w.type === 'INVESTASI') continue;
+      let balance = Number(w.initialBalance || 0);
+      for (const t of allTxns) {
+        if (t.walletId === w.clientId) {
+          if (t.type === 'INCOME') balance += Number(t.amount);
+          else if (t.type === 'EXPENSE') balance -= Number(t.amount);
+          else if (t.type === 'TRANSFER') balance -= Number(t.amount);
+        }
+        if (t.type === 'TRANSFER' && t.targetWalletId === w.clientId) {
+          balance += Number(t.amount);
+        }
+      }
+      
+      if (balance < threshold) {
+        return { walletName: w.name, currentBalance: balance, walletId: w.clientId! };
+      }
+    }
+    return null;
+  }, [allWallets, allTxns]);
+
   const rawNudgeInsights = useMemo(
-    () => generateNudges(current, prev, topExpenseCategory, weeklySavings, frequentTxn, peakDay, wantsProjection, paydayLeak, weekendTrap, nightOwl, subscriptions),
-    [current, prev, topExpenseCategory, weeklySavings, frequentTxn, peakDay, wantsProjection, paydayLeak, weekendTrap, nightOwl, subscriptions]
+    () => generateNudges({
+      current, prev, topExpenseCategory, weeklySavings, frequentTxn, peakDay, wantsProjection, paydayLeak, weekendTrap, nightOwl, subscriptions,
+      recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum, lowCashWarning
+    }),
+    [current, prev, topExpenseCategory, weeklySavings, frequentTxn, peakDay, wantsProjection, paydayLeak, weekendTrap, nightOwl, subscriptions,
+     recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum, lowCashWarning]
   );
 
   const nudgeInsights = useMemo(() => {

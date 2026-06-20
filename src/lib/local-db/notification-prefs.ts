@@ -105,6 +105,34 @@ export function incrementTodayCountInLS(): void {
   } catch {}
 }
 
+export function readLastPushTsFromLS(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('moneta-last-push-ts');
+}
+
+export function setLastPushTsInLS(isoString: string): void {
+  if (typeof window === 'undefined') return;
+  localStorage.setItem('moneta-last-push-ts', isoString);
+}
+
+export function readWeeklyInfoCountFromLS(weekStr: string): number {
+  if (typeof window === 'undefined') return 0;
+  try {
+    const raw = localStorage.getItem(`moneta-info-push-count-${weekStr}`);
+    return raw ? parseInt(raw, 10) : 0;
+  } catch {
+    return 0;
+  }
+}
+
+export function incrementWeeklyInfoCountInLS(weekStr: string): void {
+  if (typeof window === 'undefined') return;
+  const current = readWeeklyInfoCountFromLS(weekStr);
+  try {
+    localStorage.setItem(`moneta-info-push-count-${weekStr}`, (current + 1).toString());
+  } catch {}
+}
+
 // ─── Primary Save Method ─────────────────────────────────
 
 export async function saveNotifPrefs(prefs: LocalNotificationPrefs, skipSyncQueue = false): Promise<void> {

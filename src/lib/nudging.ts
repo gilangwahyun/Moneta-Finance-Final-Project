@@ -32,19 +32,19 @@ export interface NudgeInsight {
   targetCategoryName?: string;
 }
 
-export function generateNudges(
-  current: { income: number; expense: number; net: number },
-  prev: { income: number; expense: number; net: number },
-  topExpenseCategory: { name: string; value: number; prevValue: number } | null,
-  weeklySavings: number,
-  frequentTxn: { name: string; count: number; totalAmount: number } | null,
+export interface NudgeEngineParams {
+  current: { income: number; expense: number; net: number };
+  prev: { income: number; expense: number; net: number };
+  topExpenseCategory: { name: string; value: number; prevValue: number } | null;
+  weeklySavings: number;
+  frequentTxn: { name: string; count: number; totalAmount: number } | null;
   peakDay: {
     dayName: string;
     percentage: number;
     dominantCategoryName?: string;
     totalAmountOnThatDay: number;
     transactionCountOnThatDay: number;
-  } | null,
+  } | null;
   wantsProjection: {
     currentPace: number;
     annualized: number;
@@ -54,12 +54,46 @@ export function generateNudges(
     transactionCount: number;
     averageTransaction: number;
     basis: string;
-  } | null,
-  paydayLeak: { percentage: number; days: number } | null,
-  weekendTrap: { percentage: number } | null,
-  nightOwl: { totalAmount: number } | null,
-  subscriptions: { count: number; percentage: number } | null,
-): NudgeInsight[] {
+  } | null;
+  paydayLeak: { percentage: number; days: number } | null;
+  weekendTrap: { percentage: number } | null;
+  nightOwl: { totalAmount: number } | null;
+  subscriptions: { count: number; percentage: number } | null;
+
+  // Phase 1 Rules
+  recurringMerchantGrowth?: { merchantName: string; currentCount: number; prevCount: number; amount: number } | null;
+  morningVsEvening?: { dominantSession: 'pagi' | 'malam'; ratio: number; total: number } | null;
+  dayOfMonthClustering?: { ratio: number; topDays: number[]; totalAmount: number } | null;
+  zeroBudgetCategory?: { categoryName: string; categoryId: string; amount: number } | null;
+  smartBudgetSuggestion?: { categoryName: string; categoryId: string; averageAmount: number } | null;
+  singleWalletUsage?: { walletName: string; ratio: number } | null;
+  incomeMomentum?: { currentIncome: number; avgPrevIncome: number } | null;
+  lowCashWarning?: { walletName: string; currentBalance: number; walletId: string } | null;
+}
+
+export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
+  const {
+    current,
+    prev,
+    topExpenseCategory,
+    weeklySavings,
+    frequentTxn,
+    peakDay,
+    wantsProjection,
+    paydayLeak,
+    weekendTrap,
+    nightOwl,
+    subscriptions,
+    recurringMerchantGrowth,
+    morningVsEvening,
+    dayOfMonthClustering,
+    zeroBudgetCategory,
+    smartBudgetSuggestion,
+    singleWalletUsage,
+    incomeMomentum,
+    lowCashWarning,
+  } = params;
+
   const insights: NudgeInsight[] = [];
 
   // Priority 1: Payday Leak
@@ -176,7 +210,7 @@ export function generateNudges(
   if (frequentTxn) {
     insights.push({
       priority: 3,
-      severity: 'warning',
+      severity: 'info',
       title: 'Frekuensi Pengeluaran Rutin',
       body: `Terdapat ${frequentTxn.count} transaksi untuk '${frequentTxn.name}' bulan ini dengan total ${formatCurrency(frequentTxn.totalAmount)}. Perhatikan frekuensinya jika kamu berencana berhemat.`,
       ctaLabel: 'Lihat Transaksi',
@@ -241,6 +275,106 @@ export function generateNudges(
       body: bodyText,
       ctaLabel: 'Lihat Tren',
       ctaRoute: '/analytics',
+    });
+  }
+
+  // --- NEW PHASE 1 RULES ---
+
+  // [SP-08] Recurring Merchant Growth
+  if (recurringMerchantGrowth) {
+    insights.push({
+      priority: 3.2,
+      severity: 'info',
+      title: 'Kenaikan Transaksi Rutin',
+      body: `Transaksi untuk '${recurringMerchantGrowth.merchantName}' meningkat signifikan dibanding bulan lalu (${recurringMerchantGrowth.prevCount} → ${recurringMerchantGrowth.currentCount} kali). Total bulan ini: ${formatCurrency(recurringMerchantGrowth.amount)}.`,
+      ctaLabel: 'Lihat Transaksi',
+      ctaRoute: '/transactions',
+    });
+  }
+
+  // [SP-09] Morning vs Evening Spending
+  if (morningVsEvening) {
+    insights.push({
+      priority: 3.3,
+      severity: 'neutral',
+      title: 'Pola Waktu Pengeluaran',
+      body: `Lebih dari ${Math.round(morningVsEvening.ratio * 100)}% pengeluaranmu bulan ini terkonsentrasi di sesi ${morningVsEvening.dominantSession} hari (total ${formatCurrency(morningVsEvening.total)}).`,
+      ctaLabel: 'Lihat Analisis',
+      ctaRoute: '/analytics',
+    });
+  }
+
+  // [SP-10] Day-of-Month Clustering
+  if (dayOfMonthClustering) {
+    insights.push({
+      priority: 3.4,
+      severity: 'neutral',
+      title: 'Konsentrasi Pengeluaran',
+      body: `Lebih dari ${Math.round(dayOfMonthClustering.ratio * 100)}% pengeluaran bulan ini terpusat pada ${dayOfMonthClustering.topDays.length} hari tertentu saja.`,
+      ctaLabel: 'Lihat Analisis',
+      ctaRoute: '/analytics',
+    });
+  }
+
+  // [BG-03] Zero Budget Category
+  if (zeroBudgetCategory) {
+    insights.push({
+      priority: 1.5,
+      severity: 'info',
+      title: 'Pengeluaran Tanpa Anggaran',
+      body: `Kamu sudah mencatat ${formatCurrency(zeroBudgetCategory.amount)} pengeluaran di '${zeroBudgetCategory.categoryName}' bulan ini, tapi belum ada anggaran untuk kategori ini.`,
+      ctaLabel: 'Buat Anggaran',
+      ctaRoute: '/budgets',
+      relatedCategoryId: zeroBudgetCategory.categoryId,
+    });
+  }
+
+  // [BG-04] Smart Budget Suggestion
+  if (smartBudgetSuggestion) {
+    insights.push({
+      priority: 1.6,
+      severity: 'info',
+      title: 'Saran Anggaran Baru',
+      body: `Kamu rutin mencatat rata-rata ${formatCurrency(smartBudgetSuggestion.averageAmount)}/bulan di '${smartBudgetSuggestion.categoryName}'. Pertimbangkan membuat anggaran dengan nominal tersebut.`,
+      ctaLabel: 'Buat Anggaran',
+      ctaRoute: '/budgets',
+      relatedCategoryId: smartBudgetSuggestion.categoryId,
+    });
+  }
+
+  // [WL-03] Single Wallet Usage Pattern
+  if (singleWalletUsage) {
+    insights.push({
+      priority: 3.9,
+      severity: 'neutral',
+      title: 'Penggunaan Dompet Dominan',
+      body: `Sebagian besar transaksimu bulan ini (${Math.round(singleWalletUsage.ratio * 100)}%) dicatat menggunakan dompet '${singleWalletUsage.walletName}'.`,
+      ctaLabel: 'Lihat Dompet',
+      ctaRoute: '/wallets',
+    });
+  }
+
+  // [AN-08] Income Momentum Alert
+  if (incomeMomentum) {
+    insights.push({
+      priority: 1.7,
+      severity: 'warning',
+      title: 'Pemasukan Tertinggal',
+      body: `Hingga pertengahan bulan ini, pemasukan tercatat (${formatCurrency(incomeMomentum.currentIncome)}) lebih rendah dari biasanya (rata-rata ${formatCurrency(incomeMomentum.avgPrevIncome)}). Pastikan semua pemasukan sudah dicatat.`,
+      ctaLabel: 'Catat Pemasukan',
+      ctaRoute: '/transactions',
+    });
+  }
+
+  // [WL-02] Low Cash Warning
+  if (lowCashWarning) {
+    insights.push({
+      priority: 0.5,
+      severity: 'critical',
+      title: 'Saldo Dompet Menipis',
+      body: `Saldo dompet '${lowCashWarning.walletName}' saat ini ${formatCurrency(lowCashWarning.currentBalance)}. Pertimbangkan untuk melakukan top up agar kebutuhan harian terpenuhi.`,
+      ctaLabel: 'Lihat Dompet',
+      ctaRoute: '/wallets',
     });
   }
 
