@@ -119,7 +119,7 @@ export async function sendAndLogPushNotification(
     title,
     body,
     type,
-    logId: log.id, //********** <- The SW passes this back to /api/notifications/mark-read
+    logId: log.clientId, //********** <- Must use clientId for SyncManager compatibility!
   };
   const payloadString = JSON.stringify(payload);
 
@@ -143,7 +143,7 @@ export async function sendAndLogPushNotification(
         });
         anySucceeded = true;
         console.log(
-          `[Notifications] Sent to subscription ${sub.id} (logId: ${log.id})`
+          `[Notifications] Sent to subscription ${sub.id} (clientId: ${log.clientId})`
         );
       } catch (error: unknown) {
         const webPushError = error as { statusCode?: number; message?: string };
