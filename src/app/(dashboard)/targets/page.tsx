@@ -214,18 +214,9 @@ export default function TargetsPage() {
                       </div>
                       
                       <div className="min-w-0">
-                        <p className="truncate text-base font-bold text-slate-900 dark:text-slate-50">{target.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                          Target Pemasukan • {target.category?.name || 'Semua Kategori'}
-                        </p>
-                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                          {target.period === 'DAILY'
-                            ? 'Periode hari ini'
-                            : target.period === 'WEEKLY'
-                              ? 'Periode minggu ini'
-                              : target.period === 'MONTHLY'
-                                ? 'Periode bulan ini'
-                                : `${formatDate(new Date(target.progress.periodStart).toISOString())} - ${formatDate(new Date(target.progress.periodEnd).toISOString())}`}
+                        <p className="truncate text-base font-semibold text-slate-900 dark:text-slate-50">{target.name}</p>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                          Target Pemasukan
                         </p>
                       </div>
                     </div>
@@ -265,6 +256,28 @@ export default function TargetsPage() {
                       className={`h-full rounded-full transition-all duration-500 ease-out ${progressColor}`}
                       style={{ width: `${clampedPercentage}%` }}
                     />
+                  </div>
+
+                  {/* Target Details */}
+                  <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800/60">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-slate-500 dark:text-slate-400">Kategori</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300">
+                        {target.category?.name || 'Semua Kategori'}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-xs">
+                      <span className="text-slate-500 dark:text-slate-400">Periode Target</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300">
+                        {target.period === 'DAILY'
+                          ? 'Hari Ini'
+                          : target.period === 'WEEKLY'
+                            ? 'Minggu Ini'
+                            : target.period === 'MONTHLY'
+                              ? 'Bulan Ini'
+                              : `${formatDate(new Date(target.progress.periodStart).toISOString())} - ${formatDate(new Date(target.progress.periodEnd).toISOString())}`}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
