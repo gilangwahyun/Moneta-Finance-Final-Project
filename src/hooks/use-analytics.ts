@@ -785,15 +785,113 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     return null;
   }, [allWallets, allTxns]);
 
+  // =========================================================================
+  // PHASE 3: 3-MONTH HISTORICAL RULES
+  // =========================================================================
+
+  const categoryCreep = useMemo(() => {
+    if (allTxns.length === 0 || allCategories.length === 0) return null;
+    const m1 = dayjs().subtract(1, 'month').format('YYYY-MM');
+    const m2 = dayjs().subtract(2, 'month').format('YYYY-MM');
+    const m3 = dayjs().subtract(3, 'month').format('YYYY-MM');
+
+    for (const cat of allCategories) {
+      if (cat.type !== 'EXPENSE') continue;
+      
+      const expM1 = allTxns.filter(t => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m1).reduce((s,t) => s + Number(t.amount), 0);
+      const expM2 = allTxns.filter(t => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m2).reduce((s,t) => s + Number(t.amount), 0);
+      const expM3 = allTxns.filter(t => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m3).reduce((s,t) => s + Number(t.amount), 0);
+
+      // Must be significant (e.g. >50k) and grow by >10% consistently for 3 months
+      if (expM3 > 50000 && expM2 > expM3 * 1.10 && expM1 > expM2 * 1.10) {
+        return { categoryName: cat.name, categoryId: cat.clientId!, currentAmount: expM1, growthPct: Math.round(((expM1 - expM2) / expM2) * 100) };
+      }
+    }
+    return null;
+  }, [allTxns, allCategories]);
+
+  const savingsGapShrinking = useMemo(() => {
+    if (allTxns.length === 0) return null;
+    const m1 = dayjs().subtract(1, 'month').format('YYYY-MM');
+    const m2 = dayjs().subtract(2, 'month').format('YYYY-MM');
+    const m3 = dayjs().subtract(3, 'month').format('YYYY-MM');
+
+    const getNet = (m: string) => {
+      const inc = allTxns.filter(t => t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m).reduce((s,t) => s + Number(t.amount), 0);
+      const exp = allTxns.filter(t => t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m).reduce((s,t) => s + Number(t.amount), 0);
+      return inc - exp;
+    };
+
+    const net1 = getNet(m1);
+    const net2 = getNet(m2);
+    const net3 = getNet(m3);
+
+    // If gap is shrinking by more than 10% consistently (but still positive)
+    if (net3 > 0 && net2 > 0 && net1 > 0 && net2 < net3 * 0.90 && net1 < net2 * 0.90) {
+      return { netNow: net1, netThen: net3, dropPct: Math.round(((net3 - net1) / net3) * 100) };
+    }
+    return null;
+  }, [allTxns]);
+
+  const budgetAccuracyAlert = useMemo(() => {
+    if (budgets.length === 0 || allTxns.length === 0) return null;
+    const m1 = dayjs().subtract(1, 'month').format('YYYY-MM');
+    const m2 = dayjs().subtract(2, 'month').format('YYYY-MM');
+    const m3 = dayjs().subtract(3, 'month').format('YYYY-MM');
+
+    for (const b of budgets) {
+      const bAmount = Number(b.amount);
+      if (bAmount === 0) continue;
+
+      const exp1 = allTxns.filter(t => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m1).reduce((s,t) => s + Number(t.amount), 0);
+      const exp2 = allTxns.filter(t => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m2).reduce((s,t) => s + Number(t.amount), 0);
+      const exp3 = allTxns.filter(t => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m3).reduce((s,t) => s + Number(t.amount), 0);
+
+      // If they overshoot budget by >20% for 3 consecutive months
+      if (exp1 > bAmount * 1.20 && exp2 > bAmount * 1.20 && exp3 > bAmount * 1.20) {
+        const cat = allCategories.find(c => c.clientId === b.categoryId);
+        return { categoryName: cat?.name || 'Kategori', budgetId: b.clientId!, budgetAmount: bAmount, avgExpense: (exp1 + exp2 + exp3) / 3 };
+      }
+    }
+    return null;
+  }, [allTxns, budgets, allCategories]);
+
+  const categorySpike = useMemo(() => {
+    if (allTxns.length === 0 || currentTxns.length === 0) return null;
+    const m1 = dayjs().subtract(1, 'month').format('YYYY-MM');
+    const m2 = dayjs().subtract(2, 'month').format('YYYY-MM');
+    const m3 = dayjs().subtract(3, 'month').format('YYYY-MM');
+
+    for (const cat of allCategories) {
+      if (cat.type !== 'EXPENSE') continue;
+
+      const expC = currentTxns.filter(t => t.categoryId === cat.clientId && t.type === 'EXPENSE').reduce((s,t) => s + Number(t.amount), 0);
+      if (expC < 100000) continue; // Minimum threshold to prevent noise
+
+      const exp1 = allTxns.filter(t => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m1).reduce((s,t) => s + Number(t.amount), 0);
+      const exp2 = allTxns.filter(t => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m2).reduce((s,t) => s + Number(t.amount), 0);
+      const exp3 = allTxns.filter(t => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m3).reduce((s,t) => s + Number(t.amount), 0);
+
+      const avg = (exp1 + exp2 + exp3) / 3;
+      // Spike: current month is > 1.5x the historical average
+      if (avg > 50000 && expC > avg * 1.50) {
+        return { categoryName: cat.name, categoryId: cat.clientId!, currentAmount: expC, avgAmount: avg, spikePct: Math.round(((expC - avg) / avg) * 100) };
+      }
+    }
+    return null;
+  }, [allTxns, currentTxns, allCategories]);
+
   const rawNudgeInsights = useMemo(
     () => generateNudges({
       current, prev, topExpenseCategory, weeklySavings, frequentTxn, peakDay, wantsProjection, paydayLeak, weekendTrap, nightOwl, subscriptions,
       recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum, lowCashWarning,
       newCategoryEmergence, categoryDominanceShift, expenseConsistency, discretionaryDrift, budgetRunway, targetGapAlert, targetProgressImpact, walletDrainRate,
+      categoryCreep, savingsGapShrinking, budgetAccuracyAlert, categorySpike,
     }),
     [current, prev, topExpenseCategory, weeklySavings, frequentTxn, peakDay, wantsProjection, paydayLeak, weekendTrap, nightOwl, subscriptions,
      recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum, lowCashWarning,
-     newCategoryEmergence, categoryDominanceShift, expenseConsistency, discretionaryDrift, budgetRunway, targetGapAlert, targetProgressImpact, walletDrainRate]
+     newCategoryEmergence, categoryDominanceShift, expenseConsistency, discretionaryDrift, budgetRunway, targetGapAlert, targetProgressImpact, walletDrainRate,
+     categoryCreep, savingsGapShrinking, budgetAccuracyAlert, categorySpike]
   );
 
   const nudgeInsights = useMemo(() => {

@@ -79,6 +79,12 @@ export interface NudgeEngineParams {
   targetGapAlert?: { targetName: string; targetId: string; elapsedPct: number } | null;
   targetProgressImpact?: { targetName: string; targetId: string; expenseAmount: number; targetAmount: number; periodType: string } | null;
   walletDrainRate?: { walletName: string; walletId: string; drainRateNow: number; drainRatePrev: number } | null;
+  
+  // Phase 3 — 3-Month History Rules
+  categoryCreep?: { categoryName: string; categoryId: string; currentAmount: number; growthPct: number } | null;
+  savingsGapShrinking?: { netNow: number; netThen: number; dropPct: number } | null;
+  budgetAccuracyAlert?: { categoryName: string; budgetId: string; budgetAmount: number; avgExpense: number } | null;
+  categorySpike?: { categoryName: string; categoryId: string; currentAmount: number; avgAmount: number; spikePct: number } | null;
 }
 
 export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
@@ -478,12 +484,64 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
   // [AN-07] Discretionary Drift
   if (discretionaryDrift) {
     insights.push({
-      priority: 3.7,
+      priority: 2.8,
       severity: 'neutral',
       title: 'Perubahan Pola Pengeluaran',
-      body: `Porsi pengeluaran diskresioner (hiburan, jajan, hobi) meningkat dari ${Math.round(discretionaryDrift.ratioThen * 100)}% menjadi ${Math.round(discretionaryDrift.ratioNow * 100)}% dalam 3 bulan terakhir.`,
+      body: `Porsi pengeluaran gaya hidupmu naik menjadi ${discretionaryDrift.ratioNow}% dari total pengeluaran (naik ${discretionaryDrift.diffPct} poin dari 3 bulan lalu).`,
+      ctaLabel: 'Analisis Kategori',
+      ctaRoute: '/analytics',
+    });
+  }
+
+  // ==========================================
+  // PHASE 3 RULES — Multi-Month Historical
+  // ==========================================
+
+  // [AN-02] Category Creep
+  if (params.categoryCreep) {
+    insights.push({
+      priority: 2.9,
+      severity: 'warning',
+      title: 'Pengeluaran Kategori Merayap Naik',
+      body: `Pengeluaranmu di kategori '${params.categoryCreep.categoryName}' terus naik >10% tiap bulan selama 3 bulan terakhir (sekarang ${formatCurrency(params.categoryCreep.currentAmount)}).`,
       ctaLabel: 'Lihat Analisis',
       ctaRoute: '/analytics',
+    });
+  }
+
+  // [AN-03] Savings Gap Shrinking
+  if (params.savingsGapShrinking) {
+    insights.push({
+      priority: 3.1,
+      severity: 'warning',
+      title: 'Selisih Bersih Menipis',
+      body: `Selisih pemasukan dan pengeluaranmu terus menyusut selama 3 bulan terakhir (sekarang sisa ${formatCurrency(params.savingsGapShrinking.netNow)}). Hati-hati agar tidak defisit bulan depan.`,
+      ctaLabel: 'Evaluasi Anggaran',
+      ctaRoute: '/budgets',
+    });
+  }
+
+  // [BG-05] Budget Accuracy
+  if (params.budgetAccuracyAlert) {
+    insights.push({
+      priority: 3.2,
+      severity: 'warning',
+      title: 'Anggaran Mungkin Tidak Realistis',
+      body: `Kamu secara konsisten melampaui anggaran '${params.budgetAccuracyAlert.categoryName}' >20% dalam 3 bulan terakhir (rata-rata ${formatCurrency(params.budgetAccuracyAlert.avgExpense)} dari budget ${formatCurrency(params.budgetAccuracyAlert.budgetAmount)}). Pertimbangkan untuk menyesuaikan budget ini.`,
+      ctaLabel: 'Sesuaikan Anggaran',
+      ctaRoute: '/budgets',
+    });
+  }
+
+  // [SP-04] Category Spike (Refinement)
+  if (params.categorySpike) {
+    insights.push({
+      priority: 3.3,
+      severity: 'warning',
+      title: 'Lonjakan Pengeluaran Kategori',
+      body: `Pengeluaran '${params.categorySpike.categoryName}' bulan ini melonjak tajam (${formatCurrency(params.categorySpike.currentAmount)}), ${params.categorySpike.spikePct}% lebih tinggi dari rata-rata 3 bulan terakhirmu.`,
+      ctaLabel: 'Lihat Transaksi',
+      ctaRoute: '/transactions',
     });
   }
 
