@@ -1,13 +1,9 @@
-"use client";
+'use client';
 
-import { ThemeProvider as NextThemesProvider } from "next-themes";
-import { useEffect, useState } from "react";
+import { ThemeProvider as NextThemesProvider } from 'next-themes';
+import { useEffect, useState } from 'react';
 
-export function ThemeProvider({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
 
   // Avoid hydration mismatch by waiting for mount
@@ -17,7 +13,7 @@ export function ThemeProvider({
 
   if (!mounted) {
     // Return children hidden to prevent flash of unstyled content
-    return <div style={{ visibility: "hidden" }}>{children}</div>;
+    return <div style={{ visibility: 'hidden' }}>{children}</div>;
   }
 
   return (

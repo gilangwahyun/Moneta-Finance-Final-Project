@@ -4,8 +4,8 @@
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNotifications } from '@/hooks/use-notifications';
-
 /********** Types **********/
+import { SegmentedControl } from '@/components/ui/SegmentedControl';
 
 interface DisplayNotification {
   /** Unique key for deduplication */
@@ -441,27 +441,16 @@ export default function NotificationsPage() {
 
 
       {!isLoading && notifications.length > 0 && (
-        <div className="flex gap-2">
-          <button
-            onClick={() => setFilter('all')}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
-              filter === 'all'
-                ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900'
-                : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
-            }`}
-          >
-            Semua
-          </button>
-          <button
-            onClick={() => setFilter('unread')}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
-              filter === 'unread'
-                ? 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900'
-                : 'bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700'
-            }`}
-          >
-            Belum Dibaca
-          </button>
+        <div className="w-full sm:max-w-xs">
+          <SegmentedControl
+            options={[
+              { value: 'all', label: 'Semua' },
+              { value: 'unread', label: 'Belum Dibaca' }
+            ]}
+            value={filter}
+            onChange={(val) => setFilter(val as 'all' | 'unread')}
+            fullWidth
+          />
         </div>
       )}
 

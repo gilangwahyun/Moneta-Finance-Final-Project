@@ -107,7 +107,7 @@ export function TimePeriodFilter({ value, onChange }: TimePeriodFilterProps) {
       >
         {/* Sliding active indicator */}
         <div
-          className="absolute top-1 h-[calc(100%-0.5rem)] rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md shadow-indigo-500/20 transition-all duration-300 ease-out dark:from-indigo-500 dark:to-purple-500"
+          className="absolute top-1 h-[calc(100%-0.5rem)] rounded-full bg-indigo-600 shadow-md shadow-indigo-500/20 transition-all duration-300 ease-out dark:bg-indigo-500"
           style={{
             left: `${indicator.left}px`,
             width: `${indicator.width}px`,

@@ -399,7 +399,7 @@ export default function DashboardLayout({
                     isCollapsed ? "justify-center p-0 w-10 h-10 mx-auto gap-0" : "w-full gap-3 px-4 py-2.5 min-h-[44px]"
                   } ${
                     isActive
-                      ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/20 dark:from-indigo-500 dark:to-purple-500"
+                      ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500"
                       : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100"
                   }`}
                 >

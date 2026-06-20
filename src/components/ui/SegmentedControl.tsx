@@ -59,7 +59,7 @@ export function SegmentedControl<T extends string = string>({
               text-sm font-semibold transition-all duration-300 ease-out active:scale-95 whitespace-nowrap shrink-0
               ${
                 isActive
-                  ? "bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-md shadow-indigo-500/20 dark:from-indigo-500 dark:to-purple-500"
+                  ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500"
                   : "text-slate-600 hover:bg-white hover:text-slate-900 hover:shadow-sm dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-white"
               }
             `}

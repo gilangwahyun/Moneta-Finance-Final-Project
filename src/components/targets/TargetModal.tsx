@@ -116,7 +116,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Gaji bulanan"
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base shadow-sm outline-none transition-colors placeholder:text-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
             />
           </div>
 
@@ -131,7 +131,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
                 onChange={setTargetAmount}
                 required
                 placeholder="0"
-                className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-lg font-bold text-slate-900 shadow-sm transition-colors placeholder:text-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-lg font-bold text-slate-900 shadow-sm transition-colors placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
               />
             </div>
           </div>
@@ -142,7 +142,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
             <select
               value={period}
               onChange={(e) => setPeriod(e.target.value as TargetPeriod)}
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
             >
               <option value="DAILY">Harian</option>
               <option value="WEEKLY">Mingguan</option>
@@ -168,7 +168,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
                 required
                 value={startDate}
                 onChange={(e) => setStartDate(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
             {period === 'CUSTOM' && (
@@ -180,7 +180,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
                   min={startDate}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 shadow-sm outline-none transition-colors focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
             )}
