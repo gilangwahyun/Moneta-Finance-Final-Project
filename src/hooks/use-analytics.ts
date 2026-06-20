@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import dayjs from "dayjs";
-import { Transaction, Budget } from "@/types/models.types";
+import { Transaction, Budget, Wallet } from "@/types/models.types";
 import { getAllTransactions } from "@/lib/local-db/repositories/transactions";
 import { getBudgetsByPeriod } from "@/lib/local-db/repositories/budgets";
 import { getCurrentUser } from "@/lib/local-db/repositories/users";
