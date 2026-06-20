@@ -23,6 +23,7 @@ import {
   ArrowDownRight,
   CheckCircle2,
   ArrowRightLeft,
+  Info,
 } from 'lucide-react';
 import { BudgetModal } from '@/components/budgets/BudgetModal';
 import { ReallocateModal } from '@/components/budgets/ReallocateModal';
@@ -31,6 +32,7 @@ import { EntityActionMenu } from '@/components/ui/EntityActionMenu';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 import { FilterBottomSheet } from '@/components/ui/FilterBottomSheet';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
+import { Tooltip } from '@/components/ui/Tooltip';
 import { useSearchParams } from 'next/navigation';
 
 /********** Page Component **********/
@@ -456,7 +458,12 @@ export default function BudgetsPage() {
                   {/* Ritme Pengeluaran */}
                   <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800/60">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-500 dark:text-slate-400">Ritme Pengeluaran</span>
+                      <span className="text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
+                        Ritme Pengeluaran
+                        <Tooltip content="Kalkulasi Ideal: (Batas Bulanan ÷ Total Hari Bulan Ini) × Hari Berjalan. Semua transaksi sejak awal bulan diakumulasikan.">
+                          <Info className="h-3.5 w-3.5 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300" />
+                        </Tooltip>
+                      </span>
                       <span
                         className={`font-semibold ${
                           b.spentAmount === 0
@@ -478,7 +485,13 @@ export default function BudgetsPage() {
                       </span>
                     </div>
                     <div className="mt-1 flex items-center justify-between text-xs">
-                      <span className="text-slate-500 dark:text-slate-400">Ideal hingga hari ini:</span>
+                      <span className="text-slate-500 dark:text-slate-400">Batas harian:</span>
+                      <span className="font-medium text-slate-700 dark:text-slate-300">
+                        {formatCurrency(b.rhythm.dailyAllowance)}
+                      </span>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-xs">
+                      <span className="text-slate-500 dark:text-slate-400">Total ideal saat ini:</span>
                       <span className="font-medium text-slate-700 dark:text-slate-300">
                         {formatCurrency(b.rhythm.idealUsageUntilToday)}
                       </span>
