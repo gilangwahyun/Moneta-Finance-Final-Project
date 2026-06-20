@@ -14,6 +14,7 @@ interface BudgetModalProps {
   onClose: () => void;
   editingBudget: Budget | null;
   currentPeriod: string; // YYYY-MM
+  existingBudgetCategoryIds: string[];
 }
 
 export function BudgetModal({
@@ -21,6 +22,7 @@ export function BudgetModal({
   onClose,
   editingBudget,
   currentPeriod,
+  existingBudgetCategoryIds,
 }: BudgetModalProps) {
   const { expenseCategories } = useCategories();
   const { addOrEditBudget } = useBudgetActions();
@@ -116,7 +118,9 @@ export function BudgetModal({
               Kategori Pengeluaran
             </label>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[180px] overflow-y-auto pr-1 pb-1">
-              {expenseCategories.map((c) => {
+              {expenseCategories
+                .filter(c => editingBudget || !existingBudgetCategoryIds.includes(c.clientId || c.id || ''))
+                .map((c) => {
                 const isSelected = categoryId === (c.clientId || c.id);
                 return (
                   <button
@@ -147,6 +151,14 @@ export function BudgetModal({
                   </button>
                 );
               })}
+              
+              {!editingBudget && expenseCategories.filter(c => !existingBudgetCategoryIds.includes(c.clientId || c.id || '')).length === 0 && (
+                <div className="col-span-3 sm:col-span-4 p-4 text-center rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
+                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                    Semua kategori pengeluaran sudah memiliki anggaran bulan ini.
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

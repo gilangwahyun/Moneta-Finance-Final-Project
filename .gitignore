@@ -47,3 +47,11 @@ next-env.d.ts
 
 # vercel temp files (contains credentials, do not push)
 .env.vercel*.tmp
+
+# playwright
+/playwright-report/
+/test-results/
+/playwright/.cache/
+
+# tests
+/tests

@@ -512,7 +512,13 @@ export default function BudgetsPage() {
         </div>
       )}
 
-      <BudgetModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} editingBudget={editingBudget} currentPeriod={currentPeriod} />
+      <BudgetModal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        editingBudget={editingBudget} 
+        currentPeriod={currentPeriod} 
+        existingBudgetCategoryIds={budgets.map(b => b.categoryId)}
+      />
 
       {isReallocateModalOpen && (
         <ReallocateModal
