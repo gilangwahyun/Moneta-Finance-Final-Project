@@ -453,7 +453,10 @@ async function triggerLocalNotification(title, body, type, logId, tag, gateway, 
 
   // ── Step 2: Global user-level daily cap check ──────────
   const todayCount = await countTodayDeliveredInIDB(userId);
-  const isOverCap = todayCount >= dailyCap;
+  // REMINDER and DIGEST are scheduled once-a-day system alerts.
+  // They should bypass the behavioral nudge daily cap.
+  const bypassCap = type === "REMINDER" || type === "DIGEST";
+  const isOverCap = !bypassCap && (todayCount >= dailyCap);
 
   // ── Step 3: Build log record ───────────────────────────
   const finalClientId = logId || crypto.randomUUID();
