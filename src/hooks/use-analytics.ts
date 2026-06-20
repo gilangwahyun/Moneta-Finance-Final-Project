@@ -703,12 +703,13 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
 
     for (const target of allTargets) {
       if (!target.isActive) continue;
-      const startDate = dayjs(target.startDate);
-      const endDate = dayjs(target.endDate);
-      const totalDays = endDate.diff(startDate, 'day');
-      if (totalDays <= 0) continue;
+      const startDate = dayjs(target.startDate).startOf('day');
+      const endDate = target.endDate ? dayjs(target.endDate).endOf('day') : startDate.endOf('month');
+      
+      const totalDays = Math.max(1, endDate.diff(startDate, 'day'));
       const elapsedDays = today.diff(startDate, 'day');
       const elapsedPct = elapsedDays / totalDays;
+      
       if (elapsedPct < 0.30) continue;
 
       const currentAmount = currentTxns

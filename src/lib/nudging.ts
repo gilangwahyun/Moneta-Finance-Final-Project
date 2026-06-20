@@ -513,7 +513,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
   }
 
   // Priority Triage (Weighted Sorting): Ascending sort to surface critical nudges first
-  return insights.sort((a, b) => a.priority - b.priority).slice(0, 3);
+  return insights.sort((a, b) => a.priority - b.priority);
 }
 
 // ─── Budget Reallocation Recommendation ───────────────────
