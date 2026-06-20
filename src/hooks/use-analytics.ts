@@ -1,10 +1,11 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import dayjs from "dayjs";
-import { Transaction, Budget, Wallet } from "@/types/models.types";
+import { Transaction, Budget, Wallet, FinancialTarget } from "@/types/models.types";
 import { getAllTransactions } from "@/lib/local-db/repositories/transactions";
 import { getBudgetsByPeriod } from "@/lib/local-db/repositories/budgets";
 import { getCurrentUser } from "@/lib/local-db/repositories/users";
 import { getAllWallets } from "@/lib/local-db/repositories/wallets";
+import { getActiveTargets } from "@/lib/local-db/repositories/targets";
 import { useTimeFilter } from "@/providers/TimeFilterProvider";
 import { filterByDateRange } from "@/lib/utils/time-filter";
 import { useCategories } from "@/hooks/use-categories";
@@ -38,6 +39,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
   const [allTxns, setAllTxns] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [allWallets, setAllWallets] = useState<Wallet[]>([]);
+  const [allTargets, setAllTargets] = useState<FinancialTarget[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { allCategories } = useCategories();
 
@@ -46,14 +48,16 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     if (!user) return;
     const now = new Date();
     const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-    const [txns, bgets, wallets] = await Promise.all([
+    const [txns, bgets, wallets, targets] = await Promise.all([
       getAllTransactions(user.id),
       getBudgetsByPeriod(user.id, period),
       getAllWallets(user.id),
+      getActiveTargets(user.id),
     ]);
     setAllTxns(txns);
     setBudgets(bgets);
     setAllWallets(wallets);
+    setAllTargets(targets);
     setIsLoading(false);
   }, []);
 
@@ -544,13 +548,243 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     return null;
   }, [allWallets, allTxns]);
 
+  // --- NEW PHASE 2 INDICATORS ---
+
+  const newCategoryEmergence = useMemo(() => {
+    const now = dayjs();
+    const m1 = now.subtract(1, 'month').format('YYYY-MM');
+    const m2 = now.subtract(2, 'month').format('YYYY-MM');
+    const m3 = now.subtract(3, 'month').format('YYYY-MM');
+
+    const prevCatIds = new Set(
+      allTxns
+        .filter(t => [m1, m2, m3].includes(dayjs(t.date).format('YYYY-MM')) && t.type === 'EXPENSE' && t.categoryId)
+        .map(t => t.categoryId!)
+    );
+
+    const currentExpenses = currentTxns.filter(t => t.type === 'EXPENSE' && t.categoryId);
+    const catTotals: Record<string, number> = {};
+    for (const t of currentExpenses) {
+      catTotals[t.categoryId!] = (catTotals[t.categoryId!] || 0) + Number(t.amount);
+    }
+
+    for (const [catId, amount] of Object.entries(catTotals)) {
+      if (!prevCatIds.has(catId) && amount > 100_000) {
+        const cat = allCategories.find(c => c.clientId === catId);
+        return { categoryName: cat?.name || 'Lainnya', categoryId: catId, amount };
+      }
+    }
+    return null;
+  }, [currentTxns, allTxns, allCategories]);
+
+  const categoryDominanceShift = useMemo(() => {
+    const currentExpenses = currentTxns.filter(t => t.type === 'EXPENSE' && t.categoryId);
+    const prevExpenses = prevTxns.filter(t => t.type === 'EXPENSE' && t.categoryId);
+    if (currentExpenses.length === 0 || prevExpenses.length === 0) return null;
+
+    // Top category this month
+    const currentGroups: Record<string, number> = {};
+    for (const t of currentExpenses) currentGroups[t.categoryId!] = (currentGroups[t.categoryId!] || 0) + Number(t.amount);
+    const prevGroups: Record<string, number> = {};
+    for (const t of prevExpenses) prevGroups[t.categoryId!] = (prevGroups[t.categoryId!] || 0) + Number(t.amount);
+
+    const sortedCurrent = Object.entries(currentGroups).sort((a, b) => b[1] - a[1]);
+    const sortedPrev = Object.entries(prevGroups).sort((a, b) => b[1] - a[1]);
+    if (sortedCurrent.length === 0 || sortedPrev.length === 0) return null;
+
+    const [topCurrentId, topCurrentAmt] = sortedCurrent[0];
+    const [topPrevId] = sortedPrev[0];
+
+    if (topCurrentId !== topPrevId) {
+      const prevAmtSameCategory = prevGroups[topCurrentId] || 0;
+      if (prevAmtSameCategory > 0) {
+        const growthPct = Math.round(((topCurrentAmt - prevAmtSameCategory) / prevAmtSameCategory) * 100);
+        if (growthPct >= 30) {
+          const newTopCat = allCategories.find(c => c.clientId === topCurrentId);
+          const prevTopCat = allCategories.find(c => c.clientId === topPrevId);
+          return {
+            newTopName: newTopCat?.name || 'Lainnya',
+            newTopAmount: topCurrentAmt,
+            prevTopName: prevTopCat?.name || 'Lainnya',
+            growthPct,
+          };
+        }
+      }
+    }
+    return null;
+  }, [currentTxns, prevTxns, allCategories]);
+
+  const expenseConsistency = useMemo(() => {
+    const now = dayjs();
+    const periods = [now.subtract(3, 'month'), now.subtract(2, 'month'), now.subtract(1, 'month')];
+
+    const ratios = periods.map(p => {
+      const pStr = p.format('YYYY-MM');
+      const pTxns = allTxns.filter(t => dayjs(t.date).format('YYYY-MM') === pStr);
+      const { income, expense } = sumByType(pTxns);
+      return income > 0 ? expense / income : null;
+    });
+
+    if (ratios.some(r => r === null)) return null;
+    const validRatios = ratios as number[];
+
+    const min = Math.min(...validRatios);
+    const max = Math.max(...validRatios);
+    if (max - min > 0.20) {
+      return { ratios: validRatios, minRatio: min, maxRatio: max };
+    }
+    return null;
+  }, [allTxns]);
+
+  const discretionaryDrift = useMemo(() => {
+    const wantsRegex = /(hiburan|jajan|pribadi|gaya hidup|hobi)/i;
+    const now = dayjs();
+    const m3Str = now.subtract(3, 'month').format('YYYY-MM');
+
+    const m3Txns = allTxns.filter(t => dayjs(t.date).format('YYYY-MM') === m3Str && t.type === 'EXPENSE');
+
+    const calcRatio = (txns: Transaction[]) => {
+      const total = txns.reduce((s, t) => s + Number(t.amount), 0);
+      if (total === 0) return null;
+      const disc = txns.filter(t => {
+        const cat = allCategories.find(c => c.clientId === t.categoryId);
+        return cat && wantsRegex.test(cat.name);
+      }).reduce((s, t) => s + Number(t.amount), 0);
+      return disc / total;
+    };
+
+    const ratioNow = calcRatio(currentTxns);
+    const ratioThen = calcRatio(m3Txns);
+
+    if (ratioNow !== null && ratioThen !== null && ratioNow - ratioThen > 0.15) {
+      return { ratioNow, ratioThen, diffPct: Math.round((ratioNow - ratioThen) * 100) };
+    }
+    return null;
+  }, [currentTxns, allTxns, allCategories]);
+
+  const budgetRunway = useMemo(() => {
+    if (budgets.length === 0) return null;
+    const today = dayjs();
+    const daysElapsed = today.date();
+    if (daysElapsed < 7) return null; // Need at least 1 week of data
+    const daysInMonth = today.daysInMonth();
+    const daysRemaining = daysInMonth - daysElapsed;
+    if (daysRemaining <= 0) return null;
+
+    for (const budget of budgets) {
+      const spent = currentTxns
+        .filter(t => t.categoryId === budget.categoryId && t.type === 'EXPENSE')
+        .reduce((s, t) => s + Number(t.amount), 0);
+      const ratio = spent / Number(budget.amount);
+
+      // Only trigger if under 80% (not yet caught by budget warning)
+      if (ratio >= 0.8) continue;
+
+      const spendingRate = spent / daysElapsed;
+      if (spendingRate <= 0) continue;
+
+      const daysUntilExhausted = Math.floor((Number(budget.amount) - spent) / spendingRate);
+      if (daysUntilExhausted < daysRemaining) {
+        const cat = allCategories.find(c => c.clientId === budget.categoryId);
+        return {
+          categoryName: cat?.name || 'Kategori',
+          budgetId: budget.clientId!,
+          daysUntilExhausted,
+          daysRemaining,
+        };
+      }
+    }
+    return null;
+  }, [budgets, currentTxns, allCategories]);
+
+  const targetGapAlert = useMemo(() => {
+    if (allTargets.length === 0) return null;
+    const today = dayjs();
+
+    for (const target of allTargets) {
+      if (!target.isActive) continue;
+      const startDate = dayjs(target.startDate);
+      const endDate = dayjs(target.endDate);
+      const totalDays = endDate.diff(startDate, 'day');
+      if (totalDays <= 0) continue;
+      const elapsedDays = today.diff(startDate, 'day');
+      const elapsedPct = elapsedDays / totalDays;
+      if (elapsedPct < 0.30) continue;
+
+      const currentAmount = currentTxns
+        .filter(t => t.type === 'INCOME' && t.categoryId === target.categoryId)
+        .reduce((s, t) => s + Number(t.amount), 0);
+
+      if (currentAmount === 0) {
+        return { targetName: target.name, targetId: target.clientId!, elapsedPct };
+      }
+    }
+    return null;
+  }, [allTargets, currentTxns]);
+
+  const targetProgressImpact = useMemo(() => {
+    if (allTargets.length === 0) return null;
+
+    for (const target of allTargets) {
+      if (!target.isActive || !target.categoryId) continue;
+      const targetAmount = Number(target.targetAmount);
+      const expenseInTargetCategory = currentTxns
+        .filter(t => t.type === 'EXPENSE' && t.categoryId === target.categoryId)
+        .reduce((s, t) => s + Number(t.amount), 0);
+
+      if (expenseInTargetCategory > targetAmount * 0.20) {
+        const cat = allCategories.find(c => c.clientId === target.categoryId);
+        return {
+          targetName: target.name,
+          targetId: target.clientId!,
+          expenseAmount: expenseInTargetCategory,
+          targetAmount,
+          categoryName: cat?.name || 'Kategori',
+        };
+      }
+    }
+    return null;
+  }, [allTargets, currentTxns, allCategories]);
+
+  const walletDrainRate = useMemo(() => {
+    if (allWallets.length === 0) return null;
+    const today = dayjs();
+    const daysElapsed = today.date();
+    if (daysElapsed < 7) return null;
+
+    const currentMonthStr = today.format('YYYY-MM');
+    const prevMonthStr = today.subtract(1, 'month').format('YYYY-MM');
+    const daysInPrevMonth = today.subtract(1, 'month').daysInMonth();
+
+    for (const w of allWallets) {
+      if (w.type === 'INVESTASI') continue;
+
+      const currentExpense = allTxns
+        .filter(t => t.walletId === w.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === currentMonthStr)
+        .reduce((s, t) => s + Number(t.amount), 0);
+      const prevExpense = allTxns
+        .filter(t => t.walletId === w.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === prevMonthStr)
+        .reduce((s, t) => s + Number(t.amount), 0);
+
+      const drainRateNow = currentExpense / daysElapsed;
+      const drainRatePrev = prevExpense / daysInPrevMonth;
+
+      if (drainRatePrev > 0 && drainRateNow > drainRatePrev * 1.5) {
+        return { walletName: w.name, walletId: w.clientId!, drainRateNow, drainRatePrev };
+      }
+    }
+    return null;
+  }, [allWallets, allTxns]);
+
   const rawNudgeInsights = useMemo(
     () => generateNudges({
       current, prev, topExpenseCategory, weeklySavings, frequentTxn, peakDay, wantsProjection, paydayLeak, weekendTrap, nightOwl, subscriptions,
-      recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum, lowCashWarning
+      recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum, lowCashWarning,
+      newCategoryEmergence, categoryDominanceShift, expenseConsistency, discretionaryDrift, budgetRunway, targetGapAlert, targetProgressImpact, walletDrainRate,
     }),
     [current, prev, topExpenseCategory, weeklySavings, frequentTxn, peakDay, wantsProjection, paydayLeak, weekendTrap, nightOwl, subscriptions,
-     recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum, lowCashWarning]
+     recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum, lowCashWarning,
+     newCategoryEmergence, categoryDominanceShift, expenseConsistency, discretionaryDrift, budgetRunway, targetGapAlert, targetProgressImpact, walletDrainRate]
   );
 
   const nudgeInsights = useMemo(() => {

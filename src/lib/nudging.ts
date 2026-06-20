@@ -69,6 +69,16 @@ export interface NudgeEngineParams {
   singleWalletUsage?: { walletName: string; ratio: number } | null;
   incomeMomentum?: { currentIncome: number; avgPrevIncome: number } | null;
   lowCashWarning?: { walletName: string; currentBalance: number; walletId: string } | null;
+
+  // Phase 2 Rules
+  newCategoryEmergence?: { categoryName: string; categoryId: string; amount: number } | null;
+  categoryDominanceShift?: { newTopName: string; newTopAmount: number; prevTopName: string; growthPct: number } | null;
+  expenseConsistency?: { ratios: number[]; minRatio: number; maxRatio: number } | null;
+  discretionaryDrift?: { ratioNow: number; ratioThen: number; diffPct: number } | null;
+  budgetRunway?: { categoryName: string; budgetId: string; daysUntilExhausted: number; daysRemaining: number } | null;
+  targetGapAlert?: { targetName: string; targetId: string; elapsedPct: number } | null;
+  targetProgressImpact?: { targetName: string; targetId: string; expenseAmount: number; targetAmount: number; categoryName: string } | null;
+  walletDrainRate?: { walletName: string; walletId: string; drainRateNow: number; drainRatePrev: number } | null;
 }
 
 export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
@@ -92,6 +102,14 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     singleWalletUsage,
     incomeMomentum,
     lowCashWarning,
+    newCategoryEmergence,
+    categoryDominanceShift,
+    expenseConsistency,
+    discretionaryDrift,
+    budgetRunway,
+    targetGapAlert,
+    targetProgressImpact,
+    walletDrainRate,
   } = params;
 
   const insights: NudgeInsight[] = [];
@@ -375,6 +393,105 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       body: `Saldo dompet '${lowCashWarning.walletName}' saat ini ${formatCurrency(lowCashWarning.currentBalance)}. Pertimbangkan untuk melakukan top up agar kebutuhan harian terpenuhi.`,
       ctaLabel: 'Lihat Dompet',
       ctaRoute: '/wallets',
+    });
+  }
+
+  // --- NEW PHASE 2 RULES ---
+
+  // [WL-01] Wallet Drain Rate
+  if (walletDrainRate) {
+    insights.push({
+      priority: 1.8,
+      severity: 'warning',
+      title: 'Saldo Dompet Turun Cepat',
+      body: `Laju pengeluaran dari dompet '${walletDrainRate.walletName}' bulan ini 1,5× lebih cepat dari bulan lalu. Pantau transaksimu dari dompet ini.`,
+      ctaLabel: 'Lihat Dompet',
+      ctaRoute: '/wallets',
+    });
+  }
+
+  // [BG-01] Budget Runway Projection
+  if (budgetRunway) {
+    insights.push({
+      priority: 1.9,
+      severity: 'warning',
+      title: 'Anggaran Berisiko Habis Lebih Awal',
+      body: `Dengan laju pengeluaran saat ini, anggaran '${budgetRunway.categoryName}' diperkirakan habis dalam ${budgetRunway.daysUntilExhausted} hari, padahal bulan masih ${budgetRunway.daysRemaining} hari lagi.`,
+      ctaLabel: 'Lihat Anggaran',
+      ctaRoute: '/budgets',
+    });
+  }
+
+  // [FT-01] Target Gap Alert
+  if (targetGapAlert) {
+    insights.push({
+      priority: 2.3,
+      severity: 'warning',
+      title: 'Target Belum Ada Progres',
+      body: `Target '${targetGapAlert.targetName}' sudah berjalan ${Math.round(targetGapAlert.elapsedPct * 100)}% dari periodenya, namun belum ada pemasukan yang tercatat. Pastikan target sudah sesuai rencanamu.`,
+      ctaLabel: 'Lihat Target',
+      ctaRoute: '/targets',
+    });
+  }
+
+  // [FT-02] Target Progress Impact
+  if (targetProgressImpact) {
+    insights.push({
+      priority: 2.4,
+      severity: 'info',
+      title: 'Pengeluaran di Kategori Target',
+      body: `Terdapat pengeluaran ${formatCurrency(targetProgressImpact.expenseAmount)} di kategori '${targetProgressImpact.categoryName}' yang juga merupakan kategori target pemasukan '${targetProgressImpact.targetName}' (target: ${formatCurrency(targetProgressImpact.targetAmount)}).`,
+      ctaLabel: 'Lihat Target',
+      ctaRoute: '/targets',
+    });
+  }
+
+  // [AN-04] New Category Emergence
+  if (newCategoryEmergence) {
+    insights.push({
+      priority: 2.6,
+      severity: 'info',
+      title: 'Kategori Pengeluaran Baru',
+      body: `Kamu mulai mencatat pengeluaran di '${newCategoryEmergence.categoryName}' (${formatCurrency(newCategoryEmergence.amount)} bulan ini). Kategori ini belum pernah muncul dalam 3 bulan terakhir.`,
+      ctaLabel: 'Lihat Transaksi',
+      ctaRoute: '/transactions',
+    });
+  }
+
+  // [AN-05] Category Dominance Shift
+  if (categoryDominanceShift) {
+    insights.push({
+      priority: 2.7,
+      severity: 'info',
+      title: 'Pergeseran Pengeluaran Terbesar',
+      body: `Pengeluaran terbesar bulan ini berpindah dari '${categoryDominanceShift.prevTopName}' ke '${categoryDominanceShift.newTopName}' (naik ${categoryDominanceShift.growthPct}% dibanding bulan lalu).`,
+      ctaLabel: 'Lihat Analisis',
+      ctaRoute: '/analytics',
+    });
+  }
+
+  // [AN-07] Discretionary Drift
+  if (discretionaryDrift) {
+    insights.push({
+      priority: 3.7,
+      severity: 'neutral',
+      title: 'Perubahan Pola Pengeluaran',
+      body: `Porsi pengeluaran diskresioner (hiburan, jajan, hobi) meningkat dari ${Math.round(discretionaryDrift.ratioThen * 100)}% menjadi ${Math.round(discretionaryDrift.ratioNow * 100)}% dalam 3 bulan terakhir.`,
+      ctaLabel: 'Lihat Analisis',
+      ctaRoute: '/analytics',
+    });
+  }
+
+  // [AN-06] Expense-to-Income Consistency
+  if (expenseConsistency) {
+    const [r1, r2, r3] = expenseConsistency.ratios.map(r => Math.round(r * 100));
+    insights.push({
+      priority: 3.75,
+      severity: 'neutral',
+      title: 'Rasio Pengeluaran Tidak Konsisten',
+      body: `Rasio pengeluaran terhadap pemasukanmu berubah-ubah dalam 3 bulan terakhir: ${r1}% → ${r2}% → ${r3}%. Konsistensi yang lebih stabil memudahkan perencanaan keuangan.`,
+      ctaLabel: 'Lihat Analisis',
+      ctaRoute: '/analytics',
     });
   }
 
