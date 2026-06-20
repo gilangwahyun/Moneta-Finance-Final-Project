@@ -726,25 +726,33 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     if (allTargets.length === 0) return null;
 
     for (const target of allTargets) {
-      if (!target.isActive || !target.categoryId) continue;
+      if (!target.isActive) continue;
       const targetAmount = Number(target.targetAmount);
-      const expenseInTargetCategory = currentTxns
-        .filter(t => t.type === 'EXPENSE' && t.categoryId === target.categoryId)
+      
+      const start = dayjs(target.startDate).startOf('day').valueOf();
+      const end = target.endDate ? dayjs(target.endDate).endOf('day').valueOf() : dayjs().endOf('day').valueOf();
+
+      const expenseInTargetPeriod = allTxns
+        .filter(t => {
+          if (t.type !== 'EXPENSE') return false;
+          const tDate = dayjs(t.date).valueOf();
+          return tDate >= start && tDate <= end;
+        })
         .reduce((s, t) => s + Number(t.amount), 0);
 
-      if (expenseInTargetCategory > targetAmount * 0.20) {
-        const cat = allCategories.find(c => c.clientId === target.categoryId);
+      // Trigger if expense > 80% of target income
+      if (expenseInTargetPeriod > targetAmount * 0.80) {
         return {
           targetName: target.name,
           targetId: target.clientId!,
-          expenseAmount: expenseInTargetCategory,
+          expenseAmount: expenseInTargetPeriod,
           targetAmount,
-          categoryName: cat?.name || 'Kategori',
+          periodType: target.period,
         };
       }
     }
     return null;
-  }, [allTargets, currentTxns, allCategories]);
+  }, [allTargets, allTxns]);
 
   const walletDrainRate = useMemo(() => {
     if (allWallets.length === 0) return null;

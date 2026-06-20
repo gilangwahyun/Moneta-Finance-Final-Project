@@ -77,7 +77,7 @@ export interface NudgeEngineParams {
   discretionaryDrift?: { ratioNow: number; ratioThen: number; diffPct: number } | null;
   budgetRunway?: { categoryName: string; budgetId: string; daysUntilExhausted: number; daysRemaining: number } | null;
   targetGapAlert?: { targetName: string; targetId: string; elapsedPct: number } | null;
-  targetProgressImpact?: { targetName: string; targetId: string; expenseAmount: number; targetAmount: number; categoryName: string } | null;
+  targetProgressImpact?: { targetName: string; targetId: string; expenseAmount: number; targetAmount: number; periodType: string } | null;
   walletDrainRate?: { walletName: string; walletId: string; drainRateNow: number; drainRatePrev: number } | null;
 }
 
@@ -434,13 +434,18 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [FT-02] Target Progress Impact
+  // [FT-02] Target Progress Impact (Burn Rate vs Target)
   if (targetProgressImpact) {
+    let timeframeStr = 'periode ini';
+    if (targetProgressImpact.periodType === 'DAILY') timeframeStr = 'hari ini';
+    else if (targetProgressImpact.periodType === 'WEEKLY') timeframeStr = 'minggu ini';
+    else if (targetProgressImpact.periodType === 'MONTHLY') timeframeStr = 'bulan ini';
+
     insights.push({
       priority: 2.4,
       severity: 'info',
-      title: 'Pengeluaran di Kategori Target',
-      body: `Terdapat pengeluaran ${formatCurrency(targetProgressImpact.expenseAmount)} di kategori '${targetProgressImpact.categoryName}' yang juga merupakan kategori target pemasukan '${targetProgressImpact.targetName}' (target: ${formatCurrency(targetProgressImpact.targetAmount)}).`,
+      title: 'Pengeluaran vs Target Pemasukan',
+      body: `Total pengeluaranmu ${timeframeStr} (${formatCurrency(targetProgressImpact.expenseAmount)}) sudah mencapai proporsi yang besar terhadap target pemasukan '${targetProgressImpact.targetName}' (${formatCurrency(targetProgressImpact.targetAmount)}).`,
       ctaLabel: 'Lihat Target',
       ctaRoute: '/targets',
     });
