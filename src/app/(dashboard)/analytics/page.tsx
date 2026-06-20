@@ -151,12 +151,23 @@ function InsightCard({ insight, isPrimary }: { insight: NudgeInsight; isPrimary?
  * Sorts insights by severity before rendering.
  */
 function InsightsPanel({ insights, isLoading, hasData }: { insights: NudgeInsight[]; isLoading: boolean; hasData: boolean }) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
   // Sort insights by severity
   const severityScore: Record<NudgeSeverity, number> = { critical: 3, warning: 2, positive: 1, neutral: 0, info: -1 };
   const sortedInsights = [...insights].sort((a, b) => severityScore[b.severity] - severityScore[a.severity]);
 
-  const primary = sortedInsights[0];
-  const secondary = sortedInsights.slice(1);
+  const criticalInsights = sortedInsights.filter(i => i.severity === 'critical');
+  const otherInsights = sortedInsights.filter(i => i.severity !== 'critical');
+  
+  const visibleOtherCount = Math.max(0, 3 - criticalInsights.length);
+  const defaultVisible = [...criticalInsights, ...otherInsights.slice(0, visibleOtherCount)];
+  const hiddenCount = otherInsights.length - visibleOtherCount;
+
+  const visibleInsights = isExpanded ? sortedInsights : defaultVisible;
+
+  const primary = visibleInsights[0];
+  const secondary = visibleInsights.slice(1);
 
   return (
     <div className="flex flex-col gap-4">
@@ -204,6 +215,14 @@ function InsightsPanel({ insights, isLoading, hasData }: { insights: NudgeInsigh
                 <InsightCard key={i} insight={insight} />
               ))}
             </div>
+          )}
+          {hiddenCount > 0 && (
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="w-full mt-2 rounded-xl border border-slate-200 bg-white py-2.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900/50 dark:text-slate-400 dark:hover:bg-slate-800"
+            >
+              {isExpanded ? 'Sembunyikan' : `Lihat ${hiddenCount} insight lainnya...`}
+            </button>
           )}
         </div>
       )}
