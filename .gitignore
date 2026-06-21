@@ -45,6 +45,9 @@ next-env.d.ts
 # personal documents (thesis reference, not part of the codebase)
 /docs/
 
+# prisma generated client (di-generate ulang saat npm install via postinstall)
+/src/generated/
+
 # vercel temp files (contains credentials, do not push)
 .env.vercel*.tmp
 
