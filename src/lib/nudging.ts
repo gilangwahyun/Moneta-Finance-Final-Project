@@ -68,7 +68,7 @@ export interface NudgeEngineParams {
   smartBudgetSuggestion?: { categoryName: string; categoryId: string; averageAmount: number } | null;
   singleWalletUsage?: { walletName: string; ratio: number } | null;
   incomeMomentum?: { currentIncome: number; avgPrevIncome: number } | null;
-  lowCashWarning?: { walletName: string; currentBalance: number; walletId: string } | null;
+
 
   // Phase 2 Rules
   newCategoryEmergence?: { categoryName: string; categoryId: string; amount: number } | null;
@@ -78,7 +78,7 @@ export interface NudgeEngineParams {
   budgetRunway?: { categoryName: string; budgetId: string; daysUntilExhausted: number; daysRemaining: number } | null;
   targetGapAlert?: { targetName: string; targetId: string; elapsedPct: number } | null;
   targetProgressImpact?: { targetName: string; targetId: string; expenseAmount: number; targetAmount: number; periodType: string } | null;
-  walletDrainRate?: { walletName: string; walletId: string; drainRateNow: number; drainRatePrev: number } | null;
+
   
   // Phase 3 — 3-Month History Rules
   categoryCreep?: { categoryName: string; categoryId: string; currentAmount: number; growthPct: number } | null;
@@ -112,7 +112,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     smartBudgetSuggestion,
     singleWalletUsage,
     incomeMomentum,
-    lowCashWarning,
+
     newCategoryEmergence,
     categoryDominanceShift,
     expenseConsistency,
@@ -120,7 +120,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     budgetRunway,
     targetGapAlert,
     targetProgressImpact,
-    walletDrainRate,
+
   } = params;
 
   const insights: NudgeInsight[] = [];
@@ -395,31 +395,11 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [WL-02] Low Cash Warning
-  if (lowCashWarning) {
-    insights.push({
-      priority: 0.5,
-      severity: 'critical',
-      title: 'Saldo Dompet Menipis',
-      body: `Saldo dompet '${lowCashWarning.walletName}' saat ini ${formatCurrency(lowCashWarning.currentBalance)}. Pertimbangkan untuk melakukan top up agar kebutuhan harian terpenuhi.`,
-      ctaLabel: 'Lihat Dompet',
-      ctaRoute: '/wallets',
-    });
-  }
+
 
   // --- NEW PHASE 2 RULES ---
 
-  // [WL-01] Wallet Drain Rate
-  if (walletDrainRate) {
-    insights.push({
-      priority: 1.8,
-      severity: 'warning',
-      title: 'Saldo Dompet Turun Cepat',
-      body: `Laju pengeluaran dari dompet '${walletDrainRate.walletName}' bulan ini 1,5× lebih cepat dari bulan lalu. Pantau transaksimu dari dompet ini.`,
-      ctaLabel: 'Lihat Dompet',
-      ctaRoute: '/wallets',
-    });
-  }
+
 
   // [BG-01] Budget Runway Projection
   if (budgetRunway) {

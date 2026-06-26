@@ -3,10 +3,22 @@ import { Budget, Transaction, Category } from '@/types/models.types';
 import { getBudgetsByPeriod } from '@/lib/local-db/repositories/budgets';
 import { getCurrentUser } from '@/lib/local-db/repositories/users';
 import { BudgetProgressItem } from '@/components/budgets/UrgentBudgetProgressBar';
+import { findBudgetReallocationRecommendation } from '@/lib/nudging';
+import dayjs from 'dayjs';
 
 export interface UseDashboardProps {
   transactions: Transaction[];
   allCategories: Category[];
+}
+
+export interface DashboardInsight {
+  type: 'critical' | 'warning' | 'positive' | 'info';
+  title: string;
+  message: string;
+  action?: {
+    label: string;
+    route: string;
+  };
 }
 
 export interface UseDashboardReturn {
@@ -15,7 +27,7 @@ export interface UseDashboardReturn {
   totalBudget: number;
   totalSpent: number;
   dailySafeToSpend: number;
-  showBurnRateWarning: boolean;
+  dashboardInsight: DashboardInsight | null;
   isLoading: boolean;
   reload: () => Promise<void>;
 }
@@ -93,21 +105,154 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
       .slice(0, 4);
   }, [budgets, transactions, allCategories, currentPeriod]);
 
-  const { dailySafeToSpend, showBurnRateWarning } = useMemo(() => {
+  const dailySafeToSpend = useMemo(() => {
     const now = new Date();
     const currentDay = now.getDate();
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     const daysLeft = Math.max(1, daysInMonth - currentDay + 1);
 
     const totalRemaining = Math.max(0, totalBudget - totalSpent);
-    const dailySafeToSpend = totalRemaining / daysLeft;
+    return totalRemaining / daysLeft;
+  }, [totalBudget, totalSpent]);
 
+  const dashboardInsight = useMemo((): DashboardInsight | null => {
+    // 1. Reallocation (Critical)
+    if (budgets.length > 0 && transactions.length > 0) {
+      const allBudgetsInfo = budgets.map(b => {
+        const bCat = allCategories.find((c) => c.clientId === b.categoryId);
+        const bSpent = transactions
+          .filter((t) => t.categoryId === b.categoryId && t.type === 'EXPENSE' && t.date.startsWith(currentPeriod))
+          .reduce((sum, t) => sum + Number(t.amount), 0);
+        return {
+          id: b.clientId!,
+          categoryId: b.categoryId,
+          limit: Number(b.amount),
+          spent: bSpent,
+          name: bCat?.name || 'Kategori'
+        };
+      });
+      const overspentTargets = allBudgetsInfo.filter(b => b.spent > b.limit);
+      overspentTargets.sort((a, b) => (b.spent - b.limit) - (a.spent - a.limit));
+
+      let recommendation = null;
+      for (const target of overspentTargets) {
+        recommendation = findBudgetReallocationRecommendation(target, allBudgetsInfo);
+        if (recommendation) break;
+      }
+      
+      if (recommendation) {
+        return {
+          type: 'critical',
+          title: 'Rekomendasi Subsidi Silang',
+          message: `Anggaran ${recommendation.targetCategoryName} jebol. Pindahkan Rp${recommendation.recommendedAmount.toLocaleString('id-ID')} dari ${recommendation.sourceCategoryName}?`,
+          action: {
+            label: 'Subsidi Silang',
+            route: `/budgets?action=reallocate&sourceBudgetId=${recommendation.sourceBudgetId}&targetBudgetId=${recommendation.targetBudgetId}&amount=${recommendation.recommendedAmount}`
+          }
+        };
+      }
+    }
+
+    const thirtyDaysAgo = dayjs().subtract(30, 'day');
+    const allIncomes = transactions.filter(t => t.type === 'INCOME' && dayjs(t.date).isAfter(thirtyDaysAgo));
+    const currentExpTxns = transactions.filter(t => t.type === 'EXPENSE' && t.date.startsWith(currentPeriod));
+
+    // 2. Payday Leak (Warning)
+    if (allIncomes.length > 0) {
+      let maxIncome = allIncomes[0];
+      for (const inc of allIncomes) {
+        if (Number(inc.amount) > Number(maxIncome.amount)) maxIncome = inc;
+      }
+      const daysSincePayday = dayjs().diff(dayjs(maxIncome.date), 'day');
+      if (daysSincePayday >= 0 && daysSincePayday <= 3) {
+        const totalIncomeThisMonth = transactions.filter(t => t.type === 'INCOME' && t.date.startsWith(currentPeriod)).reduce((sum, t) => sum + Number(t.amount), 0);
+        const limit = totalBudget > 0 ? totalBudget : totalIncomeThisMonth;
+        if (limit > 0 && totalSpent > limit * 0.4) {
+          return {
+            type: 'warning',
+            title: 'Pengeluaran Awal Bulan',
+            message: `${Math.round((totalSpent / limit) * 100)}% dari batas aman telah terpakai hanya dalam ${Math.max(1, daysSincePayday)} hari (setelah gajian).`
+          };
+        }
+      }
+    }
+
+    // 3. Burn Rate Warning
+    const now = new Date();
+    const currentDay = now.getDate();
+    const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
     const timePassedPct = (currentDay / daysInMonth) * 100;
     const spentPct = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
-    const showBurnRateWarning = totalBudget > 0 && spentPct - timePassedPct > 10;
+    
+    if (totalBudget > 0 && spentPct - timePassedPct > 10) {
+      return {
+        type: 'warning',
+        title: 'Kecepatan Pengeluaran Meningkat',
+        message: 'Laju pengeluaranmu lebih cepat dari kalender bulan ini. Pertimbangkan untuk mengatur ulang pengeluaran beberapa hari ke depan.'
+      };
+    }
 
-    return { dailySafeToSpend, showBurnRateWarning };
-  }, [totalBudget, totalSpent]);
+    // 4. Weekend Trap (Warning)
+    const thisWeekExpenses = currentExpTxns.filter(t => dayjs(t.date).isSame(dayjs(), 'week'));
+    let weekTotal = 0, weekendTotal = 0;
+    for (const tx of thisWeekExpenses) {
+      const amt = Number(tx.amount);
+      weekTotal += amt;
+      const d = dayjs(tx.date).day();
+      if (d === 0 || d === 6) weekendTotal += amt;
+    }
+    if (weekTotal > 0 && (weekendTotal / weekTotal) > 0.7) {
+      return {
+        type: 'warning',
+        title: 'Kebocoran Akhir Pekan',
+        message: `${Math.round((weekendTotal / weekTotal) * 100)}% pengeluaran minggumu terjadi di akhir pekan. Waspadai pengeluaran impulsif liburan.`
+      };
+    }
+
+    // 5. Night Owl (Warning)
+    const wantsRegex = /(hiburan|jajan|pribadi|gaya hidup|hobi)/i;
+    let nightTotal = 0;
+    for (const tx of currentExpTxns) {
+      const cat = allCategories.find(c => c.clientId === tx.categoryId);
+      if (cat && wantsRegex.test(cat.name)) {
+        const h = dayjs(tx.createdAt).hour();
+        if (h >= 22 || h <= 4) nightTotal += Number(tx.amount);
+      }
+    }
+    if (nightTotal >= 150_000) {
+      return {
+        type: 'warning',
+        title: 'Pengeluaran Larut Malam',
+        message: `Tercatat Rp${nightTotal.toLocaleString('id-ID')} pengeluaran gaya hidup di larut malam. Kurangi kebiasaan checkout di jam tidur.`
+      };
+    }
+
+    // 6. Positive / Info Fallback
+    if (totalBudget > 0) {
+      if (totalSpent === 0) {
+        return {
+          type: 'info',
+          title: 'Mulai Mencatat',
+          message: 'Anggaran bulan ini sudah siap. Catat setiap transaksi agar kamu bisa terus memantau keuanganmu.'
+        };
+      }
+      if (spentPct <= timePassedPct) {
+        return {
+          type: 'positive',
+          title: 'Keuangan Terkendali',
+          message: 'Bagus! Laju pengeluaranmu masih sesuai dengan jadwal kalender bulan ini. Pertahankan!'
+        };
+      }
+    } else {
+      return {
+        type: 'info',
+        title: 'Belum Ada Anggaran',
+        message: 'Atur anggaran pertamamu untuk mendapatkan lebih banyak peringatan dan perlindungan pengeluaran.'
+      };
+    }
+
+    return null;
+  }, [transactions, budgets, allCategories, totalBudget, totalSpent, currentPeriod]);
 
   return {
     username,
@@ -115,7 +260,7 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
     totalBudget,
     totalSpent,
     dailySafeToSpend,
-    showBurnRateWarning,
+    dashboardInsight,
     isLoading,
     reload: load,
   };

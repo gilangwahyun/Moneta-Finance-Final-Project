@@ -316,8 +316,8 @@ export function shouldFireDigest(
   const nowMinutes = wibNow.hour * 60 + wibNow.minute;
   const digestMinutes = targetH * 60 + targetM;
   
-  // Tolerance is 5 minutes (late-only)
-  const toleranceMinutes = 5;
+  // Tolerance diperbesar menjadi 15 menit agar bisa menangkap cron GitHub Actions yang berjalan pada menit ganjil (e.g. menit ke-7)
+  const toleranceMinutes = 15;
   const diffMinutes = nowMinutes - digestMinutes;
   
   const isTimeMatch = diffMinutes >= 0 && diffMinutes <= toleranceMinutes;

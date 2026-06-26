@@ -303,7 +303,6 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       recurringMerchantGrowth,
       zeroBudgetCategory,
       incomeMomentum,
-      lowCashWarning,
     });
 
     // Evaluate Budget Limits
@@ -504,6 +503,59 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
           budgetUpdatedAt: budget.updatedAt,
         });
       }
+    }
+
+    // Evaluate Wallet Limits (WL-01, WL-02)
+    if (lowCashWarning) {
+      nudgeInsights.push({
+        priority: 0.5,
+        severity: 'critical',
+        title: 'Saldo Dompet Menipis',
+        body: `Saldo dompet '${lowCashWarning.walletName}' saat ini ${formatCurrency(lowCashWarning.currentBalance)}. Pertimbangkan untuk melakukan top up agar kebutuhan harian terpenuhi.`,
+        ctaLabel: 'Lihat Dompet',
+        ctaRoute: '/wallets',
+      });
+    }
+
+    const walletDrainRate = (() => {
+      if (allWallets.length === 0) return null;
+      const today = dayjs();
+      const daysElapsed = today.date();
+      if (daysElapsed < 7) return null;
+
+      const currentMonthStr = today.format('YYYY-MM');
+      const prevMonthStr = today.subtract(1, 'month').format('YYYY-MM');
+      const daysInPrevMonth = today.subtract(1, 'month').daysInMonth();
+
+      for (const w of allWallets) {
+        if (w.type === 'INVESTASI') continue;
+
+        const currentExpense = allTxns
+          .filter(t => t.walletId === w.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === currentMonthStr)
+          .reduce((s, t) => s + Number(t.amount), 0);
+        const prevExpense = allTxns
+          .filter(t => t.walletId === w.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === prevMonthStr)
+          .reduce((s, t) => s + Number(t.amount), 0);
+
+        const drainRateNow = currentExpense / daysElapsed;
+        const drainRatePrev = prevExpense / daysInPrevMonth;
+
+        if (drainRatePrev > 0 && drainRateNow > drainRatePrev * 1.5) {
+          return { walletName: w.name, walletId: w.clientId!, drainRateNow, drainRatePrev };
+        }
+      }
+      return null;
+    })();
+
+    if (walletDrainRate) {
+      nudgeInsights.push({
+        priority: 1.8,
+        severity: 'warning',
+        title: 'Saldo Dompet Turun Cepat',
+        body: `Laju pengeluaran dari dompet '${walletDrainRate.walletName}' bulan ini 1,5× lebih cepat dari bulan lalu. Pantau transaksimu dari dompet ini.`,
+        ctaLabel: 'Lihat Dompet',
+        ctaRoute: '/wallets',
+      });
     }
 
     // Sort by priority to evaluate the most important nudges first

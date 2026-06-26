@@ -579,40 +579,7 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
 
   test.describe('Kelompok D — Dompet & Kas', () => {
 
-    // WL-01: Wallet Drain Rate
-    test('[WL-01] VALID: walletDrainRate 1.5x triggers "Saldo Dompet Turun Cepat"', async () => {
-      const insights = await evalNudges(page, {
-        ...EMPTY_PARAMS,
-        walletDrainRate: { walletName: 'BCA', walletId: 'wlt-1', drainRateNow: 150_000, drainRatePrev: 80_000 },
-      });
-      const rule = insights.find((i: any) => i.title === 'Saldo Dompet Turun Cepat');
-      expect(rule).toBeDefined();
-      expect(rule.severity).toBe('warning');
-    });
 
-    test('[WL-01] INVALID: null walletDrainRate does NOT trigger rule', async () => {
-      const insights = await evalNudges(page, { ...EMPTY_PARAMS, walletDrainRate: null });
-      const rule = insights.find((i: any) => i.title === 'Saldo Dompet Turun Cepat');
-      expect(rule).toBeUndefined();
-    });
-
-    // WL-02: Low Cash Warning
-    test('[WL-02] VALID: lowCashWarning triggers "Saldo Dompet Menipis" (critical)', async () => {
-      const insights = await evalNudges(page, {
-        ...EMPTY_PARAMS,
-        lowCashWarning: { walletName: 'GoPay', currentBalance: 50_000, walletId: 'wlt-2' },
-      });
-      const rule = insights.find((i: any) => i.title === 'Saldo Dompet Menipis');
-      expect(rule).toBeDefined();
-      expect(rule.severity).toBe('critical');
-      expect(rule.priority).toBe(0.5);
-    });
-
-    test('[WL-02] INVALID: null lowCashWarning does NOT trigger rule', async () => {
-      const insights = await evalNudges(page, { ...EMPTY_PARAMS, lowCashWarning: null });
-      const rule = insights.find((i: any) => i.title === 'Saldo Dompet Menipis');
-      expect(rule).toBeUndefined();
-    });
 
     // WL-03: Single Wallet Usage
     test('[WL-03] VALID: singleWalletUsage > 90% triggers "Penggunaan Dompet Dominan"', async () => {
@@ -797,27 +764,26 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
     });
 
     // Critical rules appear before non-critical
-    test('[PRIORITY] WL-02 (priority 0.5) appears before SP-01 (priority 1.0)', async () => {
+    test('[PRIORITY] SP-03 (priority 2.1) appears before SP-08 (priority 3.2)', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
-        paydayLeak: { percentage: 55, days: 2 },
-        lowCashWarning: { walletName: 'GoPay', currentBalance: 50_000, walletId: 'wlt-x' },
+        recurringMerchantGrowth: { merchantName: 'Steam', currentCount: 5, prevCount: 2, amount: 500_000 },
+        nightOwl: { totalAmount: 400_000 },
       });
-      const idxLow = insights.findIndex((i: any) => i.title === 'Saldo Dompet Menipis');
-      const idxPayday = insights.findIndex((i: any) => i.title === 'Pengeluaran Awal Bulan');
-      expect(idxLow).toBeLessThan(idxPayday);
+      const idxGrowth = insights.findIndex((i: any) => i.title === 'Kenaikan Transaksi Rutin');
+      const idxNight = insights.findIndex((i: any) => i.title === 'Pola Pengeluaran Malam Hari');
+      expect(idxNight).toBeLessThan(idxGrowth);
     });
 
     // Multiple critical rules simultaneously
-    test('[CRITICAL] Multiple critical rules can coexist: AN-10a + WL-02 + SP-01', async () => {
+    test('[CRITICAL] Multiple critical rules can coexist: AN-10a + SP-01', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         current: { income: 0, expense: 3_000_000, net: -3_000_000 },
         paydayLeak: { percentage: 60, days: 1 },
-        lowCashWarning: { walletName: 'BCA', currentBalance: 20_000, walletId: 'wlt-y' },
       });
       const criticals = insights.filter((i: any) => i.severity === 'critical');
-      expect(criticals.length).toBeGreaterThanOrEqual(3);
+      expect(criticals.length).toBeGreaterThanOrEqual(2);
     });
 
     // All rules simultaneously (smoke test)

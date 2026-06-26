@@ -3,7 +3,8 @@ name: Daily Reminder Cron
 on:
   schedule:
     # Runs at 13:00 UTC every day (20:00 WIB)
-    - cron: '0 13 * * *'
+    # Menggunakan menit ganjil (17) untuk menghindari antrean server GitHub Actions yang padat di menit 00
+    - cron: '17 13 * * *'
   # Allow manual trigger from the GitHub Actions tab for testing
   workflow_dispatch:
 

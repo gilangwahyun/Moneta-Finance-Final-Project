@@ -755,35 +755,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     return null;
   }, [allTargets, allTxns]);
 
-  const walletDrainRate = useMemo(() => {
-    if (allWallets.length === 0) return null;
-    const today = dayjs();
-    const daysElapsed = today.date();
-    if (daysElapsed < 7) return null;
 
-    const currentMonthStr = today.format('YYYY-MM');
-    const prevMonthStr = today.subtract(1, 'month').format('YYYY-MM');
-    const daysInPrevMonth = today.subtract(1, 'month').daysInMonth();
-
-    for (const w of allWallets) {
-      if (w.type === 'INVESTASI') continue;
-
-      const currentExpense = allTxns
-        .filter(t => t.walletId === w.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === currentMonthStr)
-        .reduce((s, t) => s + Number(t.amount), 0);
-      const prevExpense = allTxns
-        .filter(t => t.walletId === w.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === prevMonthStr)
-        .reduce((s, t) => s + Number(t.amount), 0);
-
-      const drainRateNow = currentExpense / daysElapsed;
-      const drainRatePrev = prevExpense / daysInPrevMonth;
-
-      if (drainRatePrev > 0 && drainRateNow > drainRatePrev * 1.5) {
-        return { walletName: w.name, walletId: w.clientId!, drainRateNow, drainRatePrev };
-      }
-    }
-    return null;
-  }, [allWallets, allTxns]);
 
   // =========================================================================
   // PHASE 3: 3-MONTH HISTORICAL RULES
@@ -965,14 +937,14 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
   const rawNudgeInsights = useMemo(
     () => generateNudges({
       current, prev, topExpenseCategory, weeklySavings, frequentTxn, peakDay, wantsProjection, paydayLeak, weekendTrap, nightOwl, subscriptions,
-      recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum, lowCashWarning,
-      newCategoryEmergence, categoryDominanceShift, expenseConsistency, discretionaryDrift, budgetRunway, targetGapAlert, targetProgressImpact, walletDrainRate,
+      recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum,
+      newCategoryEmergence, categoryDominanceShift, expenseConsistency, discretionaryDrift, budgetRunway, targetGapAlert, targetProgressImpact,
       categoryCreep, savingsGapShrinking, budgetAccuracyAlert, categorySpike,
       budgetRecovery, targetStreak, walletCategoryPattern,
     }),
     [current, prev, topExpenseCategory, weeklySavings, frequentTxn, peakDay, wantsProjection, paydayLeak, weekendTrap, nightOwl, subscriptions,
-     recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum, lowCashWarning,
-     newCategoryEmergence, categoryDominanceShift, expenseConsistency, discretionaryDrift, budgetRunway, targetGapAlert, targetProgressImpact, walletDrainRate,
+     recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum,
+     newCategoryEmergence, categoryDominanceShift, expenseConsistency, discretionaryDrift, budgetRunway, targetGapAlert, targetProgressImpact,
      categoryCreep, savingsGapShrinking, budgetAccuracyAlert, categorySpike,
      budgetRecovery, targetStreak, walletCategoryPattern]
   );
