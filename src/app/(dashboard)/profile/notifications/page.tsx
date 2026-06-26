@@ -58,7 +58,7 @@ function NotificationPreview({ title, body, action1, action2 }: { title: string;
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold text-slate-700 dark:text-slate-200">{title}</p>
-          <p className="mt-0.5 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{body}</p>
+          <p className="mt-0.5 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{body}</p>
           {(action1 || action2) && (
             <div className="mt-2 flex gap-2">
               {action1 && (
@@ -67,7 +67,7 @@ function NotificationPreview({ title, body, action1, action2 }: { title: string;
                 </span>
               )}
               {action2 && (
-                <span className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
+                <span className="rounded border border-slate-200 bg-white px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400">
                   {action2}
                 </span>
               )}
@@ -120,7 +120,7 @@ function ModeCard({
 
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className={selected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-500 dark:text-slate-400'}>{icon}</span>
+            <span className={selected ? 'text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400'}>{icon}</span>
             <p
               className={`text-sm font-semibold ${
                 selected ? 'text-indigo-800 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-200'
@@ -129,7 +129,7 @@ function ModeCard({
               {title}
             </p>
           </div>
-          <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">{description}</p>
+          <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">{description}</p>
         </div>
       </div>
     </button>
@@ -151,8 +151,8 @@ function AdvancedSettings({ title = 'Pengaturan Lanjutan', children }: { title?:
         aria-controls={contentId}
         className="flex w-full items-center justify-between bg-slate-50 px-4 py-3 text-left transition-colors hover:bg-slate-100 dark:bg-slate-800/50 dark:hover:bg-slate-800"
       >
-        <span className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{title}</span>
-        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+        <span className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">{title}</span>
+        <ChevronDown className={`h-4 w-4 text-slate-600 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
       </button>
       {isOpen && (
         <div id={contentId} className="animate-in slide-in-from-top-2 fade-in duration-200 bg-white px-4 pb-4 pt-3 dark:bg-slate-900">
@@ -172,7 +172,7 @@ function DailyCapSelector({ value, onChange }: { value: number; onChange: (v: nu
       <div className="mb-3 flex items-center justify-between">
         <div>
           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">Batas Frekuensi Harian</p>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
             Moneta tidak akan mengirim lebih dari batas ini dalam satu hari.
           </p>
         </div>
@@ -197,7 +197,7 @@ function DailyCapSelector({ value, onChange }: { value: number; onChange: (v: nu
           </button>
         ))}
       </div>
-      <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+      <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
         Batas ini hanya berlaku untuk notifikasi perangkat (OS). Riwayat di halaman Notifikasi tetap tersimpan meskipun batas tercapai.
       </p>
     </div>
@@ -224,7 +224,7 @@ function TodayUsageBar({ count, cap }: { count: number; cap: number }) {
           style={{ width: `${cap === -1 ? 100 : pct}%` }}
         />
       </div>
-      <p className="mt-1.5 text-xs text-slate-400">
+      <p className="mt-1.5 text-xs text-slate-600">
         {cap === -1
           ? 'Perangkat ini dapat menerima jumlah notifikasi yang tidak terbatas.'
           : isFull
@@ -406,8 +406,8 @@ export default function NotificationSettingsPage() {
       ) : (
         <div className="space-y-5 animate-in fade-in duration-300">
           <div className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-3.5 dark:border-slate-800 dark:bg-slate-900/50">
-            <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-            <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-slate-600" />
+            <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-400">
               Moneta menerapkan kebijakan{' '}
               <span className="font-semibold text-slate-700 dark:text-slate-300">&quot;hanya saat diperlukan&quot;</span>. Pencatatan
               transaksi normal tidak memicu notifikasi apapun.
@@ -457,15 +457,15 @@ export default function NotificationSettingsPage() {
           )}
 
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pengingat Harian</p>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Pengingat Harian</p>
             <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900">
               <div className="flex items-start gap-3">
-                <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${dailyReminder ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400' : 'bg-slate-100 text-slate-400 dark:bg-slate-800 dark:text-slate-500'}`}>
+                <div className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full transition-colors ${dailyReminder ? 'bg-indigo-100 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400' : 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-500'}`}>
                   <Bell className="h-4 w-4" />
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-slate-800 dark:text-slate-200">Ingatkan Catat Keuangan</p>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+                  <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
                     Kirim notifikasi setiap pukul 20:00 jika belum ada transaksi yang dicatat pada hari ini.
                   </p>
                 </div>
@@ -489,7 +489,7 @@ export default function NotificationSettingsPage() {
           </div>
 
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Mode Peringatan Anggaran</p>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Mode Peringatan Anggaran</p>
 
             <div className="space-y-2.5" role="radiogroup" aria-label="Mode notifikasi">
               <ModeCard
@@ -528,7 +528,7 @@ export default function NotificationSettingsPage() {
                 </p>
               </div>
               <AdvancedSettings title="Lihat aturan peringatan">
-                <ul className="list-inside list-disc space-y-1.5 text-xs text-slate-500 dark:text-slate-400">
+                <ul className="list-inside list-disc space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
                   <li>Penggunaan 20%: informasi</li>
                   <li>Penggunaan 50%: peringatan</li>
                   <li>Penggunaan 100%: peringatan kritis</li>
@@ -543,7 +543,7 @@ export default function NotificationSettingsPage() {
               <div>
                 <label
                   htmlFor="digest-time"
-                  className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+                  className="mb-2 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400"
                 >
                   Waktu Ringkasan (WIB)
                 </label>
@@ -581,7 +581,7 @@ export default function NotificationSettingsPage() {
                     ))}
                   </div>
                 </div>
-                <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+                <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
                   Moneta akan mengirim satu notifikasi ringkasan pada waktu ini selama aplikasi aktif. Ringkasan dikirim mengikuti waktu WIB
                   (Asia/Jakarta).
                 </p>

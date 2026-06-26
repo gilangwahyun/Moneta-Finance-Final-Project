@@ -26,10 +26,10 @@ export function BudgetHealthBar({
     return (
       <div className="flex items-center justify-between rounded-xl border border-dashed border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-800/50 dark:bg-slate-800/20">
         <div>
-          <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
             Anggaran bulan ini belum diatur
           </p>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
             Atur anggaran untuk memantau kesehatan pengeluaranmu
           </p>
         </div>
@@ -69,7 +69,7 @@ export function BudgetHealthBar({
     <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800/50 dark:bg-slate-900">
       {/* Header row */}
       <div className="mb-3 flex items-center justify-between">
-        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+        <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
           Kesehatan Anggaran Bulanan
         </p>
         <span
@@ -90,7 +90,7 @@ export function BudgetHealthBar({
 
       {/* Numbers row */}
       <div className="mt-3 flex items-baseline justify-between">
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-slate-600 dark:text-slate-400">
           <span className={`text-sm font-semibold ${status.color}`}>
             {formatCurrency(totalSpent)}
           </span>{" "}

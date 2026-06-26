@@ -85,7 +85,7 @@ export default function CategoriesPage() {
         headerAction={
           <button
             disabled
-            className="flex w-full md:w-auto justify-center items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-400 opacity-50 dark:bg-slate-800 dark:text-slate-500"
+            className="flex w-full md:w-auto justify-center items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600 opacity-50 dark:bg-slate-800 dark:text-slate-500"
           >
             <Plus className="h-4 w-4" /> Tambah Kategori
           </button>
@@ -132,10 +132,10 @@ export default function CategoriesPage() {
         {displayedCategories.length === 0 ? (
           <div className="flex flex-col items-center rounded-xl border-2 border-dashed border-slate-200 py-14 text-center dark:border-slate-800">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-              <Folder className="h-7 w-7 text-slate-400" />
+              <Folder className="h-7 w-7 text-slate-600" />
             </div>
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Belum ada kategori</p>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Tambahkan kategori agar transaksi lebih mudah dikelompokkan.</p>
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Tambahkan kategori agar transaksi lebih mudah dikelompokkan.</p>
             <button
               onClick={startCreate}
               className="mt-4 flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:bg-indigo-500 active:scale-95 dark:bg-indigo-500 dark:hover:bg-indigo-400"
@@ -172,7 +172,7 @@ export default function CategoriesPage() {
                       <div className="flex items-center gap-2">
                         <span className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">{category.name}</span>
                         {category.isDefault && (
-                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                             Bawaan
                           </span>
                         )}
@@ -199,7 +199,7 @@ export default function CategoriesPage() {
         )}
 
         <div className="rounded-xl border border-slate-100 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/50">
-          <p className="text-xs text-slate-500 dark:text-slate-400">
+          <p className="text-xs text-slate-600 dark:text-slate-400">
             {categories.length} total kategori · {expenseCategories.length} pengeluaran · {incomeCategories.length} pemasukan
             {pendingCount > 0 && ` · ${pendingCount} perubahan menunggu sinkron`}
           </p>

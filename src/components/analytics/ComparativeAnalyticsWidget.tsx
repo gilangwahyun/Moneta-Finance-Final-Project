@@ -85,12 +85,12 @@ export function ComparativeAnalyticsWidget() {
 
     if (prev === 0 && current > 0) return { text: `Naik ${nominalText} dari 0`, color: type === "INCOME" ? "text-emerald-500" : "text-rose-500", Icon: TrendingUp };
     if (prev > 0 && current === 0) return { text: "Turun jadi 0", color: type === "INCOME" ? "text-amber-500" : "text-emerald-500", Icon: TrendingDown };
-    if (prev === 0 && current === 0) return { text: "Tetap 0", color: "text-slate-500 dark:text-slate-400", Icon: Minus };
+    if (prev === 0 && current === 0) return { text: "Tetap 0", color: "text-slate-600 dark:text-slate-400", Icon: Minus };
 
     const percent = Math.round((diff / prev) * 100);
     const absPercent = Math.abs(percent);
 
-    if (percent === 0) return { text: "Tidak berubah", color: "text-slate-500 dark:text-slate-400", Icon: Minus };
+    if (percent === 0) return { text: "Tidak berubah", color: "text-slate-600 dark:text-slate-400", Icon: Minus };
 
     if (percent > 0) {
       // Increase
@@ -128,7 +128,7 @@ export function ComparativeAnalyticsWidget() {
             className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${
               viewMode === "DAILY"
                 ? "bg-white text-slate-800 shadow-sm dark:bg-slate-700 dark:text-white"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                : "text-slate-600 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
             Harian
@@ -138,7 +138,7 @@ export function ComparativeAnalyticsWidget() {
             className={`rounded-md px-3 py-1 text-xs font-medium transition-all ${
               viewMode === "WEEKLY"
                 ? "bg-white text-slate-800 shadow-sm dark:bg-slate-700 dark:text-white"
-                : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+                : "text-slate-600 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
             }`}
           >
             7 Hari
@@ -150,7 +150,7 @@ export function ComparativeAnalyticsWidget() {
         
         {/* Expense Section */}
         <div className="pr-2">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Pengeluaran</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">Pengeluaran</p>
           <div className="mt-1 flex items-start gap-2">
             <expenseChange.Icon className={`mt-0.5 h-4 w-4 shrink-0 ${expenseChange.color}`} />
             <span className={`text-xs font-medium leading-snug ${expenseChange.color}`}>
@@ -161,7 +161,7 @@ export function ComparativeAnalyticsWidget() {
 
         {/* Income Section */}
         <div className="pl-4">
-          <p className="text-xs text-slate-500 dark:text-slate-400">Pemasukan</p>
+          <p className="text-xs text-slate-600 dark:text-slate-400">Pemasukan</p>
           <div className="mt-1 flex items-start gap-2">
             <incomeChange.Icon className={`mt-0.5 h-4 w-4 shrink-0 ${incomeChange.color}`} />
             <span className={`text-xs font-medium leading-snug ${incomeChange.color}`}>

@@ -9,7 +9,7 @@ const testPassword = 'SecurePassword123!';
 
 test.describe.serial('1. Authentication & User Management', () => {
 
-  test('Registration: User can register with a valid email and username', async ({ page }) => {
+  test('[AU-01-01_01] Registrasi Akun Valid: User can register with a valid email and username', async ({ page }) => {
     // Increase timeout for the first test to allow Next.js dev server compilation
     test.setTimeout(60000);
     await page.goto('/register');
@@ -27,7 +27,7 @@ test.describe.serial('1. Authentication & User Management', () => {
     await expect(page).toHaveURL('http://localhost:3000/', { timeout: 120000 });
   });
 
-  test('Registration Errors: System rejects duplicate emails/usernames', async ({ page }) => {
+  test('[AU-01-01_02] Registrasi Akun Invalid: System rejects duplicate emails/usernames', async ({ page }) => {
     await page.goto('/register');
     
     // Attempt to register with the EXACT SAME credentials as the previous test
@@ -45,7 +45,7 @@ test.describe.serial('1. Authentication & User Management', () => {
     await expect(errorMessage).toContainText(/sudah terdaftar/i); // Actual error: "Email atau Username sudah terdaftar."
   });
 
-  test('Login: User can login successfully', async ({ page }) => {
+  test('[AU-02-01_01] Masuk (Login) Valid: User can login successfully', async ({ page }) => {
     await page.goto('/login');
     
     // Use the demo credentials as they are guaranteed to exist, or use the newly created one.
@@ -61,7 +61,7 @@ test.describe.serial('1. Authentication & User Management', () => {
     expect(page.url()).toBe('http://localhost:3000/');
   });
 
-  test('Login Errors: System rejects invalid credentials', async ({ page }) => {
+  test('[AU-02-01_02] Masuk (Login) Invalid: System rejects invalid credentials', async ({ page }) => {
     await page.goto('/login');
     
     await page.fill('#identifier', 'wrong_user@moneta.app');
@@ -74,7 +74,7 @@ test.describe.serial('1. Authentication & User Management', () => {
     await expect(errorMessage).toBeVisible();
   });
 
-  test('Session & Logout: Session persists and user can log out', async ({ page }) => {
+  test('[AU-03-01_01] Keluar (Logout): Session persists and user can log out', async ({ page }) => {
     // 1. First, login
     await page.goto('/login');
     await page.fill('#identifier', 'user_test@moneta.app'); // Using demo user here for simplicity

@@ -66,7 +66,7 @@ export default function LoginPage() {
           <h1 className="text-4xl font-extrabold tracking-tight text-indigo-600 dark:text-indigo-400">
             Moneta
           </h1>
-          <p className="mt-2 text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-slate-600 dark:text-slate-400">
             Selamat datang kembali! Silakan masuk ke akunmu.
           </p>
         </div>
@@ -97,7 +97,7 @@ export default function LoginPage() {
                 className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 placeholder="Email atau username"
               />
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                 Masukkan alamat email atau username kamu.
               </p>
             </div>
@@ -124,7 +124,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -151,7 +151,7 @@ export default function LoginPage() {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
             Belum punya akun?{" "}
             <Link
               href="/register"
@@ -164,7 +164,7 @@ export default function LoginPage() {
 
         {/* Demo Credentials */}
         <div className="rounded-lg border border-dashed border-slate-300 p-4 text-center dark:border-slate-700">
-          <p className="text-xs font-medium text-slate-500 uppercase tracking-widest mb-1">
+          <p className="text-xs font-medium text-slate-600 uppercase tracking-widest mb-1">
             Kredensial Demo
           </p>
           <p className="text-sm text-slate-600 dark:text-slate-400 font-mono">

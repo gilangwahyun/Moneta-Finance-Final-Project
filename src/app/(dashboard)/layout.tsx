@@ -263,7 +263,7 @@ export default function DashboardLayout({
       <div className="flex min-h-screen items-center justify-center bg-slate-50 dark:bg-slate-900">
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent mx-auto" />
-          <p className="mt-4 text-sm text-slate-500 dark:text-slate-400">Memuat Moneta…</p>
+          <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">Memuat Moneta…</p>
         </div>
       </div>
     );
@@ -275,7 +275,7 @@ export default function DashboardLayout({
         <div className="text-center">
           <div className="h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent mx-auto" />
           <p className="mt-4 text-sm font-medium text-slate-700 dark:text-slate-300">Menyinkronkan data…</p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Mengambil data dari server, ini hanya terjadi sekali</p>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Mengambil data dari server, ini hanya terjadi sekali</p>
         </div>
       </div>
     );
@@ -302,7 +302,7 @@ export default function DashboardLayout({
             <h2 className="mt-3 text-base font-semibold text-slate-900 dark:text-slate-50">
               Keluar dari Moneta?
             </h2>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
               Data kamu sudah tersimpan dan akan tersinkronisasi otomatis saat kamu kembali.
             </p>
             <div className="mt-5 flex flex-col gap-2">
@@ -337,7 +337,7 @@ export default function DashboardLayout({
             </div>
             <div className="flex flex-col whitespace-nowrap">
               <p className="text-sm font-bold text-slate-800 dark:text-slate-100">Moneta</p>
-              <p className="text-[11px] text-slate-500 dark:text-slate-400">Pencatat Keuangan</p>
+              <p className="text-[11px] text-slate-600 dark:text-slate-400">Pencatat Keuangan</p>
             </div>
           </div>
 
@@ -346,7 +346,7 @@ export default function DashboardLayout({
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
               aria-label={isCollapsed ? "Buka sidebar navigasi" : "Tutup sidebar navigasi"}
-              className="rounded-md p-2 text-slate-500 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+              className="rounded-md p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
             >
               {isCollapsed ? <PanelLeft className="h-5 w-5" /> : <PanelLeftClose className="h-5 w-5" />}
             </button>
@@ -400,7 +400,7 @@ export default function DashboardLayout({
                   } ${
                     isActive
                       ? "bg-indigo-600 text-white shadow-md shadow-indigo-500/20 dark:bg-indigo-500"
-                      : "text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100"
+                      : "text-slate-600 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100"
                   }`}
                 >
                   <span className={`relative shrink-0 ${isActive ? "text-white" : ""}`}>
@@ -504,7 +504,7 @@ export default function DashboardLayout({
             {/* //********** Notification Bell (mobile only) ********** */}
             <Link
               href="/notifications"
-              className="relative flex h-8 w-8 items-center justify-center rounded-full text-slate-500 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
+              className="relative flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
               aria-label="Notifikasi"
             >
               <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
@@ -544,7 +544,7 @@ export default function DashboardLayout({
                 className={`flex flex-1 flex-col items-center justify-center gap-1 py-2 min-h-[56px] text-[11px] font-medium transition-colors active:scale-95 active:bg-slate-100 dark:active:bg-slate-800/60 ${
                   isActive
                     ? "text-indigo-600 dark:text-indigo-400"
-                    : "text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
+                    : "text-slate-600 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300"
                 }`}
               >
                 <span className="relative">

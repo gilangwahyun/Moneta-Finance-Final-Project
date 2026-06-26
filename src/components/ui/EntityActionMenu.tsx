@@ -134,7 +134,7 @@ export function EntityActionMenu({ onEdit, onDelete, title, subtitle, extraActio
         className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 ${
           isOpen
             ? "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200"
-            : "text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+            : "text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
         }`}
       >
         <MoreHorizontal className="h-4 w-4" />
@@ -162,11 +162,11 @@ export function EntityActionMenu({ onEdit, onDelete, title, subtitle, extraActio
                 <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
                   <div className="min-w-0 flex-1 pr-4">
                     <h3 className="truncate text-base font-bold text-slate-900 dark:text-slate-50">{title}</h3>
-                    {subtitle && <div className="mt-0.5 truncate text-xs text-slate-500 dark:text-slate-400">{subtitle}</div>}
+                    {subtitle && <div className="mt-0.5 truncate text-xs text-slate-600 dark:text-slate-400">{subtitle}</div>}
                   </div>
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors"
+                    className="rounded-full p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300 transition-colors"
                     aria-label="Tutup"
                   >
                     <X className="h-5 w-5" />
@@ -179,7 +179,7 @@ export function EntityActionMenu({ onEdit, onDelete, title, subtitle, extraActio
                   onClick={() => { setIsOpen(false); onEdit(); }}
                   className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50 active:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-700"
                 >
-                  <Pencil className="h-4 w-4 text-slate-400" />
+                  <Pencil className="h-4 w-4 text-slate-600" />
                   Ubah
                 </button>
                 
@@ -194,7 +194,7 @@ export function EntityActionMenu({ onEdit, onDelete, title, subtitle, extraActio
                     }`}
                   >
                     {action.icon && (
-                      <span className={`flex items-center justify-center [&>svg]:h-4 [&>svg]:w-4 ${action.variant === "destructive" ? "text-rose-500" : "text-slate-400"}`}>
+                      <span className={`flex items-center justify-center [&>svg]:h-4 [&>svg]:w-4 ${action.variant === "destructive" ? "text-rose-500" : "text-slate-600"}`}>
                         {action.icon}
                       </span>
                     )}
@@ -212,9 +212,9 @@ export function EntityActionMenu({ onEdit, onDelete, title, subtitle, extraActio
                 
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm font-semibold text-slate-500 transition-colors hover:bg-slate-50 active:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:active:bg-slate-700"
+                  className="flex w-full items-center gap-3 rounded-xl px-4 py-3.5 text-left text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 active:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-800 dark:active:bg-slate-700"
                 >
-                  <X className="h-4 w-4 text-slate-400" />
+                  <X className="h-4 w-4 text-slate-600" />
                   Batal
                 </button>
               </div>
@@ -236,7 +236,7 @@ export function EntityActionMenu({ onEdit, onDelete, title, subtitle, extraActio
                 onClick={() => { setIsOpen(false); onEdit(); }}
                 className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-left text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
               >
-                <Pencil className="h-3.5 w-3.5 text-slate-400" />
+                <Pencil className="h-3.5 w-3.5 text-slate-600" />
                 Ubah
               </button>
               
@@ -251,7 +251,7 @@ export function EntityActionMenu({ onEdit, onDelete, title, subtitle, extraActio
                   }`}
                 >
                   {action.icon && (
-                    <span className={`flex items-center justify-center [&>svg]:h-3.5 [&>svg]:w-3.5 ${action.variant === "destructive" ? "text-rose-500" : "text-slate-400"}`}>
+                    <span className={`flex items-center justify-center [&>svg]:h-3.5 [&>svg]:w-3.5 ${action.variant === "destructive" ? "text-rose-500" : "text-slate-600"}`}>
                       {action.icon}
                     </span>
                   )}

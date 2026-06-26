@@ -92,7 +92,7 @@ export default function TargetsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50">Target Keuangan</h1>
-          <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Pantau pencapaian pemasukan kamu dari waktu ke waktu.</p>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Pantau pencapaian pemasukan kamu dari waktu ke waktu.</p>
         </div>
         <button
           onClick={handleOpenCreate}
@@ -121,10 +121,10 @@ export default function TargetsPage() {
             aria-label="Buka filter status target"
             className="flex h-[48px] w-full items-center justify-between rounded-2xl bg-white/60 px-4 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur-xl ring-1 ring-inset ring-slate-200/60 transition-all hover:bg-white active:scale-95 dark:bg-slate-900/60 dark:text-slate-200 dark:ring-slate-800/60 dark:hover:bg-slate-800"
           >
-            <span className="text-slate-500 dark:text-slate-400">Status Target</span>
+            <span className="text-slate-600 dark:text-slate-400">Status Target</span>
             <div className="flex items-center gap-2">
               <span className="truncate max-w-[120px]">{statusOptions.find((o) => o.value === statusFilter)?.label}</span>
-              <ChevronDown className="h-4 w-4 text-slate-400 shrink-0" />
+              <ChevronDown className="h-4 w-4 text-slate-600 shrink-0" />
             </div>
           </button>
         </div>
@@ -137,10 +137,10 @@ export default function TargetsPage() {
       ) : targets.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 px-6 py-16 text-center dark:border-slate-800/50">
           <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-            <TargetIcon className="h-8 w-8 text-slate-400" />
+            <TargetIcon className="h-8 w-8 text-slate-600" />
           </div>
           <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300">Belum ada target</h3>
-          <p className="mt-1.5 max-w-sm text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1.5 max-w-sm text-sm text-slate-600 dark:text-slate-400">
             Buat target untuk memantau pencapaian pemasukanmu setiap periode.
           </p>
           <button
@@ -154,10 +154,10 @@ export default function TargetsPage() {
       ) : filteredTargets.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 px-6 py-16 text-center dark:border-slate-800/50">
           <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-            <AlertCircle className="h-8 w-8 text-slate-400" />
+            <AlertCircle className="h-8 w-8 text-slate-600" />
           </div>
           <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300">Tidak ada target</h3>
-          <p className="mt-1.5 max-w-sm text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1.5 max-w-sm text-sm text-slate-600 dark:text-slate-400">
             Tidak ada target yang sesuai dengan filter status ini.
           </p>
           <button
@@ -179,7 +179,7 @@ export default function TargetsPage() {
             if (target.progress.isNotStarted) {
               progressColor = 'bg-slate-300 dark:bg-slate-600';
               statusText = 'Belum Aktif';
-              statusTextColor = 'text-slate-500 dark:text-slate-400';
+              statusTextColor = 'text-slate-600 dark:text-slate-400';
             } else if (target.progress.percentage >= 100) {
               progressColor = 'bg-emerald-500';
               statusText = 'Tercapai';
@@ -215,7 +215,7 @@ export default function TargetsPage() {
                       
                       <div className="min-w-0">
                         <p className="truncate text-base font-semibold text-slate-900 dark:text-slate-50">{target.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
                           {target.category?.name || 'Semua Kategori'} • {
                             target.period === 'DAILY'
                               ? 'Hari Ini'
@@ -254,8 +254,8 @@ export default function TargetsPage() {
                   <div className="mt-5 flex items-end justify-between">
                     <div className="flex items-baseline gap-1.5 text-sm">
                       <span className="font-bold text-slate-800 dark:text-slate-100 text-base">{formatCurrency(target.progress.currentAmount)}</span>
-                      <span className="text-slate-500 dark:text-slate-400">dari</span>
-                      <span className="font-medium text-slate-500 dark:text-slate-400">{formatCurrency(target.targetAmount)}</span>
+                      <span className="text-slate-600 dark:text-slate-400">dari</span>
+                      <span className="font-medium text-slate-600 dark:text-slate-400">{formatCurrency(target.targetAmount)}</span>
                     </div>
                   </div>
 

@@ -86,7 +86,7 @@ export function GlobalTimeFilter({ compact = false }: GlobalTimeFilterProps) {
                 }
               `}
             >
-              {isCustom && <CalendarDays className={`h-4 w-4 ${isActive ? "text-white/90" : "text-slate-400"}`} />}
+              {isCustom && <CalendarDays className={`h-4 w-4 ${isActive ? "text-white/90" : "text-slate-600"}`} />}
               {label}
               {isCustom && (
                 <ChevronDown
@@ -131,7 +131,7 @@ export function GlobalTimeFilter({ compact = false }: GlobalTimeFilterProps) {
           <div className="flex flex-1 flex-col gap-1">
             <label
               htmlFor={`${pickerId}-start`}
-              className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+              className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
             >
               Dari
             </label>
@@ -154,7 +154,7 @@ export function GlobalTimeFilter({ compact = false }: GlobalTimeFilterProps) {
           <div className="flex flex-1 flex-col gap-1">
             <label
               htmlFor={`${pickerId}-end`}
-              className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400"
+              className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400"
             >
               Sampai
             </label>

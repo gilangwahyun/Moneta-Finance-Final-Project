@@ -47,8 +47,8 @@ export function CompactSummaryRow({ metrics }: { metrics: [MetricItem, MetricIte
               key={i} 
               className="group flex flex-col p-3.5 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 sm:rounded-xl sm:border sm:border-slate-100 sm:bg-white sm:p-5 sm:shadow-sm sm:hover:bg-slate-50 sm:dark:border-slate-800/60 sm:dark:bg-slate-900 sm:dark:hover:bg-slate-800/50"
             >
-              <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                {metric.icon && <span className="text-slate-500 dark:text-slate-400">{metric.icon}</span>}
+              <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400">
+                {metric.icon && <span className="text-slate-600 dark:text-slate-400">{metric.icon}</span>}
                 <span className="sm:hidden">{metric.compactLabel}</span>
                 <span className="hidden sm:inline">{metric.label}</span>
               </div>
@@ -64,7 +64,7 @@ export function CompactSummaryRow({ metrics }: { metrics: [MetricItem, MetricIte
                   <div
                     className={`mt-3 inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors group-hover:bg-opacity-80 ${
                       isZero
-                        ? "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+                        ? "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
                         : isGood
                         ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
                         : "bg-rose-50 text-rose-600 dark:bg-rose-950/30 dark:text-rose-400"
@@ -85,7 +85,7 @@ export function CompactSummaryRow({ metrics }: { metrics: [MetricItem, MetricIte
                   </div>
                 )}
                 {hasTrend && metric.previousValue === 0 && (
-                  <p className="mt-3 text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <p className="mt-3 text-xs font-medium text-slate-600 dark:text-slate-400">
                     Tidak ada data periode lalu
                   </p>
                 )}

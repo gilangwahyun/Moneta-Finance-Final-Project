@@ -54,7 +54,7 @@ export function SecondaryPageLayout({ title, description, backRoute, headerActio
             {/* //********** Title + description ********** */}
             <div>
               <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{title}</h1>
-              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{description}</p>
+              <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">{description}</p>
             </div>
           </div>
 

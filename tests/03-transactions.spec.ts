@@ -55,7 +55,7 @@ test.describe.serial('2.3 Transactions (Transaksi)', () => {
     await context.close();
   });
 
-  test('Create Income: Adds correctly to the selected wallet', async () => {
+  test('[AU-04-01_01] Tambah Transaksi: Create Income adds correctly to the selected wallet', async () => {
     await page.goto('/transactions');
     
     await page.click('button:has-text("Tambah Transaksi")');
@@ -88,7 +88,7 @@ test.describe.serial('2.3 Transactions (Transaksi)', () => {
     await expect(page.locator('span', { hasText: '500.000' }).first()).toBeVisible();
   });
 
-  test('Create Expense: Deducts correctly from the selected wallet', async () => {
+  test('[AU-04-01_02] Tambah Transaksi: Create Expense deducts correctly from the selected wallet', async () => {
     await page.goto('/transactions');
     await page.click('button:has-text("Tambah Transaksi")');
     
@@ -114,7 +114,7 @@ test.describe.serial('2.3 Transactions (Transaksi)', () => {
     await expect(page.locator('span', { hasText: '150.000' }).first()).toBeVisible();
   });
 
-  test('Create Transfer: Deducts from source wallet, adds to destination', async () => {
+  test('[AU-07-01_01] Transfer Dompet: Create Transfer deducts from source wallet, adds to destination', async () => {
     await page.goto('/transactions');
     await page.click('button:has-text("Tambah Transaksi")');
     
@@ -145,7 +145,7 @@ test.describe.serial('2.3 Transactions (Transaksi)', () => {
     await expect(page.locator('span', { hasText: '200.000' }).first()).toBeVisible();
   });
 
-  test('Validation: Amount must be greater than zero', async () => {
+  test('[AU-04-01_03] Tambah Transaksi Invalid: Amount must be greater than zero', async () => {
     await page.goto('/transactions');
     await page.click('button:has-text("Tambah Transaksi")');
     
@@ -163,7 +163,7 @@ test.describe.serial('2.3 Transactions (Transaksi)', () => {
     await expect(modal).not.toBeVisible();
   });
 
-  test('Validation: Transfer must have valid source and different destination', async () => {
+  test('[AU-07-01_02] Transfer Dompet Invalid: Transfer must have valid source and different destination', async () => {
     await page.goto('/transactions');
     await page.click('button:has-text("Tambah Transaksi")');
     
@@ -190,7 +190,7 @@ test.describe.serial('2.3 Transactions (Transaksi)', () => {
     await expect(modal).not.toBeVisible();
   });
 
-  test('Edit: Updating amounts reflects correctly', async () => {
+  test('[AU-04-02_01] Ubah Transaksi: Updating amounts reflects correctly', async () => {
     await page.goto('/transactions');
     
     // Find the 'Makan Siang QA' transaction
@@ -214,7 +214,7 @@ test.describe.serial('2.3 Transactions (Transaksi)', () => {
     await expect(page.locator('span', { hasText: '250.000' }).first()).toBeVisible();
   });
 
-  test('Delete: Deleting a transaction reverses its effect', async () => {
+  test('[AU-04-03_01] Hapus Transaksi: Deleting a transaction reverses its effect', async () => {
     await page.goto('/transactions');
     
     // Find the 'Makan Siang QA' transaction

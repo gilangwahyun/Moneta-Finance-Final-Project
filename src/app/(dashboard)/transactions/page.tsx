@@ -190,7 +190,7 @@ export default function TransactionsPage() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Transaksi</h1>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{subtitle}</p>
+          <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">{subtitle}</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -205,7 +205,7 @@ export default function TransactionsPage() {
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
         {/* Search */}
         <div className="flex h-[48px] flex-1 items-center rounded-2xl bg-white/60 px-4 shadow-sm backdrop-blur-xl ring-1 ring-inset ring-slate-200/60 focus-within:ring-2 focus-within:ring-indigo-500/50 dark:bg-slate-900/60 dark:ring-slate-800/60">
-          <Search className="h-4 w-4 shrink-0 text-slate-400" />
+          <Search className="h-4 w-4 shrink-0 text-slate-600" />
           <input
             type="text"
             placeholder="Cari transaksi..."
@@ -234,7 +234,7 @@ export default function TransactionsPage() {
             className="flex h-[48px] w-full shrink-0 items-center justify-between gap-2 rounded-2xl bg-white/60 px-4 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur-xl ring-1 ring-inset ring-slate-200/60 transition-all hover:bg-white active:scale-95 dark:bg-slate-900/60 dark:text-slate-200 dark:ring-slate-800/60 dark:hover:bg-slate-800 sm:w-auto"
           >
             <span className="truncate">{activeTimeLabel}</span>
-            <ChevronDown className="h-3.5 w-3.5 text-slate-400" />
+            <ChevronDown className="h-3.5 w-3.5 text-slate-600" />
           </button>
         </div>
       </div>
@@ -248,12 +248,12 @@ export default function TransactionsPage() {
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 px-6 py-16 text-center dark:border-slate-800">
           <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-            <Inbox className="h-7 w-7 text-slate-400" />
+            <Inbox className="h-7 w-7 text-slate-600" />
           </div>
           {isTotalEmpty ? (
             <>
               <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300">Belum ada transaksi</h3>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Transaksi untuk periode ini belum tersedia.</p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Transaksi untuk periode ini belum tersedia.</p>
               <button
                 onClick={() => openForm()}
                 className="mt-5 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:bg-indigo-500 active:scale-95 dark:bg-indigo-500 dark:hover:bg-indigo-400"
@@ -264,7 +264,7 @@ export default function TransactionsPage() {
           ) : isPeriodEmpty ? (
             <>
               <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300">Tidak ada transaksi</h3>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Tidak ada transaksi untuk periode ini.</p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">Tidak ada transaksi untuk periode ini.</p>
               <button
                 onClick={() => setRange('month')}
                 className="mt-5 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 active:scale-95 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300"
@@ -275,7 +275,7 @@ export default function TransactionsPage() {
           ) : (
             <>
               <h3 className="text-base font-semibold text-slate-700 dark:text-slate-300">Tidak ada hasil</h3>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                 Tidak ada transaksi yang sesuai dengan pencarian atau filter.
               </p>
               <button
@@ -296,7 +296,7 @@ export default function TransactionsPage() {
           {grouped.map(({ date, items }) => (
             <div key={date}>
               <div className="mb-2">
-                <p className="text-[13px] font-semibold text-slate-500 dark:text-slate-400">{dateLabel(date)}</p>
+                <p className="text-[13px] font-semibold text-slate-600 dark:text-slate-400">{dateLabel(date)}</p>
               </div>
               <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:divide-slate-800/60 dark:border-slate-800 dark:bg-slate-900">
                 {items.map((txn) => {
@@ -357,13 +357,13 @@ export default function TransactionsPage() {
           }`}
         >
           Pilih Tanggal...
-          <CalendarDays className={`h-4 w-4 transition-transform ${showCustomDate ? 'text-indigo-500' : 'text-slate-400'}`} />
+          <CalendarDays className={`h-4 w-4 transition-transform ${showCustomDate ? 'text-indigo-500' : 'text-slate-600'}`} />
         </button>
         {showCustomDate && (
           <div className="mt-2 flex flex-col gap-3 rounded-xl border border-slate-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center gap-3">
               <div className="flex-1">
-                <label className="mb-1 block text-xs font-semibold text-slate-500">Dari</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-600">Dari</label>
                 <input
                   type="date"
                   value={customStart}
@@ -372,7 +372,7 @@ export default function TransactionsPage() {
                 />
               </div>
               <div className="flex-1">
-                <label className="mb-1 block text-xs font-semibold text-slate-500">Sampai</label>
+                <label className="mb-1 block text-xs font-semibold text-slate-600">Sampai</label>
                 <input
                   type="date"
                   value={customEnd}
@@ -405,7 +405,7 @@ export default function TransactionsPage() {
 
       {filtered.length > 0 && (
         <div className="rounded-xl border border-slate-100 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900 mt-6">
-          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-600 dark:text-slate-400">
             <p>
               <span className="font-semibold text-slate-700 dark:text-slate-300">{filtered.length}</span> transaksi
               <span className="mx-1.5 text-slate-300 dark:text-slate-600" aria-hidden="true">

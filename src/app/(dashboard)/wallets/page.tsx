@@ -64,7 +64,7 @@ export default function WalletsPage() {
 
   const inputCls =
     'w-full min-h-[44px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white';
-  const labelCls = 'mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400';
+  const labelCls = 'mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400';
 
   /********** Event Handlers **********/
 
@@ -104,7 +104,7 @@ export default function WalletsPage() {
         headerAction={
           <button
             disabled
-            className="flex w-full md:w-auto justify-center items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-400 opacity-50 dark:bg-slate-800 dark:text-slate-500"
+            className="flex w-full md:w-auto justify-center items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-600 opacity-50 dark:bg-slate-800 dark:text-slate-500"
           >
             <Plus className="h-4 w-4" /> Tambah Dompet
           </button>
@@ -146,28 +146,28 @@ export default function WalletsPage() {
     >
       <div className="space-y-6">
         <div className="rounded-xl border border-slate-100 bg-white px-5 py-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">Total Saldo</p>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">Total Saldo</p>
           <p
             className={`mt-1 text-2xl font-bold tracking-tight ${totalBalance < 0 ? 'text-rose-600 dark:text-rose-400' : 'text-indigo-600 dark:text-indigo-400'}`}
           >
             {totalBalance < 0 ? '−' : ''}
             {formatCurrency(Math.abs(totalBalance))}
           </p>
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">Dari {activeWallets.length} dompet aktif</p>
+          <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">Dari {activeWallets.length} dompet aktif</p>
         </div>
 
-        <p className="text-sm text-slate-500 dark:text-slate-400 rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
-          <ArrowLeftRight className="inline h-4 w-4 mr-1.5 mb-0.5 text-slate-400" />
+        <p className="text-sm text-slate-600 dark:text-slate-400 rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
+          <ArrowLeftRight className="inline h-4 w-4 mr-1.5 mb-0.5 text-slate-600" />
           Transfer antar dompet tersedia melalui menu Transfer pada tombol Tambah Transaksi.
         </p>
 
         {activeWallets.length === 0 && (
           <div className="flex flex-col items-center rounded-xl border-2 border-dashed border-slate-200 py-14 text-center dark:border-slate-800">
             <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800/50">
-              <WalletIcon className="h-7 w-7 text-slate-400" />
+              <WalletIcon className="h-7 w-7 text-slate-600" />
             </div>
             <p className="text-sm font-medium text-slate-700 dark:text-slate-300">Belum ada dompet</p>
-            <p className="mt-1 text-sm text-slate-400">Tambahkan dompet untuk mulai mengelompokkan saldo dan transaksi.</p>
+            <p className="mt-1 text-sm text-slate-600">Tambahkan dompet untuk mulai mengelompokkan saldo dan transaksi.</p>
             <button
               onClick={openCreateModal}
               className="mt-4 flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:bg-indigo-500 active:scale-95 dark:bg-indigo-500 dark:hover:bg-indigo-400"
@@ -196,12 +196,12 @@ export default function WalletsPage() {
                     />
 
                     <div className="relative z-10 flex items-center gap-3 px-4 py-4 outline-none transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50 pointer-events-none sm:pointer-events-auto">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                         {TYPE_ICON[wallet.type]}
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-semibold text-slate-800 dark:text-slate-100">{wallet.name}</p>
-                        <p className="text-xs text-slate-500 dark:text-slate-400">{TYPE_LABEL[wallet.type]}</p>
+                        <p className="text-xs text-slate-600 dark:text-slate-400">{TYPE_LABEL[wallet.type]}</p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1 min-w-0 pr-1">
                         <span
@@ -242,7 +242,7 @@ export default function WalletsPage() {
           </div>
         )}
 
-        <p className="text-xs text-slate-500 dark:text-slate-400 whitespace-normal text-wrap break-words w-full px-4">
+        <p className="text-xs text-slate-600 dark:text-slate-400 whitespace-normal text-wrap break-words w-full px-4">
           Saldo ditampilkan berdasarkan kalkulasi dari seluruh riwayat transaksi. Menghapus dompet tidak menghapus transaksi yang terkait.
         </p>
       </div>

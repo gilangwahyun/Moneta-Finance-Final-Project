@@ -206,7 +206,7 @@ const VARIANT_STYLES: Record<CardVariant, { bg: string; border: string; iconBg: 
     bg: "bg-slate-50 dark:bg-slate-800/50",
     border: "border-slate-200 dark:border-slate-700",
     iconBg: "bg-slate-100 dark:bg-slate-700",
-    iconText: "text-slate-500 dark:text-slate-400",
+    iconText: "text-slate-600 dark:text-slate-400",
   },
   synced: {
     bg: "bg-emerald-50 dark:bg-emerald-950/30",
@@ -245,7 +245,7 @@ function SyncCard({
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{title}</p>
-          <p className="mt-0.5 text-[11px] leading-tight text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-[11px] leading-tight text-slate-600 dark:text-slate-400">
             {description}
           </p>
           {actionLabel && onAction && (

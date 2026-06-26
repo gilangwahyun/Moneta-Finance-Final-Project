@@ -98,7 +98,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+            className="rounded-full p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
             <X className="h-5 w-5" />
           </button>
@@ -116,7 +116,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Gaji bulanan"
-              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm outline-none transition-colors placeholder:text-slate-400 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
+              className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-base text-slate-900 shadow-sm outline-none transition-colors placeholder:text-slate-600 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-600"
             />
           </div>
 
@@ -124,14 +124,14 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Target Pemasukan</label>
             <div className="relative">
-              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-slate-400">Rp</span>
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-slate-600">Rp</span>
               <CurrencyInput
                 ref={amountRef}
                 value={targetAmount}
                 onChange={setTargetAmount}
                 required
                 placeholder="0"
-                className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-lg font-bold text-slate-900 shadow-sm transition-colors placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500"
+                className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-lg font-bold text-slate-900 shadow-sm transition-colors placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-600"
               />
             </div>
           </div>
@@ -149,7 +149,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
               <option value="MONTHLY">Bulanan</option>
               <option value="CUSTOM">Khusus (Custom)</option>
             </select>
-            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400">
+            <p className="mt-1.5 text-xs text-slate-600 dark:text-slate-400">
               {period === 'DAILY' && 'Target akan direset setiap hari.'}
               {period === 'WEEKLY' && 'Target akan direset setiap minggu.'}
               {period === 'MONTHLY' && 'Target akan direset setiap bulan.'}

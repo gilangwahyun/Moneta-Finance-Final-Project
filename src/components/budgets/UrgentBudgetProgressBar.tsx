@@ -125,7 +125,7 @@ export function UrgentBudgetProgressBar({ item }: UrgentBudgetProgressBarProps) 
 
       {/* ── Bottom row: Spent/Total + Percentage OR Deficit label ── */}
       <div className="flex items-baseline justify-between">
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-slate-600 dark:text-slate-400">
           <span className="font-medium text-slate-600 dark:text-slate-300">
             {formatCurrency(item.spentAmount)}
           </span>
@@ -137,7 +137,7 @@ export function UrgentBudgetProgressBar({ item }: UrgentBudgetProgressBarProps) 
             +{formatCurrency(deficitAmount)} lebih
           </p>
         ) : (
-          <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+          <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
             {item.clampedPercentage}%
           </p>
         )}

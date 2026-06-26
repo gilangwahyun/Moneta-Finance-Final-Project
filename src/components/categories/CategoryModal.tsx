@@ -104,14 +104,14 @@ export function CategoryModal({ isOpen, onClose, editingCategory, initialType = 
               {editingCategory ? "Ubah Kategori" : "Kategori Baru"}
             </h2>
           </div>
-          <button onClick={onClose} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
+          <button onClick={onClose} className="rounded-full p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-5">
           <div>
-            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
               Nama Kategori
             </label>
             <input
@@ -127,7 +127,7 @@ export function CategoryModal({ isOpen, onClose, editingCategory, initialType = 
 
           {!editingCategory && (
             <div>
-              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
                 Tipe
               </label>
               <div className="flex gap-3">
@@ -158,7 +158,7 @@ export function CategoryModal({ isOpen, onClose, editingCategory, initialType = 
           )}
 
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
               Warna
             </p>
             <div className="flex flex-wrap gap-2">
@@ -183,7 +183,7 @@ export function CategoryModal({ isOpen, onClose, editingCategory, initialType = 
           </div>
 
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
               Ikon
             </p>
             <div className="grid grid-cols-5 gap-2 max-h-[160px] overflow-y-auto pr-1 pb-1">
@@ -198,7 +198,7 @@ export function CategoryModal({ isOpen, onClose, editingCategory, initialType = 
                     className={`flex flex-col items-center justify-center gap-1 rounded-xl border py-2 text-[10px] font-medium transition-all active:scale-95 ${
                       isSelected
                         ? "border-transparent text-white shadow-sm"
-                        : "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-400"
                     }`}
                     style={isSelected ? { backgroundColor: formColor, borderColor: formColor } : {}}
                   >

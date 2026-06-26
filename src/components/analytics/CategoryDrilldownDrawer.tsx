@@ -92,14 +92,14 @@ export function CategoryDrilldownDrawer({
               <h2 className="text-sm font-bold text-slate-900 dark:text-slate-50">
                 {categoryName}
               </h2>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                 {activeSegment} • {activePeriod || `${transactions.length} Transaksi`}
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-600 active:scale-95 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-600 active:scale-95 dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
             <X className="h-5 w-5" />
           </button>
@@ -111,19 +111,19 @@ export function CategoryDrilldownDrawer({
           {totalAmount !== undefined && (
             <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Nominal</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Total Nominal</p>
                 <p className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-50">{formatCurrency(totalAmount)}</p>
               </div>
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Kontribusi</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Kontribusi</p>
                 <p className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-50">{percentage}%</p>
               </div>
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Jumlah Transaksi</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Jumlah Transaksi</p>
                 <p className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-50">{transactions.length}</p>
               </div>
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Rata-rata</p>
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Rata-rata</p>
                 <p className="mt-1 text-sm font-bold text-slate-900 dark:text-slate-50">{formatCurrency(avgPerTxn)}</p>
               </div>
             </div>
@@ -134,7 +134,7 @@ export function CategoryDrilldownDrawer({
               <p className="text-sm font-medium text-slate-700 dark:text-slate-300">
                 Tidak ada transaksi
               </p>
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                 Tidak ditemukan transaksi untuk periode ini.
               </p>
             </div>

@@ -84,7 +84,7 @@ export function AnalyticsTimeFilter() {
                   }
                 `}
               >
-                {isCustom && <CalendarDays className={`h-4 w-4 ${isActive ? "text-white/90" : "text-slate-400"}`} />}
+                {isCustom && <CalendarDays className={`h-4 w-4 ${isActive ? "text-white/90" : "text-slate-600"}`} />}
                 {label}
                 {isCustom && <ChevronDown className={`h-3.5 w-3.5 transition-transform ${pickerOpen ? "rotate-180" : ""}`} />}
               </button>
@@ -108,7 +108,7 @@ export function AnalyticsTimeFilter() {
         {pickerOpen && (
           <div className="animate-in fade-in slide-in-from-top-2 duration-200 flex flex-row items-end gap-3 rounded-xl border border-indigo-200/70 bg-white p-4 shadow-md dark:border-indigo-800/40 dark:bg-slate-900">
             <div className="flex flex-1 flex-col gap-1">
-              <label htmlFor={`${pickerId}-start-desktop`} className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dari</label>
+              <label htmlFor={`${pickerId}-start-desktop`} className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Dari</label>
               <input
                 id={`${pickerId}-start-desktop`}
                 type="date"
@@ -123,7 +123,7 @@ export function AnalyticsTimeFilter() {
               />
             </div>
             <div className="flex flex-1 flex-col gap-1">
-              <label htmlFor={`${pickerId}-end-desktop`} className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Sampai</label>
+              <label htmlFor={`${pickerId}-end-desktop`} className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Sampai</label>
               <input
                 id={`${pickerId}-end-desktop`}
                 type="date"
@@ -151,7 +151,7 @@ export function AnalyticsTimeFilter() {
             <CalendarDays className="h-4 w-4 text-indigo-500" />
             {activeLabel}
           </span>
-          <ChevronDown className="h-4 w-4 text-slate-400" />
+          <ChevronDown className="h-4 w-4 text-slate-600" />
         </button>
 
         <FilterBottomSheet
@@ -180,18 +180,18 @@ export function AnalyticsTimeFilter() {
             }`}
           >
             Pilih Tanggal...
-            <CalendarDays className={`h-4 w-4 transition-transform ${sheetCustomOpen ? "text-indigo-500" : "text-slate-400"}`} />
+            <CalendarDays className={`h-4 w-4 transition-transform ${sheetCustomOpen ? "text-indigo-500" : "text-slate-600"}`} />
           </button>
           
           {sheetCustomOpen && (
             <div className="mt-2 flex flex-col gap-3 rounded-xl border border-slate-100 bg-white p-4 dark:border-slate-800 dark:bg-slate-900 animate-in fade-in slide-in-from-top-2">
               <div className="flex items-center gap-3">
                 <div className="flex-1">
-                  <label className="mb-1 block text-xs font-semibold text-slate-500">Dari</label>
+                  <label className="mb-1 block text-xs font-semibold text-slate-600">Dari</label>
                   <input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" />
                 </div>
                 <div className="flex-1">
-                  <label className="mb-1 block text-xs font-semibold text-slate-500">Sampai</label>
+                  <label className="mb-1 block text-xs font-semibold text-slate-600">Sampai</label>
                   <input type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} className="w-full rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200" />
                 </div>
               </div>

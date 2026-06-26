@@ -62,7 +62,7 @@ function CustomTooltip({
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-xl dark:border-slate-700 dark:bg-slate-800">
-      <p className="mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400">
+      <p className="mb-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
         {label}
       </p>
       {payload.map((p, i) => (

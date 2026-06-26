@@ -104,7 +104,7 @@ export function BudgetModal({
           </h2>
           <button
             onClick={handleClose}
-            className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+            className="rounded-full p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
             <X className="h-5 w-5" />
           </button>
@@ -154,7 +154,7 @@ export function BudgetModal({
               
               {!editingBudget && expenseCategories.filter(c => !existingBudgetCategoryIds.includes(c.clientId || c.id || '')).length === 0 && (
                 <div className="col-span-3 sm:col-span-4 p-4 text-center rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800">
-                  <p className="text-sm font-medium text-slate-500 dark:text-slate-400">
+                  <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
                     Semua kategori pengeluaran sudah memiliki anggaran bulan ini.
                   </p>
                 </div>
@@ -168,7 +168,7 @@ export function BudgetModal({
               Batas Nominal
             </label>
             <div className="relative">
-              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-slate-400">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-slate-600">
                 Rp
               </span>
               <CurrencyInput
@@ -177,7 +177,7 @@ export function BudgetModal({
                 onChange={setAmount}
                 required
                 placeholder="0"
-                className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-lg font-bold text-slate-900 shadow-sm transition-colors placeholder:text-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-lg font-bold text-slate-900 shadow-sm transition-colors placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
               />
             </div>
           </div>

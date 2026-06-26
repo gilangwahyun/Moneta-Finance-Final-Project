@@ -81,7 +81,7 @@ export function SpendingAnalyticsChart() {
     if (active && payload && payload.length) {
       return (
         <div className="rounded-lg border border-slate-200 bg-white p-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1">{label || payload[0].name}</p>
+          <p className="text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1">{label || payload[0].name}</p>
           <p className="text-sm font-bold text-slate-900 dark:text-white">
             {formatCurrency(payload[0].value)}
           </p>
@@ -94,20 +94,20 @@ export function SpendingAnalyticsChart() {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800/50 dark:bg-slate-900">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
           Analisis Pengeluaran
         </h2>
         
         <div className="flex rounded-lg border border-slate-200 p-1 dark:border-slate-700">
           <button 
             onClick={() => setView("CATEGORY")}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${view === "CATEGORY" ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white" : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"}`}
+            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${view === "CATEGORY" ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white" : "text-slate-600 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"}`}
           >
             Kategori
           </button>
           <button 
             onClick={() => setView("TREND")}
-            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${view === "TREND" ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white" : "text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"}`}
+            className={`rounded-md px-3 py-1.5 text-xs font-medium transition-colors ${view === "TREND" ? "bg-slate-100 text-slate-900 dark:bg-slate-800 dark:text-white" : "text-slate-600 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"}`}
           >
             Tren
           </button>
@@ -138,7 +138,7 @@ export function SpendingAnalyticsChart() {
                 </PieChart>
               </ResponsiveContainer>
               <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                <span className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Pengeluaran</span>
+                <span className="text-xs font-medium text-slate-600 dark:text-slate-400">Total Pengeluaran</span>
                 <span className="text-lg font-bold text-slate-900 dark:text-white">
                   {formatCurrency(currentMonthData.total)}
                 </span>
@@ -146,7 +146,7 @@ export function SpendingAnalyticsChart() {
             </>
           ) : (
             <div className="flex h-full items-center justify-center">
-              <p className="text-sm text-slate-400">Belum ada pengeluaran bulan ini</p>
+              <p className="text-sm text-slate-600">Belum ada pengeluaran bulan ini</p>
             </div>
           )
         ) : (

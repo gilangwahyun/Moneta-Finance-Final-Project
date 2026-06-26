@@ -33,7 +33,7 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     await context.close();
   });
 
-  test('Skenario 1 (CRITICAL): UI merender peringatan "Defisit Arus Kas"', async () => {
+  test('[AU-11-01_01] Melihat Rekomendasi: Skenario 1 (CRITICAL): UI merender peringatan "Defisit Arus Kas"', async () => {
     const page = await context.newPage();
     await registerFreshUser(page, 'insight_deficit');
 
@@ -41,15 +41,18 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     await page.goto('/wallets');
     await page.click('button:has-text("Tambah Dompet")');
     await page.fill('input[placeholder="contoh: BCA, GoPay"]', 'Dompet Utama');
-    await page.fill('input[placeholder="0"]', '10000000');
+    await page.locator('input[placeholder="0"]').clear();
+    await page.locator('input[placeholder="0"]').pressSequentially('10000000', { delay: 10 });
     await page.click('button[type="submit"]:has-text("Simpan Dompet")');
-    await page.waitForTimeout(1000);
+    await expect(page.locator('h2:has-text("Tambah Dompet Baru")')).not.toBeVisible();
+    await expect(page.locator('div, a').filter({ hasText: 'Dompet Utama' }).first()).toBeVisible({ timeout: 10000 });
 
     // 2. Add Income 1.000.000
     await page.goto('/transactions');
     await page.click('button:has-text("Tambah Transaksi")');
     await page.locator('form button:has-text("Pemasukan")').click();
-    await page.fill('#txn-amount', '1000000');
+    await page.locator('#txn-amount').clear();
+    await page.locator('#txn-amount').pressSequentially('1000000', { delay: 10 });
     await page.locator('button[aria-label="Gaji"]').click();
     await page.fill('#txn-desc', 'Gaji');
     await page.locator('form button[type="submit"]:has-text("Simpan")').click();
@@ -57,7 +60,8 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
 
     // 3. Add Expense 2.000.000 (Creates a deficit: Expense > Income)
     await page.click('button:has-text("Tambah Transaksi")');
-    await page.fill('#txn-amount', '2000000');
+    await page.locator('#txn-amount').clear();
+    await page.locator('#txn-amount').pressSequentially('2000000', { delay: 10 });
     // Using default category
     await page.fill('#txn-desc', 'Beli Kulkas');
     await page.locator('form button[type="submit"]:has-text("Simpan")').click();
@@ -77,7 +81,7 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     await page.close();
   });
 
-  test('Skenario 2 (INFO): UI merender "Pengeluaran Tanpa Anggaran"', async () => {
+  test('[AU-11-01_02] Melihat Rekomendasi: Skenario 2 (INFO): UI merender "Pengeluaran Tanpa Anggaran"', async () => {
     const page = await context.newPage();
     await registerFreshUser(page, 'insight_nobudget');
 
@@ -85,16 +89,19 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     await page.goto('/wallets');
     await page.click('button:has-text("Tambah Dompet")');
     await page.fill('input[placeholder="contoh: BCA, GoPay"]', 'Dompet Kas');
-    await page.fill('input[placeholder="0"]', '5000000');
+    await page.locator('input[placeholder="0"]').clear();
+    await page.locator('input[placeholder="0"]').pressSequentially('5000000', { delay: 10 });
     await page.click('button[type="submit"]:has-text("Simpan Dompet")');
-    await page.waitForTimeout(1000);
+    await expect(page.locator('h2:has-text("Tambah Dompet Baru")')).not.toBeVisible();
+    await expect(page.locator('div, a').filter({ hasText: 'Dompet Kas' }).first()).toBeVisible({ timeout: 10000 });
 
     // 2. We deliberately DO NOT create any budget.
     // 2.5 Add Income to prevent 'Data Pemasukan Kosong' from hiding our insight
     await page.goto('/transactions');
     await page.click('button:has-text("Tambah Transaksi")');
     await page.locator('form button:has-text("Pemasukan")').click();
-    await page.fill('#txn-amount', '5000000');
+    await page.locator('#txn-amount').clear();
+    await page.locator('#txn-amount').pressSequentially('5000000', { delay: 10 });
     await page.locator('button[aria-label="Gaji"]').click();
     await page.fill('#txn-desc', 'Gaji');
     await page.locator('form button[type="submit"]:has-text("Simpan")').click();
@@ -102,9 +109,9 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
 
     // 3. Add Expense (500.000)
     await page.click('button:has-text("Tambah Transaksi")');
-    await page.fill('#txn-amount', '500000');
-    // Select Wallet 'Dompet Kas'
-    await page.locator('button[aria-label="Dompet Kas"]').click();
+    await page.locator('#txn-amount').clear();
+    await page.locator('#txn-amount').pressSequentially('500000', { delay: 10 });
+    // Wallet 'Dompet Kas' is auto-selected because it is the only wallet
     // Select category 'Makanan' to enable the submit button
     await page.locator('button[aria-label="Makanan"]').click();
     await page.fill('#txn-desc', 'Makan Steak');
@@ -121,7 +128,7 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     await page.close();
   });
 
-  test('Skenario 3 (POSITIVE): UI merender "Kamu Berhasil Berhemat!"', async () => {
+  test('[AU-11-01_03] Melihat Rekomendasi: Skenario 3 (POSITIVE): UI merender "Kamu Berhasil Berhemat!"', async () => {
     const page = await context.newPage();
     await registerFreshUser(page, 'insight_positive');
 
@@ -129,16 +136,19 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     await page.goto('/wallets');
     await page.click('button:has-text("Tambah Dompet")');
     await page.fill('input[placeholder="contoh: BCA, GoPay"]', 'Dompet Kas');
-    await page.fill('input[placeholder="0"]', '15000000');
+    await page.locator('input[placeholder="0"]').clear();
+    await page.locator('input[placeholder="0"]').pressSequentially('15000000', { delay: 10 });
     await page.click('button[type="submit"]:has-text("Simpan Dompet")');
-    await page.waitForTimeout(1000);
+    await expect(page.locator('h2:has-text("Tambah Dompet Baru")')).not.toBeVisible();
+    await expect(page.locator('div, a').filter({ hasText: 'Dompet Kas' }).first()).toBeVisible({ timeout: 10000 });
 
     // 2. Setup Data - hanya ada pemasukan besar (tidak ada pengeluaran)
     await page.goto('/transactions');
     await page.click('button:has-text("Tambah Transaksi")');
     await page.locator('form button:has-text("Pemasukan")').click();
-    await page.fill('#txn-amount', '15000000');
-    await page.locator('button[aria-label="Dompet Kas"]').click();
+    await page.locator('#txn-amount').clear();
+    await page.locator('#txn-amount').pressSequentially('15000000', { delay: 10 });
+    // Wallet 'Dompet Kas' is auto-selected
     await page.locator('button[aria-label="Gaji"]').click();
     await page.fill('#txn-desc', 'Bonus Tahunan');
     await page.locator('form button[type="submit"]:has-text("Simpan")').click();

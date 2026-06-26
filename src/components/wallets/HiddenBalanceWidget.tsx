@@ -46,13 +46,13 @@ export function HiddenBalanceWidget({
       <div className="relative z-10">
         {/* ── Label + Toggle button ─────────────────────── */}
         <div className="flex items-center justify-between">
-          <p className="text-xs font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <p className="text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Total Saldo Bersih
           </p>
           <button
             onClick={onToggle}
             aria-label={isVisible ? "Sembunyikan saldo" : "Tampilkan saldo"}
-            className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-slate-400 transition-all hover:bg-slate-100 hover:text-slate-600 active:scale-95 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+            className="flex items-center gap-1.5 rounded-lg px-2 py-1 text-xs font-medium text-slate-600 transition-all hover:bg-slate-100 hover:text-slate-600 active:scale-95 dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
             {isVisible ? (
               <EyeOff className="h-3.5 w-3.5" />
@@ -85,7 +85,7 @@ export function HiddenBalanceWidget({
             <div className="mt-1 flex items-center gap-3">
               <p
                 aria-hidden="true"
-                className="select-none font-sans text-xl font-bold tracking-widest text-slate-400 dark:text-slate-600"
+                className="select-none font-sans text-xl font-bold tracking-widest text-slate-600 dark:text-slate-600"
               >
                 ••••••
               </p>
@@ -95,7 +95,7 @@ export function HiddenBalanceWidget({
 
         {/* ── Subtitle shown only when balance is visible ── */}
         {isVisible && !isLoading && (
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
             Gabungan saldo semua dompetmu
           </p>
         )}

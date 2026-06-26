@@ -95,7 +95,7 @@ export default function DashboardPage() {
               {username ? `Hai, ${username}!` : 'Beranda'}
             </h1>
           )}
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">{monthLabel}</p>
+          <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">{monthLabel}</p>
         </div>
       </div>
 
@@ -170,7 +170,7 @@ export default function DashboardPage() {
               <stat.Icon className="h-20 w-20" />
             </div>
             <div className="relative z-10">
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">{stat.label}</p>
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">{stat.label}</p>
               <div className="min-h-[52px] pt-1">
                 {isLoading ? (
                   <Skeleton className="mt-0.5 h-6 w-20" />
@@ -180,7 +180,7 @@ export default function DashboardPage() {
                       {stat.prefix}
                       {formatCurrency(stat.value)}
                     </p>
-                    {stat.subtext && <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{stat.subtext}</p>}
+                    {stat.subtext && <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{stat.subtext}</p>}
                   </>
                 )}
               </div>
@@ -239,7 +239,7 @@ export default function DashboardPage() {
             <LayoutList className="h-6 w-6 text-indigo-500 dark:text-indigo-400" />
           </div>
           <p className="mt-3 text-sm font-medium text-slate-700 dark:text-slate-300">Belum ada anggaran bulan ini</p>
-          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Atur anggaran untuk mulai memantau pengeluaranmu</p>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">Atur anggaran untuk mulai memantau pengeluaranmu</p>
           <a
             href="/budgets"
             className="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:bg-indigo-500 active:scale-95 dark:bg-indigo-500 dark:hover:bg-indigo-400"
@@ -253,7 +253,7 @@ export default function DashboardPage() {
 
       <div className="overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm dark:border-slate-800/60 dark:bg-slate-900">
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Transaksi Terbaru</h2>
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Transaksi Terbaru</h2>
           <a
             href="/transactions"
             className="text-xs font-medium text-indigo-600 transition-colors hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300"
@@ -279,7 +279,7 @@ export default function DashboardPage() {
           </div>
         ) : transactions.length === 0 ? (
           <div className="px-5 py-10 text-center">
-            <p className="text-slate-500 dark:text-slate-400">Belum ada transaksi</p>
+            <p className="text-slate-600 dark:text-slate-400">Belum ada transaksi</p>
             <button
               onClick={() => {}}
               className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 hover:text-indigo-700 dark:text-indigo-400"
@@ -300,7 +300,7 @@ export default function DashboardPage() {
       <div className="flex justify-center pt-2 pb-8">
         <a
           href="/analytics"
-          className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+          className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 transition-colors hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
         >
           Lihat Analisis Lengkap &rarr;
         </a>

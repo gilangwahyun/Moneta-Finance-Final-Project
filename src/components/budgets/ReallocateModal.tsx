@@ -63,15 +63,15 @@ function CustomSelect({
               <span className="truncate text-sm font-semibold text-slate-900 dark:text-slate-50">
                 {selected.title}
               </span>
-              <span className="truncate text-xs font-medium text-slate-500 dark:text-slate-400">
+              <span className="truncate text-xs font-medium text-slate-600 dark:text-slate-400">
                 {selected.subtitle}
               </span>
             </>
           ) : (
-            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">{placeholder}</span>
+            <span className="text-sm font-medium text-slate-600 dark:text-slate-400">{placeholder}</span>
           )}
         </div>
-        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+        <ChevronDown className={`h-4 w-4 shrink-0 text-slate-600 transition-transform ${isOpen ? "rotate-180" : ""}`} />
       </button>
 
       {isOpen && (
@@ -95,7 +95,7 @@ function CustomSelect({
                   <span className={`truncate text-sm font-semibold ${value === o.value ? "text-indigo-700 dark:text-indigo-400" : "text-slate-900 dark:text-slate-50"}`}>
                     {o.title}
                   </span>
-                  <span className={`truncate text-xs font-medium ${value === o.value ? "text-indigo-600/80 dark:text-indigo-400/80" : "text-slate-500 dark:text-slate-400"}`}>
+                  <span className={`truncate text-xs font-medium ${value === o.value ? "text-indigo-600/80 dark:text-indigo-400/80" : "text-slate-600 dark:text-slate-400"}`}>
                     {o.subtitle}
                   </span>
                 </div>
@@ -103,7 +103,7 @@ function CustomSelect({
               </button>
             ))}
             {options.length === 0 && (
-              <div className="p-4 text-center text-sm font-medium text-slate-500">Tidak ada opsi tersedia</div>
+              <div className="p-4 text-center text-sm font-medium text-slate-600">Tidak ada opsi tersedia</div>
             )}
           </div>
         </div>
@@ -227,14 +227,14 @@ export function ReallocateModal({
               <h2 className="text-base font-bold text-slate-900 dark:text-slate-50">
                 Subsidi Silang
               </h2>
-              <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+              <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                 Pindahkan sebagian sisa anggaran ke kategori lain.
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-800 dark:hover:text-slate-300"
+            className="rounded-full p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-600 transition-colors dark:hover:bg-slate-800 dark:hover:text-slate-300"
           >
             <X className="h-5 w-5" />
           </button>
@@ -266,7 +266,7 @@ export function ReallocateModal({
                       style={{ width: `${Math.min(100, Math.round((sourceBudget.spent / Number(sourceBudget.amount)) * 100))}%` }}
                     />
                   </div>
-                  <span className="shrink-0 text-xs font-medium text-slate-500 dark:text-slate-400">
+                  <span className="shrink-0 text-xs font-medium text-slate-600 dark:text-slate-400">
                     Sisa <span className="font-bold text-slate-700 dark:text-slate-200">{formatCurrency(sourceRemaining)}</span>
                   </span>
                </div>
@@ -296,7 +296,7 @@ export function ReallocateModal({
               Nominal
             </label>
             <div className="relative">
-              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-slate-400">
+              <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 font-semibold text-slate-600">
                 Rp
               </span>
               <CurrencyInput
@@ -310,7 +310,7 @@ export function ReallocateModal({
                 }`}
               />
             </div>
-            <p className={`mt-2 text-xs font-medium ${amountError ? "text-rose-500 dark:text-rose-400" : "text-slate-500 dark:text-slate-400"}`}>
+            <p className={`mt-2 text-xs font-medium ${amountError ? "text-rose-500 dark:text-rose-400" : "text-slate-600 dark:text-slate-400"}`}>
               {amountError || "Masukkan nominal yang ingin dipindahkan."}
             </p>
           </div>
@@ -325,16 +325,16 @@ export function ReallocateModal({
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium text-slate-600 dark:text-slate-300">{sourceBudget.category?.name || "Sumber"}</span>
                   <div className="flex items-center gap-1.5 font-bold">
-                    <span className="text-slate-400 line-through decoration-slate-300 dark:decoration-slate-600">{formatCurrency(Number(sourceBudget.amount))}</span>
-                    <span className="text-slate-400">→</span>
+                    <span className="text-slate-600 line-through decoration-slate-300 dark:decoration-slate-600">{formatCurrency(Number(sourceBudget.amount))}</span>
+                    <span className="text-slate-600">→</span>
                     <span className="text-rose-600 dark:text-rose-400">{formatCurrency(Number(sourceBudget.amount) - parsedAmount)}</span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="font-medium text-slate-600 dark:text-slate-300">{destinationBudget.category?.name || "Tujuan"}</span>
                   <div className="flex items-center gap-1.5 font-bold">
-                    <span className="text-slate-400 line-through decoration-slate-300 dark:decoration-slate-600">{formatCurrency(Number(destinationBudget.amount))}</span>
-                    <span className="text-slate-400">→</span>
+                    <span className="text-slate-600 line-through decoration-slate-300 dark:decoration-slate-600">{formatCurrency(Number(destinationBudget.amount))}</span>
+                    <span className="text-slate-600">→</span>
                     <span className="text-emerald-600 dark:text-emerald-400">{formatCurrency(Number(destinationBudget.amount) + parsedAmount)}</span>
                   </div>
                 </div>

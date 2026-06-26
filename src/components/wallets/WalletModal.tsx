@@ -83,7 +83,7 @@ export function WalletModal({ isOpen, onClose, editingWallet }: WalletModalProps
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
             {editingWallet ? "Ubah Dompet" : "Tambah Dompet Baru"}
           </h2>
-          <button onClick={onClose} className="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
+          <button onClick={onClose} className="rounded-full p-2 text-slate-600 hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -121,18 +121,18 @@ export function WalletModal({ isOpen, onClose, editingWallet }: WalletModalProps
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Saldo Awal (Opsional)</label>
               <div className="relative">
-                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-400">Rp</span>
+                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm font-semibold text-slate-600">Rp</span>
                 <CurrencyInput
                   value={initialBalance}
                   onChange={setInitialBalance}
                   placeholder="0"
-                  className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm font-semibold text-slate-900 shadow-sm transition-colors placeholder:text-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
+                  className="w-full rounded-xl border border-slate-200 bg-white py-3 pl-12 pr-4 text-sm font-semibold text-slate-900 shadow-sm transition-colors placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 />
               </div>
             </div>
           ) : (
             <div>
-              <p className="text-xs text-slate-500 font-medium dark:text-slate-400 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800/50 text-center">
+              <p className="text-xs text-slate-600 font-medium dark:text-slate-400 p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-800/50 text-center">
                 Saldo dihitung otomatis dari riwayat transaksi.
               </p>
             </div>

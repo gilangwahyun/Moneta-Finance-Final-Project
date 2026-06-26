@@ -73,7 +73,7 @@ export function TransactionItem({
               </span>
             )}
           </div>
-          <p className="truncate text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+          <p className="truncate text-xs text-slate-600 dark:text-slate-400 mt-0.5">
             {formatDate(transaction.date, transaction.createdAt)}
           </p>
         </div>

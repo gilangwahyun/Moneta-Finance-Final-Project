@@ -120,7 +120,7 @@ function groupNotifications(notifications: DisplayNotification[]): NotificationG
  */
 function TypeBadge({ type, eventType }: { type: string; eventType?: string }) {
   const colors: Record<string, string> = {
-    system: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+    system: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
     BUDGET_CRITICAL: 'bg-rose-50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400',
     BUDGET_WARNING: 'bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-300',
     BUDGET_INFO: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300',
@@ -130,7 +130,7 @@ function TypeBadge({ type, eventType }: { type: string; eventType?: string }) {
     DAILY_EXPENSE_SUMMARY: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400',
     REMINDER: 'bg-purple-50 text-purple-700 dark:bg-purple-950/20 dark:text-purple-300',
     DIGEST: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400',
-    SYSTEM: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400',
+    SYSTEM: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
   };
   const label: Record<string, string> = {
     system: 'Sistem',
@@ -206,7 +206,7 @@ function EmptyState() {
         </div>
       </div>
       <h3 className="text-base font-semibold text-slate-900 dark:text-slate-50">Semua aman!</h3>
-      <p className="mt-1.5 max-w-xs text-sm text-slate-500 dark:text-slate-400">
+      <p className="mt-1.5 max-w-xs text-sm text-slate-600 dark:text-slate-400">
         Belum ada peringatan keuangan untukmu saat ini. Kami akan memberitahumu jika ada hal penting.
       </p>
     </div>
@@ -245,14 +245,14 @@ function NotificationListItem({ item, onMarkRead, onNavigate }: { item: DisplayN
           <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
             <p
               className={`text-sm font-semibold leading-tight ${
-                item.isUnread ? 'text-slate-900 dark:text-slate-50' : 'text-slate-500 dark:text-slate-400'
+                item.isUnread ? 'text-slate-900 dark:text-slate-50' : 'text-slate-600 dark:text-slate-400'
               }`}
             >
               {item.title}
             </p>
             <div className="flex shrink-0 items-center gap-2">
               <TypeBadge type={item.type} eventType={item.eventType} />
-              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+              <span className="text-[11px] text-slate-600 dark:text-slate-400">
                 {formatAbsoluteTime(item.createdAt)}
                 {formatRelativeTime(item.createdAt) && ` • ${formatRelativeTime(item.createdAt)}`}
               </span>
@@ -260,7 +260,7 @@ function NotificationListItem({ item, onMarkRead, onNavigate }: { item: DisplayN
           </div>
           <p
             className={`text-sm leading-relaxed ${
-              item.isUnread ? 'text-slate-600 dark:text-slate-300' : 'text-slate-500 dark:text-slate-400'
+              item.isUnread ? 'text-slate-600 dark:text-slate-300' : 'text-slate-600 dark:text-slate-400'
             }`}
           >
             {item.body}
@@ -410,7 +410,7 @@ export default function NotificationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50 sm:text-2xl">Notifikasi</h1>
-          <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
             {isLoading
               ? 'Memuat...'
               : notifications.length === 0
@@ -470,7 +470,7 @@ export default function NotificationsPage() {
         <div className="space-y-6">
           {groupNotifications(filteredNotifications).map((group) => (
             <div key={group.label} className="space-y-3">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 px-1">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400 px-1">
                 {group.label}
               </h2>
               <div className="space-y-2">
@@ -482,7 +482,7 @@ export default function NotificationsPage() {
           ))}
 
           {/* Footer */}
-          <p className="pt-2 text-center text-[11px] text-slate-400 dark:text-slate-600">Menampilkan {filteredNotifications.length} notifikasi</p>
+          <p className="pt-2 text-center text-[11px] text-slate-600 dark:text-slate-600">Menampilkan {filteredNotifications.length} notifikasi</p>
         </div>
       )}
     </div>

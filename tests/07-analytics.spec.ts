@@ -41,9 +41,11 @@ test.describe.serial('3. Analytics & Export', () => {
     await page.click('button:has-text("Tambah Dompet")');
     await page.fill('input[placeholder="contoh: BCA, GoPay"]', 'Dompet Utama');
     const balanceInput = page.locator('input[placeholder="0"]');
-    await balanceInput.fill('0');
+    await balanceInput.clear();
+    await balanceInput.pressSequentially('0', { delay: 10 });
     await page.click('button[type="submit"]:has-text("Simpan Dompet")');
-    await page.waitForTimeout(1000);
+    await expect(page.locator('h2:has-text("Tambah Dompet Baru")')).not.toBeVisible();
+    await expect(page.locator('div, a').filter({ hasText: 'Dompet Utama' }).first()).toBeVisible({ timeout: 10000 });
 
     // 3. Create Transactions
     await page.goto('/transactions');
@@ -52,7 +54,8 @@ test.describe.serial('3. Analytics & Export', () => {
     await page.click('button:has-text("Tambah Transaksi")');
     await expect(page.locator('h2:has-text("Tambah Transaksi")')).toBeVisible();
     await page.locator('form button:has-text("Pemasukan")').click();
-    await page.fill('#txn-amount', '10000000');
+    await page.locator('#txn-amount').clear();
+    await page.locator('#txn-amount').pressSequentially('10000000', { delay: 10 });
     await page.locator('button[aria-label="Gaji"]').click();
     await page.fill('#txn-desc', 'Gaji Bulan Ini');
     await page.locator('form button[type="submit"]:has-text("Simpan")').click();
@@ -61,7 +64,8 @@ test.describe.serial('3. Analytics & Export', () => {
     // T2: Expense this month
     await page.click('button:has-text("Tambah Transaksi")');
     await expect(page.locator('h2:has-text("Tambah Transaksi")')).toBeVisible();
-    await page.fill('#txn-amount', '2000000');
+    await page.locator('#txn-amount').clear();
+    await page.locator('#txn-amount').pressSequentially('2000000', { delay: 10 });
     // 'Makan & Minum' is auto-selected by default, skipping explicit click to prevent timeouts.
     await page.fill('#txn-desc', 'Makan Enak');
     await page.locator('form button[type="submit"]:has-text("Simpan")').click();
@@ -70,7 +74,8 @@ test.describe.serial('3. Analytics & Export', () => {
     // T3: Expense LAST month
     await page.click('button:has-text("Tambah Transaksi")');
     await expect(page.locator('h2:has-text("Tambah Transaksi")')).toBeVisible();
-    await page.fill('#txn-amount', '1000000');
+    await page.locator('#txn-amount').clear();
+    await page.locator('#txn-amount').pressSequentially('1000000', { delay: 10 });
     await page.fill('#txn-date', lastMonthStr);
     // Rely on default category for this transaction as well.
     await page.fill('#txn-desc', 'Tiket Pesawat Lama');
@@ -82,7 +87,7 @@ test.describe.serial('3. Analytics & Export', () => {
     await context.close();
   });
 
-  test('Time Filters & Charts: User can view analytics and change time periods', async () => {
+  test('[AU-10-01_01] Tampil Analisis Keuangan: Time Filters & Charts: User can view analytics and change time periods', async () => {
     await page.goto('/analytics');
     
     // By default it should show This Month
@@ -103,7 +108,7 @@ test.describe.serial('3. Analytics & Export', () => {
     await expect(chartSvg).toBeVisible();
   });
 
-  test('Category Drilldown: User can open the drilldown drawer from the category list', async () => {
+  test('[AU-10-01_02] Tampil Analisis Keuangan: Category Drilldown: User can open the drilldown drawer from the category list', async () => {
     await page.goto('/analytics');
     
     // Wait for the total value to appear to ensure data is loaded
@@ -129,7 +134,7 @@ test.describe.serial('3. Analytics & Export', () => {
     await expect(drawerTitle).not.toBeVisible();
   });
 
-  test('Export XLSX: User can download transactions in excel format from Profile', async () => {
+  test('[AU-17-01_01] Ekspor Data Keuangan: Export XLSX: User can download transactions in excel format from Profile', async () => {
     await page.goto('/profile');
     
     // Start waiting for download before clicking

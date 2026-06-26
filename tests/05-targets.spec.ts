@@ -32,9 +32,11 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
     await page.goto('http://localhost:3000/wallets');
     await page.click('button:has-text("Tambah Dompet")');
     await page.fill('input[placeholder="contoh: BCA, GoPay"]', 'Dompet Utama');
-    await page.fill('input[placeholder="0"]', '1000000');
+    await page.locator('input[placeholder="0"]').clear();
+    await page.locator('input[placeholder="0"]').pressSequentially('1000000', { delay: 10 });
     await page.click('button[type="submit"]:has-text("Simpan Dompet")');
-    await page.waitForTimeout(1000);
+    await expect(page.locator('h2:has-text("Tambah Dompet Baru")')).not.toBeVisible();
+    await expect(page.locator('div, a').filter({ hasText: 'Dompet Utama' }).first()).toBeVisible({ timeout: 10000 });
     
     // Create Income Transaction (Gaji 5M)
     await page.goto('http://localhost:3000/transactions');
@@ -43,19 +45,19 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
     await expect(modal).toBeVisible();
     await modal.locator('button:has-text("Pemasukan")').first().click();
     await page.fill('#txn-amount', '5000000');
-    await page.locator('button[aria-label="Dompet Utama"]').click();
+    // Wallet "Dompet Utama" is auto-selected because it is the only wallet
     await page.locator('button[aria-label="Gaji"]').click();
     await page.fill('#txn-desc', 'Gaji QA');
     await page.click('button[type="submit"]:has-text("Simpan")');
     await expect(modal).not.toBeVisible();
-    await page.waitForTimeout(1000);
+    await expect(page.locator('div, p').filter({ hasText: 'Gaji QA' }).first()).toBeVisible({ timeout: 10000 });
   });
 
   test.afterAll(async () => {
     await context.close();
   });
 
-  test('Create: User can set an Income target', async () => {
+  test('[AU-09-01_01] Tambah Target Finansial: User can set an Income target', async () => {
     await page.goto('/targets');
     
     await page.click('button:has-text("Tambah Target Pemasukan")');
@@ -68,7 +70,8 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
     
     // Amount
     const amountInput = page.locator('input[placeholder="0"]');
-    await amountInput.fill('10000000'); // 10 Million
+    await amountInput.clear();
+    await amountInput.pressSequentially('10000000', { delay: 10 }); // 10 Million
     
     // Period is MONTHLY by default.
     // Select category (required)
@@ -88,7 +91,7 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
     await expect(row.locator('span', { hasText: '10.000.000' }).first()).toBeVisible();
   });
 
-  test('Edit: User can edit an existing target', async () => {
+  test('[AU-09-02_01] Ubah Target Finansial: User can edit an existing target', async () => {
     await page.goto('/targets');
     
     const row = page.locator('div.group.relative').filter({ hasText: 'Target Pemasukan Bulanan' });
@@ -100,7 +103,8 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
     
     // Change limit to 5 Million so it reaches 100%
     const amountInput = page.locator('input[placeholder="0"]');
-    await amountInput.fill('5000000');
+    await amountInput.clear();
+    await amountInput.pressSequentially('5000000', { delay: 10 });
     
     await page.click('button[type="submit"]:has-text("Simpan Perubahan")');
     await expect(modal).not.toBeVisible();
@@ -109,7 +113,7 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
     await expect(page.locator('span:has-text("Tercapai")').first()).toBeVisible();
   });
 
-  test('Delete: User can delete a target', async () => {
+  test('[AU-09-03_01] Hapus Target Finansial: User can delete a target', async () => {
     await page.goto('/targets');
     
     const row = page.locator('div.group.relative').filter({ hasText: 'Target Pemasukan Bulanan' });

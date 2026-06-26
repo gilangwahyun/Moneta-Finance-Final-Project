@@ -73,7 +73,7 @@ export default function RegisterPage() {
           <h1 className="text-4xl font-extrabold tracking-tight text-indigo-600 dark:text-indigo-400">
             Moneta
           </h1>
-          <p className="mt-2 text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-slate-600 dark:text-slate-400">
             Mulai perjalanan keuanganmu bersama kami.
           </p>
         </div>
@@ -128,7 +128,7 @@ export default function RegisterPage() {
                 className="mt-1 w-full rounded-lg border border-slate-300 bg-white px-4 py-2 text-slate-900 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white"
                 placeholder="Pilih username unikmu"
               />
-              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
                 3–30 karakter. Huruf, angka, dan garis bawah saja.
               </p>
             </div>
@@ -156,7 +156,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -189,7 +189,7 @@ export default function RegisterPage() {
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-slate-600 dark:hover:text-slate-300"
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -216,7 +216,7 @@ export default function RegisterPage() {
             </button>
           </form>
 
-          <p className="mt-8 text-center text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-8 text-center text-sm text-slate-600 dark:text-slate-400">
             Sudah punya akun?{" "}
             <Link
               href="/login"

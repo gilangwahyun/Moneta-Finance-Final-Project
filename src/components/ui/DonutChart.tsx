@@ -58,7 +58,7 @@ function CustomTooltip({
           {d.name}
         </p>
       </div>
-      <p className="text-xs text-slate-500 dark:text-slate-400">
+      <p className="text-xs text-slate-600 dark:text-slate-400">
         {fmtAmt(d.value)}&nbsp;&middot;&nbsp;{d.percentage}%
       </p>
       {d.budgetSpentPct !== undefined && (
@@ -142,7 +142,7 @@ export function DonutChart({ data, onSliceClick, showLegend = true }: DonutChart
         </ResponsiveContainer>
         {/* Center label */}
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <p className="text-[10px] font-medium uppercase tracking-wider text-slate-500 dark:text-slate-400">
+          <p className="text-[10px] font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Total
           </p>
           <p className="text-base font-bold text-slate-800 dark:text-slate-100">
@@ -195,7 +195,7 @@ export function DonutChart({ data, onSliceClick, showLegend = true }: DonutChart
                   </div>
                 </div>
                 {hasBudget && <BudgetMiniBar pct={d.budgetSpentPct!} />}
-                <p className="mt-0.5 pl-5 text-[10px] text-slate-500 dark:text-slate-400">
+                <p className="mt-0.5 pl-5 text-[10px] text-slate-600 dark:text-slate-400">
                   {fmtAmt(d.value)}
                   {hasBudget &&
                     ` · ${d.budgetSpentPct!.toFixed(0)}% dari anggaran`}

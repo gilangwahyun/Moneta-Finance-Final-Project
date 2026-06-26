@@ -35,7 +35,7 @@ test.describe.serial('2.2 Categories (Kategori)', () => {
     await context.close();
   });
 
-  test('Create: User can create a new category', async () => {
+  test('[AU-05-01_01] Tambah Kategori: User can create a new category', async () => {
     await page.goto('/categories');
     
     // Default tab is EXPENSE. Create an expense category.
@@ -62,7 +62,7 @@ test.describe.serial('2.2 Categories (Kategori)', () => {
     await expect(page.locator('span', { hasText: 'Langganan Spesial' }).first()).toBeVisible();
   });
 
-  test('Edit: User can edit an existing custom category', async () => {
+  test('[AU-05-02_01] Ubah Kategori: User can edit an existing custom category', async () => {
     await page.goto('/categories');
     
     const categoryRow = page.locator('.group.relative').filter({ hasText: 'Langganan Spesial' });
@@ -87,7 +87,7 @@ test.describe.serial('2.2 Categories (Kategori)', () => {
     await expect(page.locator('span', { hasText: 'Langganan Pro' }).first()).toBeVisible();
   });
 
-  test('Delete: User can delete a custom category', async () => {
+  test('[AU-05-03_01] Hapus Kategori: User can delete a custom category', async () => {
     await page.goto('/categories');
     
     const categoryRow = page.locator('.group.relative').filter({ hasText: 'Langganan Pro' });
@@ -107,7 +107,7 @@ test.describe.serial('2.2 Categories (Kategori)', () => {
     await expect(page.locator('span', { hasText: 'Langganan Pro' })).toHaveCount(0);
   });
 
-  test('Quick Add: User can create a new category directly from the Transaction Modal', async () => {
+  test('[AU-05-01_02] Tambah Kategori Cepat: User can create a new category directly from the Transaction Modal', async () => {
     await page.goto('/transactions');
     await page.click('button:has-text("Tambah Transaksi")');
     

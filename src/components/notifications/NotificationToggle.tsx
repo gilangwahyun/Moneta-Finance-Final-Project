@@ -227,14 +227,14 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
     return (
       <div className={`rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50 ${className}`}>
         <div className="flex items-start gap-2.5">
-          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-400 dark:bg-slate-700">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-700">
             <BellSlashIcon />
           </div>
           <div>
             <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
               Notifikasi tidak tersedia
             </p>
-            <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+            <p className="mt-0.5 text-[11px] text-slate-600 dark:text-slate-400">
               Browser kamu tidak mendukung notifikasi push.
             </p>
           </div>
@@ -255,7 +255,7 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
             <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
               Notifikasi diblokir
             </p>
-            <p className="mt-0.5 text-[11px] leading-tight text-slate-500 dark:text-slate-400">
+            <p className="mt-0.5 text-[11px] leading-tight text-slate-600 dark:text-slate-400">
               Untuk mengaktifkannya, klik ikon gembok di bilah alamat browser kamu
               dan atur <strong>Notifikasi</strong> ke <strong>Izinkan</strong>,
               lalu muat ulang halaman.
@@ -280,7 +280,7 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
         <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${
           isOn
             ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400"
-            : "bg-slate-100 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+            : "bg-slate-100 text-slate-600 dark:bg-slate-700 dark:text-slate-400"
         }`}>
           {isLoading ? <SpinnerIcon /> : isOn ? <BellIcon /> : <BellSlashIcon />}
         </div>
@@ -290,7 +290,7 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
           <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
             {isOn ? "Notifikasi aktif" : "Notifikasi nonaktif"}
           </p>
-          <p className="mt-0.5 text-[11px] leading-tight text-slate-500 dark:text-slate-400">
+          <p className="mt-0.5 text-[11px] leading-tight text-slate-600 dark:text-slate-400">
             {isOn
               ? "Kamu akan menerima pengingat dari Moneta."
               : "Aktifkan untuk menerima peringatan anggaran dan pengeluaran."}

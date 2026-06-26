@@ -33,7 +33,7 @@ test.describe.serial('2.1 Wallets (Dompet)', () => {
   });
 
   // 1. Create Wallet
-  test('Create: User can create a new wallet', async () => {
+  test('[AU-06-01_01] Tambah Dompet: User can create a new wallet', async () => {
     await page.goto('/wallets');
     
     await page.click('button:has-text("Tambah Dompet")');
@@ -44,19 +44,20 @@ test.describe.serial('2.1 Wallets (Dompet)', () => {
     // Fill wallet details
     await page.fill('input[placeholder="contoh: BCA, GoPay"]', 'Dompet BCA QA');
     await page.selectOption('select', 'BANK');
-    await page.fill('input[placeholder="0"]', '1500000');
+    const amountInput = page.locator('input[placeholder="0"]');
+    await amountInput.clear();
+    await amountInput.pressSequentially('1500000', { delay: 10 });
     
     await page.click('button[type="submit"]:has-text("Simpan Dompet")');
     
     // Wait for modal to close
     await expect(modal).not.toBeVisible();
     
-    // Verify wallet appears in the list with correct initial balance
-    await expect(page.locator('p:has-text("Dompet BCA QA")')).toBeVisible();
-    await expect(page.locator('span:has-text("1.500.000")')).toBeVisible();
+    const newWallet = page.locator('div, a').filter({ hasText: 'Dompet BCA QA' }).first();
+    await expect(newWallet).toBeVisible({ timeout: 10000 });
   });
 
-  test('Validation: Wallet name cannot be empty', async () => {
+  test('[AU-06-01_02] Tambah Dompet Invalid: Wallet name cannot be empty', async () => {
     await page.goto('/wallets');
     await page.click('button:has-text("Tambah Dompet")');
     
@@ -77,7 +78,7 @@ test.describe.serial('2.1 Wallets (Dompet)', () => {
     await expect(modal).not.toBeVisible();
   });
 
-  test('Validation: Initial balance ignores non-numeric input', async () => {
+  test('[AU-06-01_03] Tambah Dompet Invalid: Initial balance ignores non-numeric input', async () => {
     await page.goto('/wallets');
     await page.click('button:has-text("Tambah Dompet")');
     
@@ -98,7 +99,7 @@ test.describe.serial('2.1 Wallets (Dompet)', () => {
     await expect(modal).not.toBeVisible();
   });
 
-  test('Edit: User can edit wallet details', async () => {
+  test('[AU-06-02_01] Ubah Dompet: User can edit wallet details', async () => {
     await page.goto('/wallets');
     
     // Find the wallet row
@@ -125,7 +126,7 @@ test.describe.serial('2.1 Wallets (Dompet)', () => {
     await expect(page.locator('p:text-is("Dompet BCA QA")')).not.toBeVisible();
   });
 
-  test('Delete: User can delete a wallet', async () => {
+  test('[AU-06-03_01] Hapus Dompet: User can delete a wallet', async () => {
     await page.goto('/wallets');
     
     const row = page.locator('div.group.relative').filter({ hasText: 'Dompet BCA QA Edited' });

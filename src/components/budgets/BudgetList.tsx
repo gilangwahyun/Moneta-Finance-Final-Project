@@ -12,12 +12,12 @@ export function BudgetList({ period, selectedMonth }: BudgetListProps) {
   const { budgetsWithStats: budgets, isLoading, transactions: txnLoading } = useBudgets(selectedMonth);
 
   if (isLoading || txnLoading) {
-    return <div className="text-sm text-slate-500">Loading budgets...</div>;
+    return <div className="text-sm text-slate-600">Loading budgets...</div>;
   }
 
   if (budgets.length === 0) {
     return (
-      <div className="rounded-xl border border-slate-200 p-5 text-center text-sm text-slate-500">
+      <div className="rounded-xl border border-slate-200 p-5 text-center text-sm text-slate-600">
         No budgets set for {period}.
       </div>
     );

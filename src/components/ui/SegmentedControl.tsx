@@ -73,7 +73,7 @@ export function SegmentedControl<T extends string = string>({
                 className={`rounded-full px-1.5 py-0.5 text-[10px] font-semibold transition-colors ${
                   isActive
                     ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400"
-                    : "bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400"
+                    : "bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-400"
                 }`}
               >
                 {opt.count}

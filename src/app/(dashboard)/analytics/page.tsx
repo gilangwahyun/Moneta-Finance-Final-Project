@@ -192,7 +192,7 @@ function InsightsPanel({ insights, isLoading, hasData }: { insights: NudgeInsigh
             <>
               <ShieldCheck className="mb-3 h-10 w-10 text-emerald-500 opacity-80" />
               <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Keuangan terlihat stabil</p>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-[280px]">
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-[280px]">
                 Belum ada pola berisiko pada periode ini.
               </p>
             </>
@@ -200,7 +200,7 @@ function InsightsPanel({ insights, isLoading, hasData }: { insights: NudgeInsigh
             <>
               <BarChart2 className="mb-3 h-10 w-10 text-slate-300 dark:text-slate-700" />
               <p className="text-sm font-bold text-slate-800 dark:text-slate-200">Belum ada rekomendasi</p>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400 max-w-[280px]">
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 max-w-[280px]">
                 Tambahkan lebih banyak transaksi agar Moneta dapat membaca pola keuanganmu.
               </p>
             </>
@@ -297,14 +297,14 @@ export default function AnalyticsPage() {
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50 sm:text-2xl">
           Analisis Keuangan
         </h1>
-        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
           Ringkasan dan pola keuangan berdasarkan transaksi tersimpan
         </p>
       </div>
 
       <div>
         <AnalyticsTimeFilter />
-        <p className="mt-2.5 text-sm font-medium text-slate-500 dark:text-slate-400">
+        <p className="mt-2.5 text-sm font-medium text-slate-600 dark:text-slate-400">
           {activeSummaryText}
         </p>
       </div>
@@ -387,7 +387,7 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3 text-xs md:text-sm text-slate-400">
+          <div className="flex items-center gap-3 text-xs md:text-sm text-slate-600">
             <span className="flex items-center gap-1">
               <span className={`inline-block h-2 w-2 rounded-full ${activeSegment === "EXPENSE" ? "bg-slate-400" : "bg-emerald-500"}`} />
               {activeSegment === "EXPENSE" ? "Di bawah rata-rata" : "Pemasukan harian"}
@@ -434,7 +434,7 @@ export default function AnalyticsPage() {
         ) : donutData.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-10">
             <PieChart className="mb-3 h-10 w-10 text-slate-300 dark:text-slate-700" />
-            <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">Belum ada data distribusi</p>
+            <p className="text-sm font-semibold text-slate-600 dark:text-slate-400">Belum ada data distribusi</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-[40%_60%] items-center divide-y md:divide-y-0 md:divide-x divide-slate-100 dark:divide-slate-800">
@@ -457,7 +457,7 @@ export default function AnalyticsPage() {
                 }}
               />
               <div className="text-center mt-4">
-                <p className="text-xs md:text-sm uppercase tracking-wider font-bold text-slate-500 dark:text-slate-400">TOTAL</p>
+                <p className="text-xs md:text-sm uppercase tracking-wider font-bold text-slate-600 dark:text-slate-400">TOTAL</p>
                 <p className="text-xl md:text-2xl font-bold text-slate-900 dark:text-slate-50 mt-0.5">
                   {formatCurrency(current[activeSegment.toLowerCase() as "expense" | "income"])}
                 </p>
@@ -496,7 +496,7 @@ export default function AnalyticsPage() {
                         <span className="text-sm md:text-base font-bold text-slate-900 dark:text-slate-50">
                           {formatCurrency(slice.value)}
                         </span>
-                        <span className="w-10 text-right text-xs md:text-sm font-medium text-slate-400">{slice.percentage}%</span>
+                        <span className="w-10 text-right text-xs md:text-sm font-medium text-slate-600">{slice.percentage}%</span>
                         <ChevronRight className="h-4 w-4 text-slate-300 opacity-0 transition-all -ml-2 group-hover:opacity-100 group-hover:translate-x-1 dark:text-slate-600" />
                       </div>
                     </div>

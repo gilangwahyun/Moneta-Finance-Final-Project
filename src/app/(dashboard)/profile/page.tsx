@@ -277,7 +277,7 @@ export default function ProfilePage() {
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
-          <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
             Memuat profil...
           </p>
         </div>
@@ -291,7 +291,7 @@ export default function ProfilePage() {
         <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50 sm:text-2xl">
           Profil
         </h1>
-        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+        <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
           Pengaturan akun dan manajemen data
         </p>
       </div>
@@ -306,7 +306,7 @@ export default function ProfilePage() {
             <p className="truncate text-lg font-semibold text-slate-900 dark:text-slate-50">
               {user?.username || "User"}
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               Pencatat Keuangan
             </p>
           </div>
@@ -314,7 +314,7 @@ export default function ProfilePage() {
 
         <div className="mt-5 grid grid-cols-1 gap-3 border-t border-slate-100 pt-5 dark:border-slate-800/50 sm:grid-cols-2">
           <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
               Bergabung Sejak
             </p>
             <p className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-slate-50">
@@ -328,7 +328,7 @@ export default function ProfilePage() {
             </p>
           </div>
           <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
-            <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
               Status Sinkronisasi
             </p>
             <div className="mt-0.5 flex items-center gap-2">
@@ -354,7 +354,7 @@ export default function ProfilePage() {
 
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/50 dark:bg-slate-900">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-400">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-600">
           Pengaturan Aplikasi
         </h2>
 
@@ -371,11 +371,11 @@ export default function ProfilePage() {
               <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
                 Manajemen Dompet
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Tambah dan kelola dompet atau rekening kamu
               </p>
             </div>
-            <div className="text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600 dark:group-hover:text-slate-300">
+            <div className="text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600 dark:group-hover:text-slate-300">
               <ChevronRight className="h-5 w-5" />
             </div>
           </Link>
@@ -392,11 +392,11 @@ export default function ProfilePage() {
               <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
                 Manajemen Kategori
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Tambah, ubah, atau hapus kategori kustom
               </p>
             </div>
-            <div className="text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600 dark:group-hover:text-slate-300">
+            <div className="text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600 dark:group-hover:text-slate-300">
               <ChevronRight className="h-5 w-5" />
             </div>
           </Link>
@@ -413,11 +413,11 @@ export default function ProfilePage() {
               <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
                 Pengaturan Notifikasi
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Kelola peringatan dan ringkasan harian
               </p>
             </div>
-            <div className="text-slate-400 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600 dark:group-hover:text-slate-300">
+            <div className="text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600 dark:group-hover:text-slate-300">
               <ChevronRight className="h-5 w-5" />
             </div>
           </Link>
@@ -426,7 +426,7 @@ export default function ProfilePage() {
 
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/50 dark:bg-slate-900">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
           Manajemen Data
         </h2>
 
@@ -460,7 +460,7 @@ export default function ProfilePage() {
               <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
                 Sinkronisasi Paksa
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Kirim perubahan lokal dan tarik pembaruan server
               </p>
             </div>
@@ -497,10 +497,10 @@ export default function ProfilePage() {
                   Hapus Cache Lokal
                 </p>
                 <Tooltip content="Menghapus data sementara di peramban. Transaksi aman." position="top">
-                  <Info className="h-3.5 w-3.5 text-slate-400" />
+                  <Info className="h-3.5 w-3.5 text-slate-600" />
                 </Tooltip>
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Hapus semua data cache (data server aman)
               </p>
             </div>
@@ -535,7 +535,7 @@ export default function ProfilePage() {
               <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
                 Unduh Laporan Excel
               </p>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 {isOnline
                   ? "Unduh seluruh data transaksi dalam format Excel (.xlsx) yang rapi"
                   : "Butuh koneksi internet untuk mengekspor laporan Excel"}
@@ -548,7 +548,7 @@ export default function ProfilePage() {
 
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/50 dark:bg-slate-900">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
           Akun
         </h2>
 
@@ -580,7 +580,7 @@ export default function ProfilePage() {
             <p className="text-sm font-medium text-red-600 dark:text-red-400">
               Keluar
             </p>
-            <p className="text-xs text-slate-500 dark:text-slate-400">
+            <p className="text-xs text-slate-600 dark:text-slate-400">
               Keluar dan kembali ke layar login
             </p>
           </div>

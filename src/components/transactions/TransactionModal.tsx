@@ -376,7 +376,7 @@ export function TransactionModal({
           </h2>
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
+            className="rounded-full p-2 text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-600 dark:hover:bg-slate-800 dark:hover:text-slate-300"
             aria-label="Tutup form"
           >
             <X className="h-5 w-5" />
@@ -480,7 +480,7 @@ export function TransactionModal({
                     }}
                     rows={4}
                     placeholder={`Contoh:\nBCA - Debit Rp150.000 dari rek 1234567890 ke rek 0987654321 berhasil. Saldo akhir Rp2.350.000`}
-                    className="w-full resize-none rounded-lg border border-indigo-200 bg-white px-3 py-2 text-[13px] leading-relaxed text-slate-700 shadow-sm placeholder:text-slate-300 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-indigo-800/60 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-600"
+                    className="w-full resize-none rounded-lg border border-indigo-200 bg-white px-3 py-2 text-[13px] leading-relaxed text-slate-700 shadow-sm placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-indigo-800/60 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-600"
                   />
                   {/* //********** Status badge ********** */}
                   {mutationStatus !== "idle" && (
@@ -514,7 +514,7 @@ export function TransactionModal({
               Nominal
             </label>
             <div className="relative">
-              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg font-semibold text-slate-400">
+              <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg font-semibold text-slate-600">
                 Rp
               </span>
               <CurrencyInput
@@ -686,7 +686,7 @@ export function TransactionModal({
                   className={[
                     "flex flex-col items-center justify-center gap-1.5 min-h-[60px]",
                     "rounded-xl border-2 border-dashed border-slate-200 px-1 py-3",
-                    "text-[10px] font-medium text-slate-400",
+                    "text-[10px] font-medium text-slate-600",
                     "transition-all duration-150 active:scale-95",
                     "hover:border-indigo-300 hover:bg-indigo-50/50 hover:text-indigo-600",
                     "dark:border-slate-700 dark:text-slate-600 dark:hover:border-indigo-700/60 dark:hover:bg-indigo-950/20 dark:hover:text-indigo-400",
@@ -704,7 +704,7 @@ export function TransactionModal({
                   onClick={() => {
                     setIsCategoryExpanded((v) => !v);
                   }}
-                  className="flex w-full items-center justify-center gap-1 pt-0.5 text-[11px] font-medium text-slate-400 transition-colors hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400"
+                  className="flex w-full items-center justify-center gap-1 pt-0.5 text-[11px] font-medium text-slate-600 transition-colors hover:text-indigo-600 dark:text-slate-500 dark:hover:text-indigo-400"
                 >
                   <ChevronDown
                     className={`h-3.5 w-3.5 transition-transform duration-200 ${
@@ -748,7 +748,7 @@ export function TransactionModal({
             <div>
               <label htmlFor="txn-desc" className={labelCls}>
                 Deskripsi{" "}
-                <span className="font-normal text-slate-400">(Opsional)</span>
+                <span className="font-normal text-slate-600">(Opsional)</span>
               </label>
               <input
                 id="txn-desc"
@@ -756,7 +756,7 @@ export function TransactionModal({
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
                 placeholder="Contoh: Makan siang"
-                className={inputCls + " placeholder:text-slate-300"}
+                className={inputCls + " placeholder:text-slate-500"}
               />
             </div>
           )}
@@ -767,7 +767,7 @@ export function TransactionModal({
               <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                 <label htmlFor="txn-note" className={labelCls}>
                   Catatan{" "}
-                  <span className="font-normal text-slate-400">(Opsional)</span>
+                  <span className="font-normal text-slate-600">(Opsional)</span>
                 </label>
                 <textarea
                   id="txn-note"
@@ -776,7 +776,7 @@ export function TransactionModal({
                   placeholder="Catatan tambahan..."
                   rows={2}
                   autoFocus
-                  className={inputCls + " placeholder:text-slate-300"}
+                  className={inputCls + " placeholder:text-slate-500"}
                 />
               </div>
             ) : (

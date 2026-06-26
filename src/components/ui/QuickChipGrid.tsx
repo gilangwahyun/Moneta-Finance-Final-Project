@@ -119,7 +119,7 @@ export function QuickChipGrid({
   /********** Render **********/
   return (
     <div>
-      <p className="mb-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+      <p className="mb-2 text-xs font-medium text-slate-600 dark:text-slate-400">
         Pilihan cepat
       </p>
       {/* Single-line horizontal scroll on mobile; wraps on desktop — hide-scrollbar in globals.css */}
@@ -152,7 +152,7 @@ export function QuickChipGrid({
                 "rounded-full border px-3 py-1.5 text-xs font-medium",
                 "transition-all duration-150 active:scale-95",
                 isDisabled
-                  ? "cursor-not-allowed border-slate-200/60 bg-slate-100 text-slate-400 dark:border-slate-800/40 dark:bg-slate-900 dark:text-slate-600"
+                  ? "cursor-not-allowed border-slate-200/60 bg-slate-100 text-slate-600 dark:border-slate-800/40 dark:bg-slate-900 dark:text-slate-600"
                   : isActive
                   ? "border-indigo-200 bg-indigo-50 text-indigo-700 shadow-sm dark:border-indigo-800/60 dark:bg-indigo-950/40 dark:text-indigo-300"
                   : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200 hover:bg-indigo-50 hover:text-indigo-700 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-indigo-800/60 dark:hover:bg-indigo-950/40 dark:hover:text-indigo-300",

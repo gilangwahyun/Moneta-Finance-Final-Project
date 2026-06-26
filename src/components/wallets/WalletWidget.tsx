@@ -64,10 +64,10 @@ export function WalletWidget({ wallets, transactions, isLoading }: WalletWidgetP
   if (wallets.length === 0) {
     return (
       <div className="rounded-xl border border-slate-100 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">Dompet</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Dompet</p>
         <div className="mt-3 flex flex-col items-center py-4 text-center">
           <WalletIcon className="h-8 w-8 text-slate-300 dark:text-slate-600" />
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">Belum ada dompet</p>
+          <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Belum ada dompet</p>
         </div>
       </div>
     );
@@ -77,7 +77,7 @@ export function WalletWidget({ wallets, transactions, isLoading }: WalletWidgetP
     <div className="rounded-xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
       {/* Header */}
       <div className="flex items-center justify-between px-5 pt-4 pb-2">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
           Dompet
         </p>
         <Link
@@ -96,14 +96,14 @@ export function WalletWidget({ wallets, transactions, isLoading }: WalletWidgetP
           const isNegative = balance < 0;
           return (
             <div key={wallet.clientId} className="flex items-center gap-3 py-2.5 px-2">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400">
                 {WALLET_ICONS[wallet.type] ?? <WalletIcon className="h-4 w-4" />}
               </div>
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-medium text-slate-800 dark:text-slate-100">
                   {wallet.name}
                 </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
+                <p className="text-xs text-slate-600 dark:text-slate-400">
                   {WALLET_TYPE_LABELS[wallet.type] ?? wallet.type}
                 </p>
               </div>
@@ -122,7 +122,7 @@ export function WalletWidget({ wallets, transactions, isLoading }: WalletWidgetP
 
       {/* Total row */}
       <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-5 py-3 dark:border-slate-800/50 dark:bg-slate-800/30">
-        <p className="text-xs font-semibold text-slate-500 dark:text-slate-400">Total Saldo</p>
+        <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Total Saldo</p>
         {/* Bug 4: Use ASCII '-' instead of Unicode '−' */}
         <p className={`text-sm font-bold ${
           totalBalance < 0

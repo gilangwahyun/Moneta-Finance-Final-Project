@@ -97,7 +97,7 @@ export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: Ca
           type="button"
           onClick={onCancel}
           aria-label="Kembali ke form transaksi"
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-500 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 dark:border-slate-700 dark:text-slate-400 dark:hover:bg-slate-800"
         >
           <ArrowLeft className="h-4 w-4" />
         </button>
@@ -105,7 +105,7 @@ export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: Ca
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
             Buat Kategori Baru
           </h3>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400">
+          <p className="text-[11px] text-slate-600 dark:text-slate-400">
             Tipe: {type === "INCOME" ? "Pemasukan" : "Pengeluaran"}
           </p>
         </div>
@@ -118,7 +118,7 @@ export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: Ca
           >
             <PreviewIcon className="h-5 w-5" style={{ color }} />
           </div>
-          <span className="max-w-[48px] truncate text-center text-[9px] text-slate-400">
+          <span className="max-w-[48px] truncate text-center text-[9px] text-slate-600">
             {name || "Preview"}
           </span>
         </div>
@@ -128,7 +128,7 @@ export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: Ca
       <div>
         <label
           htmlFor="cat-builder-name"
-          className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400"
+          className="mb-1.5 block text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400"
         >
           Nama Kategori
         </label>
@@ -140,13 +140,13 @@ export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: Ca
           onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSave(); } }}
           placeholder="Contoh: Makan Siang"
-          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
+          className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-800 placeholder:text-slate-600 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-600"
         />
       </div>
 
       {/* ── Color picker ─────────────────────────────── */}
       <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
           Warna
         </p>
         <div className="flex flex-wrap gap-2">
@@ -179,7 +179,7 @@ export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: Ca
 
       {/* ── Icon picker ──────────────────────────────── */}
       <div>
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
           Ikon
         </p>
         {/* 5-column grid, max-height + scroll so it doesn't push CTA off-screen */}
@@ -197,7 +197,7 @@ export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: Ca
                   "flex flex-col items-center justify-center gap-1 rounded-xl border py-2.5 text-[9px] font-medium transition-all duration-150 active:scale-95",
                   isSelected
                     ? "border-transparent text-white shadow-sm"
-                    : "border-slate-200 bg-white text-slate-500 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800",
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:border-slate-700 dark:hover:bg-slate-800",
                 ].join(" ")}
                 style={isSelected ? { backgroundColor: color, borderColor: color } : {}}
               >

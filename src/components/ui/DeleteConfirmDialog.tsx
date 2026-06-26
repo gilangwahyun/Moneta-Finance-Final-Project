@@ -58,7 +58,7 @@ export function DeleteConfirmDialog({
             {title}
           </h3>
           
-          <p className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-2 text-center text-sm text-slate-600 dark:text-slate-400">
             {body}
           </p>
         </div>
