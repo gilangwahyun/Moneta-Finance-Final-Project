@@ -37,9 +37,6 @@ interface NudgeInsight {
 
 ---
 
-## KELOMPOK A — Budget & Anggaran (BG)
-
-
 ## KATEGORI 1: Anggaran (Budgeting)
 
 ### BG-00 (Budget Threshold 50%): Anggaran Terpakai Setengah
@@ -152,8 +149,6 @@ interface NudgeInsight {
   - CTA: `"Sesuaikan Anggaran"` → `/budgets`
 
 ---
-
-## KELOMPOK B — Spending Pattern / Pengeluaran (SP)
 
 ## KATEGORI 2: Pola Pengeluaran (Spending Patterns)
 
@@ -268,8 +263,6 @@ interface NudgeInsight {
 
 ---
 
-## KELOMPOK D — Dompet & Kas (WL)
-
 ## KATEGORI 3: Analitik Pola (Pattern Analytics)
 
 ### SP-04: Category Spike — Lonjakan Kategori vs Rata-rata 3 Bulan
@@ -314,8 +307,6 @@ interface NudgeInsight {
   - CTA: `"Lihat Analisis"` → `/analytics`
 
 ---
-
-## KELOMPOK C — Analitik Pola (AN)
 
 ### AN-01: Peak Spending Day — Hari Pengeluaran Tertinggi
 - **Modul**: Transaksi (bulan berjalan, per hari)
@@ -504,8 +495,6 @@ interface NudgeInsight {
 
 ---
 
-## KELOMPOK E — Target Keuangan (FT)
-
 ## KATEGORI 5: Target Finansial (Financial Targets)
 
 ### FT-01: Target Gap Alert — Target Belum Ada Progres
@@ -577,8 +566,6 @@ interface NudgeInsight {
 
 ---
 
-## KELOMPOK F — Reinforcement Positif (PR)
-
 ### PR-01: Berhasil Berhemat! — Positive Reinforcement 7 Hari
 - **Modul**: Transaksi (sliding window 7 hari terakhir)
 - **Sumber data**: `barData` di `use-analytics.ts` (loop `for i = 6..0`) → data per-hari 7 hari ke belakang dari hari ini
@@ -603,8 +590,6 @@ interface NudgeInsight {
   - CTA: `"Kelola Dompet"` → `/wallets`
 
 ---
-
-## KELOMPOK G — Rule Fallback
 
 ### FALLBACK: Pola Pengeluaran Stabil
 - **Kondisi**: Tidak ada rule lain yang aktif, tapi ada pengeluaran bulan ini (`insights.length === 0 AND current.expense > 0`)

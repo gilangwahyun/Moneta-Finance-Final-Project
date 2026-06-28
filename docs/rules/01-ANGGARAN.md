@@ -4,13 +4,14 @@ Kelompok ini mencakup semua aturan yang berkaitan dengan pengawasan anggaran fin
 
 ---
 
-## Rule BG-00a — Anggaran Terpakai Setengah
+## Rule BG-00 — Anggaran Terpakai Setengah
 
 **Entitas yang dipantau:** Anggaran × Transaksi × Kategori
 
 **Kondisi pemicu (pseudocode):**
+
 ```
-FUNGSI EvaluasiBG00a(anggaran, semuaTransaksi, semuaKategori):
+FUNGSI EvaluasiBG00(anggaran, semuaTransaksi, semuaKategori):
     transaksiBulanIni = FILTER semuaTransaksi DIMANA
         transaksi.tipe = 'EXPENSE'
         DAN transaksi.kategoriId = anggaran.kategoriId
@@ -22,14 +23,14 @@ FUNGSI EvaluasiBG00a(anggaran, semuaTransaksi, semuaKategori):
     JIKA rasio >= 0.5 DAN rasio < 0.8 MAKA
         HASILKAN Insight(
             judul = 'Penggunaan Anggaran Berjalan',
-            isi   = 'Anggaran {nama kategori} sudah terpakai 50%. Masih ada ruang, 
+            isi   = 'Anggaran {nama kategori} sudah terpakai 50%. Masih ada ruang,
                      tetapi mulai pantau agar tetap sesuai rencana.',
             tingkatUrgensi = 'info',
             prioritas      = 0.3
         )
 ```
 
-**Keluaran:** Judul "Penggunaan Anggaran Berjalan", tingkat urgensi *info*, dengan tombol aksi mengarah ke `/budgets`.
+**Keluaran:** Judul "Penggunaan Anggaran Berjalan", tingkat urgensi _info_, dengan tombol aksi mengarah ke `/budgets`.
 
 **Jenis keluaran:** Nudge (Digital Nudging — Peringatan Preventif). Rule ini mendorong kewaspadaan dini terhadap pola pengeluaran sebelum mendekati batas, tanpa menyertakan solusi eksekusi spesifik; pengguna dibiarkan menentukan responsnya sendiri.
 
@@ -40,6 +41,7 @@ FUNGSI EvaluasiBG00a(anggaran, semuaTransaksi, semuaKategori):
 **Entitas yang dipantau:** Anggaran × Transaksi × Kategori
 
 **Kondisi pemicu (pseudocode):**
+
 ```
 FUNGSI EvaluasiBG00b(anggaran, semuaTransaksi, semuaKategori):
     totalTerpakai = JUMLAH transaksi.nominal
@@ -56,7 +58,7 @@ FUNGSI EvaluasiBG00b(anggaran, semuaTransaksi, semuaKategori):
 
         JIKA pengeluaranHariIni > rataRata7Hari MAKA
             judul = 'Pengeluaran {nama kategori} Naik'
-            teksExtra = ' Pengeluaran hari ini {nominal}, lebih tinggi {selisih} 
+            teksExtra = ' Pengeluaran hari ini {nominal}, lebih tinggi {selisih}
                          dari rata-rata harian minggu lalu.'
         SEBALIKNYA
             judul = 'Anggaran Mulai Menipis'
@@ -72,9 +74,9 @@ FUNGSI EvaluasiBG00b(anggaran, semuaTransaksi, semuaKategori):
         )
 ```
 
-**Keluaran:** Judul "Anggaran Mulai Menipis" atau "Pengeluaran [Kategori] Naik" (jika ada data perbandingan), tingkat urgensi *warning*, tombol aksi ke `/budgets`.
+**Keluaran:** Judul "Anggaran Mulai Menipis" atau "Pengeluaran [Kategori] Naik" (jika ada data perbandingan), tingkat urgensi _warning_, tombol aksi ke `/budgets`.
 
-**Jenis keluaran:** Nudge (Digital Nudging — Peringatan dengan Konteks Perbandingan). Rule ini menggunakan teknik *loss framing* yang dikombinasikan dengan konteks harian, mendorong pengguna untuk menghentikan atau menunda pengeluaran berikutnya.
+**Jenis keluaran:** Nudge (Digital Nudging — Peringatan dengan Konteks Perbandingan). Rule ini menggunakan teknik _loss framing_ yang dikombinasikan dengan konteks harian, mendorong pengguna untuk menghentikan atau menunda pengeluaran berikutnya.
 
 ---
 
@@ -83,6 +85,7 @@ FUNGSI EvaluasiBG00b(anggaran, semuaTransaksi, semuaKategori):
 **Entitas yang dipantau:** Anggaran × Transaksi × Kategori × (opsional) Anggaran Lain
 
 **Kondisi pemicu (pseudocode):**
+
 ```
 FUNGSI EvaluasiBG00c(anggaran, semuaAnggaran, semuaTransaksi, semuaKategori):
     totalTerpakai = JUMLAH transaksi.nominal
@@ -96,7 +99,7 @@ FUNGSI EvaluasiBG00c(anggaran, semuaAnggaran, semuaTransaksi, semuaKategori):
     JIKA rasio = 1.0 MAKA
         HASILKAN Insight(
             judul          = 'Batas Anggaran Tercapai',
-            isi            = 'Anggaran {nama kategori} sudah mencapai batas bulan ini. 
+            isi            = 'Anggaran {nama kategori} sudah mencapai batas bulan ini.
                               Pengeluaran berikutnya akan membuat anggaran melewati limit.',
             tingkatUrgensi = 'critical',
             prioritas      = 0.1
@@ -109,9 +112,9 @@ FUNGSI EvaluasiBG00c(anggaran, semuaAnggaran, semuaTransaksi, semuaKategori):
         JIKA rekomendasiSumber DITEMUKAN MAKA
             HASILKAN Insight(
                 judul          = 'Rekomendasi Subsidi Silang',
-                isi            = 'Anggaran {nama kategori} telah melewati batas sebesar 
-                                  {defisit}. Kamu dapat mempertimbangkan memindahkan 
-                                  {jumlah rekomendasi} dari {nama kategori sumber}. 
+                isi            = 'Anggaran {nama kategori} telah melewati batas sebesar
+                                  {defisit}. Kamu dapat mempertimbangkan memindahkan
+                                  {jumlah rekomendasi} dari {nama kategori sumber}.
                                   Keputusan tetap ada di tanganmu.',
                 tingkatUrgensi = 'critical',
                 prioritas      = 0.1,
@@ -120,8 +123,8 @@ FUNGSI EvaluasiBG00c(anggaran, semuaAnggaran, semuaTransaksi, semuaKategori):
         SEBALIKNYA
             HASILKAN Insight(
                 judul          = 'Batas Anggaran Terlampaui',
-                isi            = 'Anggaran {nama kategori} telah melewati batas sebesar 
-                                  {defisit}. Kamu dapat meninjau pengeluaran atau 
+                isi            = 'Anggaran {nama kategori} telah melewati batas sebesar
+                                  {defisit}. Kamu dapat meninjau pengeluaran atau
                                   mempertimbangkan penyesuaian anggaran.',
                 tingkatUrgensi = 'critical',
                 prioritas      = 0.1
@@ -145,9 +148,9 @@ FUNGSI CariBudgetUntukSubsidi(targetAnggaran, semuaAnggaran):
     KEMBALIKAN null (tidak ada kandidat cocok)
 ```
 
-**Keluaran:** Judul "Batas Anggaran Tercapai", "Batas Anggaran Terlampaui", atau "Rekomendasi Subsidi Silang" (jika ada sumber dana alternatif), tingkat urgensi *critical*, tombol aksi ke `/budgets` atau ke halaman realokasi.
+**Keluaran:** Judul "Batas Anggaran Tercapai", "Batas Anggaran Terlampaui", atau "Rekomendasi Subsidi Silang" (jika ada sumber dana alternatif), tingkat urgensi _critical_, tombol aksi ke `/budgets` atau ke halaman realokasi.
 
-**Jenis keluaran:** Nudge (Digital Nudging — Intervensi Kritis dengan Rekomendasi Aksi). Ketika ada solusi yang memungkinkan, rule ini mengintegrasikan rekomendasi subsidi silang (*smart recommendation*) agar pengguna tidak hanya diberi peringatan, namun langsung ditawari jalur resolusi yang terukur.
+**Jenis keluaran:** Nudge (Digital Nudging — Intervensi Kritis dengan Rekomendasi Aksi). Ketika ada solusi yang memungkinkan, rule ini mengintegrasikan rekomendasi subsidi silang (_smart recommendation_) agar pengguna tidak hanya diberi peringatan, namun langsung ditawari jalur resolusi yang terukur.
 
 ---
 
@@ -156,6 +159,7 @@ FUNGSI CariBudgetUntukSubsidi(targetAnggaran, semuaAnggaran):
 **Entitas yang dipantau:** Anggaran × Transaksi (bulan berjalan)
 
 **Kondisi pemicu (pseudocode):**
+
 ```
 FUNGSI EvaluasiBG01(anggaran, transaksiBulanIni):
     hariIni       = tanggal hari ini dalam bulan (misal: 15)
@@ -183,17 +187,17 @@ FUNGSI EvaluasiBG01(anggaran, transaksiBulanIni):
     JIKA hariSampaiHabis < sisaHari MAKA
         HASILKAN Insight(
             judul = 'Anggaran Berisiko Habis Lebih Awal',
-            isi   = 'Dengan laju pengeluaran saat ini, anggaran {nama kategori} 
-                     diperkirakan habis dalam {hariSampaiHabis} hari, padahal bulan 
+            isi   = 'Dengan laju pengeluaran saat ini, anggaran {nama kategori}
+                     diperkirakan habis dalam {hariSampaiHabis} hari, padahal bulan
                      masih {sisaHari} hari lagi.',
             tingkatUrgensi = 'warning',
             prioritas      = 1.9
         )
 ```
 
-**Keluaran:** Judul "Anggaran Berisiko Habis Lebih Awal", tingkat urgensi *warning*, tombol aksi ke `/budgets`.
+**Keluaran:** Judul "Anggaran Berisiko Habis Lebih Awal", tingkat urgensi _warning_, tombol aksi ke `/budgets`.
 
-**Jenis keluaran:** Nudge (Digital Nudging — Proyeksi Preventif). Rule ini memanfaatkan prinsip *temporal projection* — memperlihatkan konsekuensi finansial di masa depan (kehabisan anggaran) agar pengguna termotivasi untuk mengambil tindakan korektif sekarang, bukan setelah defisit terjadi.
+**Jenis keluaran:** Nudge (Digital Nudging — Proyeksi Preventif). Rule ini memanfaatkan prinsip _temporal projection_ — memperlihatkan konsekuensi finansial di masa depan (kehabisan anggaran) agar pengguna termotivasi untuk mengambil tindakan korektif sekarang, bukan setelah defisit terjadi.
 
 ---
 
@@ -202,6 +206,7 @@ FUNGSI EvaluasiBG01(anggaran, transaksiBulanIni):
 **Entitas yang dipantau:** Transaksi × Kategori × Anggaran (ketiadaan)
 
 **Kondisi pemicu (pseudocode):**
+
 ```
 FUNGSI EvaluasiBG03(semuaTransaksi, semuaAnggaran, semuaKategori):
     totalPerKategori = {}
@@ -217,8 +222,8 @@ FUNGSI EvaluasiBG03(semuaTransaksi, semuaAnggaran, semuaKategori):
 
             HASILKAN Insight(
                 judul = 'Pengeluaran Tanpa Anggaran',
-                isi   = 'Kamu sudah mencatat {totalNominal} pengeluaran di 
-                         {namaKategori} bulan ini, tapi belum ada anggaran 
+                isi   = 'Kamu sudah mencatat {totalNominal} pengeluaran di
+                         {namaKategori} bulan ini, tapi belum ada anggaran
                          untuk kategori ini.',
                 tingkatUrgensi = 'info',
                 prioritas      = 1.5
@@ -226,9 +231,9 @@ FUNGSI EvaluasiBG03(semuaTransaksi, semuaAnggaran, semuaKategori):
             HENTIKAN (ambil pertama yang ditemukan)
 ```
 
-**Keluaran:** Judul "Pengeluaran Tanpa Anggaran", tingkat urgensi *info*, tombol aksi ke `/budgets` dengan pre-fill kategori terkait.
+**Keluaran:** Judul "Pengeluaran Tanpa Anggaran", tingkat urgensi _info_, tombol aksi ke `/budgets` dengan pre-fill kategori terkait.
 
-**Jenis keluaran:** Nudge (Digital Nudging — Rekomendasi Proaktif). Rule ini mendeteksi kebutuhan perencanaan yang terlewat dan secara aktif mendorong pengguna untuk mengisi celah tersebut. Batas Rp 200.000 dipakai sebagai *minimum significance threshold* agar notifikasi tidak muncul untuk pengeluaran yang terlalu sepele.
+**Jenis keluaran:** Nudge (Digital Nudging — Rekomendasi Proaktif). Rule ini mendeteksi kebutuhan perencanaan yang terlewat dan secara aktif mendorong pengguna untuk mengisi celah tersebut. Batas Rp 200.000 dipakai sebagai _minimum significance threshold_ agar notifikasi tidak muncul untuk pengeluaran yang terlalu sepele.
 
 ---
 
@@ -237,6 +242,7 @@ FUNGSI EvaluasiBG03(semuaTransaksi, semuaAnggaran, semuaKategori):
 **Entitas yang dipantau:** Transaksi × Kategori (riwayat 3 bulan)
 
 **Kondisi pemicu (pseudocode):**
+
 ```
 FUNGSI EvaluasiBG04(semuaTransaksi, semuaAnggaran, semuaKategori):
     bulanM1 = 1 bulan lalu
@@ -262,8 +268,8 @@ FUNGSI EvaluasiBG04(semuaTransaksi, semuaAnggaran, semuaKategori):
             JIKA rataRata > 50.000 MAKA
                 HASILKAN Insight(
                     judul = 'Saran Anggaran Baru',
-                    isi   = 'Kamu rutin mencatat rata-rata {rataRata}/bulan di 
-                             {nama kategori}. Pertimbangkan membuat anggaran 
+                    isi   = 'Kamu rutin mencatat rata-rata {rataRata}/bulan di
+                             {nama kategori}. Pertimbangkan membuat anggaran
                              dengan nominal tersebut.',
                     tingkatUrgensi = 'info',
                     prioritas      = 1.6
@@ -271,9 +277,9 @@ FUNGSI EvaluasiBG04(semuaTransaksi, semuaAnggaran, semuaKategori):
                 HENTIKAN (ambil pertama yang ditemukan)
 ```
 
-**Keluaran:** Judul "Saran Anggaran Baru", tingkat urgensi *info*, tombol aksi ke `/budgets`.
+**Keluaran:** Judul "Saran Anggaran Baru", tingkat urgensi _info_, tombol aksi ke `/budgets`.
 
-**Jenis keluaran:** Nudge (Digital Nudging — Rekomendasi Berbasis Data). Rule ini menggunakan pola historis pengguna sendiri (*data-driven personalization*) untuk menyarankan batas anggaran yang realistis, mengurangi gesekan (*friction*) dalam proses membuat anggaran baru.
+**Jenis keluaran:** Nudge (Digital Nudging — Rekomendasi Berbasis Data). Rule ini menggunakan pola historis pengguna sendiri (_data-driven personalization_) untuk menyarankan batas anggaran yang realistis, mengurangi gesekan (_friction_) dalam proses membuat anggaran baru.
 
 ---
 
@@ -282,6 +288,7 @@ FUNGSI EvaluasiBG04(semuaTransaksi, semuaAnggaran, semuaKategori):
 **Entitas yang dipantau:** Anggaran × Transaksi (riwayat 3 bulan berturut-turut)
 
 **Kondisi pemicu (pseudocode):**
+
 ```
 FUNGSI EvaluasiBG05(semuaAnggaran, semuaTransaksi, semuaKategori):
     bulanM1 = 1 bulan lalu
@@ -307,9 +314,9 @@ FUNGSI EvaluasiBG05(semuaAnggaran, semuaTransaksi, semuaKategori):
 
             HASILKAN Insight(
                 judul = 'Anggaran Mungkin Tidak Realistis',
-                isi   = 'Kamu secara konsisten melampaui anggaran {nama kategori} >20% 
-                         dalam 3 bulan terakhir (rata-rata {rataRataRealisasi} dari 
-                         budget {batasNominal}). Pertimbangkan untuk menyesuaikan 
+                isi   = 'Kamu secara konsisten melampaui anggaran {nama kategori} >20%
+                         dalam 3 bulan terakhir (rata-rata {rataRataRealisasi} dari
+                         budget {batasNominal}). Pertimbangkan untuk menyesuaikan
                          budget ini.',
                 tingkatUrgensi = 'warning',
                 prioritas      = 3.2
@@ -317,6 +324,6 @@ FUNGSI EvaluasiBG05(semuaAnggaran, semuaTransaksi, semuaKategori):
             HENTIKAN
 ```
 
-**Keluaran:** Judul "Anggaran Mungkin Tidak Realistis", tingkat urgensi *warning*, tombol aksi ke `/budgets`.
+**Keluaran:** Judul "Anggaran Mungkin Tidak Realistis", tingkat urgensi _warning_, tombol aksi ke `/budgets`.
 
 **Jenis keluaran:** Nudge (Digital Nudging — Umpan Balik Adaptif). Alih-alih hanya mengingatkan bahwa anggaran terlampaui, rule ini memberikan penilaian kritis bahwa batas anggaran itu sendiri yang mungkin perlu direvisi — mendorong perencanaan yang lebih realistis dan berbasis data historis pengguna itu sendiri.

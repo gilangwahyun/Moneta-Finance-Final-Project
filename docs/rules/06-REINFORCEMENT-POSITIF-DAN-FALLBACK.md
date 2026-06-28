@@ -164,13 +164,13 @@ FUNGSI EvaluasiFT03(semuaTarget, semuaTransaksi):
 
 ---
 
-## Rule FB-01 — Pola Pengeluaran Stabil (Empathetic Fallback)
+## Rule FALLBACK — Pola Pengeluaran Stabil (Empathetic Fallback)
 
 **Entitas yang dipantau:** Semua indikator analitik (bulan berjalan)
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiFB01(daftarSemuaInsightYangDihasilkan, totalPengeluaranBulanIni):
+FUNGSI EvaluasiFALLBACK(daftarSemuaInsightYangDihasilkan, totalPengeluaranBulanIni):
     -- Rule ini hanya aktif jika tidak ada satu pun rule lain yang menghasilkan insight
     JIKA JUMLAH daftarSemuaInsightYangDihasilkan = 0
     DAN totalPengeluaranBulanIni > 0 MAKA
@@ -191,13 +191,13 @@ FUNGSI EvaluasiFB01(daftarSemuaInsightYangDihasilkan, totalPengeluaranBulanIni):
 
 ---
 
-## Rule AN-PY — Proyeksi Kebiasaan (Annualized Snowball Projection)
+## Rule AN-09 — Proyeksi Kebiasaan (Annualized Snowball Projection)
 
 **Entitas yang dipantau:** Transaksi Pengeluaran pada kategori diskresioner (bulan berjalan)
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiANPY(transaksiBulanIni, semuaKategori, kategoriPengeluaranTeratas):
+FUNGSI EvaluasiAN09(transaksiBulanIni, semuaKategori, kategoriPengeluaranTeratas):
     kategorDiskresioner = kategori yang namanya mengandung:
         'hiburan', 'jajan', 'pribadi', 'gaya hidup', atau 'hobi'
 

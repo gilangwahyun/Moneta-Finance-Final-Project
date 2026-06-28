@@ -9,6 +9,7 @@ Kelompok ini mencakup aturan-aturan yang mendeteksi anomali dan pola pengeluaran
 **Entitas yang dipantau:** Transaksi Pemasukan × Transaksi Pengeluaran (30 hari terakhir)
 
 **Kondisi pemicu (pseudocode):**
+
 ```
 FUNGSI EvaluasiSP01(semuaTransaksi, semuaAnggaran, totalPemasukan):
     tiga0HariLalu = tanggal hari ini dikurangi 30 hari
@@ -40,108 +41,89 @@ FUNGSI EvaluasiSP01(semuaTransaksi, semuaAnggaran, totalPemasukan):
 
         HASILKAN Insight(
             judul = 'Pengeluaran Awal Bulan',
-            isi   = '{persentase}% dari pemasukan bulan ini telah terpakai hanya 
-                     dalam {selisihHari} hari terakhir. Periksa kembali pengeluaran 
+            isi   = '{persentase}% dari pemasukan bulan ini telah terpakai hanya
+                     dalam {selisihHari} hari terakhir. Periksa kembali pengeluaran
                      agar keuangan akhir bulan tetap terkendali.',
             tingkatUrgensi = 'critical',
             prioritas      = 1.0
         )
 ```
 
-**Keluaran:** Judul "Pengeluaran Awal Bulan", tingkat urgensi *critical*, tombol aksi ke `/transactions`.
+**Keluaran:** Judul "Pengeluaran Awal Bulan", tingkat urgensi _critical_, tombol aksi ke `/transactions`.
 
-**Jenis keluaran:** Nudge (Digital Nudging — Intervensi Kritis Berbasis Momentum). Rule ini mengeksploitasi fenomena *payday effect* — kecenderungan manusia berbelanja lebih boros segera setelah menerima penghasilan. Dengan membandingkan pengeluaran terhadap batas gaji di 3 hari pertama, sistem mendeteksi kebocoran finansial paling berbahaya sebelum merusak sisa bulan.
+**Jenis keluaran:** Nudge (Digital Nudging — Intervensi Kritis Berbasis Momentum). Rule ini mengeksploitasi fenomena _payday effect_ — kecenderungan manusia berbelanja lebih boros segera setelah menerima penghasilan. Dengan membandingkan pengeluaran terhadap batas gaji di 3 hari pertama, sistem mendeteksi kebocoran finansial paling berbahaya sebelum merusak sisa bulan.
 
 ---
 
-## Rule SP-01b — Data Pemasukan Kosong
+## Rule AN-10 — Defisit / Rasio Pengeluaran Tinggi terhadap Pemasukan
 
-**Entitas yang dipantau:** Transaksi Pengeluaran × Transaksi Pemasukan (bulan berjalan)
+**Entitas yang dipantau:** Transaksi Pemasukan × Transaksi Pengeluaran (bulan berjalan)
 
 **Kondisi pemicu (pseudocode):**
+
 ```
-FUNGSI EvaluasiSP01b(totalPemasukan, totalPengeluaran):
+FUNGSI EvaluasiAN10(totalPemasukan, totalPengeluaran):
+    -- KONDISI A: Belum ada pemasukan sama sekali tapi sudah ada pengeluaran
     JIKA totalPemasukan <= 0 DAN totalPengeluaran > 0 MAKA
         HASILKAN Insight(
-            judul = 'Data Pemasukan Kosong',
-            isi   = 'Belum ada pemasukan tercatat bulan ini, sehingga rasio 
-                     pengeluaran terhadap pemasukan belum dapat dihitung secara 
-                     akurat. Catat pemasukan agar analisis arus kas lebih lengkap.',
+            judul          = 'Data Pemasukan Kosong',
+            isi            = 'Belum ada pemasukan tercatat bulan ini, sehingga rasio
+                             pengeluaran terhadap pemasukan belum dapat dihitung secara
+                             akurat. Catat pemasukan agar analisis arus kas lebih lengkap.',
             tingkatUrgensi = 'critical',
             prioritas      = 1.1
         )
-```
+        HENTIKAN
 
-**Keluaran:** Judul "Data Pemasukan Kosong", tingkat urgensi *critical*, tombol aksi ke `/transactions` (buat transaksi baru).
-
-**Jenis keluaran:** Nudge (Digital Nudging — Peringatan Kelengkapan Data). Rule ini mendeteksi kondisi di mana analisis tidak dapat dilakukan secara akurat. Tanpa data pemasukan, semua rule berbasis rasio menjadi tidak valid. Notifikasi ini mendorong pengguna untuk melengkapi data agar sistem dapat memberikan insight yang bermakna.
-
----
-
-## Rule SP-01c — Defisit Arus Kas
-
-**Entitas yang dipantau:** Transaksi Pemasukan × Transaksi Pengeluaran (bulan berjalan)
-
-**Kondisi pemicu (pseudocode):**
-```
-FUNGSI EvaluasiSP01c(totalPemasukan, totalPengeluaran):
-    arusKasBersih = totalPemasukan - totalPengeluaran
-
+    -- KONDISI B: Pengeluaran sudah melebihi pemasukan (defisit)
     JIKA totalPemasukan > 0 DAN totalPengeluaran > totalPemasukan MAKA
-        kelebihan = ABS(arusKasBersih)
+        kelebihan = ABS(totalPengeluaran - totalPemasukan)
 
         HASILKAN Insight(
-            judul = 'Defisit Arus Kas',
-            isi   = 'Pengeluaran bulan ini melebihi pemasukan sebesar {kelebihan}. 
-                     Tinjau kembali kategori pengeluaran terbesar agar arus kas 
-                     bulanan tetap terkendali.',
+            judul          = 'Defisit Arus Kas',
+            isi            = 'Pengeluaran bulan ini melebihi pemasukan sebesar {kelebihan}.
+                             Tinjau kembali kategori pengeluaran terbesar agar arus kas
+                             bulanan tetap terkendali.',
             tingkatUrgensi = 'critical',
             prioritas      = 1.1
         )
+        HENTIKAN
+
+    -- KONDISI C: Rasio pengeluaran mendekati batas berbahaya (>= 80%)
+    JIKA totalPemasukan > 0 MAKA
+        rasio = totalPengeluaran / totalPemasukan
+
+        JIKA rasio >= 0.80 MAKA
+            persentase = BULAT(rasio * 100)
+
+            HASILKAN Insight(
+                judul          = 'Rasio Pengeluaran Tinggi',
+                isi            = 'Pengeluaran bulan ini sudah mencapai {persentase}% dari
+                                 pemasukan bulan ini. Pertimbangkan menyisihkan sebagian
+                                 pemasukan terlebih dahulu sebelum menambah pengeluaran.',
+                tingkatUrgensi = 'warning',
+                prioritas      = 1.1
+            )
 ```
 
-**Keluaran:** Judul "Defisit Arus Kas", tingkat urgensi *critical*, tombol aksi ke `/analytics`.
+**Keluaran:**
+- **Kondisi A** → Judul "Data Pemasukan Kosong", urgensi *critical*, CTA ke `/transactions`
+- **Kondisi B** → Judul "Defisit Arus Kas", urgensi *critical*, CTA ke `/analytics`
+- **Kondisi C** → Judul "Rasio Pengeluaran Tinggi", urgensi *warning*, CTA ke `/analytics`
 
-**Jenis keluaran:** Nudge (Digital Nudging — Peringatan Kondisi Darurat Finansial). Rule ini muncul hanya saat situasi paling kritis: pengeluaran sudah melampaui pendapatan. Pesan dirancang singkat dan langsung (*loss-framing*) agar pengguna segera bertindak, bukan sekadar membaca lalu mengabaikan.
+Ketiga kondisi dievaluasi secara berurutan (A → B → C) dan hanya satu yang aktif per siklus evaluasi.
+
+**Jenis keluaran:** Nudge (Digital Nudging — Peringatan Berjenjang Berbasis Rasio Arus Kas). Rule ini bekerja sebagai *safety net* berlapis — dimulai dari deteksi data yang belum lengkap (Kondisi A), kemudian kondisi darurat sesungguhnya (Kondisi B), hingga peringatan dini sebelum defisit terjadi (Kondisi C). Ambang 80% pada Kondisi C merujuk pada prinsip keuangan umum bahwa proporsi pengeluaran ideal tidak melebihi 80% dari pendapatan.
 
 ---
 
-## Rule SP-01d — Rasio Pengeluaran Tinggi
-
-**Entitas yang dipantau:** Transaksi Pemasukan × Transaksi Pengeluaran (bulan berjalan)
-
-**Kondisi pemicu (pseudocode):**
-```
-FUNGSI EvaluasiSP01d(totalPemasukan, totalPengeluaran):
-    JIKA totalPemasukan <= 0 MAKA HENTIKAN
-    JIKA totalPengeluaran > totalPemasukan MAKA HENTIKAN (ditangani SP-01c)
-
-    rasio = totalPengeluaran / totalPemasukan
-
-    JIKA rasio >= 0.80 MAKA
-        persentase = BULAT(rasio * 100)
-
-        HASILKAN Insight(
-            judul = 'Rasio Pengeluaran Tinggi',
-            isi   = 'Pengeluaran bulan ini sudah mencapai {persentase}% dari pemasukan 
-                     bulan ini. Pertimbangkan menyisihkan sebagian pemasukan terlebih 
-                     dahulu sebelum menambah pengeluaran.',
-            tingkatUrgensi = 'warning',
-            prioritas      = 1.1
-        )
-```
-
-**Keluaran:** Judul "Rasio Pengeluaran Tinggi", tingkat urgensi *warning*, tombol aksi ke `/analytics`.
-
-**Jenis keluaran:** Nudge (Digital Nudging — Peringatan Dini Berbasis Rasio). Ambang batas 80% merujuk pada prinsip keuangan umum yang menyarankan agar pengeluaran tidak melebihi 80% pendapatan agar ada ruang tabungan dan dana darurat.
-
----
 
 ## Rule SP-02 — Pola Pengeluaran Akhir Pekan
 
 **Entitas yang dipantau:** Transaksi Pengeluaran (minggu berjalan)
 
 **Kondisi pemicu (pseudocode):**
+
 ```
 FUNGSI EvaluasiSP02(transaksiBulanIni):
     -- Ambil hanya transaksi pengeluaran dalam minggu kalender saat ini
@@ -163,14 +145,14 @@ FUNGSI EvaluasiSP02(transaksiBulanIni):
 
         HASILKAN Insight(
             judul = 'Pola Pengeluaran Akhir Pekan',
-            isi   = 'Sekitar {persentase}% pengeluaranmu minggu ini terjadi di 
+            isi   = 'Sekitar {persentase}% pengeluaranmu minggu ini terjadi di
                      akhir pekan. Pastikan tetap sesuai dengan rencana anggaranmu, ya.',
             tingkatUrgensi = 'warning',
             prioritas      = 2.0
         )
 ```
 
-**Keluaran:** Judul "Pola Pengeluaran Akhir Pekan", tingkat urgensi *warning*, tombol aksi ke `/transactions`.
+**Keluaran:** Judul "Pola Pengeluaran Akhir Pekan", tingkat urgensi _warning_, tombol aksi ke `/transactions`.
 
 **Jenis keluaran:** Nudge (Digital Nudging — Refleksi Pola Temporal). Rule ini menyampaikan fakta statistik pengeluaran mingguan secara netral, membiarkan pengguna untuk merefleksikan apakah pola ini sesuai dengan rencananya atau tidak. Tidak ada nilai minimum nominal — selama proporsinya melebihi 70% di akhir pekan, pola ini dianggap signifikan secara statistik.
 
@@ -181,6 +163,7 @@ FUNGSI EvaluasiSP02(transaksiBulanIni):
 **Entitas yang dipantau:** Transaksi Pengeluaran × Kategori Diskresioner (bulan berjalan)
 
 **Kondisi pemicu (pseudocode):**
+
 ```
 FUNGSI EvaluasiSP03(transaksiBulanIni, semuaKategori):
     kategorDiskresioner = kategori yang namanya mengandung kata:
@@ -203,17 +186,17 @@ FUNGSI EvaluasiSP03(transaksiBulanIni, semuaKategori):
     JIKA totalBelanjaMalam >= 150.000 MAKA
         HASILKAN Insight(
             judul = 'Pola Pengeluaran Malam Hari',
-            isi   = 'Pengeluaran pada larut malam terdeteksi cukup tinggi 
-                     ({totalBelanjaMalam} bulan ini). Periksa kembali transaksi 
+            isi   = 'Pengeluaran pada larut malam terdeteksi cukup tinggi
+                     ({totalBelanjaMalam} bulan ini). Periksa kembali transaksi
                      tersebut agar pengeluaran tetap sesuai rencana.',
             tingkatUrgensi = 'warning',
             prioritas      = 2.1
         )
 ```
 
-**Keluaran:** Judul "Pola Pengeluaran Malam Hari", tingkat urgensi *warning*, tombol aksi ke `/analytics`.
+**Keluaran:** Judul "Pola Pengeluaran Malam Hari", tingkat urgensi _warning_, tombol aksi ke `/analytics`.
 
-**Jenis keluaran:** Nudge (Digital Nudging — Intervensi Berbasis Konteks Waktu). Rule ini memanfaatkan konsep *temporal self-control* dalam psikologi perilaku; belanja larut malam pada kategori gaya hidup cenderung bersifat impulsif. Ambang Rp 150.000 digunakan untuk memfilter agar hanya pengeluaran yang signifikan secara finansial yang memicu notifikasi.
+**Jenis keluaran:** Nudge (Digital Nudging — Intervensi Berbasis Konteks Waktu). Rule ini memanfaatkan konsep _temporal self-control_ dalam psikologi perilaku; belanja larut malam pada kategori gaya hidup cenderung bersifat impulsif. Ambang Rp 150.000 digunakan untuk memfilter agar hanya pengeluaran yang signifikan secara finansial yang memicu notifikasi.
 
 ---
 
@@ -222,6 +205,7 @@ FUNGSI EvaluasiSP03(transaksiBulanIni, semuaKategori):
 **Entitas yang dipantau:** Transaksi Pengeluaran (frekuensi berdasarkan deskripsi/nama)
 
 **Kondisi pemicu (pseudocode):**
+
 ```
 FUNGSI EvaluasiSP05(transaksiBulanIni):
     hitunganPerNama = {} -- kamus: nama transaksi → {jumlahKali, totalNominal}
@@ -245,17 +229,17 @@ FUNGSI EvaluasiSP05(transaksiBulanIni):
     DAN namaTeringgi.nama TIDAK KOSONG MAKA
         HASILKAN Insight(
             judul = 'Frekuensi Pengeluaran Rutin',
-            isi   = 'Terdapat {jumlahKali} transaksi untuk {nama} bulan ini dengan 
-                     total {totalNominal}. Perhatikan frekuensinya jika kamu 
+            isi   = 'Terdapat {jumlahKali} transaksi untuk {nama} bulan ini dengan
+                     total {totalNominal}. Perhatikan frekuensinya jika kamu
                      berencana berhemat.',
             tingkatUrgensi = 'info',
             prioritas      = 3.0
         )
 ```
 
-**Keluaran:** Judul "Frekuensi Pengeluaran Rutin", tingkat urgensi *info*, tombol aksi ke `/transactions`.
+**Keluaran:** Judul "Frekuensi Pengeluaran Rutin", tingkat urgensi _info_, tombol aksi ke `/transactions`.
 
-**Jenis keluaran:** Nudge (Digital Nudging — Kesadaran Agregat). Rule ini mengimplementasikan prinsip *Latte Factor* yang dipopulerkan David Bach — transaksi kecil yang terlalu sering bisa menjadi kebocoran besar secara kumulatif. Dengan menampilkan total kumulatif, rule ini mengekspos pengeluaran tersembunyi yang sering tidak disadari pengguna.
+**Jenis keluaran:** Nudge (Digital Nudging — Kesadaran Agregat). Rule ini mengimplementasikan prinsip _Latte Factor_ yang dipopulerkan David Bach — transaksi kecil yang terlalu sering bisa menjadi kebocoran besar secara kumulatif. Dengan menampilkan total kumulatif, rule ini mengekspos pengeluaran tersembunyi yang sering tidak disadari pengguna.
 
 ---
 
@@ -264,6 +248,7 @@ FUNGSI EvaluasiSP05(transaksiBulanIni):
 **Entitas yang dipantau:** Transaksi Pengeluaran bulan ini × Transaksi bulan lalu (deteksi pola berulang)
 
 **Kondisi pemicu (pseudocode):**
+
 ```
 FUNGSI EvaluasiSP06(transaksiBulanIni, transaksiBulanLalu, totalPemasukan):
     jumlahLangganan  = 0
@@ -290,17 +275,17 @@ FUNGSI EvaluasiSP06(transaksiBulanIni, transaksiBulanLalu, totalPemasukan):
 
         HASILKAN Insight(
             judul = 'Evaluasi Langganan',
-            isi   = 'Kamu punya {jumlahLangganan} tagihan rutin bulanan yang 
-                     memakan {persentaseDariPemasukan}% dari total pemasukanmu. 
+            isi   = 'Kamu punya {jumlahLangganan} tagihan rutin bulanan yang
+                     memakan {persentaseDariPemasukan}% dari total pemasukanmu.
                      Coba evaluasi, apakah semua layanan ini masih rutin kamu pakai?',
             tingkatUrgensi = 'warning',
             prioritas      = 3.1
         )
 ```
 
-**Keluaran:** Judul "Evaluasi Langganan", tingkat urgensi *warning*, tombol aksi ke `/transactions`.
+**Keluaran:** Judul "Evaluasi Langganan", tingkat urgensi _warning_, tombol aksi ke `/transactions`.
 
-**Jenis keluaran:** Nudge (Digital Nudging — Deteksi Kewajiban Tersembunyi). Rule ini menggunakan *pattern matching* sederhana: transaksi dengan nominal dan kategori sama yang muncul di dua bulan berurutan dengan jeda tanggal ≤3 hari dianggap sebagai *subscription* (berlangganan). Ambang 3 transaksi dipilih untuk memastikan ada pola yang nyata, bukan kebetulan.
+**Jenis keluaran:** Nudge (Digital Nudging — Deteksi Kewajiban Tersembunyi). Rule ini menggunakan _pattern matching_ sederhana: transaksi dengan nominal dan kategori sama yang muncul di dua bulan berurutan dengan jeda tanggal ≤3 hari dianggap sebagai _subscription_ (berlangganan). Ambang 3 transaksi dipilih untuk memastikan ada pola yang nyata, bukan kebetulan.
 
 ---
 
@@ -309,6 +294,7 @@ FUNGSI EvaluasiSP06(transaksiBulanIni, transaksiBulanLalu, totalPemasukan):
 **Entitas yang dipantau:** Transaksi Pengeluaran berdasarkan nama/deskripsi (bulan ini vs bulan lalu)
 
 **Kondisi pemicu (pseudocode):**
+
 ```
 FUNGSI EvaluasiSP08(transaksiBulanIni, transaksiBulanLalu):
     hitunganBulanIni  = {} -- nama merchant → jumlah kemunculan
@@ -349,15 +335,15 @@ FUNGSI EvaluasiSP08(transaksiBulanIni, transaksiBulanLalu):
 
         HASILKAN Insight(
             judul = 'Kenaikan Transaksi Rutin',
-            isi   = 'Transaksi untuk {merchantTerbaik.nama} meningkat signifikan 
-                     dibanding bulan lalu ({jumlahLalu} → {jumlahSekarang} kali). 
+            isi   = 'Transaksi untuk {merchantTerbaik.nama} meningkat signifikan
+                     dibanding bulan lalu ({jumlahLalu} → {jumlahSekarang} kali).
                      Total bulan ini: {totalNominal}.',
             tingkatUrgensi = 'info',
             prioritas      = 3.2
         )
 ```
 
-**Keluaran:** Judul "Kenaikan Transaksi Rutin", tingkat urgensi *info*, tombol aksi ke `/transactions`.
+**Keluaran:** Judul "Kenaikan Transaksi Rutin", tingkat urgensi _info_, tombol aksi ke `/transactions`.
 
 **Jenis keluaran:** Nudge (Digital Nudging — Peringatan Eskalasi Kebiasaan). Rule ini mendeteksi normalisasi pengeluaran yang berbahaya — saat transaksi ke merchant yang sama meningkat 2x lipat dalam satu bulan, bisa menjadi sinyal awal adanya kebiasaan konsumtif baru yang tidak disadari.
 
@@ -368,6 +354,7 @@ FUNGSI EvaluasiSP08(transaksiBulanIni, transaksiBulanLalu):
 **Entitas yang dipantau:** Transaksi Pemasukan (bulan berjalan vs bulan lalu)
 
 **Kondisi pemicu (pseudocode):**
+
 ```
 FUNGSI EvaluasiAN08(transaksiBulanIni, transaksiBulanLalu):
     hariIni = tanggal hari ini dalam bulan (1–31)
@@ -390,14 +377,14 @@ FUNGSI EvaluasiAN08(transaksiBulanIni, transaksiBulanLalu):
     JIKA pemasukanBulanIni < pemasukanBulanLalu * 0.50 MAKA
         HASILKAN Insight(
             judul = 'Pemasukan Tertinggal',
-            isi   = 'Hingga pertengahan bulan ini, pemasukan tercatat 
-                     ({pemasukanBulanIni}) lebih rendah dari biasanya (rata-rata 
+            isi   = 'Hingga pertengahan bulan ini, pemasukan tercatat
+                     ({pemasukanBulanIni}) lebih rendah dari biasanya (rata-rata
                      {pemasukanBulanLalu}). Pastikan semua pemasukan sudah dicatat.',
             tingkatUrgensi = 'warning',
             prioritas      = 1.7
         )
 ```
 
-**Keluaran:** Judul "Pemasukan Tertinggal", tingkat urgensi *warning*, tombol aksi ke `/transactions` (catat pemasukan).
+**Keluaran:** Judul "Pemasukan Tertinggal", tingkat urgensi _warning_, tombol aksi ke `/transactions` (catat pemasukan).
 
 **Jenis keluaran:** Nudge (Digital Nudging — Pengingat Kelengkapan Data dan Pengawasan Arus Kas). Muncul setelah pertengahan bulan, rule ini melayani dua fungsi sekaligus: mengingatkan pengguna yang mungkin lupa mencatat pemasukan, sekaligus memberi peringatan dini jika memang ada penurunan pendapatan yang nyata.
