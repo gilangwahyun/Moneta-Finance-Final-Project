@@ -183,6 +183,7 @@ interface NudgeInsight {
 ### SP-03: Night Owl — Pengeluaran Larut Malam
 - **Modul**: Transaksi × Kategori (diskresioner: hiburan, jajan, pribadi, gaya hidup, hobi)
 - **Kondisi**: Total pengeluaran di jam 22.00–04.00 pada kategori diskresioner ≥ Rp 150.000 bulan ini
+- **Catatan**: Jam diambil dari field `createdAt` (waktu input transaksi), bukan dari `date`.
 - **Output**:
   - Judul: `"Pola Pengeluaran Malam Hari"`
   - Body: `"Pengeluaran pada larut malam terdeteksi cukup tinggi (Rp X bulan ini). Periksa kembali transaksi tersebut..."`
@@ -194,7 +195,10 @@ interface NudgeInsight {
 
 ### SP-05: Latte Factor — Frekuensi Pengeluaran Rutin (Frequent Small Txns)
 - **Modul**: Transaksi (frekuensi nama/deskripsi)
-- **Kondisi**: Nama transaksi yang sama muncul berkali-kali bulan ini dengan total signifikan
+- **Kondisi**:
+  - Nama/deskripsi transaksi yang sama muncul **> 10 kali** bulan ini
+  - Rata-rata nominal per transaksi **< Rp 30.000** (nominal kecil, impulsif)
+  - Nama tidak boleh kosong
 - **Output**:
   - Judul: `"Frekuensi Pengeluaran Rutin"`
   - Body: `"Terdapat {N} transaksi untuk '{name}' bulan ini dengan total Rp X. Perhatikan frekuensinya jika kamu berencana berhemat."`
@@ -206,7 +210,10 @@ interface NudgeInsight {
 
 ### SP-06: Subscription Cannibalization — Evaluasi Langganan
 - **Modul**: Transaksi (deteksi pola berulang bulanan)
-- **Kondisi**: Jumlah langganan aktif ≥ N dan porsinya terhadap pemasukan signifikan
+- **Kondisi**:
+  - Untuk setiap transaksi bulan ini, cari pasangan di bulan lalu dengan: **nominal sama + kategori sama + selisih tanggal ≤ 3 hari**
+  - Jumlah pasangan yang ditemukan (tanpa duplikasi) **≥ 3**
+  - `totalPemasukan > 0` (agar persentase bisa dihitung)
 - **Output**:
   - Judul: `"Evaluasi Langganan"`
   - Body: `"Kamu punya {N} tagihan rutin bulanan yang memakan {X}% dari total pemasukanmu. Coba evaluasi..."`
@@ -248,7 +255,7 @@ interface NudgeInsight {
 
 ---
 
-### AN-10 (Anonim): Defisit / Rasio Pengeluaran Tinggi terhadap Pemasukan
+### AN-10: Defisit / Rasio Pengeluaran Tinggi terhadap Pemasukan
 - **Modul**: Transaksi × INCOME × EXPENSE (bulan berjalan)
 - **Kondisi A** (income = 0, expense > 0):
   - Judul: `"Data Pemasukan Kosong"`; Severity: `critical`
@@ -416,7 +423,7 @@ interface NudgeInsight {
 
 ---
 
-### AN-09 (Anonim): Proyeksi Kategori Diskresioner Tahunan (Snowball Projection)
+### AN-09: Proyeksi Kebiasaan (Annualized Snowball Projection)
 - **Modul**: Transaksi × Kategori (bulan ini)
 - **Kondisi**: Kategori diskresioner menjadi pengeluaran terbesar bulan ini dengan ≥5 transaksi atau rata-rata >Rp 250.000 per transaksi
 - **Output**:
@@ -469,7 +476,10 @@ interface NudgeInsight {
 ### WL-03: Single Wallet Usage Pattern — Dominasi Satu Dompet
 - **Modul**: Transaksi × Dompet (bulan berjalan)
 - **Sumber pemicu**: `use-analytics.ts` (`singleWalletUsage` useMemo)
-- **Kondisi**: Satu dompet digunakan untuk mayoritas transaksi bulan ini (>X%)
+- **Kondisi**:
+  - Pengguna memiliki **> 1 dompet** terdaftar
+  - Minimal **5 transaksi** bulan ini (agar data statistik bermakna)
+  - Satu dompet digunakan untuk **> 90%** dari seluruh transaksi bulan ini
 - **Output**:
   - Judul: `"Penggunaan Dompet Dominan"`
   - Body: `"Sebagian besar transaksimu bulan ini ({X}%) dicatat menggunakan dompet '{walletName}'."`
@@ -632,7 +642,7 @@ interface NudgeInsight {
 | AN-06 | Rasio Pengeluaran Tidak Konsisten | Transaksi × INCOME × EXPENSE (3 bln) | max-min rasio > 0.20 | neutral | 3.75 | /analytics |
 | AN-07 | Perubahan Pola Pengeluaran | Transaksi × Kategori diskresioner (3 bln) | ratioNow - ratioThen > 0.15 | neutral | 2.8 | /analytics |
 | AN-08 | Pemasukan Tertinggal | Transaksi × INCOME (M0 vs M-1) | currentIncome < 50% avgPrev, tgl≥15 | warning | 1.7 | /transactions |
-| AN-09 | Proyeksi Kebiasaan | Transaksi × Kategori (M0) | Kategori diskresioner terbesar | warning | 2.5 | /analytics |
+| AN-09 | Proyeksi Kebiasaan | Transaksi × Kategori (M0) | Kategori diskresioner terbesar, proyeksi ≥ Rp 1.000.000/tahun | warning | 2.5 | /analytics |
 | AN-10 | Defisit / Rasio Pengeluaran Tinggi | Transaksi × INCOME × EXPENSE (M0) | expense/income ≥ 0.8 atau defisit | critical/warning | 1.1 | /analytics |
 | WL-01 | Saldo Dompet Turun Cepat | Dompet × Transaksi (M0 vs M-1) | drainRateNow > 1.5× drainRatePrev | warning | 1.8 | /wallets |
 | WL-02 | Saldo Dompet Menipis | Dompet × Transaksi (saldo dinamis) | balance < 10% avgMonthlyExpense | critical | 0.5 | /wallets |

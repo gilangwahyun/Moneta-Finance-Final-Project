@@ -10,12 +10,12 @@ Insight Engine terbagi dalam dua mode pengiriman:
 
 ## Kategori Aturan (Sesuai Draf Skripsi)
 
-Sistem ini menjalankan **40 Aturan Aktif**, yang dikelompokkan ke dalam 6 area analitik utama:
+Sistem ini menjalankan **37 Aturan Aktif** (dengan 3 rule memiliki beberapa kondisi berjenjang di dalamnya), yang dikelompokkan ke dalam 6 area analitik utama:
 
 ### 1. Anggaran (Budgeting)
 Berfokus pada pengawasan batas anggaran, peringatan dini (*early-warning system*), dan rekomendasi alokasi dana secara adaptif.
-1. **[Push] Penggunaan Anggaran 50%** (Info): Peringatan dini setengah jalan.
-2. **[Push] Penggunaan Anggaran 80%** (Warning): Peringatan menipisnya ruang pengeluaran.
+1. **[Push] Penggunaan Anggaran Berjalan** (Info): Peringatan dini setengah jalan.
+2. **[Push] Anggaran Mulai Menipis** (Warning): Peringatan menipisnya ruang pengeluaran.
 3. **[Push] Batas Anggaran Terlampaui** (Critical): Over-budget.
 4. **[Push] Rekomendasi Subsidi Silang** (Critical): Menyarankan menutupi defisit dari kategori bersisa.
 5. **Pengeluaran Tanpa Anggaran** (Info - P1.5): Deteksi pengeluaran besar tanpa limit alokasi.
@@ -53,22 +53,23 @@ Berfokus pada analisis tren historis dan pergeseran gaya hidup jangka panjang (l
 
 ### 4. Dompet (Wallets)
 Berfokus pada kesehatan likuiditas dan kebiasaan pengguna terhadap metode pembayaran.
-31. **[Push] Saldo Dompet Menipis** (Warning): Likuiditas dompet harian berada di level bahaya.
-32. **Penggunaan Dompet Dominan** (Neutral - P3.9): Sindrom pemusatan satu dompet (*Single Point of Failure*).
-33. **Pola Penggunaan Dompet** (Neutral - P3.8): Identifikasi pola "Kategori A selalu pakai Dompet B".
+31. **[Push] Saldo Dompet Menipis** (Critical - P0.5): Likuiditas dompet harian berada di level bahaya.
+32. **Saldo Dompet Turun Cepat** (Warning - P1.8): Laju pengeluaran dari dompet 1,5× lebih cepat dari bulan lalu.
+33. **Penggunaan Dompet Dominan** (Neutral - P3.9): Sindrom pemusatan satu dompet (*Single Point of Failure*).
+34. **Pola Penggunaan Dompet** (Neutral - P3.8): Identifikasi pola "Kategori A selalu pakai Dompet B".
 
 ### 5. Target Finansial (Financial Targets)
 Berfokus pada pengawalan mimpi finansial pengguna agar selaras dengan pola pengeluarannya.
-34. **Target Belum Ada Progres** (Warning - P2.3): Jangka waktu target mendekat, tetapi belum ada uang yang disisihkan.
-35. **Pengeluaran vs Target Pemasukan** (Info - P2.4): Menyadarkan pengguna bahwa pengeluaran harian mereka berisiko menyabotase impian finansial besar mereka.
+35. **Target Belum Ada Progres** (Warning - P2.3): Jangka waktu target mendekat, tetapi belum ada uang yang disisihkan.
+36. **Pengeluaran vs Target Pemasukan** (Info - P2.4): Menyadarkan pengguna bahwa pengeluaran harian mereka berisiko menyabotase impian finansial besar mereka.
 
 ### 6. Reinforcement Positif & Fallback
 Berfokus pada pembangunan *habit* finansial, mitigasi demotivasi, serta kondisi netral saat tidak ada anomali terdeteksi.
-36. **Pemulihan Anggaran Berhasil** (Positive - P3.4): Validasi positif karena bulan ini berhasil hemat dan pulih dari dosa bulan lalu.
-37. **Konsistensi Target Terjaga** (Positive - P3.5): Penghargaan atas *streak* mencapai target.
-38. **Kamu Berhasil Berhemat!** (Positive - P3.5): Valuasi singkat terhadap uang yang berhasil disisihkan minggu ini.
-39. **Pemasukan Meningkat** (Positive - P3.6): Respons adaptif menabung paksa sesaat setelah gaji/pendapatan naik.
-40. **Pola Pengeluaran Stabil** (Neutral - P4.0): *Fallback* / Jaring pengaman, menampilkan kalimat empati dan apresiatif saat semua matriks finansial berada dalam kendali sempurna.
+37. **Pemulihan Anggaran Berhasil** (Positive - P3.4): Validasi positif karena bulan ini berhasil hemat dan pulih dari dosa bulan lalu.
+38. **Konsistensi Target Terjaga** (Positive - P3.5): Penghargaan atas *streak* mencapai target.
+39. **Kamu Berhasil Berhemat!** (Positive - P3.5): Valuasi singkat terhadap uang yang berhasil disisihkan minggu ini.
+40. **Pemasukan Meningkat** (Positive - P3.6): Respons adaptif menabung paksa sesaat setelah gaji/pendapatan naik.
+41. **Pola Pengeluaran Stabil** (Neutral - P4.0): *Fallback* / Jaring pengaman, menampilkan kalimat empati dan apresiatif saat semua matriks finansial berada dalam kendali sempurna.
 
 ## Mitigasi "Insight Fatigue"
 Untuk mencegah kelelahan pengguna menerima nasihat finansial, halaman Analytics membatasi kartu yang ditampilkan:
