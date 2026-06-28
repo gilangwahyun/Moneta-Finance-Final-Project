@@ -25,11 +25,11 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
 
   let context: any;
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeEach(async ({ browser }) => {
     context = await browser.newContext();
   });
 
-  test.afterAll(async () => {
+  test.afterEach(async () => {
     await context.close();
   });
 
