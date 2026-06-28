@@ -133,19 +133,35 @@ FUNGSI EvaluasiBG00c(anggaran, semuaAnggaran, semuaTransaksi, semuaKategori):
 
 --- ALGORITMA SUBSIDI SILANG ---
 FUNGSI CariBudgetUntukSubsidi(targetAnggaran, semuaAnggaran):
+    kandidatTerbaik = null
+    skorTerbaik = { sisaRasio: -1, maxTransfer: -1, nominalSisa: -1 }
+
     UNTUK SETIAP kandidat DALAM semuaAnggaran:
         sisaKandidat = kandidat.batasNominal - kandidat.totalTerpakai
+        JIKA sisaKandidat <= 0 MAKA LEWATI
 
-        -- Kandidat harus punya sisa minimal 70% dari batasnya
+        -- Kandidat harus punya sisa minimal 70% dari batasnya sebelum transfer
         JIKA (sisaKandidat / kandidat.batasNominal) < 0.7 MAKA LEWATI
 
-        -- Setelah transfer, kandidat masih harus punya sisa minimal 50%
-        jumlahTransfer = MIN(sisaKandidat * 0.3, defisit)
-        JIKA (sisaKandidat - jumlahTransfer) / kandidat.batasNominal < 0.5 MAKA LEWATI
+        -- Batas aman setelah transfer adalah 50% dari batas nominal
+        maxTransfer = sisaKandidat - (kandidat.batasNominal * 0.5)
+        JIKA maxTransfer <= 0 MAKA LEWATI
 
-        KEMBALIKAN { sumber: kandidat, jumlahRekomendasi: jumlahTransfer }
+        jumlahTransfer = MIN(defisit, maxTransfer)
+        JIKA jumlahTransfer <= 0 MAKA LEWATI
 
-    KEMBALIKAN null (tidak ada kandidat cocok)
+        rasioSetelahTransfer = (sisaKandidat - jumlahTransfer) / kandidat.batasNominal
+
+        -- Pemeringkatan: Prioritas rasio sisa tertinggi → max transfer terbesar → nominal sisa terbesar
+        isLebihBaik = (rasioSetelahTransfer > skorTerbaik.sisaRasio) ATAU
+                      (rasioSetelahTransfer == skorTerbaik.sisaRasio DAN maxTransfer > skorTerbaik.maxTransfer) ATAU
+                      (rasioSetelahTransfer == skorTerbaik.sisaRasio DAN maxTransfer == skorTerbaik.maxTransfer DAN sisaKandidat > skorTerbaik.nominalSisa)
+        
+        JIKA isLebihBaik MAKA
+            skorTerbaik = { sisaRasio: rasioSetelahTransfer, maxTransfer: maxTransfer, nominalSisa: sisaKandidat }
+            kandidatTerbaik = { sumber: kandidat, jumlahRekomendasi: jumlahTransfer }
+
+    KEMBALIKAN kandidatTerbaik
 ```
 
 **Keluaran:** Judul "Batas Anggaran Tercapai", "Batas Anggaran Terlampaui", atau "Rekomendasi Subsidi Silang" (jika ada sumber dana alternatif), tingkat urgensi _critical_, tombol aksi ke `/budgets` atau ke halaman realokasi.
@@ -208,10 +224,10 @@ FUNGSI EvaluasiBG01(anggaran, transaksiBulanIni):
 **Kondisi pemicu (pseudocode):**
 
 ```
-FUNGSI EvaluasiBG03(semuaTransaksi, semuaAnggaran, semuaKategori):
+FUNGSI EvaluasiBG03(transaksiBulanIni, semuaAnggaran, semuaKategori):
     totalPerKategori = {}
 
-    UNTUK SETIAP transaksi DALAM semuaTransaksi:
+    UNTUK SETIAP transaksi DALAM transaksiBulanIni:
         JIKA transaksi.tipe = 'EXPENSE' DAN transaksi.kategoriId ADA MAKA
             totalPerKategori[transaksi.kategoriId] += transaksi.nominal
 
