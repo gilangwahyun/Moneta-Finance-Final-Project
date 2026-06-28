@@ -177,10 +177,13 @@ FUNGSI EvaluasiSP03(transaksiBulanIni, semuaKategori):
         kategori = CARI kategori berdasarkan transaksi.kategoriId
         JIKA kategori TIDAK ADA atau kategori BUKAN diskresioner MAKA LEWATI
 
-        jamTransaksi = jam saat transaksi dicatat (0–23)
+        -- PENTING: jam diambil dari waktu INPUT transaksi (field createdAt),
+        -- bukan dari tanggal transaksi itu sendiri (field date). Ini karena
+        -- pengguna biasanya mencatat transaksi saat atau sesaat setelah kejadian.
+        jamInput = jam dari transaksi.waktuInput (field createdAt, rentang 0–23)
 
         -- Rentang jam larut malam: 22:00 – 23:59 atau 00:00 – 04:00
-        JIKA jamTransaksi >= 22 ATAU jamTransaksi <= 4 MAKA
+        JIKA jamInput >= 22 ATAU jamInput <= 4 MAKA
             totalBelanjaMalam += transaksi.nominal
 
     JIKA totalBelanjaMalam >= 150.000 MAKA

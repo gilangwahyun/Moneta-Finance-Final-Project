@@ -12,6 +12,8 @@ Kelompok ini mencakup aturan-aturan yang bersifat membangun dan apresiatif. Berb
 ```
 FUNGSI EvaluasiPR01(data7HariTerakhir):
     -- data7HariTerakhir: array per hari berisi { pemasukan, pengeluaran }
+    -- Data dihitung dari setiap hari dalam 7 hari terakhir menggunakan seluruh
+    -- riwayat transaksi. TRANSFER dikecualikan dari kalkulasi (hanya INCOME dan EXPENSE).
 
     totalBersih7Hari = 0
 
