@@ -1,40 +1,41 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
-import dayjs from "dayjs";
-import { Transaction, Budget, Wallet, FinancialTarget } from "@/types/models.types";
-import { getAllTransactions } from "@/lib/local-db/repositories/transactions";
-import { getBudgetsByPeriod } from "@/lib/local-db/repositories/budgets";
-import { getCurrentUser } from "@/lib/local-db/repositories/users";
-import { getAllWallets } from "@/lib/local-db/repositories/wallets";
-import { getActiveTargets } from "@/lib/local-db/repositories/targets";
-import { useTimeFilter } from "@/providers/TimeFilterProvider";
-import { filterByDateRange } from "@/lib/utils/time-filter";
-import { useCategories } from "@/hooks/use-categories";
-import { generateNudges, findBudgetReallocationRecommendation, ReallocationRecommendation } from "@/lib/nudging";
-import { formatCurrency } from "@/lib/utils/helpers";
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import dayjs from 'dayjs';
+import { Transaction, Budget, Wallet, FinancialTarget } from '@/types/models.types';
+import { getAllTransactions } from '@/lib/local-db/repositories/transactions';
+import { getBudgetsByPeriod } from '@/lib/local-db/repositories/budgets';
+import { getCurrentUser } from '@/lib/local-db/repositories/users';
+import { getAllWallets } from '@/lib/local-db/repositories/wallets';
+import { getActiveTargets } from '@/lib/local-db/repositories/targets';
+import { useTimeFilter } from '@/providers/TimeFilterProvider';
+import { filterByDateRange } from '@/lib/utils/time-filter';
+import { useCategories } from '@/hooks/use-categories';
+import { generateNudges, findBudgetReallocationRecommendation, ReallocationRecommendation } from '@/lib/nudging';
+import { formatCurrency } from '@/lib/utils/helpers';
 
 export const CHART_PALETTE = [
-  "#6366f1", // indigo-500
-  "#14b8a6", // teal-500
-  "#f59e0b", // amber-500
-  "#f43f5e", // rose-500
-  "#06b6d4", // cyan-500
-  "#8b5cf6", // violet-500
-  "#10b981", // emerald-500
-  "#fb923c", // orange-400
-  "#64748b", // slate-500
-  "#ec4899", // pink-500
+  '#6366f1', // indigo-500
+  '#14b8a6', // teal-500
+  '#f59e0b', // amber-500
+  '#f43f5e', // rose-500
+  '#06b6d4', // cyan-500
+  '#8b5cf6', // violet-500
+  '#10b981', // emerald-500
+  '#fb923c', // orange-400
+  '#64748b', // slate-500
+  '#ec4899', // pink-500
 ];
 
 export function sumByType(txns: Transaction[]) {
-  let income = 0, expense = 0;
+  let income = 0,
+    expense = 0;
   for (const t of txns) {
-    if (t.type === "INCOME") income += Number(t.amount);
-    else if (t.type === "EXPENSE") expense += Number(t.amount);
+    if (t.type === 'INCOME') income += Number(t.amount);
+    else if (t.type === 'EXPENSE') expense += Number(t.amount);
   }
   return { income, expense, net: income - expense };
 }
 
-export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
+export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
   const { comparison } = useTimeFilter();
   const [allTxns, setAllTxns] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -47,7 +48,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     const user = await getCurrentUser();
     if (!user) return;
     const now = new Date();
-    const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const [txns, bgets, wallets, targets] = await Promise.all([
       getAllTransactions(user.id),
       getBudgetsByPeriod(user.id, period),
@@ -63,19 +64,13 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
 
   useEffect(() => {
     loadData();
-    window.addEventListener("moneta-transaction-updated", loadData);
-    return () => window.removeEventListener("moneta-transaction-updated", loadData);
+    window.addEventListener('moneta-transaction-updated', loadData);
+    return () => window.removeEventListener('moneta-transaction-updated', loadData);
   }, [loadData]);
 
-  const currentTxns = useMemo(
-    () => filterByDateRange(allTxns, comparison.currentPeriod),
-    [allTxns, comparison.currentPeriod]
-  );
-  
-  const prevTxns = useMemo(
-    () => filterByDateRange(allTxns, comparison.baselinePeriod),
-    [allTxns, comparison.baselinePeriod]
-  );
+  const currentTxns = useMemo(() => filterByDateRange(allTxns, comparison.currentPeriod), [allTxns, comparison.currentPeriod]);
+
+  const prevTxns = useMemo(() => filterByDateRange(allTxns, comparison.baselinePeriod), [allTxns, comparison.baselinePeriod]);
 
   const current = useMemo(() => sumByType(currentTxns), [currentTxns]);
   const prev = useMemo(() => sumByType(prevTxns), [prevTxns]);
@@ -95,7 +90,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
         const budgetSpentPct = budget && budget.amount > 0 ? Math.round((value / budget.amount) * 100) : undefined;
         return {
           categoryId: catId,
-          name: cat?.name || "Lainnya",
+          name: cat?.name || 'Lainnya',
           icon: cat?.icon,
           color: cat?.color,
           value,
@@ -113,9 +108,9 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     for (let i = 6; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split("T")[0];
-      const label = d.toLocaleDateString("id-ID", { weekday: "short", day: "numeric" });
-      const dayTxns = allTxns.filter((t) => t.date.startsWith(dateStr) && !t.deletedAt && t.type !== "TRANSFER");
+      const dateStr = d.toISOString().split('T')[0];
+      const label = d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' });
+      const dayTxns = allTxns.filter((t) => t.date.startsWith(dateStr) && !t.deletedAt && t.type !== 'TRANSFER');
       const { income, expense } = sumByType(dayTxns);
       days.push({ label, income, expense });
     }
@@ -129,7 +124,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     if (donutData.length === 0) return null;
     const top = donutData[0];
     const prevRelevant = prevTxns.filter(
-      (t) => t.type === "EXPENSE" && allCategories.find((c) => c.name === top.name)?.clientId === t.categoryId
+      (t) => t.type === 'EXPENSE' && allCategories.find((c) => c.name === top.name)?.clientId === t.categoryId,
     );
     const prevValue = prevRelevant.reduce((s, t) => s + Number(t.amount), 0);
     return { name: top.name, value: top.value, prevValue };
@@ -143,7 +138,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
   // Analytics Nudge Indicators
   const paydayLeak = useMemo(() => {
     const thirtyDaysAgo = dayjs().subtract(30, 'day');
-    const incomes = allTxns.filter(t => t.type === 'INCOME' && dayjs(t.date).isAfter(thirtyDaysAgo));
+    const incomes = allTxns.filter((t) => t.type === 'INCOME' && dayjs(t.date).isAfter(thirtyDaysAgo));
     if (incomes.length === 0) return null;
     let maxIncome = incomes[0];
     for (const inc of incomes) {
@@ -161,24 +156,25 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
   }, [allTxns, current.expense, current.income, budgets]);
 
   const weekendTrap = useMemo(() => {
-    const thisWeekExpenses = currentTxns.filter(t => t.type === 'EXPENSE' && dayjs(t.date).isSame(dayjs(), 'week'));
-    let weekTotal = 0, weekendTotal = 0;
+    const thisWeekExpenses = currentTxns.filter((t) => t.type === 'EXPENSE' && dayjs(t.date).isSame(dayjs(), 'week'));
+    let weekTotal = 0,
+      weekendTotal = 0;
     for (const tx of thisWeekExpenses) {
       const amt = Number(tx.amount);
       weekTotal += amt;
       const d = dayjs(tx.date).day();
       if (d === 0 || d === 6) weekendTotal += amt;
     }
-    if (weekTotal >= 150_000 && (weekendTotal / weekTotal) > 0.7) return { percentage: Math.round((weekendTotal / weekTotal) * 100) };
+    if (weekTotal > 0 && weekendTotal / weekTotal > 0.7) return { percentage: Math.round((weekendTotal / weekTotal) * 100) };
     return null;
   }, [currentTxns]);
 
   const nightOwl = useMemo(() => {
     const wantsRegex = /(hiburan|jajan|pribadi|gaya hidup|hobi)/i;
     let nightTotal = 0;
-    const expenses = currentTxns.filter(t => t.type === 'EXPENSE');
+    const expenses = currentTxns.filter((t) => t.type === 'EXPENSE');
     for (const tx of expenses) {
-      const cat = allCategories.find(c => c.clientId === tx.categoryId);
+      const cat = allCategories.find((c) => c.clientId === tx.categoryId);
       if (cat && wantsRegex.test(cat.name)) {
         const h = dayjs(tx.createdAt).hour();
         if (h >= 22 || h <= 4) nightTotal += Number(tx.amount);
@@ -189,7 +185,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
   }, [currentTxns, allCategories]);
 
   const frequentTxn = useMemo(() => {
-    const expenses = currentTxns.filter((t) => t.type === "EXPENSE");
+    const expenses = currentTxns.filter((t) => t.type === 'EXPENSE');
     const counts: Record<string, { count: number; totalAmount: number }> = {};
     for (const tx of expenses) {
       if (!tx.description) continue;
@@ -198,29 +194,31 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
       counts[name].count += 1;
       counts[name].totalAmount += Number(tx.amount);
     }
-    let max = { name: "", count: 0, totalAmount: 0 };
+    let max = { name: '', count: 0, totalAmount: 0 };
     for (const [name, stats] of Object.entries(counts)) {
       if (stats.count > max.count) max = { name, ...stats };
     }
-    if (max.count > 10 && (max.totalAmount / max.count) < 30000 && max.name !== "") {
-      const titleCaseName = max.name.replace(/\b\w/g, l => l.toUpperCase());
+    if (max.count > 10 && max.totalAmount / max.count < 30000 && max.name !== '') {
+      const titleCaseName = max.name.replace(/\b\w/g, (l) => l.toUpperCase());
       return { name: titleCaseName, count: max.count, totalAmount: max.totalAmount };
     }
     return null;
   }, [currentTxns]);
 
   const subscriptions = useMemo(() => {
-    const currExp = currentTxns.filter(t => t.type === "EXPENSE");
-    const prevExp = prevTxns.filter(t => t.type === "EXPENSE");
-    let matchCount = 0, sumMatched = 0;
+    const currExp = currentTxns.filter((t) => t.type === 'EXPENSE');
+    const prevExp = prevTxns.filter((t) => t.type === 'EXPENSE');
+    let matchCount = 0,
+      sumMatched = 0;
     const matchedPrev = new Set<string>();
-    
+
     for (const curr of currExp) {
-      const match = prevExp.find(p => 
-        p.amount === curr.amount && 
-        p.categoryId === curr.categoryId &&
-        Math.abs(dayjs(curr.date).date() - dayjs(p.date).date()) <= 3 &&
-        !matchedPrev.has(p.clientId)
+      const match = prevExp.find(
+        (p) =>
+          p.amount === curr.amount &&
+          p.categoryId === curr.categoryId &&
+          Math.abs(dayjs(curr.date).date() - dayjs(p.date).date()) <= 3 &&
+          !matchedPrev.has(p.clientId),
       );
       if (match) {
         matchedPrev.add(match.clientId);
@@ -235,14 +233,14 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
   }, [currentTxns, prevTxns, current.income]);
 
   const peakDay = useMemo(() => {
-    const expenses = currentTxns.filter((t) => t.type === "EXPENSE");
+    const expenses = currentTxns.filter((t) => t.type === 'EXPENSE');
     if (expenses.length === 0) return null;
     const dayTotals: Record<string, number> = {};
     let totalExpense = 0;
     const dayCategoryTotals: Record<string, Record<string, { total: number; count: number }>> = {};
 
     for (const tx of expenses) {
-      const dayName = dayjs(tx.date).format("dddd");
+      const dayName = dayjs(tx.date).format('dddd');
       const amount = Number(tx.amount);
       dayTotals[dayName] = (dayTotals[dayName] || 0) + amount;
       totalExpense += amount;
@@ -254,16 +252,20 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
         dayCategoryTotals[dayName][tx.categoryId].count += 1;
       }
     }
-    let maxDay = "", maxAmount = 0;
+    let maxDay = '',
+      maxAmount = 0;
     for (const [dayName, amount] of Object.entries(dayTotals)) {
-      if (amount > maxAmount) { maxAmount = amount; maxDay = dayName; }
+      if (amount > maxAmount) {
+        maxAmount = amount;
+        maxDay = dayName;
+      }
     }
     if (totalExpense > 0 && maxAmount > 0) {
       let dominantCategoryName: string | undefined;
       let dominantCategoryId: string | undefined;
       let maxCatAmount = 0;
       let transactionCountOnThatDay = 0;
-      
+
       if (dayCategoryTotals[maxDay]) {
         for (const [catId, stats] of Object.entries(dayCategoryTotals[maxDay])) {
           if (stats.total > maxCatAmount) {
@@ -273,17 +275,17 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
           }
         }
         if (dominantCategoryId) {
-          const cat = allCategories.find(c => c.clientId === dominantCategoryId);
+          const cat = allCategories.find((c) => c.clientId === dominantCategoryId);
           if (cat) dominantCategoryName = cat.name;
         }
       }
 
-      return { 
-        dayName: maxDay, 
+      return {
+        dayName: maxDay,
         percentage: Math.round((maxAmount / totalExpense) * 100),
         dominantCategoryName,
         totalAmountOnThatDay: maxAmount,
-        transactionCountOnThatDay
+        transactionCountOnThatDay,
       };
     }
     return null;
@@ -291,15 +293,15 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
 
   const wantsProjection = useMemo(() => {
     const wantsRegex = /(hiburan|jajan|pribadi|gaya hidup|hobi)/i;
-    const expenses = currentTxns.filter((t) => t.type === "EXPENSE");
-    
-    let maxCatId = "";
-    let maxCatName = "";
+    const expenses = currentTxns.filter((t) => t.type === 'EXPENSE');
+
+    let maxCatId = '';
+    let maxCatName = '';
     let maxCatTotal = 0;
     let maxCatCount = 0;
-    
+
     const catTotals: Record<string, { total: number; count: number; name: string }> = {};
-    
+
     for (const tx of expenses) {
       if (!tx.categoryId) continue;
       const cat = allCategories.find((c) => c.clientId === tx.categoryId);
@@ -311,7 +313,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
         catTotals[cat.clientId].count += 1;
       }
     }
-    
+
     for (const [catId, stats] of Object.entries(catTotals)) {
       if (stats.total > maxCatTotal) {
         maxCatTotal = stats.total;
@@ -320,33 +322,33 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
         maxCatCount = stats.count;
       }
     }
-    
+
     // Fallback: If no discretionary category is found, just use the absolute highest expense category
     if (maxCatTotal === 0 && topExpenseCategory) {
       const cat = allCategories.find((c) => c.name === topExpenseCategory.name);
       if (cat) {
         maxCatId = cat.clientId;
         maxCatName = cat.name;
-        const catTxns = expenses.filter(t => t.categoryId === maxCatId);
+        const catTxns = expenses.filter((t) => t.categoryId === maxCatId);
         maxCatTotal = catTxns.reduce((sum, t) => sum + Number(t.amount), 0);
         maxCatCount = catTxns.length;
       }
     }
-    
+
     if (maxCatTotal > 0) {
       const annualized = maxCatTotal * 12;
       const avgTxn = maxCatCount > 0 ? maxCatTotal / maxCatCount : 0;
-      
+
       if (annualized >= 1_000_000) {
-        return { 
+        return {
           categoryId: maxCatId,
-          categoryName: maxCatName || "kategori pengeluaran utama",
-          currentPace: maxCatTotal, 
+          categoryName: maxCatName || 'kategori pengeluaran utama',
+          currentPace: maxCatTotal,
           annualized,
           monthlyTotal: maxCatTotal,
           transactionCount: maxCatCount,
           averageTransaction: avgTxn,
-          basis: maxCatName.match(wantsRegex) ? "TOP_DISCRETIONARY_CATEGORY" : "TOP_SPENDING_CATEGORY"
+          basis: maxCatName.match(wantsRegex) ? 'TOP_DISCRETIONARY_CATEGORY' : 'TOP_SPENDING_CATEGORY',
         };
       }
     }
@@ -356,22 +358,28 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
   // --- NEW PHASE 1 INDICATORS ---
 
   const recurringMerchantGrowth = useMemo(() => {
-    const currentExp = currentTxns.filter(t => t.type === 'EXPENSE' && t.description);
-    const prevExp = prevTxns.filter(t => t.type === 'EXPENSE' && t.description);
-    
-    const currentCounts = currentExp.reduce((acc, t) => {
-      acc[t.description!] = (acc[t.description!] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    
-    const prevCounts = prevExp.reduce((acc, t) => {
-      acc[t.description!] = (acc[t.description!] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
-    
+    const currentExp = currentTxns.filter((t) => t.type === 'EXPENSE' && t.description);
+    const prevExp = prevTxns.filter((t) => t.type === 'EXPENSE' && t.description);
+
+    const currentCounts = currentExp.reduce(
+      (acc, t) => {
+        acc[t.description!] = (acc[t.description!] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
+    const prevCounts = prevExp.reduce(
+      (acc, t) => {
+        acc[t.description!] = (acc[t.description!] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
+
     let topMerchant = null;
     let maxRatio = 0;
-    
+
     for (const [desc, currCount] of Object.entries(currentCounts)) {
       if (currCount >= 3) {
         const pCount = prevCounts[desc] || 0;
@@ -383,7 +391,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
               merchantName: desc,
               currentCount: currCount,
               prevCount: pCount,
-              amount: currentExp.filter(t => t.description === desc).reduce((sum, t) => sum + Number(t.amount), 0)
+              amount: currentExp.filter((t) => t.description === desc).reduce((sum, t) => sum + Number(t.amount), 0),
             };
           }
         }
@@ -393,18 +401,18 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
   }, [currentTxns, prevTxns]);
 
   const morningVsEvening = useMemo(() => {
-    const expenses = currentTxns.filter(t => t.type === 'EXPENSE');
+    const expenses = currentTxns.filter((t) => t.type === 'EXPENSE');
     if (expenses.length < 10) return null; // T2 minimum data
-    
+
     let morningTotal = 0;
     let eveningTotal = 0;
-    
+
     for (const t of expenses) {
       const hour = dayjs(t.date).hour();
       if (hour >= 5 && hour <= 11) morningTotal += Number(t.amount);
       else if (hour >= 17 && hour <= 21) eveningTotal += Number(t.amount);
     }
-    
+
     const total = morningTotal + eveningTotal;
     if (total >= 200_000) {
       const morningRatio = morningTotal / total;
@@ -416,19 +424,19 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
   }, [currentTxns]);
 
   const dayOfMonthClustering = useMemo(() => {
-    const expenses = currentTxns.filter(t => t.type === 'EXPENSE');
+    const expenses = currentTxns.filter((t) => t.type === 'EXPENSE');
     if (expenses.length < 10) return null; // T2
-    
+
     let totalExpense = 0;
     const dayTotals: Record<number, number> = {};
-    
+
     for (const t of expenses) {
       const amt = Number(t.amount);
       totalExpense += amt;
       const day = dayjs(t.date).date();
       dayTotals[day] = (dayTotals[day] || 0) + amt;
     }
-    
+
     if (totalExpense >= 500_000) {
       const sortedDays = Object.entries(dayTotals).sort((a, b) => b[1] - a[1]);
       const topThreeDays = sortedDays.slice(0, 3);
@@ -442,15 +450,15 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
   }, [currentTxns]);
 
   const zeroBudgetCategory = useMemo(() => {
-    const expenses = currentTxns.filter(t => t.type === 'EXPENSE' && t.categoryId);
+    const expenses = currentTxns.filter((t) => t.type === 'EXPENSE' && t.categoryId);
     const catTotals: Record<string, number> = {};
     for (const t of expenses) {
       catTotals[t.categoryId!] = (catTotals[t.categoryId!] || 0) + Number(t.amount);
     }
-    
+
     for (const [catId, amount] of Object.entries(catTotals)) {
-      if (amount > 200_000 && !budgets.find(b => b.categoryId === catId)) {
-        const cat = allCategories.find(c => c.clientId === catId);
+      if (amount > 200_000 && !budgets.find((b) => b.categoryId === catId)) {
+        const cat = allCategories.find((c) => c.clientId === catId);
         return { categoryName: cat?.name || 'Lainnya', categoryId: catId, amount };
       }
     }
@@ -462,17 +470,17 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     const m1Period = now.subtract(1, 'month').format('YYYY-MM');
     const m2Period = now.subtract(2, 'month').format('YYYY-MM');
     const m3Period = now.subtract(3, 'month').format('YYYY-MM');
-    
-    const m1Txns = allTxns.filter(t => dayjs(t.date).format('YYYY-MM') === m1Period && t.type === 'EXPENSE');
-    const m2Txns = allTxns.filter(t => dayjs(t.date).format('YYYY-MM') === m2Period && t.type === 'EXPENSE');
-    const m3Txns = allTxns.filter(t => dayjs(t.date).format('YYYY-MM') === m3Period && t.type === 'EXPENSE');
-    
+
+    const m1Txns = allTxns.filter((t) => dayjs(t.date).format('YYYY-MM') === m1Period && t.type === 'EXPENSE');
+    const m2Txns = allTxns.filter((t) => dayjs(t.date).format('YYYY-MM') === m2Period && t.type === 'EXPENSE');
+    const m3Txns = allTxns.filter((t) => dayjs(t.date).format('YYYY-MM') === m3Period && t.type === 'EXPENSE');
+
     for (const cat of allCategories) {
-      if (budgets.find(b => b.categoryId === cat.clientId)) continue; // already has budget this month
-      const m1Amt = m1Txns.filter(t => t.categoryId === cat.clientId).reduce((s, t) => s + Number(t.amount), 0);
-      const m2Amt = m2Txns.filter(t => t.categoryId === cat.clientId).reduce((s, t) => s + Number(t.amount), 0);
-      const m3Amt = m3Txns.filter(t => t.categoryId === cat.clientId).reduce((s, t) => s + Number(t.amount), 0);
-      
+      if (budgets.find((b) => b.categoryId === cat.clientId)) continue; // already has budget this month
+      const m1Amt = m1Txns.filter((t) => t.categoryId === cat.clientId).reduce((s, t) => s + Number(t.amount), 0);
+      const m2Amt = m2Txns.filter((t) => t.categoryId === cat.clientId).reduce((s, t) => s + Number(t.amount), 0);
+      const m3Amt = m3Txns.filter((t) => t.categoryId === cat.clientId).reduce((s, t) => s + Number(t.amount), 0);
+
       if (m1Amt > 0 && m2Amt > 0 && m3Amt > 0) {
         const avg = (m1Amt + m2Amt + m3Amt) / 3;
         if (avg > 50_000) {
@@ -487,16 +495,16 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     if (allWallets.length <= 1) return null;
     const totalTxns = currentTxns.length;
     if (totalTxns < 5) return null; // T1
-    
+
     const walletCounts: Record<string, number> = {};
     for (const t of currentTxns) {
       if (t.walletId) walletCounts[t.walletId] = (walletCounts[t.walletId] || 0) + 1;
     }
-    
+
     for (const [wId, count] of Object.entries(walletCounts)) {
       const ratio = count / totalTxns;
-      if (ratio > 0.90) {
-        const w = allWallets.find(w => w.clientId === wId);
+      if (ratio > 0.9) {
+        const w = allWallets.find((w) => w.clientId === wId);
         return { walletName: w?.name || 'Dompet Utama', ratio };
       }
     }
@@ -504,12 +512,12 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
   }, [currentTxns, allWallets]);
 
   const incomeMomentum = useMemo(() => {
-    const incomes = currentTxns.filter(t => t.type === 'INCOME');
+    const incomes = currentTxns.filter((t) => t.type === 'INCOME');
     const currentIncome = incomes.reduce((s, t) => s + Number(t.amount), 0);
-    
+
     const dayOfMonth = dayjs().date();
     if (dayOfMonth >= 15) {
-      const prevIncomes = prevTxns.filter(t => t.type === 'INCOME');
+      const prevIncomes = prevTxns.filter((t) => t.type === 'INCOME');
       const avgPrevIncome = prevIncomes.reduce((s, t) => s + Number(t.amount), 0);
       if (avgPrevIncome > 0 && currentIncome < avgPrevIncome * 0.5) {
         return { currentIncome, avgPrevIncome };
@@ -520,13 +528,14 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
 
   const lowCashWarning = useMemo(() => {
     if (allWallets.length === 0) return null;
-    
+
     // Compute total months we have data for
-    const uniqueMonths = new Set(allTxns.map(t => dayjs(t.date).format('YYYY-MM'))).size;
-    const avgMonthlyExpense = allTxns.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0) / Math.max(1, uniqueMonths);
-      
-    const threshold = Math.max(100_000, avgMonthlyExpense * 0.10);
-    
+    const uniqueMonths = new Set(allTxns.map((t) => dayjs(t.date).format('YYYY-MM'))).size;
+    const avgMonthlyExpense =
+      allTxns.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0) / Math.max(1, uniqueMonths);
+
+    const threshold = Math.max(100_000, avgMonthlyExpense * 0.1);
+
     for (const w of allWallets) {
       if (w.type === 'INVESTASI') continue;
       let balance = Number(w.initialBalance || 0);
@@ -540,7 +549,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
           balance += Number(t.amount);
         }
       }
-      
+
       if (balance < threshold) {
         return { walletName: w.name, currentBalance: balance, walletId: w.clientId! };
       }
@@ -558,11 +567,11 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
 
     const prevCatIds = new Set(
       allTxns
-        .filter(t => [m1, m2, m3].includes(dayjs(t.date).format('YYYY-MM')) && t.type === 'EXPENSE' && t.categoryId)
-        .map(t => t.categoryId!)
+        .filter((t) => [m1, m2, m3].includes(dayjs(t.date).format('YYYY-MM')) && t.type === 'EXPENSE' && t.categoryId)
+        .map((t) => t.categoryId!),
     );
 
-    const currentExpenses = currentTxns.filter(t => t.type === 'EXPENSE' && t.categoryId);
+    const currentExpenses = currentTxns.filter((t) => t.type === 'EXPENSE' && t.categoryId);
     const catTotals: Record<string, number> = {};
     for (const t of currentExpenses) {
       catTotals[t.categoryId!] = (catTotals[t.categoryId!] || 0) + Number(t.amount);
@@ -570,7 +579,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
 
     for (const [catId, amount] of Object.entries(catTotals)) {
       if (!prevCatIds.has(catId) && amount > 100_000) {
-        const cat = allCategories.find(c => c.clientId === catId);
+        const cat = allCategories.find((c) => c.clientId === catId);
         return { categoryName: cat?.name || 'Lainnya', categoryId: catId, amount };
       }
     }
@@ -578,8 +587,8 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
   }, [currentTxns, allTxns, allCategories]);
 
   const categoryDominanceShift = useMemo(() => {
-    const currentExpenses = currentTxns.filter(t => t.type === 'EXPENSE' && t.categoryId);
-    const prevExpenses = prevTxns.filter(t => t.type === 'EXPENSE' && t.categoryId);
+    const currentExpenses = currentTxns.filter((t) => t.type === 'EXPENSE' && t.categoryId);
+    const prevExpenses = prevTxns.filter((t) => t.type === 'EXPENSE' && t.categoryId);
     if (currentExpenses.length === 0 || prevExpenses.length === 0) return null;
 
     // Top category this month
@@ -600,8 +609,8 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
       if (prevAmtSameCategory > 0) {
         const growthPct = Math.round(((topCurrentAmt - prevAmtSameCategory) / prevAmtSameCategory) * 100);
         if (growthPct >= 30) {
-          const newTopCat = allCategories.find(c => c.clientId === topCurrentId);
-          const prevTopCat = allCategories.find(c => c.clientId === topPrevId);
+          const newTopCat = allCategories.find((c) => c.clientId === topCurrentId);
+          const prevTopCat = allCategories.find((c) => c.clientId === topPrevId);
           return {
             newTopName: newTopCat?.name || 'Lainnya',
             newTopAmount: topCurrentAmt,
@@ -618,19 +627,19 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     const now = dayjs();
     const periods = [now.subtract(3, 'month'), now.subtract(2, 'month'), now.subtract(1, 'month')];
 
-    const ratios = periods.map(p => {
+    const ratios = periods.map((p) => {
       const pStr = p.format('YYYY-MM');
-      const pTxns = allTxns.filter(t => dayjs(t.date).format('YYYY-MM') === pStr);
+      const pTxns = allTxns.filter((t) => dayjs(t.date).format('YYYY-MM') === pStr);
       const { income, expense } = sumByType(pTxns);
       return income > 0 ? expense / income : null;
     });
 
-    if (ratios.some(r => r === null)) return null;
+    if (ratios.some((r) => r === null)) return null;
     const validRatios = ratios as number[];
 
     const min = Math.min(...validRatios);
     const max = Math.max(...validRatios);
-    if (max - min > 0.20) {
+    if (max - min > 0.2) {
       return { ratios: validRatios, minRatio: min, maxRatio: max };
     }
     return null;
@@ -641,15 +650,17 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     const now = dayjs();
     const m3Str = now.subtract(3, 'month').format('YYYY-MM');
 
-    const m3Txns = allTxns.filter(t => dayjs(t.date).format('YYYY-MM') === m3Str && t.type === 'EXPENSE');
+    const m3Txns = allTxns.filter((t) => dayjs(t.date).format('YYYY-MM') === m3Str && t.type === 'EXPENSE');
 
     const calcRatio = (txns: Transaction[]) => {
       const total = txns.reduce((s, t) => s + Number(t.amount), 0);
       if (total === 0) return null;
-      const disc = txns.filter(t => {
-        const cat = allCategories.find(c => c.clientId === t.categoryId);
-        return cat && wantsRegex.test(cat.name);
-      }).reduce((s, t) => s + Number(t.amount), 0);
+      const disc = txns
+        .filter((t) => {
+          const cat = allCategories.find((c) => c.clientId === t.categoryId);
+          return cat && wantsRegex.test(cat.name);
+        })
+        .reduce((s, t) => s + Number(t.amount), 0);
       return disc / total;
     };
 
@@ -673,7 +684,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
 
     for (const budget of budgets) {
       const spent = currentTxns
-        .filter(t => t.categoryId === budget.categoryId && t.type === 'EXPENSE')
+        .filter((t) => t.categoryId === budget.categoryId && t.type === 'EXPENSE')
         .reduce((s, t) => s + Number(t.amount), 0);
       const ratio = spent / Number(budget.amount);
 
@@ -685,7 +696,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
 
       const daysUntilExhausted = Math.floor((Number(budget.amount) - spent) / spendingRate);
       if (daysUntilExhausted < daysRemaining) {
-        const cat = allCategories.find(c => c.clientId === budget.categoryId);
+        const cat = allCategories.find((c) => c.clientId === budget.categoryId);
         return {
           categoryName: cat?.name || 'Kategori',
           budgetId: budget.clientId!,
@@ -705,15 +716,15 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
       if (!target.isActive) continue;
       const startDate = dayjs(target.startDate).startOf('day');
       const endDate = target.endDate ? dayjs(target.endDate).endOf('day') : startDate.endOf('month');
-      
+
       const totalDays = Math.max(1, endDate.diff(startDate, 'day'));
       const elapsedDays = today.diff(startDate, 'day');
       const elapsedPct = elapsedDays / totalDays;
-      
-      if (elapsedPct < 0.30) continue;
+
+      if (elapsedPct < 0.3) continue;
 
       const currentAmount = currentTxns
-        .filter(t => t.type === 'INCOME' && t.categoryId === target.categoryId)
+        .filter((t) => t.type === 'INCOME' && t.categoryId === target.categoryId)
         .reduce((s, t) => s + Number(t.amount), 0);
 
       if (currentAmount === 0) {
@@ -729,12 +740,12 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     for (const target of allTargets) {
       if (!target.isActive) continue;
       const targetAmount = Number(target.targetAmount);
-      
+
       const start = dayjs(target.startDate).startOf('day').valueOf();
       const end = target.endDate ? dayjs(target.endDate).endOf('day').valueOf() : dayjs().endOf('day').valueOf();
 
       const expenseInTargetPeriod = allTxns
-        .filter(t => {
+        .filter((t) => {
           if (t.type !== 'EXPENSE') return false;
           const tDate = dayjs(t.date).valueOf();
           return tDate >= start && tDate <= end;
@@ -742,7 +753,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
         .reduce((s, t) => s + Number(t.amount), 0);
 
       // Trigger if expense > 80% of target income
-      if (expenseInTargetPeriod > targetAmount * 0.80) {
+      if (expenseInTargetPeriod > targetAmount * 0.8) {
         return {
           targetName: target.name,
           targetId: target.clientId!,
@@ -754,8 +765,6 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     }
     return null;
   }, [allTargets, allTxns]);
-
-
 
   // =========================================================================
   // PHASE 3: 3-MONTH HISTORICAL RULES
@@ -769,14 +778,25 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
 
     for (const cat of allCategories) {
       if (cat.type !== 'EXPENSE') continue;
-      
-      const expM1 = allTxns.filter(t => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m1).reduce((s,t) => s + Number(t.amount), 0);
-      const expM2 = allTxns.filter(t => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m2).reduce((s,t) => s + Number(t.amount), 0);
-      const expM3 = allTxns.filter(t => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m3).reduce((s,t) => s + Number(t.amount), 0);
+
+      const expM1 = allTxns
+        .filter((t) => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m1)
+        .reduce((s, t) => s + Number(t.amount), 0);
+      const expM2 = allTxns
+        .filter((t) => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m2)
+        .reduce((s, t) => s + Number(t.amount), 0);
+      const expM3 = allTxns
+        .filter((t) => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m3)
+        .reduce((s, t) => s + Number(t.amount), 0);
 
       // Must be significant (e.g. >50k) and grow by >10% consistently for 3 months
-      if (expM3 > 50000 && expM2 > expM3 * 1.10 && expM1 > expM2 * 1.10) {
-        return { categoryName: cat.name, categoryId: cat.clientId!, currentAmount: expM1, growthPct: Math.round(((expM1 - expM2) / expM2) * 100) };
+      if (expM3 > 50000 && expM2 > expM3 * 1.1 && expM1 > expM2 * 1.1) {
+        return {
+          categoryName: cat.name,
+          categoryId: cat.clientId!,
+          currentAmount: expM1,
+          growthPct: Math.round(((expM1 - expM2) / expM2) * 100),
+        };
       }
     }
     return null;
@@ -789,8 +809,12 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     const m3 = dayjs().subtract(3, 'month').format('YYYY-MM');
 
     const getNet = (m: string) => {
-      const inc = allTxns.filter(t => t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m).reduce((s,t) => s + Number(t.amount), 0);
-      const exp = allTxns.filter(t => t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m).reduce((s,t) => s + Number(t.amount), 0);
+      const inc = allTxns
+        .filter((t) => t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m)
+        .reduce((s, t) => s + Number(t.amount), 0);
+      const exp = allTxns
+        .filter((t) => t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m)
+        .reduce((s, t) => s + Number(t.amount), 0);
       return inc - exp;
     };
 
@@ -799,7 +823,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     const net3 = getNet(m3);
 
     // If gap is shrinking by more than 10% consistently (but still positive)
-    if (net3 > 0 && net2 > 0 && net1 > 0 && net2 < net3 * 0.90 && net1 < net2 * 0.90) {
+    if (net3 > 0 && net2 > 0 && net1 > 0 && net2 < net3 * 0.9 && net1 < net2 * 0.9) {
       return { netNow: net1, netThen: net3, dropPct: Math.round(((net3 - net1) / net3) * 100) };
     }
     return null;
@@ -815,14 +839,25 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
       const bAmount = Number(b.amount);
       if (bAmount === 0) continue;
 
-      const exp1 = allTxns.filter(t => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m1).reduce((s,t) => s + Number(t.amount), 0);
-      const exp2 = allTxns.filter(t => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m2).reduce((s,t) => s + Number(t.amount), 0);
-      const exp3 = allTxns.filter(t => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m3).reduce((s,t) => s + Number(t.amount), 0);
+      const exp1 = allTxns
+        .filter((t) => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m1)
+        .reduce((s, t) => s + Number(t.amount), 0);
+      const exp2 = allTxns
+        .filter((t) => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m2)
+        .reduce((s, t) => s + Number(t.amount), 0);
+      const exp3 = allTxns
+        .filter((t) => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m3)
+        .reduce((s, t) => s + Number(t.amount), 0);
 
       // If they overshoot budget by >20% for 3 consecutive months
-      if (exp1 > bAmount * 1.20 && exp2 > bAmount * 1.20 && exp3 > bAmount * 1.20) {
-        const cat = allCategories.find(c => c.clientId === b.categoryId);
-        return { categoryName: cat?.name || 'Kategori', budgetId: b.clientId!, budgetAmount: bAmount, avgExpense: (exp1 + exp2 + exp3) / 3 };
+      if (exp1 > bAmount * 1.2 && exp2 > bAmount * 1.2 && exp3 > bAmount * 1.2) {
+        const cat = allCategories.find((c) => c.clientId === b.categoryId);
+        return {
+          categoryName: cat?.name || 'Kategori',
+          budgetId: b.clientId!,
+          budgetAmount: bAmount,
+          avgExpense: (exp1 + exp2 + exp3) / 3,
+        };
       }
     }
     return null;
@@ -837,17 +872,31 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     for (const cat of allCategories) {
       if (cat.type !== 'EXPENSE') continue;
 
-      const expC = currentTxns.filter(t => t.categoryId === cat.clientId && t.type === 'EXPENSE').reduce((s,t) => s + Number(t.amount), 0);
+      const expC = currentTxns
+        .filter((t) => t.categoryId === cat.clientId && t.type === 'EXPENSE')
+        .reduce((s, t) => s + Number(t.amount), 0);
       if (expC < 100000) continue; // Minimum threshold to prevent noise
 
-      const exp1 = allTxns.filter(t => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m1).reduce((s,t) => s + Number(t.amount), 0);
-      const exp2 = allTxns.filter(t => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m2).reduce((s,t) => s + Number(t.amount), 0);
-      const exp3 = allTxns.filter(t => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m3).reduce((s,t) => s + Number(t.amount), 0);
+      const exp1 = allTxns
+        .filter((t) => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m1)
+        .reduce((s, t) => s + Number(t.amount), 0);
+      const exp2 = allTxns
+        .filter((t) => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m2)
+        .reduce((s, t) => s + Number(t.amount), 0);
+      const exp3 = allTxns
+        .filter((t) => t.categoryId === cat.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m3)
+        .reduce((s, t) => s + Number(t.amount), 0);
 
       const avg = (exp1 + exp2 + exp3) / 3;
       // Spike: current month is > 1.5x the historical average
-      if (avg > 50000 && expC > avg * 1.50) {
-        return { categoryName: cat.name, categoryId: cat.clientId!, currentAmount: expC, avgAmount: avg, spikePct: Math.round(((expC - avg) / avg) * 100) };
+      if (avg > 50000 && expC > avg * 1.5) {
+        return {
+          categoryName: cat.name,
+          categoryId: cat.clientId!,
+          currentAmount: expC,
+          avgAmount: avg,
+          spikePct: Math.round(((expC - avg) / avg) * 100),
+        };
       }
     }
     return null;
@@ -866,12 +915,16 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
       const bAmount = Number(b.amount);
       if (bAmount === 0) continue;
 
-      const expM1 = allTxns.filter(t => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m1).reduce((s,t) => s + Number(t.amount), 0);
-      const expM2 = allTxns.filter(t => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m2).reduce((s,t) => s + Number(t.amount), 0);
+      const expM1 = allTxns
+        .filter((t) => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m1)
+        .reduce((s, t) => s + Number(t.amount), 0);
+      const expM2 = allTxns
+        .filter((t) => t.categoryId === b.categoryId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === m2)
+        .reduce((s, t) => s + Number(t.amount), 0);
 
       // M-2 was over budget, but M-1 they recovered and stayed under budget
       if (expM2 > bAmount && expM1 <= bAmount && expM1 < expM2) {
-        const cat = allCategories.find(c => c.clientId === b.categoryId);
+        const cat = allCategories.find((c) => c.clientId === b.categoryId);
         return { categoryName: cat?.name || 'Kategori', budgetId: b.clientId!, savedAmount: expM2 - expM1 };
       }
     }
@@ -888,9 +941,15 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
       if (!target.isActive || target.period !== 'MONTHLY') continue;
       const tAmount = Number(target.targetAmount);
 
-      const inc1 = allTxns.filter(t => t.categoryId === target.categoryId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m1).reduce((s,t) => s + Number(t.amount), 0);
-      const inc2 = allTxns.filter(t => t.categoryId === target.categoryId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m2).reduce((s,t) => s + Number(t.amount), 0);
-      const inc3 = allTxns.filter(t => t.categoryId === target.categoryId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m3).reduce((s,t) => s + Number(t.amount), 0);
+      const inc1 = allTxns
+        .filter((t) => t.categoryId === target.categoryId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m1)
+        .reduce((s, t) => s + Number(t.amount), 0);
+      const inc2 = allTxns
+        .filter((t) => t.categoryId === target.categoryId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m2)
+        .reduce((s, t) => s + Number(t.amount), 0);
+      const inc3 = allTxns
+        .filter((t) => t.categoryId === target.categoryId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m3)
+        .reduce((s, t) => s + Number(t.amount), 0);
 
       if (inc1 >= tAmount && inc2 >= tAmount && inc3 >= tAmount) {
         return { targetName: target.name, targetId: target.clientId!, streakCount: 3 };
@@ -903,7 +962,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     if (allTxns.length === 0 || allWallets.length === 0) return null;
     // Look at past 3 months total
     const startM3 = dayjs().subtract(3, 'month').startOf('month').valueOf();
-    
+
     const categoryTotals: Record<string, number> = {};
     const categoryWalletTotals: Record<string, Record<string, number>> = {};
 
@@ -915,16 +974,18 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
       }
     }
 
-    const topCategories = Object.keys(categoryTotals).sort((a, b) => categoryTotals[b] - categoryTotals[a]).slice(0, 5);
+    const topCategories = Object.keys(categoryTotals)
+      .sort((a, b) => categoryTotals[b] - categoryTotals[a])
+      .slice(0, 5);
 
     for (const catId of topCategories) {
       const totalExp = categoryTotals[catId];
-      if (totalExp < 100000) continue; 
+      if (totalExp < 100000) continue;
 
       for (const [walletId, wAmount] of Object.entries(categoryWalletTotals[catId])) {
-        if (wAmount / totalExp >= 0.80) {
-          const cat = allCategories.find(c => c.clientId === catId);
-          const wal = allWallets.find(w => w.clientId === walletId);
+        if (wAmount / totalExp >= 0.8) {
+          const cat = allCategories.find((c) => c.clientId === catId);
+          const wal = allWallets.find((w) => w.clientId === walletId);
           if (cat && wal) {
             return { walletName: wal.name, categoryName: cat.name, percentage: Math.round((wAmount / totalExp) * 100) };
           }
@@ -935,25 +996,82 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
   }, [allTxns, allWallets, allCategories]);
 
   const rawNudgeInsights = useMemo(
-    () => generateNudges({
-      current, prev, topExpenseCategory, weeklySavings, frequentTxn, peakDay, wantsProjection, paydayLeak, weekendTrap, nightOwl, subscriptions,
-      recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum,
-      newCategoryEmergence, categoryDominanceShift, expenseConsistency, discretionaryDrift, budgetRunway, targetGapAlert, targetProgressImpact,
-      categoryCreep, savingsGapShrinking, budgetAccuracyAlert, categorySpike,
-      budgetRecovery, targetStreak, walletCategoryPattern,
-    }),
-    [current, prev, topExpenseCategory, weeklySavings, frequentTxn, peakDay, wantsProjection, paydayLeak, weekendTrap, nightOwl, subscriptions,
-     recurringMerchantGrowth, morningVsEvening, dayOfMonthClustering, zeroBudgetCategory, smartBudgetSuggestion, singleWalletUsage, incomeMomentum,
-     newCategoryEmergence, categoryDominanceShift, expenseConsistency, discretionaryDrift, budgetRunway, targetGapAlert, targetProgressImpact,
-     categoryCreep, savingsGapShrinking, budgetAccuracyAlert, categorySpike,
-     budgetRecovery, targetStreak, walletCategoryPattern]
+    () =>
+      generateNudges({
+        current,
+        prev,
+        topExpenseCategory,
+        weeklySavings,
+        frequentTxn,
+        peakDay,
+        wantsProjection,
+        paydayLeak,
+        weekendTrap,
+        nightOwl,
+        subscriptions,
+        recurringMerchantGrowth,
+        morningVsEvening,
+        dayOfMonthClustering,
+        zeroBudgetCategory,
+        smartBudgetSuggestion,
+        singleWalletUsage,
+        incomeMomentum,
+        newCategoryEmergence,
+        categoryDominanceShift,
+        expenseConsistency,
+        discretionaryDrift,
+        budgetRunway,
+        targetGapAlert,
+        targetProgressImpact,
+        categoryCreep,
+        savingsGapShrinking,
+        budgetAccuracyAlert,
+        categorySpike,
+        budgetRecovery,
+        targetStreak,
+        walletCategoryPattern,
+      }),
+    [
+      current,
+      prev,
+      topExpenseCategory,
+      weeklySavings,
+      frequentTxn,
+      peakDay,
+      wantsProjection,
+      paydayLeak,
+      weekendTrap,
+      nightOwl,
+      subscriptions,
+      recurringMerchantGrowth,
+      morningVsEvening,
+      dayOfMonthClustering,
+      zeroBudgetCategory,
+      smartBudgetSuggestion,
+      singleWalletUsage,
+      incomeMomentum,
+      newCategoryEmergence,
+      categoryDominanceShift,
+      expenseConsistency,
+      discretionaryDrift,
+      budgetRunway,
+      targetGapAlert,
+      targetProgressImpact,
+      categoryCreep,
+      savingsGapShrinking,
+      budgetAccuracyAlert,
+      categorySpike,
+      budgetRecovery,
+      targetStreak,
+      walletCategoryPattern,
+    ],
   );
 
   const nudgeInsights = useMemo(() => {
     let reallocationInsight = null;
-    
+
     if (budgets.length > 0 && currentTxns.length > 0) {
-      const allBudgetsInfo = budgets.map(b => {
+      const allBudgetsInfo = budgets.map((b) => {
         const bCat = allCategories.find((c) => c.clientId === b.categoryId);
         const bSpent = currentTxns
           .filter((t) => t.categoryId === b.categoryId && t.type === 'EXPENSE')
@@ -963,15 +1081,15 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
           categoryId: b.categoryId,
           limit: Number(b.amount),
           spent: bSpent,
-          name: bCat?.name || 'Kategori'
+          name: bCat?.name || 'Kategori',
         };
       });
 
       // Find budgets that are > 100% utilized (strictly overspent)
-      const overspentTargets = allBudgetsInfo.filter(b => b.spent > b.limit);
-      
+      const overspentTargets = allBudgetsInfo.filter((b) => b.spent > b.limit);
+
       // Sort by highest deficit first
-      overspentTargets.sort((a, b) => (b.spent - b.limit) - (a.spent - a.limit));
+      overspentTargets.sort((a, b) => b.spent - b.limit - (a.spent - a.limit));
 
       let recommendation: ReallocationRecommendation | null = null;
       for (const target of overspentTargets) {
@@ -1010,6 +1128,6 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
     donutData,
     barData,
     dailyAvg,
-    nudgeInsights
+    nudgeInsights,
   };
 }

@@ -143,7 +143,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
         const d = dayjs(tx.date).day();
         if (d === 0 || d === 6) weekendTotal += amt;
       }
-      if (weekTotal >= 150_000 && weekendTotal / weekTotal > 0.7) return { percentage: Math.round((weekendTotal / weekTotal) * 100) };
+      if (weekTotal > 0 && weekendTotal / weekTotal > 0.7) return { percentage: Math.round((weekendTotal / weekTotal) * 100) };
       return null;
     })();
 
@@ -184,25 +184,31 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
     })();
 
     // Phase 1 Rules
-    
+
     // [SP-08] Recurring Merchant Growth
     const recurringMerchantGrowth = (() => {
-      const currentExp = currentTxns.filter(t => t.type === 'EXPENSE' && t.description);
-      const prevExp = prevTxns.filter(t => t.type === 'EXPENSE' && t.description);
-      
-      const currentCounts = currentExp.reduce((acc, t) => {
-        acc[t.description!] = (acc[t.description!] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      
-      const prevCounts = prevExp.reduce((acc, t) => {
-        acc[t.description!] = (acc[t.description!] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
-      
+      const currentExp = currentTxns.filter((t) => t.type === 'EXPENSE' && t.description);
+      const prevExp = prevTxns.filter((t) => t.type === 'EXPENSE' && t.description);
+
+      const currentCounts = currentExp.reduce(
+        (acc, t) => {
+          acc[t.description!] = (acc[t.description!] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+
+      const prevCounts = prevExp.reduce(
+        (acc, t) => {
+          acc[t.description!] = (acc[t.description!] || 0) + 1;
+          return acc;
+        },
+        {} as Record<string, number>,
+      );
+
       let topMerchant = null;
       let maxRatio = 0;
-      
+
       for (const [desc, currCount] of Object.entries(currentCounts)) {
         if (currCount >= 3) {
           const pCount = prevCounts[desc] || 0;
@@ -214,7 +220,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
                 merchantName: desc,
                 currentCount: currCount,
                 prevCount: pCount,
-                amount: currentExp.filter(t => t.description === desc).reduce((sum, t) => sum + Number(t.amount), 0)
+                amount: currentExp.filter((t) => t.description === desc).reduce((sum, t) => sum + Number(t.amount), 0),
               };
             }
           }
@@ -225,15 +231,15 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
 
     // [BG-03] Zero Budget Category
     const zeroBudgetCategory = (() => {
-      const expenses = currentTxns.filter(t => t.type === 'EXPENSE' && t.categoryId);
+      const expenses = currentTxns.filter((t) => t.type === 'EXPENSE' && t.categoryId);
       const catTotals: Record<string, number> = {};
       for (const t of expenses) {
         catTotals[t.categoryId!] = (catTotals[t.categoryId!] || 0) + Number(t.amount);
       }
-      
+
       for (const [catId, amount] of Object.entries(catTotals)) {
-        if (amount > 200_000 && !budgets.find(b => b.categoryId === catId)) {
-          const cat = allCategories.find(c => c.clientId === catId);
+        if (amount > 200_000 && !budgets.find((b) => b.categoryId === catId)) {
+          const cat = allCategories.find((c) => c.clientId === catId);
           return { categoryName: cat?.name || 'Lainnya', categoryId: catId, amount };
         }
       }
@@ -242,12 +248,12 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
 
     // [AN-08] Income Momentum Alert
     const incomeMomentum = (() => {
-      const incomes = currentTxns.filter(t => t.type === 'INCOME');
+      const incomes = currentTxns.filter((t) => t.type === 'INCOME');
       const currentIncome = incomes.reduce((s, t) => s + Number(t.amount), 0);
-      
+
       const dayOfMonth = dayjs().date();
       if (dayOfMonth >= 15) {
-        const prevIncomes = prevTxns.filter(t => t.type === 'INCOME');
+        const prevIncomes = prevTxns.filter((t) => t.type === 'INCOME');
         const avgPrevIncome = prevIncomes.reduce((s, t) => s + Number(t.amount), 0);
         if (avgPrevIncome > 0 && currentIncome < avgPrevIncome * 0.5) {
           return { currentIncome, avgPrevIncome };
@@ -259,12 +265,13 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
     // [WL-02] Low Cash Warning
     const lowCashWarning = (() => {
       if (allWallets.length === 0) return null;
-      
-      const uniqueMonths = new Set(allTxns.map(t => dayjs(t.date).format('YYYY-MM'))).size;
-      const avgMonthlyExpense = allTxns.filter(t => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0) / Math.max(1, uniqueMonths);
-        
-      const threshold = Math.max(100_000, avgMonthlyExpense * 0.10);
-      
+
+      const uniqueMonths = new Set(allTxns.map((t) => dayjs(t.date).format('YYYY-MM'))).size;
+      const avgMonthlyExpense =
+        allTxns.filter((t) => t.type === 'EXPENSE').reduce((s, t) => s + Number(t.amount), 0) / Math.max(1, uniqueMonths);
+
+      const threshold = Math.max(100_000, avgMonthlyExpense * 0.1);
+
       for (const w of allWallets) {
         if (w.type === 'INVESTASI') continue;
         let balance = Number(w.initialBalance || 0);
@@ -278,7 +285,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
             balance += Number(t.amount);
           }
         }
-        
+
         if (balance < threshold) {
           return { walletName: w.name, currentBalance: balance, walletId: w.clientId! };
         }
@@ -531,10 +538,10 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
         if (w.type === 'INVESTASI') continue;
 
         const currentExpense = allTxns
-          .filter(t => t.walletId === w.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === currentMonthStr)
+          .filter((t) => t.walletId === w.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === currentMonthStr)
           .reduce((s, t) => s + Number(t.amount), 0);
         const prevExpense = allTxns
-          .filter(t => t.walletId === w.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === prevMonthStr)
+          .filter((t) => t.walletId === w.clientId && t.type === 'EXPENSE' && dayjs(t.date).format('YYYY-MM') === prevMonthStr)
           .reduce((s, t) => s + Number(t.amount), 0);
 
         const drainRateNow = currentExpense / daysElapsed;
@@ -690,7 +697,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
         // ── STEP 4.5: Global Cooldowns (Inter-rule gap & Info weekly cap) ──
         const isCritical = insight.priority === BUDGET_CRITICAL_PRIORITY || insight.severity === 'critical';
         const nowMs = Date.now();
-        
+
         // 1. Inter-rule gap (30 minutes) - bypassed for critical
         if (!isCritical) {
           const lastPushIso = readLastPushTsFromLS();
@@ -818,7 +825,7 @@ export async function evaluateTargetNudges(createdTxn: Transaction) {
           console.log(`[TargetNudge] Triggering Notification: ${title}`);
 
           const logId = generateClientId();
-          
+
           await upsertNotificationLog({
             clientId: logId,
             createdAt: new Date().toISOString(),
@@ -874,7 +881,7 @@ export async function evaluateTargetNudges(createdTxn: Transaction) {
                     ctaLabel: 'Lihat Target',
                   },
                 } as any);
-                
+
                 const { markLogPushed } = await import('@/lib/local-db/repositories/notification-logs');
                 await markLogPushed(logId, new Date().toISOString());
                 console.log('[LocalEngine] Target Push delivered successfully.');

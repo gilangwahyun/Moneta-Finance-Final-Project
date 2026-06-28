@@ -179,7 +179,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 2,
       severity: 'warning',
       title: 'Pola Pengeluaran Akhir Pekan',
-      body: `Sekitar ${weekendTrap.percentage}% pengeluaranmu minggu ini terjadi di akhir pekan. Pastikan pengeluaran harianmu tetap aman, ya!`,
+      body: `Sekitar ${weekendTrap.percentage}% pengeluaranmu minggu ini terjadi di akhir pekan. Pastikan tetap sesuai dengan rencana anggaranmu, ya.`,
       ctaLabel: 'Cek Transaksi',
       ctaRoute: '/transactions',
     });
