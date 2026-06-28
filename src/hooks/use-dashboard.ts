@@ -201,7 +201,7 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
       const d = dayjs(tx.date).day();
       if (d === 0 || d === 6) weekendTotal += amt;
     }
-    if (weekTotal > 0 && (weekendTotal / weekTotal) > 0.7) {
+    if (weekTotal >= 150_000 && (weekendTotal / weekTotal) > 0.7) {
       return {
         type: 'warning',
         title: 'Kebocoran Akhir Pekan',

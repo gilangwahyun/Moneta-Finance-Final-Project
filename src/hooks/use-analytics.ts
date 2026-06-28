@@ -169,7 +169,7 @@ export function useAnalytics(donutMode: "EXPENSE" | "INCOME") {
       const d = dayjs(tx.date).day();
       if (d === 0 || d === 6) weekendTotal += amt;
     }
-    if (weekTotal > 0 && (weekendTotal / weekTotal) > 0.7) return { percentage: Math.round((weekendTotal / weekTotal) * 100) };
+    if (weekTotal >= 150_000 && (weekendTotal / weekTotal) > 0.7) return { percentage: Math.round((weekendTotal / weekTotal) * 100) };
     return null;
   }, [currentTxns]);
 

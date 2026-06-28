@@ -226,7 +226,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
           <div className="mt-4 flex flex-col gap-3 sm:flex-row-reverse">
             <button
               type="submit"
-              disabled={isSubmitting || !name || !targetAmount || !categoryId || (period === 'CUSTOM' && !endDate)}
+              disabled={isSubmitting || !name || !targetAmount || parseInt(targetAmount.replace(/\D/g, ''), 10) <= 0 || !categoryId || (period === 'CUSTOM' && !endDate)}
               className="inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-semibold text-white shadow-md shadow-indigo-500/20 transition-all hover:bg-indigo-500 active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-indigo-500 dark:hover:bg-indigo-400 sm:w-auto sm:flex-1"
             >
               {isSubmitting && <Loader2 className="h-4 w-4 animate-spin" />}
