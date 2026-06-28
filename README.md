@@ -1,332 +1,147 @@
-# Moneta Finance
+# MONETA FINANCE
+**Intelligent Personal Financial Management System**
 
-> Aplikasi manajemen keuangan pribadi berbasis Progressive Web App (PWA) dengan arsitektur *offline-first*.
+> Dibangun untuk resiliensi, presisi, dan privasi. Aplikasi Progressive Web App (PWA) yang ditenagai oleh arsitektur *Offline-First* dan *Rule-Based Insight Engine*.
 
-Moneta Finance memungkinkan pengguna mencatat, memantau, dan menganalisis keuangan pribadi secara real-time, bahkan tanpa koneksi internet. Data disimpan lokal menggunakan IndexedDB dan disinkronisasi otomatis ke server saat kembali online.
-
----
-
-## Tech Stack
-
-| Layer | Teknologi |
-|---|---|
-| **Framework** | Next.js 16 (App Router) |
-| **Language** | TypeScript |
-| **UI** | React 19, Tailwind CSS v4, Recharts, Lucide React |
-| **Database (Server)** | PostgreSQL via Supabase |
-| **ORM** | Prisma |
-| **Database (Client)** | IndexedDB via `idb` |
-| **Auth** | JWT (`jose`), bcryptjs, CSRF token |
-| **Push Notification** | Web Push API (`web-push`), Service Worker |
-| **PWA** | `@ducanh2912/next-pwa` |
-| **Deployment** | Vercel |
+Moneta Finance mendefinisikan ulang cara pencatatan keuangan dengan memungkinkan pengguna untuk mencatat, memantau, dan menganalisis metrik finansial secara *real-time*—bahkan tanpa koneksi internet sama sekali. Data disimpan secara aman di sisi klien menggunakan IndexedDB dan direkonsiliasi secara asinkron ke server dengan strategi resolusi konflik *Last-Write-Wins* (LWW).
 
 ---
 
-## Fitur Utama
+## KAPABILITAS UTAMA
 
-- ✅ **Offline-first** — semua operasi CRUD berjalan tanpa internet
-- ✅ **Background Sync** — data disinkronisasi otomatis saat kembali online
-- ✅ **Multi-wallet** — kelola beberapa dompet sekaligus (tunai, bank, e-wallet, investasi)
-- ✅ **Budget & Target** — atur anggaran bulanan dan lacak progres target finansial
-- ✅ **Analisis Cerdas** — insight otomatis berbasis pola pengeluaran
-- ✅ **Web Push Notification** — notifikasi peringatan anggaran & ringkasan harian
-- ✅ **Ekspor Data** — unduh laporan keuangan ke format Excel (.xlsx)
-- ✅ **Dark Mode** — dukungan tema terang dan gelap
+- **Offline-First Resilience**
+  Seluruh operasi CRUD berjalan instan tanpa dependensi jaringan. Akses penuh terhadap data keuangan Anda, kapan pun dan di mana pun.
+- **Background Synchronization**
+  Sinkronisasi mutasi data otomatis saat koneksi terdeteksi, menjamin integritas data terdistribusi tanpa intervensi manual pengguna.
+- **Multi-Wallet Architecture**
+  Pemisahan aset secara logis melalui dompet Tunai, Bank, E-Wallet, dan Investasi. Dilengkapi fitur *Hidden Balance* untuk ekstra privasi.
+- **Rule-Based Insight Engine**
+  Analitik proaktif yang mendeteksi pola pengeluaran laten (seperti *Payday Leak* atau *Weekend Trap*) dan mengirimkan *behavioral nudge* untuk mencegah pemborosan.
+- **Smart Budgeting & Subsidies**
+  Sistem peringatan anggaran bertingkat yang diintegrasikan dengan algoritma subsidi silang cerdas—merekomendasikan realokasi dana dari kategori surplus ke kategori yang mengalami defisit.
+- **Progressive Web Push Notifications**
+  Notifikasi *Instant Alert* untuk peristiwa kritikal dan *Daily Digest* harian yang diregulasi oleh *Daily Cap Engine* agar mencegah *alert fatigue* (spam).
+- **Data Portability**
+  Ekstraksi komprehensif seluruh buku besar transaksi ke dalam format Excel (.xlsx).
 
 ---
 
-## Arsitektur Sistem
+## SPESIFIKASI TEKNIS (TECH STACK)
 
-```
-Browser (Client)
-├── IndexedDB (Primary Store — offline-first)
-│   ├── Transactions, Wallets, Budgets, Categories
-│   ├── Financial Targets, Notification Logs
-│   └── Sync Queue (antrian perubahan yang belum tersinkronisasi)
+**Frontend Architecture**
+- Next.js 16 (App Router)
+- React 19, Tailwind CSS v4, Recharts, Lucide React
+
+**Backend & Database**
+- PostgreSQL (via Supabase) ditenagai oleh Prisma ORM
+- Client-Side Database: IndexedDB (via `idb`)
+
+**Authentication & Security**
+- Stateless JWT (`jose`), `bcryptjs`
+- Anti-CSRF Tokens, Algoritma Rate Limiting
+
+**Progressive Web App (PWA)**
+- `@ducanh2912/next-pwa`, Custom Service Worker, Web Push API
+
+---
+
+## ARSITEKTUR SISTEM
+
+```text
+CLIENT ARCHITECTURE (BROWSER)
+├── IndexedDB (Primary Store — Offline-First)
+│   ├── Transactions, Wallets, Budgets, Categories, Targets
+│   └── Sync Queue (Antrian mutasi lokal tertunda)
 │
 ├── Service Worker
-│   ├── Push Notification handler
-│   ├── Daily Cap Engine (pembatasan notifikasi harian)
-│   └── Background Sync trigger
+│   ├── Push Notification Handler
+│   ├── Daily Cap Engine (Regulator batas notifikasi)
+│   └── Background Sync Trigger
 │
 └── Sync Engine
-    ├── Last-Write-Wins (LWW) conflict resolution
-    └── Auto-sync saat browser kembali online
+    ├── Last-Write-Wins (LWW) Conflict Resolution
+    └── Auto-sync state reconciler
 
-Server (Next.js API Routes)
+SERVER ARCHITECTURE (NEXT.JS API)
 ├── REST API → Prisma → PostgreSQL
-├── Auth (JWT + CSRF + Rate Limiter)
-└── Web Push (VAPID)
+├── Authentication Layer (JWT + CSRF Token + Rate Limiter)
+└── Web Push Integration (VAPID)
 ```
 
 ---
 
-## Struktur Modul
+## MODUL INTI APLIKASI
 
-### 1. 🔐 Autentikasi (`/src/app/(auth)/`)
+### 1. Autentikasi Kriptografis
+Manajemen sesi *stateless* menggunakan token JWT yang dienkripsi dan disimpan sebagai *HttpOnly Cookie*. Dilengkapi proteksi *anti-CSRF* dan perlindungan serangan *brute-force* tingkat lanjut.
 
-Mengelola siklus hidup sesi pengguna.
+### 2. Command Center (Dashboard)
+Dasbor terpusat yang menyajikan akumulasi likuiditas, analitik komparatif arus kas, riwayat transaksi historis, dan telemetri status sinkronisasi *real-time*.
 
-| Komponen | Deskripsi |
-|---|---|
-| Register | Pembuatan akun baru dengan validasi email & password |
-| Login | Autentikasi dengan JWT yang disimpan sebagai HttpOnly cookie |
-| Profile | Pengelolaan profil dan pengaturan akun |
+### 3. Manajemen Dompet & Buku Besar
+Pencatatan buku besar (Pemasukan, Pengeluaran, Transfer) yang bertindak sebagai *trigger* instan bagi evaluasi anggaran sisi klien dan pengiriman *nudge* seketika.
 
-**Teknis:** JWT di-sign menggunakan `jose`, password di-hash dengan `bcryptjs`. Setiap request API terproteksi CSRF token dan rate limiter untuk mencegah brute-force.
+### 4. Manajemen Anggaran & Target Finansial
+Penetapan ambang batas presisi (50%, 80%, 100%) dan pemantauan metrik *milestone* tabungan.
 
----
+### 5. Analitik & Nudging Engine
+Visualisasi komparatif (*Donut Chart*, *Trend Lines*) yang menerjemahkan data mentah menjadi wawasan keuangan yang *actionable* berkat orkestrasi mesin *nudging* lokal.
 
-### 2. 🏠 Dashboard (`/src/app/(dashboard)/page.tsx`)
-
-Halaman utama yang menampilkan ringkasan keuangan terkini.
-
-- Saldo total semua dompet
-- Ringkasan pemasukan & pengeluaran periode aktif
-- Transaksi terbaru
-- Status sinkronisasi data
-- Filter periode waktu global (harian, mingguan, bulanan, kustom)
+### 6. Mesin Sinkronisasi Terdistribusi
+Lapisan sinkronisasi kompleks yang mengorkestrasi urutan *pull/push* secara asinkronus untuk mencegah dan memecahkan tabrakan data antara *local state* dan *server state*.
 
 ---
 
-### 3. 👛 Kelola Dompet (`/src/app/(dashboard)/wallets/`)
-
-Manajemen multi-dompet dengan tipe: **Tunai**, **Bank**, **E-Wallet**, **Investasi**, **Lainnya**.
-
-| Fitur | Deskripsi |
-|---|---|
-| Tambah / Edit / Hapus Dompet | CRUD lengkap dengan validasi |
-| Saldo Tersembunyi | Toggle visibilitas saldo untuk privasi |
-| Transfer antar Dompet | Pencatatan transfer dengan deduksi & kredit otomatis |
-
----
-
-### 4. 💸 Kelola Transaksi (`/src/app/(dashboard)/transactions/`)
-
-Inti dari aplikasi — pencatatan setiap aktivitas keuangan.
-
-| Tipe | Deskripsi |
-|---|---|
-| **Pemasukan** | Pencatatan sumber pendapatan |
-| **Pengeluaran** | Pencatatan pengeluaran per kategori |
-| **Transfer** | Perpindahan dana antar dompet |
-
-Setiap transaksi memicu evaluasi budget dan nudge notifikasi secara otomatis di sisi klien (via `local-engine.ts`).
-
----
-
-### 5. 📊 Kelola Anggaran (`/src/app/(dashboard)/budgets/`)
-
-Pengaturan batas pengeluaran bulanan per kategori dengan sistem peringatan bertingkat.
-
-| Ambang Batas | Peringatan |
-|---|---|
-| 50% | Info — penggunaan anggaran berjalan |
-| 80% | Warning — anggaran mulai menipis |
-| 100% | Critical — batas anggaran tercapai |
-| >100% | Critical + Rekomendasi Subsidi Silang |
-
-**Fitur Unggulan:** Sistem rekomendasi realokasi anggaran otomatis — saat satu kategori melampaui batas, sistem mendeteksi kategori lain yang memiliki sisa anggaran dan merekomendasikan subsidi silang.
-
----
-
-### 6. 🎯 Kelola Target Finansial (`/src/app/(dashboard)/targets/`)
-
-Penetapan dan pemantauan target keuangan dengan tipe dan periode fleksibel.
-
-| Tipe Target | Deskripsi |
-|---|---|
-| **Target Pemasukan** | Kejar jumlah pendapatan tertentu |
-| **Target Tabungan** | Akumulasi tabungan dalam periode |
-| **Target Saldo** | Pertahankan saldo minimum dompet |
-
-**Periode:** Harian, Mingguan, Bulanan, Kustom. Notifikasi progres otomatis saat mencapai 80% dan 100%.
-
----
-
-### 7. 📈 Analisis & Insight (`/src/app/(dashboard)/analytics/`)
-
-Visualisasi dan analisis pola keuangan berbasis data transaksi.
-
-| Fitur Analisis | Deskripsi |
-|---|---|
-| Distribusi Pengeluaran | Donut chart per kategori |
-| Tren Bulanan | Perbandingan pemasukan vs pengeluaran |
-| Category Drilldown | Detail transaksi per kategori |
-| Analisis Komparatif | Perbandingan antar periode |
-| Spending Insights | Deteksi pola: Payday Leak, Weekend Trap, Night Owl, Latte Factor, dll. |
-
-**Engine nudging (`/src/lib/nudging.ts`)** menganalisis 10+ pola pengeluaran dan menghasilkan insight yang dapat dinotifikasikan.
-
----
-
-### 8. 🔔 Notifikasi (`/src/app/(dashboard)/notifications/`)
-
-Sistem notifikasi berbasis Web Push API dengan dua mode pengiriman.
-
-| Mode | Deskripsi |
-|---|---|
-| **Instant Alert** | Notifikasi langsung saat peristiwa keuangan terdeteksi (anggaran 80%/100%, target tercapai) |
-| **Daily Digest** | Ringkasan harian pada jam yang dikonfigurasi pengguna |
-
-**Komponen teknis:**
-
-| File | Fungsi |
-|---|---|
-| `worker/index.ts` | Service Worker — handler push event & Daily Cap Engine |
-| `src/lib/notifications.ts` | Server-side push via VAPID |
-| `src/lib/notifications/local-engine.ts` | Evaluasi nudge sisi klien per transaksi |
-| `src/lib/notifications/daily-digest.ts` | Builder konten digest & timing checker |
-| `src/lib/sw/register.ts` | Registrasi SW, subscription, digest timer |
-
-**Daily Cap Engine:** Membatasi jumlah push notification harian (default: 5) untuk mencegah spam. Notifikasi yang melebihi kuota tetap dicatat di log internal.
-
----
-
-### 9. 🏷️ Kelola Kategori (`/src/app/(dashboard)/categories/`)
-
-Pengelolaan kategori transaksi dengan dukungan ikon dan warna kustom.
-
-- Kategori default disediakan saat registrasi
-- Pengguna dapat menambah, mengedit, dan menghapus kategori kustom
-- Tipe: **Pemasukan** dan **Pengeluaran**
-
----
-
-### 10. 📤 Ekspor Data (`/src/app/api/export/`)
-
-Ekspor data keuangan ke format Excel (.xlsx) menggunakan library `xlsx`.
-
-- Ekspor transaksi berdasarkan filter periode
-- Format laporan siap cetak
-
----
-
-### 11. 🔄 Sinkronisasi (`/src/lib/sync/`)
-
-Mesin sinkronisasi offline-first yang memastikan konsistensi data antara klien dan server.
-
-| Komponen | File | Fungsi |
-|---|---|---|
-| Sync Manager | `sync-manager.ts` | Orkestrasi proses pull & push data |
-| Sync Queue | `queue.ts` | Antrian perubahan lokal yang menunggu upload |
-| Conflict Resolver | `conflict-resolver.ts` | Resolusi konflik dengan strategi Last-Write-Wins (LWW) |
-| Sync Events | `events.ts` | Event bus untuk notifikasi status sinkronisasi ke UI |
-
-**Alur Sinkronisasi:**
-```
-Pengguna online → Sync Manager aktif
-  → Pull: ambil data terbaru dari server
-  → Push: unggah perubahan dari Sync Queue
-  → Conflict: resolusi LWW berdasarkan updatedAt timestamp
-```
-
----
-
-### 12. 🗄️ Akses Data Lokal (`/src/lib/local-db/`)
-
-Layer abstraksi untuk operasi IndexedDB menggunakan library `idb`.
-
-```
-src/lib/local-db/
-├── index.ts              — inisialisasi & schema IndexedDB
-├── schema.ts             — definisi stores & indexes
-├── notification-prefs.ts — helper preferensi notifikasi
-├── cache-manager.ts      — manajemen cache
-└── repositories/
-    ├── transactions.ts
-    ├── wallets.ts
-    ├── budgets.ts
-    ├── categories.ts
-    ├── targets.ts
-    ├── notification-logs.ts
-    ├── notification-settings.ts
-    └── sync-queue.ts
-```
-
----
-
-### 13. 🌐 Akses Data Server (`/src/app/api/`)
-
-REST API endpoints yang berinteraksi dengan PostgreSQL via Prisma.
-
-```
-/api/
-├── auth/           — register, login, logout, me
-├── sync/           — pull & push data sinkronisasi
-├── budgets/        — CRUD anggaran
-├── export/         — ekspor laporan Excel
-├── notifications/
-│   ├── subscribe/  — pendaftaran Web Push subscription
-│   └── test/       — pengujian push pipeline
-└── settings/       — pengaturan pengguna
-```
-
----
-
-## Instalasi & Menjalankan Lokal
+## PANDUAN PENGEMBANGAN LOKAL
 
 ### Prasyarat
-
 - Node.js >= 20
-- PostgreSQL (atau akun Supabase)
-- VAPID keys untuk Web Push
+- Instance PostgreSQL (Misal: Supabase / Neon)
+- Kunci VAPID untuk Web Push Notifications
 
-### Setup
+### Inisialisasi Proyek
 
 ```bash
-# 1. Clone repository
+# 1. Kloning repositori
 git clone https://github.com/gilangwahyun/Moneta-Finance-Final-Project.git
 cd Moneta-Finance-Final-Project
 
-# 2. Install dependencies (otomatis menjalankan prisma generate)
+# 2. Instalasi dependensi (akan memicu prisma generate)
 npm install
 
-# 3. Salin environment template dan isi nilainya
+# 3. Konfigurasi Environment Variables
 cp .env.example .env.local
+# (Lengkapi DATABASE_URL dan VAPID Keys)
 
-# 4. Jalankan migrasi database
+# 4. Pembuatan Kunci VAPID
+npx web-push generate-vapid-keys
+# (Masukkan public & private keys ke .env.local)
+
+# 5. Migrasi Skema Database
 npx prisma db push
 
-# 5. (Opsional) Seed data default
+# 6. (Opsional) Injeksi Data Awal
 npx prisma db seed
 
-# 6. Jalankan development server
+# 7. Mulai Server Pengembangan
 npm run dev
 ```
 
-Buka [http://localhost:3000](http://localhost:3000).
-
-### Environment Variables
-
-| Variable | Keterangan |
-|---|---|
-| `DATABASE_URL` | Connection string PostgreSQL (pooler) |
-| `DIRECT_URL` | Connection string PostgreSQL (direct) |
-| `JWT_SECRET` | Secret key untuk signing JWT |
-| `NEXT_PUBLIC_VAPID_PUBLIC_KEY` | VAPID public key untuk Web Push |
-| `VAPID_PRIVATE_KEY` | VAPID private key untuk Web Push |
-| `VAPID_SUBJECT` | Email/URL untuk VAPID identification |
-
-**Generate VAPID keys:**
-```bash
-npx web-push generate-vapid-keys
-```
+Aplikasi dapat diakses melalui `http://localhost:3000`.
 
 ---
 
-## Deployment
+## INSTRUKSI DEPLOYMENT
 
-Project ini di-deploy ke Vercel menggunakan Vercel CLI:
+Proyek ini telah dikalibrasi untuk proses *deployment* di infrastruktur Vercel:
 
 ```bash
-npm run build   # build production
+npm run build
 npx vercel --prod
 ```
 
 ---
 
-## Lisensi
+## LISENSI & HAK CIPTA
 
-Project ini dibuat sebagai tugas akhir akademik. Seluruh hak cipta dimiliki oleh penulis.
+Dikembangkan sebagai purwarupa tugas akhir akademik. Seluruh hak kekayaan intelektual atas desain arsitektur, inovasi *insight engine*, dan kode sumber sepenuhnya dimiliki oleh penulis.
