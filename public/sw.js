@@ -289,6 +289,11 @@ self.addEventListener("notificationclick", (event) => {
 
   event.waitUntil(
     (async () => {
+      // 1. Mark as read in IndexedDB immediately so mobile background resume doesn't lose state
+      if (notifClientId) {
+        await markNotificationAsReadInIDB(notifClientId);
+      }
+
       const windowClients = await self.clients.matchAll({
         type: "window",
         includeUncontrolled: true,
@@ -298,12 +303,21 @@ self.addEventListener("notificationclick", (event) => {
         client.url.startsWith(self.location.origin)
       );
 
+      // Always encode clientId in URL for mobile background resume and cold-start redundancy
+      const openUrl = notifClientId
+        ? targetUrl + (targetUrl.includes("?") ? "&" : "?") + "notifRead=" + encodeURIComponent(notifClientId)
+        : targetUrl;
+
       if (appClient) {
         console.log("[SW] notificationclick — focusing existing client");
         await appClient.focus();
         
-        // Send navigation message
-        appClient.postMessage({ type: "SW_NAVIGATE", path: targetPath });
+        // Navigate or send SW_NAVIGATE with openUrl so layout.tsx catches ?notifRead= reliably
+        if ("navigate" in appClient && (!appClient.url.includes(targetPath) || notifClientId)) {
+          await appClient.navigate(openUrl);
+        } else {
+          appClient.postMessage({ type: "SW_NAVIGATE", path: openUrl });
+        }
         
         // Send mark-read message so the app calls markLogRead() which enqueues sync
         if (notifClientId) {
@@ -319,16 +333,90 @@ self.addEventListener("notificationclick", (event) => {
           appClient.postMessage({ type: "INBOX_UPDATED" });
         }
       } else {
-        console.log("[SW] notificationclick — no existing client, opening window:", targetUrl);
-        // Encode clientId so the newly opened page can mark it as read on load
-        const openUrl = notifClientId
-          ? targetUrl + (targetUrl.includes("?") ? "&" : "?") + "notifRead=" + encodeURIComponent(notifClientId)
-          : targetUrl;
+        console.log("[SW] notificationclick — no existing client, opening window:", openUrl);
         await self.clients.openWindow(openUrl);
       }
     })()
   );
 });
+
+// ─── Helper: Mark notification as read directly in IDB ────
+// Ensures mobile PWA clicks are marked read even if WebView postMessage fails or is suspended.
+async function markNotificationAsReadInIDB(clientId) {
+  if (!clientId) return;
+  const now = new Date().toISOString();
+  return new Promise((resolve) => {
+    try {
+      const request = indexedDB.open("moneta-finance");
+      request.onsuccess = (event) => {
+        const db = event.target.result;
+        
+        // 1. Update notification_inbox
+        if (db.objectStoreNames.contains("notification_inbox")) {
+          try {
+            const tx = db.transaction("notification_inbox", "readwrite");
+            const store = tx.objectStore("notification_inbox");
+            const req = store.openCursor();
+            req.onsuccess = () => {
+              const cursor = req.result;
+              if (cursor) {
+                const item = cursor.value;
+                if (!item.isRead && (item.logId === clientId || item.clientId === clientId || item.id === clientId || item.clientId === Number(clientId))) {
+                  cursor.update({ ...item, isRead: true });
+                }
+                cursor.continue();
+              }
+            };
+          } catch (e) { console.warn("[SW] Gagal update inbox IDB:", e); }
+        }
+
+        // 2. Update notification_logs
+        if (db.objectStoreNames.contains("notification_logs")) {
+          try {
+            const tx = db.transaction("notification_logs", "readwrite");
+            const store = tx.objectStore("notification_logs");
+            const getReq = store.get(clientId);
+            getReq.onsuccess = () => {
+              const record = getReq.result;
+              if (record && !record.readAt) {
+                record.readAt = now;
+                record.updatedAt = now;
+                record.syncStatus = "PENDING";
+                store.put(record);
+
+                // 3. Enqueue to sync_queue
+                if (db.objectStoreNames.contains("sync_queue")) {
+                  try {
+                    const sqTx = db.transaction("sync_queue", "readwrite");
+                    sqTx.objectStore("sync_queue").add({
+                      id: crypto.randomUUID(),
+                      entity: "notification_log",
+                      mutation: "update",
+                      clientId: clientId,
+                      payload: { readAt: now, updatedAt: now },
+                      createdAt: now,
+                      retryCount: 0,
+                      status: "PENDING",
+                    });
+                  } catch (errSq) { console.warn("[SW] Gagal enqueue sync_queue:", errSq); }
+                }
+              }
+            };
+            tx.oncomplete = () => { db.close(); resolve(); };
+            tx.onerror = () => { db.close(); resolve(); };
+          } catch (e) { db.close(); resolve(); console.warn("[SW] Gagal update logs IDB:", e); }
+        } else {
+          db.close();
+          resolve();
+        }
+      };
+      request.onerror = () => resolve();
+    } catch (err) {
+      console.warn("[SW] markNotificationAsReadInIDB error:", err);
+      resolve();
+    }
+  });
+}
 
 // Returns { userId, dailyCap, instantAlerts, dailyDigest, deliveryMode }
 

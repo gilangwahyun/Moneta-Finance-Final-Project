@@ -186,7 +186,7 @@ async function checkCapAndShowNotification(payload) {
   const title = payload.title || "Moneta Finance";
   const body = payload.body || "Kamu memiliki pembaruan baru.";
   const notifType = payload.type || "INSTANT";
-  const logId = payload.logId || null;
+  const logId = payload.logId || payload.clientId || payload.data?.clientId || payload.data?.logId || null;
 
   // ── 1. Baca preferensi ─────────────────────────────────
   const prefs = await getPrefsFromIDB();
@@ -220,8 +220,10 @@ async function checkCapAndShowNotification(payload) {
     icon: "/icons/icon-192x192.png",
     badge: "/icons/icon-192x192.png",
     data: {
-      url: payload.data?.url || "/",
+      url: payload.data?.url || payload.url || "/",
       logId, // Digunakan oleh notificationclick untuk mark-read
+      clientId: logId,
+      notificationClientId: logId,
     },
     tag: `moneta-${notifType}`, // Mencegah duplikat notif tipe sama
     requireInteraction: false,
@@ -265,23 +267,112 @@ self.addEventListener("push", (event) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
 
-  const urlToOpen = new URL(
-    event.notification.data?.url || "/",
-    self.location.origin
-  ).href;
+  const data = event.notification.data || {};
+  const notificationId = data.notificationClientId || data.logId || data.clientId || null;
+  let targetUrl = data.url || "/";
 
   event.waitUntil(
-    self.clients
-      .matchAll({ type: "window", includeUncontrolled: true })
-      .then((windowClients) => {
-        for (const client of windowClients) {
-          if (client.url === urlToOpen && "focus" in client) {
-            return client.focus();
-          }
+    (async () => {
+      if (notificationId) {
+        await markNotificationAsReadInIDB(notificationId);
+      }
+
+      const windowClients = await self.clients.matchAll({
+        type: "window",
+        includeUncontrolled: true,
+      });
+
+      const appClient = windowClients.find((client) =>
+        client.url.startsWith(self.location.origin)
+      );
+
+      const openUrl = notificationId
+        ? targetUrl + (targetUrl.includes("?") ? "&" : "?") + "notifRead=" + encodeURIComponent(notificationId)
+        : targetUrl;
+
+      if (appClient) {
+        await appClient.focus();
+        if ("navigate" in appClient && (!appClient.url.includes(targetUrl) || notificationId)) {
+          await appClient.navigate(openUrl);
+        } else {
+          appClient.postMessage({ type: "SW_NAVIGATE", path: openUrl });
         }
-        if (self.clients.openWindow) {
-          return self.clients.openWindow(urlToOpen);
+        if (notificationId) {
+          appClient.postMessage({
+            type: "NOTIFICATION_CLICKED",
+            notificationClientId: notificationId,
+          });
         }
-      })
+      } else if (self.clients.openWindow) {
+        await self.clients.openWindow(openUrl);
+      }
+    })()
   );
 });
+
+async function markNotificationAsReadInIDB(clientId: string) {
+  if (!clientId) return;
+  const now = new Date().toISOString();
+  return new Promise<void>((resolve) => {
+    try {
+      const request = indexedDB.open("moneta-finance");
+      request.onsuccess = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (db.objectStoreNames.contains("notification_inbox")) {
+          try {
+            const tx = db.transaction("notification_inbox", "readwrite");
+            const store = tx.objectStore("notification_inbox");
+            const req = store.openCursor();
+            req.onsuccess = () => {
+              const cursor = req.result;
+              if (cursor) {
+                const item = cursor.value;
+                if (!item.isRead && (item.logId === clientId || item.clientId === clientId || item.id === clientId || item.clientId === Number(clientId))) {
+                  cursor.update({ ...item, isRead: true });
+                }
+                cursor.continue();
+              }
+            };
+          } catch (e) { console.warn("[SW] Gagal update inbox IDB:", e); }
+        }
+        if (db.objectStoreNames.contains("notification_logs")) {
+          try {
+            const tx = db.transaction("notification_logs", "readwrite");
+            const store = tx.objectStore("notification_logs");
+            const getReq = store.get(clientId);
+            getReq.onsuccess = () => {
+              const record = getReq.result;
+              if (record && !record.readAt) {
+                record.readAt = now;
+                record.updatedAt = now;
+                record.syncStatus = "PENDING";
+                store.put(record);
+                if (db.objectStoreNames.contains("sync_queue")) {
+                  try {
+                    const sqTx = db.transaction("sync_queue", "readwrite");
+                    sqTx.objectStore("sync_queue").add({
+                      id: crypto.randomUUID(),
+                      entity: "notification_log",
+                      mutation: "update",
+                      clientId: clientId,
+                      payload: { readAt: now, updatedAt: now },
+                      createdAt: now,
+                      retryCount: 0,
+                      status: "PENDING",
+                    });
+                  } catch (errSq) {}
+                }
+              }
+            };
+            tx.oncomplete = () => { db.close(); resolve(); };
+            tx.onerror = () => { db.close(); resolve(); };
+          } catch (e) { db.close(); resolve(); }
+        } else {
+          db.close();
+          resolve();
+        }
+      };
+      request.onerror = () => resolve();
+    } catch { resolve(); }
+  });
+}
