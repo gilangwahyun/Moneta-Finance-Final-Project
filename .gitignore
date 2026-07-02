@@ -43,7 +43,7 @@ next-env.d.ts
 .env*
 
 # personal documents (thesis reference, not part of the codebase)
-/docs/
+/docs
 
 # prisma generated client (di-generate ulang saat npm install via postinstall)
 /src/generated/

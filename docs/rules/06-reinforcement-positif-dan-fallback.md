@@ -10,26 +10,25 @@ Kelompok ini mencakup aturan-aturan yang bersifat membangun dan apresiatif. Berb
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiPR01(data7HariTerakhir):
-    -- data7HariTerakhir: array per hari berisi { pemasukan, pengeluaran }
-    -- Data dihitung dari setiap hari dalam 7 hari terakhir menggunakan seluruh
-    -- riwayat transaksi. TRANSFER dikecualikan dari kalkulasi (hanya INCOME dan EXPENSE).
+Program Evaluasi Keberhasilan Berhemat Mingguan (PR-01)
+Deklarasi
+    data7HariTerakhir : larik data harian { per hari: pemasukan, pengeluaran }
+                        { TRANSFER dikecualikan dari kalkulasi }
+    totalBersih7Hari  : bilangan real
+    tabungan7Hari     : bilangan real
 
-    totalBersih7Hari = 0
+Algoritma
+    totalBersih7Hari ← 0
 
-    UNTUK SETIAP hari DALAM data7HariTerakhir:
-        totalBersih7Hari += hari.pemasukan - hari.pengeluaran
+    FOR EACH hari IN data7HariTerakhir DO
+        totalBersih7Hari ← totalBersih7Hari + (hari.pemasukan - hari.pengeluaran)
+    END FOR
 
-    tabungan7Hari = MAKS(0, totalBersih7Hari)
+    tabungan7Hari ← MAX(0, totalBersih7Hari)
 
-    JIKA tabungan7Hari > 0 MAKA
-        HASILKAN Insight(
-            judul = 'Kamu Berhasil Berhemat!',
-            isi   = 'Hebat! Kamu berhasil menyisakan {tabungan7Hari} pada 7 hari 
-                     terakhir. Pertahankan kebiasaan baik ini.',
-            tingkatUrgensi = 'positive',
-            prioritas      = 3.5
-        )
+    IF tabungan7Hari > 0 THEN
+        OUTPUT Insight("Kamu Berhasil Berhemat!", urgensi=positive)
+    END IF
 ```
 
 **Keluaran:** Judul "Kamu Berhasil Berhemat!", tingkat urgensi *positive*, tombol aksi ke `/transactions`.
@@ -44,26 +43,27 @@ FUNGSI EvaluasiPR01(data7HariTerakhir):
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiPR02(pemasukanBulanIni, pemasukanBulanLalu):
-    JIKA pemasukanBulanLalu <= 0 MAKA HENTIKAN (tidak ada basis perbandingan)
-    JIKA pemasukanBulanIni <= pemasukanBulanLalu MAKA HENTIKAN (tidak naik)
+Program Evaluasi Pemasukan Meningkat (PR-02)
+Deklarasi
+    pemasukanBulanIni    : bilangan real
+    pemasukanBulanLalu   : bilangan real
+    persentaseKenaikan   : bilangan bulat
+    selisihNominal       : bilangan real
+    rekomendasiTabungan  : bilangan real  { 50% dari selisih kenaikan }
 
-    persentaseKenaikan = BULAT((pemasukanBulanIni - pemasukanBulanLalu) 
-                                / pemasukanBulanLalu * 100)
+Algoritma
+    IF pemasukanBulanLalu <= 0 THEN RETURN  { tidak ada basis perbandingan }
+    IF pemasukanBulanIni <= pemasukanBulanLalu THEN RETURN  { tidak ada kenaikan }
 
-    -- Kondisi utama: kenaikan signifikan, minimal 10%
-    JIKA persentaseKenaikan >= 10 MAKA
-        selisihNominal = pemasukanBulanIni - pemasukanBulanLalu
-        rekomendasiTabungan = selisihNominal / 2  -- saran sisihkan 50% dari kenaikan
+    persentaseKenaikan  ← ROUND((pemasukanBulanIni - pemasukanBulanLalu)
+                                 / pemasukanBulanLalu × 100)
 
-        HASILKAN Insight(
-            judul = 'Pemasukan Meningkat',
-            isi   = 'Pemasukan naik {persentaseKenaikan}%. Coba sisihkan 
-                     {rekomendasiTabungan} langsung ke dana darurat untuk 
-                     memperkuat fondasi keuanganmu.',
-            tingkatUrgensi = 'positive',
-            prioritas      = 3.6
-        )
+    IF persentaseKenaikan >= 10 THEN
+        selisihNominal      ← pemasukanBulanIni - pemasukanBulanLalu
+        rekomendasiTabungan ← selisihNominal / 2
+
+        OUTPUT Insight("Pemasukan Meningkat", urgensi=positive)
+    END IF
 ```
 
 **Keluaran:** Judul "Pemasukan Meningkat", tingkat urgensi *positive*, tombol aksi ke `/wallets`.
@@ -78,41 +78,31 @@ FUNGSI EvaluasiPR02(pemasukanBulanIni, pemasukanBulanLalu):
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiBG02(semuaAnggaran, semuaTransaksi, semuaKategori):
-    bulanM1 = 1 bulan lalu
-    bulanM2 = 2 bulan lalu
+Program Evaluasi Pemulihan Anggaran Berhasil (BG-02)
+Deklarasi
+    anggaran       : data anggaran yang dievaluasi
+    pengeluaranM1  : bilangan real  { realisasi pengeluaran 1 bulan lalu }
+    pengeluaranM2  : bilangan real  { realisasi pengeluaran 2 bulan lalu }
+    selisihHemat   : bilangan real
 
-    UNTUK SETIAP anggaran DALAM semuaAnggaran:
-        JIKA anggaran.batasNominal = 0 MAKA LEWATI
+Algoritma
+    FOR EACH anggaran DO
+        IF anggaran.batasNominal = 0 THEN SKIP
 
-        pengeluaranM1 = JUMLAH transaksi.nominal DIMANA
-            transaksi.kategoriId = anggaran.kategoriId
-            DAN transaksi.tipe = 'EXPENSE'
-            DAN transaksi.periode = bulanM1
+        pengeluaranM1 ← SUM transaksi.nominal
+                        WHERE kategoriId = anggaran.kategoriId AND tipe = 'EXPENSE' AND periode = M-1
+        pengeluaranM2 ← SUM transaksi.nominal
+                        WHERE kategoriId = anggaran.kategoriId AND tipe = 'EXPENSE' AND periode = M-2
 
-        pengeluaranM2 = JUMLAH transaksi.nominal DIMANA
-            transaksi.kategoriId = anggaran.kategoriId
-            DAN transaksi.tipe = 'EXPENSE'
-            DAN transaksi.periode = bulanM2
-
-        -- Kondisi:
-        -- 1. Bulan M-2 (dua bulan lalu): masih over-budget
-        -- 2. Bulan M-1 (bulan lalu): berhasil kembali ke bawah batas DAN nominal turun
-        JIKA pengeluaranM2 > anggaran.batasNominal
-        DAN  pengeluaranM1 <= anggaran.batasNominal
-        DAN  pengeluaranM1 < pengeluaranM2 MAKA
-            selisihHemat   = pengeluaranM2 - pengeluaranM1
-            namaKategori   = CARI nama dari semuaKategori berdasarkan anggaran.kategoriId
-
-            HASILKAN Insight(
-                judul = 'Pemulihan Anggaran Berhasil',
-                isi   = 'Kerja bagus! Bulan lalu kamu berhasil menekan pengeluaran 
-                         {namaKategori} kembali ke batas anggaran (hemat {selisihHemat} 
-                         dari bulan sebelumnya). Pertahankan!',
-                tingkatUrgensi = 'positive',
-                prioritas      = 3.4
-            )
-            HENTIKAN (kembalikan anggaran pertama yang memenuhi syarat)
+        { Kondisi: M-2 over-budget, M-1 berhasil kembali di bawah batas }
+        IF pengeluaranM2 > anggaran.batasNominal
+        AND pengeluaranM1 <= anggaran.batasNominal
+        AND pengeluaranM1 < pengeluaranM2 THEN
+            selisihHemat ← pengeluaranM2 - pengeluaranM1
+            OUTPUT Insight("Pemulihan Anggaran Berhasil", urgensi=positive)
+            RETURN  { kembalikan anggaran pertama yang memenuhi syarat }
+        END IF
+    END FOR
 ```
 
 **Keluaran:** Judul "Pemulihan Anggaran Berhasil", tingkat urgensi *positive*, tombol aksi ke `/budgets`.
@@ -127,37 +117,33 @@ FUNGSI EvaluasiBG02(semuaAnggaran, semuaTransaksi, semuaKategori):
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiFT03(semuaTarget, semuaTransaksi):
-    bulanM1 = 1 bulan lalu
-    bulanM2 = 2 bulan lalu
-    bulanM3 = 3 bulan lalu
+Program Evaluasi Konsistensi Target Terjaga (FT-03)
+Deklarasi
+    target        : data target finansial aktif bertipe bulanan
+    nominalTarget : bilangan real
+    pemasukanM1   : bilangan real  { realisasi pemasukan 1 bulan lalu }
+    pemasukanM2   : bilangan real  { realisasi pemasukan 2 bulan lalu }
+    pemasukanM3   : bilangan real  { realisasi pemasukan 3 bulan lalu }
 
-    UNTUK SETIAP target DALAM semuaTarget:
-        JIKA target.aktif = TIDAK MAKA LEWATI
-        JIKA target.periodeTarget != 'MONTHLY' MAKA LEWATI
+Algoritma
+    FOR EACH target DO
+        IF target.aktif = false THEN SKIP
+        IF target.periodeTarget != 'MONTHLY' THEN SKIP
 
-        nominalTarget = target.nominalTarget
+        nominalTarget ← target.nominalTarget
 
-        pemasukanM1 = JUMLAH transaksi.nominal DIMANA
-            transaksi.kategoriId = target.kategoriId
-            DAN transaksi.tipe = 'INCOME'
-            DAN transaksi.periode = bulanM1
+        pemasukanM1 ← SUM transaksi.nominal WHERE kategoriId = target.kategoriId
+                      AND tipe = 'INCOME' AND periode = M-1
+        pemasukanM2 ← SUM ... WHERE periode = M-2
+        pemasukanM3 ← SUM ... WHERE periode = M-3
 
-        pemasukanM2 = JUMLAH ... periode = bulanM2
-        pemasukanM3 = JUMLAH ... periode = bulanM3
-
-        -- Kondisi utama: 3 bulan berturut-turut semua melampaui atau sama dengan target
-        JIKA pemasukanM1 >= nominalTarget
-        DAN  pemasukanM2 >= nominalTarget
-        DAN  pemasukanM3 >= nominalTarget MAKA
-            HASILKAN Insight(
-                judul = 'Konsistensi Target Terjaga',
-                isi   = 'Luar biasa! Kamu berhasil mencapai target pemasukan 
-                         {nama target} selama 3 bulan berturut-turut.',
-                tingkatUrgensi = 'positive',
-                prioritas      = 3.5
-            )
-            HENTIKAN
+        IF pemasukanM1 >= nominalTarget
+        AND pemasukanM2 >= nominalTarget
+        AND pemasukanM3 >= nominalTarget THEN
+            OUTPUT Insight("Konsistensi Target Terjaga", urgensi=positive)
+            RETURN
+        END IF
+    END FOR
 ```
 
 **Keluaran:** Judul "Konsistensi Target Terjaga", tingkat urgensi *positive*, tombol aksi ke `/targets`.
@@ -172,17 +158,17 @@ FUNGSI EvaluasiFT03(semuaTarget, semuaTransaksi):
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiFALLBACK(daftarSemuaInsightYangDihasilkan, totalPengeluaranBulanIni):
-    -- Rule ini hanya aktif jika tidak ada satu pun rule lain yang menghasilkan insight
-    JIKA JUMLAH daftarSemuaInsightYangDihasilkan = 0
-    DAN totalPengeluaranBulanIni > 0 MAKA
-        HASILKAN Insight(
-            judul = 'Pola Pengeluaran Stabil',
-            isi   = 'Arus kas kamu bulan ini berjalan stabil. Yuk, tinjau kembali 
-                     pengeluaranmu untuk memastikan semuanya tetap berada di jalurnya.',
-            tingkatUrgensi = 'neutral',
-            prioritas      = 4.0
-        )
+Program Evaluasi Fallback — Pola Pengeluaran Stabil
+Deklarasi
+    daftarInsightYangDihasilkan : larik insight  { hasil dari semua rule sebelumnya }
+    totalPengeluaranBulanIni    : bilangan real
+
+Algoritma
+    { Rule ini hanya aktif jika tidak ada satu pun rule lain yang menghasilkan insight }
+    IF COUNT daftarInsightYangDihasilkan = 0
+    AND totalPengeluaranBulanIni > 0 THEN
+        OUTPUT Insight("Pola Pengeluaran Stabil", urgensi=neutral)
+    END IF
 ```
 
 **Keluaran:** Judul "Pola Pengeluaran Stabil", tingkat urgensi *neutral*, tombol aksi ke `/transactions`.

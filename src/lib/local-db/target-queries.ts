@@ -16,6 +16,8 @@ export interface TargetProgress {
   periodStart: Date;
   periodEnd: Date;
   isNotStarted?: boolean;
+  /** True when the period has ended (today > periodEnd), target was not achieved, and period is CUSTOM */
+  isExpired?: boolean;
 }
 
 /**
@@ -87,6 +89,14 @@ export async function calculateTargetProgress(
       const isAchieved = currentAmount >= target.targetAmount;
       const remainingAmount = Math.max(0, target.targetAmount - currentAmount);
 
+      // A CUSTOM-period target is considered expired when:
+      // - today is strictly after periodEnd
+      // - and the target has not been achieved yet
+      const isExpired =
+        target.period === 'CUSTOM' &&
+        !isAchieved &&
+        new Date() > periodEnd;
+
       resolve({
         currentAmount,
         percentage,
@@ -94,6 +104,7 @@ export async function calculateTargetProgress(
         remainingAmount,
         periodStart,
         periodEnd,
+        isExpired,
       });
     };
 

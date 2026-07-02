@@ -10,46 +10,34 @@ Kelompok ini mencakup aturan-aturan yang menggali pola pengeluaran jangka panjan
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiAN01(transaksiBulanIni, semuaKategori):
-    totalPerHari  = {} -- nama hari → total nominal
-    totalKeseluruhan = 0
-    detailKategoriPerHari = {} -- nama hari → { kategoriId → {total, jumlah} }
+Program Evaluasi Pola Pengeluaran Ditemukan (AN-01)
+Deklarasi
+    totalPerHari          : kamus { nama hari → total nominal pengeluaran }
+    detailKategoriPerHari : kamus { nama hari → { kategoriId → total } }
+    totalKeseluruhan      : bilangan real
+    hariPuncak            : teks          { nama hari dengan pengeluaran tertinggi }
+    kategoriDominan       : identifikasi kategori terbesar di hari puncak
+    persentaseHariPuncak  : bilangan bulat
 
-    UNTUK SETIAP transaksi DALAM transaksiBulanIni:
-        JIKA transaksi.tipe != 'EXPENSE' MAKA LEWATI
+Algoritma
+    totalPerHari     ← { }
+    totalKeseluruhan ← 0
 
-        namaHari = nama hari (misal: 'Senin', 'Sabtu')
-        nominal  = transaksi.nominal
+    FOR EACH transaksi bulan ini DO
+        IF tipe != 'EXPENSE' THEN SKIP
+        namaHari ← nama hari dari tanggal transaksi
+        totalPerHari[namaHari]          ← totalPerHari[namaHari] + nominal
+        totalKeseluruhan                ← totalKeseluruhan + nominal
+        detailKategoriPerHari[namaHari][kategoriId] ← ... + nominal
+    END FOR
 
-        totalPerHari[namaHari]   += nominal
-        totalKeseluruhan         += nominal
+    hariPuncak           ← nama hari dengan totalPerHari MAKSIMUM
+    persentaseHariPuncak ← ROUND(totalPerHari[hariPuncak] / totalKeseluruhan × 100)
+    kategoriDominan      ← kategoriId dengan total tertinggi pada hari puncak
 
-        JIKA transaksi.kategoriId ADA MAKA
-            detailKategoriPerHari[namaHari][transaksi.kategoriId].total  += nominal
-            detailKategoriPerHari[namaHari][transaksi.kategoriId].jumlah += 1
-
-    -- Temukan hari dengan total pengeluaran tertinggi
-    hariPuncak      = CARI namaHari dengan totalPerHari MAKSIMUM
-    nominalHariPuncak = totalPerHari[hariPuncak]
-
-    JIKA totalKeseluruhan > 0 DAN nominalHariPuncak > 0 MAKA
-        persentaseHariPuncak = BULAT(nominalHariPuncak / totalKeseluruhan * 100)
-
-        -- Cari kategori dominan di hari puncak tersebut
-        kategoriDominan = CARI kategoriId dengan total MAKSIMUM
-            dari detailKategoriPerHari[hariPuncak]
-        namaKategoriDominan = CARI nama dari semuaKategori berdasarkan kategoriDominan
-
-        HASILKAN Insight(
-            judul = 'Pola Pengeluaran Ditemukan',
-            isi   = 'Pengeluaran tertinggimu bulan ini paling sering terjadi pada 
-                     hari {hariPuncak}, terutama pada kategori {namaKategoriDominan}. 
-                     Hari tersebut menyumbang {persentaseHariPuncak}% dari total 
-                     pengeluaran. Pertimbangkan menetapkan batas pengeluaran khusus 
-                     untuk hari {hariPuncak}.',
-            tingkatUrgensi = 'neutral',
-            prioritas      = 3.8
-        )
+    IF totalKeseluruhan > 0 THEN
+        OUTPUT Insight("Pola Pengeluaran Ditemukan", urgensi=neutral)
+    END IF
 ```
 
 **Keluaran:** Judul "Pola Pengeluaran Ditemukan", tingkat urgensi *neutral*, tombol aksi ke `/analytics`.
@@ -64,38 +52,31 @@ FUNGSI EvaluasiAN01(transaksiBulanIni, semuaKategori):
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiAN02(semuaTransaksi, semuaKategori):
-    bulanM1 = 1 bulan lalu
-    bulanM2 = 2 bulan lalu
-    bulanM3 = 3 bulan lalu
+Program Evaluasi Pengeluaran Kategori Merayap Naik (AN-02)
+Deklarasi
+    kategori        : data kategori pengeluaran
+    pengeluaranM1   : bilangan real  { total pengeluaran 1 bulan lalu }
+    pengeluaranM2   : bilangan real  { total pengeluaran 2 bulan lalu }
+    pengeluaranM3   : bilangan real  { total pengeluaran 3 bulan lalu }
+    pertumbuhan     : bilangan bulat { persentase kenaikan M-2 ke M-1 }
 
-    UNTUK SETIAP kategori DALAM semuaKategori:
-        JIKA kategori.tipe != 'EXPENSE' MAKA LEWATI
+Algoritma
+    FOR EACH kategori DO
+        IF kategori.tipe != 'EXPENSE' THEN SKIP
 
-        pengeluaranM1 = JUMLAH transaksi.nominal DIMANA
-            transaksi.kategoriId = kategori.id
-            DAN transaksi.tipe = 'EXPENSE'
-            DAN transaksi.periode = bulanM1
+        pengeluaranM1 ← SUM transaksi.nominal WHERE kategoriId = kategori.id AND tipe = 'EXPENSE' AND periode = M-1
+        pengeluaranM2 ← SUM ... WHERE periode = M-2
+        pengeluaranM3 ← SUM ... WHERE periode = M-3
 
-        pengeluaranM2 = JUMLAH ... periode = bulanM2
-        pengeluaranM3 = JUMLAH ... periode = bulanM3
+        IF pengeluaranM3 <= 50.000 THEN SKIP  { baseline terlalu kecil }
 
-        -- Syarat minimal: nilai bulan M-3 harus sudah cukup signifikan (>50.000)
-        JIKA pengeluaranM3 <= 50.000 MAKA LEWATI
-
-        -- Kondisi utama: setiap bulan tumbuh konsisten lebih dari 10%
-        JIKA pengeluaranM2 > pengeluaranM3 * 1.10
-        DAN  pengeluaranM1 > pengeluaranM2 * 1.10 MAKA
-            pertumbuhanBulanIni = BULAT((pengeluaranM1 - pengeluaranM2) / pengeluaranM2 * 100)
-
-            HASILKAN Insight(
-                judul = 'Pengeluaran Kategori Merayap Naik',
-                isi   = 'Pengeluaranmu di kategori {nama kategori} terus naik >10% 
-                         tiap bulan selama 3 bulan terakhir (sekarang {pengeluaranM1}).',
-                tingkatUrgensi = 'warning',
-                prioritas      = 2.9
-            )
-            HENTIKAN (kembalikan kategori pertama yang ditemukan)
+        IF pengeluaranM2 > pengeluaranM3 × 1,1
+        AND pengeluaranM1 > pengeluaranM2 × 1,1 THEN
+            pertumbuhan ← ROUND((pengeluaranM1 - pengeluaranM2) / pengeluaranM2 × 100)
+            OUTPUT Insight("Pengeluaran Kategori Merayap Naik", urgensi=warning)
+            RETURN  { ambil kategori pertama yang memenuhi syarat }
+        END IF
+    END FOR
 ```
 
 **Keluaran:** Judul "Pengeluaran Kategori Merayap Naik", tingkat urgensi *warning*, tombol aksi ke `/analytics`.
@@ -110,35 +91,33 @@ FUNGSI EvaluasiAN02(semuaTransaksi, semuaKategori):
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiAN03(semuaTransaksi):
-    bulanM1 = 1 bulan lalu
-    bulanM2 = 2 bulan lalu
-    bulanM3 = 3 bulan lalu
+Program Evaluasi Selisih Bersih Menipis (AN-03)
+Deklarasi
+    bersihM1 : bilangan real  { arus kas bersih 1 bulan lalu }
+    bersihM2 : bilangan real  { arus kas bersih 2 bulan lalu }
+    bersihM3 : bilangan real  { arus kas bersih 3 bulan lalu }
+    penurunan: bilangan bulat { persentase penyusutan dari M-3 ke M-1 }
 
-    FUNGSI HitungArusKasBersih(periodeStr):
-        pemasukan   = JUMLAH transaksi.nominal DIMANA tipe='INCOME' DAN periode=periodeStr
-        pengeluaran = JUMLAH transaksi.nominal DIMANA tipe='EXPENSE' DAN periode=periodeStr
-        KEMBALIKAN pemasukan - pengeluaran
+{ Sub-algoritma: menghitung arus kas bersih satu periode }
+Program Hitung Arus Kas Bersih
+Algoritma
+    pemasukan   ← SUM transaksi.nominal WHERE tipe = 'INCOME' AND periode = input
+    pengeluaran ← SUM transaksi.nominal WHERE tipe = 'EXPENSE' AND periode = input
+    RETURN pemasukan - pengeluaran
 
-    bersihM1 = HitungArusKasBersih(bulanM1)
-    bersihM2 = HitungArusKasBersih(bulanM2)
-    bersihM3 = HitungArusKasBersih(bulanM3)
+{ Algoritma utama }
+Algoritma
+    bersihM1 ← HitungArusKasBersih(M-1)
+    bersihM2 ← HitungArusKasBersih(M-2)
+    bersihM3 ← HitungArusKasBersih(M-3)
 
-    -- Semua bulan harus masih positif (belum defisit) agar rule ini bermakna
-    JIKA bersihM3 <= 0 ATAU bersihM2 <= 0 ATAU bersihM1 <= 0 MAKA HENTIKAN
+    IF bersihM3 <= 0 OR bersihM2 <= 0 OR bersihM1 <= 0 THEN RETURN
+    { semua bulan harus masih positif agar rule ini bermakna }
 
-    -- Kondisi: gap menyusut konsisten lebih dari 10% per bulan
-    JIKA bersihM2 < bersihM3 * 0.90 DAN bersihM1 < bersihM2 * 0.90 MAKA
-        penurunan = BULAT((bersihM3 - bersihM1) / bersihM3 * 100)
-
-        HASILKAN Insight(
-            judul = 'Selisih Bersih Menipis',
-            isi   = 'Selisih pemasukan dan pengeluaranmu terus menyusut selama 
-                     3 bulan terakhir (sekarang sisa {bersihM1}). Hati-hati agar 
-                     tidak defisit bulan depan.',
-            tingkatUrgensi = 'warning',
-            prioritas      = 3.1
-        )
+    IF bersihM2 < bersihM3 × 0,9 AND bersihM1 < bersihM2 × 0,9 THEN
+        penurunan ← ROUND((bersihM3 - bersihM1) / bersihM3 × 100)
+        OUTPUT Insight("Selisih Bersih Menipis", urgensi=warning)
+    END IF
 ```
 
 **Keluaran:** Judul "Selisih Bersih Menipis", tingkat urgensi *warning*, tombol aksi ke `/budgets`.
@@ -153,39 +132,30 @@ FUNGSI EvaluasiAN03(semuaTransaksi):
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiAN04(transaksiBulanIni, semuaTransaksi, semuaKategori):
-    bulanM1 = 1 bulan lalu
-    bulanM2 = 2 bulan lalu
-    bulanM3 = 3 bulan lalu
+Program Evaluasi Kategori Pengeluaran Baru (AN-04)
+Deklarasi
+    kategoriHistoris : himpunan kategoriId { semua kategori yang pernah dipakai 3 bulan lalu }
+    totalPerKategori : kamus { kategoriId → total nominal bulan ini }
+    totalNominal     : bilangan real
 
-    -- Kumpulkan semua kategori yang pernah digunakan dalam 3 bulan terakhir
-    kategoriHistoris = SET kategoriId DARI semuaTransaksi DIMANA
-        transaksi.tipe = 'EXPENSE'
-        DAN transaksi.kategoriId ADA
-        DAN transaksi.periode ADALAH bulanM1 ATAU bulanM2 ATAU bulanM3
+Algoritma
+    kategoriHistoris ← SET kategoriId FROM transaksi WHERE tipe = 'EXPENSE'
+                       AND periode IN (M-1, M-2, M-3)
 
-    -- Hitung total pengeluaran per kategori bulan ini
-    totalPerKategori = {}
-    UNTUK SETIAP transaksi DALAM transaksiBulanIni:
-        JIKA transaksi.tipe = 'EXPENSE' DAN transaksi.kategoriId ADA MAKA
-            totalPerKategori[transaksi.kategoriId] += transaksi.nominal
+    totalPerKategori ← { }
+    FOR EACH transaksi bulan ini DO
+        IF tipe = 'EXPENSE' AND kategoriId ADA THEN
+            totalPerKategori[kategoriId] ← totalPerKategori[kategoriId] + nominal
+        END IF
+    END FOR
 
-    UNTUK SETIAP (kategoriId, totalNominal) DALAM totalPerKategori:
-        -- Kondisi: kategori ini TIDAK PERNAH muncul dalam 3 bulan terakhir
-        -- DAN nominalnya sudah cukup signifikan
-        JIKA kategoriId TIDAK ADA dalam kategoriHistoris
-        DAN totalNominal > 100.000 MAKA
-            namaKategori = CARI nama dari semuaKategori berdasarkan kategoriId
-
-            HASILKAN Insight(
-                judul = 'Kategori Pengeluaran Baru',
-                isi   = 'Kamu mulai mencatat pengeluaran di {namaKategori} 
-                         ({totalNominal} bulan ini). Kategori ini belum pernah 
-                         muncul dalam 3 bulan terakhir.',
-                tingkatUrgensi = 'info',
-                prioritas      = 2.6
-            )
-            HENTIKAN (ambil pertama yang ditemukan)
+    FOR EACH (kategoriId, totalNominal) IN totalPerKategori DO
+        IF kategoriId TIDAK ADA dalam kategoriHistoris
+        AND totalNominal > 100.000 THEN
+            OUTPUT Insight("Kategori Pengeluaran Baru", urgensi=info)
+            RETURN  { ambil kategori pertama yang ditemukan }
+        END IF
+    END FOR
 ```
 
 **Keluaran:** Judul "Kategori Pengeluaran Baru", tingkat urgensi *info*, tombol aksi ke `/transactions`.
@@ -200,42 +170,42 @@ FUNGSI EvaluasiAN04(transaksiBulanIni, semuaTransaksi, semuaKategori):
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiAN05(transaksiBulanIni, transaksiBulanLalu, semuaKategori):
-    -- Hitung total pengeluaran per kategori untuk masing-masing periode
-    totalBulanIni  = { kategoriId → total nominal }
-    totalBulanLalu = { kategoriId → total nominal }
+Program Evaluasi Pergeseran Pengeluaran Terbesar (AN-05)
+Deklarasi
+    totalBulanIni           : kamus { kategoriId → total nominal }
+    totalBulanLalu          : kamus { kategoriId → total nominal }
+    kategoriTeratasSekarang : identifikasi kategori dominan bulan ini
+    kategoriTeratasBulanLalu: identifikasi kategori dominan bulan lalu
+    pertumbuhan             : bilangan bulat
 
-    UNTUK SETIAP transaksi DALAM transaksiBulanIni:
-        JIKA transaksi.tipe = 'EXPENSE' DAN transaksi.kategoriId ADA MAKA
-            totalBulanIni[transaksi.kategoriId] += transaksi.nominal
+Algoritma
+    { Akumulasi pengeluaran per kategori untuk masing-masing periode }
+    FOR EACH transaksi bulan ini DO
+        IF tipe = 'EXPENSE' AND kategoriId ADA THEN
+            totalBulanIni[kategoriId] ← totalBulanIni[kategoriId] + nominal
+        END IF
+    END FOR
 
-    UNTUK SETIAP transaksi DALAM transaksiBulanLalu: (serupa)
+    FOR EACH transaksi bulan lalu DO
+        IF tipe = 'EXPENSE' AND kategoriId ADA THEN
+            totalBulanLalu[kategoriId] ← totalBulanLalu[kategoriId] + nominal
+        END IF
+    END FOR
 
-    -- Temukan kategori peringkat 1 masing-masing bulan
-    kategoriTeratasSekarang = CARI kategoriId dengan totalBulanIni MAKSIMUM
-    kategoriTeratasBulanLalu = CARI kategoriId dengan totalBulanLalu MAKSIMUM
+    kategoriTeratasSekarang  ← kategoriId dengan totalBulanIni MAKSIMUM
+    kategoriTeratasBulanLalu ← kategoriId dengan totalBulanLalu MAKSIMUM
 
-    -- Kondisi utama: kategori teratas BERBEDA antara bulan ini dan bulan lalu
-    JIKA kategoriTeratasSekarang != kategoriTeratasBulanLalu MAKA
-        -- Pastikan kategori baru memang meningkat signifikan (>30%)
-        nominalSebelumnya = totalBulanLalu[kategoriTeratasSekarang] ATAU 0
-        JIKA nominalSebelumnya <= 0 MAKA HENTIKAN
+    IF kategoriTeratasSekarang != kategoriTeratasBulanLalu THEN
+        nominalSebelumnya ← totalBulanLalu[kategoriTeratasSekarang] OR 0
+        IF nominalSebelumnya <= 0 THEN RETURN
 
-        pertumbuhan = BULAT((totalBulanIni[kategoriTeratasSekarang] - nominalSebelumnya) 
-                            / nominalSebelumnya * 100)
+        pertumbuhan ← ROUND((totalBulanIni[kategoriTeratasSekarang] - nominalSebelumnya)
+                            / nominalSebelumnya × 100)
 
-        JIKA pertumbuhan >= 30 MAKA
-            namaKategoriBaru  = CARI nama dari semuaKategori berdasarkan kategoriTeratasSekarang
-            namaKategoriLama  = CARI nama dari semuaKategori berdasarkan kategoriTeratasBulanLalu
-
-            HASILKAN Insight(
-                judul = 'Pergeseran Pengeluaran Terbesar',
-                isi   = 'Pengeluaran terbesar bulan ini berpindah dari 
-                         {namaKategoriLama} ke {namaKategoriBaru} (naik {pertumbuhan}% 
-                         dibanding bulan lalu).',
-                tingkatUrgensi = 'info',
-                prioritas      = 2.7
-            )
+        IF pertumbuhan >= 30 THEN
+            OUTPUT Insight("Pergeseran Pengeluaran Terbesar", urgensi=info)
+        END IF
+    END IF
 ```
 
 **Keluaran:** Judul "Pergeseran Pengeluaran Terbesar", tingkat urgensi *info*, tombol aksi ke `/analytics`.
@@ -250,38 +220,31 @@ FUNGSI EvaluasiAN05(transaksiBulanIni, transaksiBulanLalu, semuaKategori):
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiAN06(semuaTransaksi):
-    tiga bulan terakhir = [bulan M-3, bulan M-2, bulan M-1]
-    daftarRasio = []
+Program Evaluasi Rasio Pengeluaran Tidak Konsisten (AN-06)
+Deklarasi
+    daftarRasio : larik bilangan real  { rasio pengeluaran/pemasukan per bulan }
+    rasioMin    : bilangan real
+    rasioMaks   : bilangan real
 
-    UNTUK SETIAP periodeBulan DALAM tiga bulan terakhir:
-        pemasukan   = JUMLAH transaksi.nominal DIMANA tipe='INCOME' DAN periode=periodeBulan
-        pengeluaran = JUMLAH transaksi.nominal DIMANA tipe='EXPENSE' DAN periode=periodeBulan
+Algoritma
+    daftarRasio ← [ ]
 
-        JIKA pemasukan = 0 MAKA
-            HENTIKAN (data tidak lengkap, tidak bisa menghitung rasio)
+    FOR EACH periode IN (M-3, M-2, M-1) DO
+        pemasukan   ← SUM transaksi.nominal WHERE tipe = 'INCOME' AND periode = periode
+        pengeluaran ← SUM transaksi.nominal WHERE tipe = 'EXPENSE' AND periode = periode
 
-        rasio = pengeluaran / pemasukan
-        daftarRasio.tambahkan(rasio)
+        IF pemasukan = 0 THEN RETURN  { data tidak lengkap }
+        daftarRasio ← daftarRasio + (pengeluaran / pemasukan)
+    END FOR
 
-    -- Harus ada data valid di semua 3 bulan
-    JIKA daftarRasio.panjang < 3 MAKA HENTIKAN
+    IF LENGTH(daftarRasio) < 3 THEN RETURN
 
-    rasioMin = nilai MINIMUM dari daftarRasio
-    rasioMaks = nilai MAKSIMUM dari daftarRasio
+    rasioMin  ← nilai MINIMUM dari daftarRasio
+    rasioMaks ← nilai MAKSIMUM dari daftarRasio
 
-    -- Kondisi: selisih antara rasio tertinggi dan terendah > 20 poin persen
-    JIKA (rasioMaks - rasioMin) > 0.20 MAKA
-        r1, r2, r3 = daftarRasio dibulatkan ke persen
-
-        HASILKAN Insight(
-            judul = 'Rasio Pengeluaran Tidak Konsisten',
-            isi   = 'Rasio pengeluaran terhadap pemasukanmu berubah-ubah dalam 
-                     3 bulan terakhir: {r1}% → {r2}% → {r3}%. Konsistensi yang 
-                     lebih stabil memudahkan perencanaan keuangan.',
-            tingkatUrgensi = 'neutral',
-            prioritas      = 3.75
-        )
+    IF (rasioMaks - rasioMin) > 0,2 THEN
+        OUTPUT Insight("Rasio Pengeluaran Tidak Konsisten", urgensi=neutral)
+    END IF
 ```
 
 **Keluaran:** Judul "Rasio Pengeluaran Tidak Konsisten", tingkat urgensi *neutral*, tombol aksi ke `/analytics`.
@@ -296,39 +259,33 @@ FUNGSI EvaluasiAN06(semuaTransaksi):
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiAN07(transaksiBulanIni, semuaTransaksi, semuaKategori):
-    bulanM3 = 3 bulan lalu
-    transaksiM3 = FILTER semuaTransaksi DIMANA periode = bulanM3 DAN tipe = 'EXPENSE'
+Program Evaluasi Perubahan Pola Pengeluaran Diskresioner (AN-07)
+Deklarasi
+    kategoriDiskresioner : kumpulan kategori { mengandung: hiburan, jajan, pribadi,
+                                               gaya hidup, hobi }
+    rasioSekarang        : bilangan real  { proporsi diskresioner bulan ini }
+    rasio3BulanLalu      : bilangan real  { proporsi diskresioner 3 bulan lalu }
+    selisih              : bilangan bulat
 
-    kategorDiskresioner = kategori yang namanya mengandung:
-        'hiburan', 'jajan', 'pribadi', 'gaya hidup', atau 'hobi'
+{ Sub-algoritma: menghitung rasio diskresioner }
+Program Hitung Rasio Diskresioner
+Algoritma
+    total            ← SUM semua transaksi.nominal dari input
+    IF total = 0 THEN RETURN null
+    totalDiskresioner ← SUM transaksi.nominal WHERE kategori IN kategoriDiskresioner
+    RETURN totalDiskresioner / total
 
-    FUNGSI HitungRasioDiskresioner(daftarTransaksi):
-        total = JUMLAH semua transaksi.nominal
-        JIKA total = 0 MAKA KEMBALIKAN null
+{ Algoritma utama }
+Algoritma
+    rasioSekarang   ← HitungRasioDiskresioner(transaksi bulan ini)
+    rasio3BulanLalu ← HitungRasioDiskresioner(transaksi 3 bulan lalu)
 
-        totalDiskresioner = JUMLAH transaksi.nominal DIMANA
-            kategorinya termasuk dalam kategoriDiskresioner
+    IF rasioSekarang = null OR rasio3BulanLalu = null THEN RETURN
 
-        KEMBALIKAN totalDiskresioner / total
-
-    rasioSekarang = HitungRasioDiskresioner(transaksiBulanIni)
-    rasio3BulanLalu = HitungRasioDiskresioner(transaksiM3)
-
-    JIKA rasioSekarang = null ATAU rasio3BulanLalu = null MAKA HENTIKAN
-
-    -- Kondisi utama: porsi gaya hidup naik lebih dari 15 poin persen
-    JIKA (rasioSekarang - rasio3BulanLalu) > 0.15 MAKA
-        selisih = BULAT((rasioSekarang - rasio3BulanLalu) * 100)
-
-        HASILKAN Insight(
-            judul = 'Perubahan Pola Pengeluaran',
-            isi   = 'Porsi pengeluaran gaya hidupmu naik menjadi 
-                     {rasioSekarang * 100}% dari total pengeluaran (naik {selisih} 
-                     poin dari 3 bulan lalu).',
-            tingkatUrgensi = 'neutral',
-            prioritas      = 2.8
-        )
+    IF (rasioSekarang - rasio3BulanLalu) > 0,15 THEN
+        selisih ← ROUND((rasioSekarang - rasio3BulanLalu) × 100)
+        OUTPUT Insight("Perubahan Pola Pengeluaran", urgensi=neutral)
+    END IF
 ```
 
 **Keluaran:** Judul "Perubahan Pola Pengeluaran", tingkat urgensi *neutral*, tombol aksi ke `/analytics`.
@@ -343,45 +300,31 @@ FUNGSI EvaluasiAN07(transaksiBulanIni, semuaTransaksi, semuaKategori):
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiSP04(transaksiBulanIni, semuaTransaksi, semuaKategori):
-    bulanM1 = 1 bulan lalu
-    bulanM2 = 2 bulan lalu
-    bulanM3 = 3 bulan lalu
+Program Evaluasi Lonjakan Pengeluaran Kategori (SP-04)
+Deklarasi
+    kategori           : data kategori pengeluaran
+    pengeluaranBulanIni: bilangan real
+    rataRataHistoris   : bilangan real  { rata-rata pengeluaran 3 bulan terakhir }
+    persentaseLonjakan : bilangan bulat
 
-    UNTUK SETIAP kategori DALAM semuaKategori:
-        JIKA kategori.tipe != 'EXPENSE' MAKA LEWATI
+Algoritma
+    FOR EACH kategori DO
+        IF kategori.tipe != 'EXPENSE' THEN SKIP
 
-        pengeluaranBulanIni = JUMLAH transaksi.nominal DIMANA
-            transaksi.kategoriId = kategori.id
-            DAN transaksi.tipe = 'EXPENSE'
-            DAN transaksi dari transaksiBulanIni
+        pengeluaranBulanIni ← SUM transaksi.nominal WHERE kategoriId = kategori.id
+                              AND tipe = 'EXPENSE' AND periode = bulan ini
+        IF pengeluaranBulanIni < 100.000 THEN SKIP  { terlalu kecil, abaikan }
 
-        -- Abaikan jika nominal bulan ini terlalu kecil (menghindari noise)
-        JIKA pengeluaranBulanIni < 100.000 MAKA LEWATI
+        rataRataHistoris ← (SUM M-1 + SUM M-2 + SUM M-3) / 3
+        IF rataRataHistoris < 50.000 THEN SKIP
 
-        pengeluaranM1 = JUMLAH ... periode = bulanM1
-        pengeluaranM2 = JUMLAH ... periode = bulanM2
-        pengeluaranM3 = JUMLAH ... periode = bulanM3
-
-        rataRataHistoris = (pengeluaranM1 + pengeluaranM2 + pengeluaranM3) / 3
-
-        -- Abaikan jika riwayat historis tidak signifikan
-        JIKA rataRataHistoris < 50.000 MAKA LEWATI
-
-        -- Kondisi utama: lonjakan > 50% dari rata-rata historis
-        JIKA pengeluaranBulanIni > rataRataHistoris * 1.50 MAKA
-            persentaseLonjakan = BULAT((pengeluaranBulanIni - rataRataHistoris) 
-                                       / rataRataHistoris * 100)
-
-            HASILKAN Insight(
-                judul = 'Lonjakan Pengeluaran Kategori',
-                isi   = 'Pengeluaran {nama kategori} bulan ini melonjak tajam 
-                         ({pengeluaranBulanIni}), {persentaseLonjakan}% lebih tinggi 
-                         dari rata-rata 3 bulan terakhirmu.',
-                tingkatUrgensi = 'warning',
-                prioritas      = 3.3
-            )
-            HENTIKAN (ambil kategori pertama yang memenuhi syarat)
+        IF pengeluaranBulanIni > rataRataHistoris × 1,5 THEN
+            persentaseLonjakan ← ROUND((pengeluaranBulanIni - rataRataHistoris)
+                                       / rataRataHistoris × 100)
+            OUTPUT Insight("Lonjakan Pengeluaran Kategori", urgensi=warning)
+            RETURN  { ambil kategori pertama yang memenuhi syarat }
+        END IF
+    END FOR
 ```
 
 **Keluaran:** Judul "Lonjakan Pengeluaran Kategori", tingkat urgensi *warning*, tombol aksi ke `/transactions`.
@@ -396,40 +339,39 @@ FUNGSI EvaluasiSP04(transaksiBulanIni, semuaTransaksi, semuaKategori):
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiSP09(transaksiBulanIni):
-    -- Syarat: minimal ada 10 transaksi agar pola bermakna secara statistik
-    JIKA JUMLAH transaksiBulanIni.tipe='EXPENSE' < 10 MAKA HENTIKAN
+Program Evaluasi Pola Waktu Pengeluaran (SP-09)
+Deklarasi
+    totalPagi    : bilangan real  { pengeluaran sesi pagi: jam 05:00 – 11:59 }
+    totalMalam   : bilangan real  { pengeluaran sesi malam: jam 17:00 – 21:59 }
+    totalGabungan: bilangan real
+    ratioPagi    : bilangan real
+    ratioMalam   : bilangan real
 
-    totalPagi  = 0  -- jam 05:00 – 11:59
-    totalMalam = 0  -- jam 17:00 – 21:59
+Algoritma
+    IF jumlah transaksi EXPENSE bulan ini < 10 THEN RETURN
 
-    UNTUK SETIAP transaksi DALAM transaksiBulanIni:
-        JIKA transaksi.tipe != 'EXPENSE' MAKA LEWATI
+    totalPagi  ← 0
+    totalMalam ← 0
 
-        jamTransaksi = jam dari tanggal transaksi (0–23)
+    FOR EACH transaksi bulan ini DO
+        IF tipe != 'EXPENSE' THEN SKIP
+        jam ← jam dari tanggal transaksi (0–23)
 
-        JIKA jamTransaksi >= 5 DAN jamTransaksi <= 11 MAKA
-            totalPagi += transaksi.nominal
-        JIKA jamTransaksi >= 17 DAN jamTransaksi <= 21 MAKA
-            totalMalam += transaksi.nominal
+        IF jam >= 5 AND jam <= 11 THEN totalPagi  ← totalPagi + nominal
+        IF jam >= 17 AND jam <= 21 THEN totalMalam ← totalMalam + nominal
+    END FOR
 
-    totalGabungan = totalPagi + totalMalam
+    totalGabungan ← totalPagi + totalMalam
+    IF totalGabungan < 200.000 THEN RETURN
 
-    -- Syarat: total gabungan pagi+malam harus signifikan
-    JIKA totalGabungan < 200.000 MAKA HENTIKAN
+    ratioPagi  ← totalPagi  / totalGabungan
+    ratioMalam ← totalMalam / totalGabungan
 
-    ratioPagi  = totalPagi  / totalGabungan
-    ratioMalam = totalMalam / totalGabungan
-
-    JIKA ratioPagi > 0.60 MAKA
-        HASILKAN Insight(sesi='pagi', ratio=ratioPagi, total=totalPagi)
-    JIKA ratioMalam > 0.60 MAKA
-        HASILKAN Insight(sesi='malam', ratio=ratioMalam, total=totalMalam)
-
-    -- Format pesan keluaran:
-    isi = 'Lebih dari {ratio*100}% pengeluaranmu bulan ini terkonsentrasi di 
-           sesi {sesi} hari (total {total}).'
-    tingkatUrgensi = 'neutral', prioritas = 3.3
+    IF ratioPagi > 0,6 THEN
+        OUTPUT Insight("Pola Waktu Pengeluaran", sesi=pagi, urgensi=neutral)
+    ELSE IF ratioMalam > 0,6 THEN
+        OUTPUT Insight("Pola Waktu Pengeluaran", sesi=malam, urgensi=neutral)
+    END IF
 ```
 
 **Keluaran:** Judul "Pola Waktu Pengeluaran", tingkat urgensi *neutral*, tombol aksi ke `/analytics`.
@@ -444,37 +386,34 @@ FUNGSI EvaluasiSP09(transaksiBulanIni):
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiSP10(transaksiBulanIni):
-    -- Syarat: minimal ada 10 transaksi agar pola bermakna
-    JIKA JUMLAH transaksiBulanIni.tipe='EXPENSE' < 10 MAKA HENTIKAN
+Program Evaluasi Konsentrasi Pengeluaran (SP-10)
+Deklarasi
+    totalPerTanggal  : kamus { nomor tanggal → total nominal pengeluaran }
+    totalKeseluruhan : bilangan real
+    top3Tanggal      : larik { 3 tanggal dengan pengeluaran tertinggi }
+    rasioKonsentrasi : bilangan real
 
-    totalPerTanggal = {} -- nomor tanggal → total nominal
-    totalKeseluruhan = 0
+Algoritma
+    IF jumlah transaksi EXPENSE bulan ini < 10 THEN RETURN
 
-    UNTUK SETIAP transaksi DALAM transaksiBulanIni:
-        JIKA transaksi.tipe != 'EXPENSE' MAKA LEWATI
+    totalPerTanggal  ← { }
+    totalKeseluruhan ← 0
 
-        tanggalAngka    = tanggal dalam bulan (1–31)
-        totalPerTanggal[tanggalAngka] += transaksi.nominal
-        totalKeseluruhan              += transaksi.nominal
+    FOR EACH transaksi bulan ini DO
+        IF tipe != 'EXPENSE' THEN SKIP
+        tanggalAngka    ← tanggal dalam bulan (1–31)
+        totalPerTanggal[tanggalAngka] ← totalPerTanggal[tanggalAngka] + nominal
+        totalKeseluruhan              ← totalKeseluruhan + nominal
+    END FOR
 
-    -- Syarat: total keseluruhan harus signifikan
-    JIKA totalKeseluruhan < 500.000 MAKA HENTIKAN
+    IF totalKeseluruhan < 500.000 THEN RETURN
 
-    -- Ambil 3 tanggal dengan pengeluaran tertinggi
-    top3Tanggal   = URUTKAN totalPerTanggal dari terbesar, ambil 3 teratas
-    totalTop3     = JUMLAH nilai dari top3Tanggal
-    rasioKonsentrasi = totalTop3 / totalKeseluruhan
+    top3Tanggal      ← SORT totalPerTanggal DESC, ambil 3 teratas
+    rasioKonsentrasi ← SUM(top3Tanggal) / totalKeseluruhan
 
-    -- Kondisi utama: 3 hari itu menyumbang lebih dari 50% total pengeluaran
-    JIKA rasioKonsentrasi > 0.50 MAKA
-        HASILKAN Insight(
-            judul = 'Konsentrasi Pengeluaran',
-            isi   = 'Lebih dari {rasioKonsentrasi*100}% pengeluaran bulan ini 
-                     terpusat pada {3} hari tertentu saja.',
-            tingkatUrgensi = 'neutral',
-            prioritas      = 3.4
-        )
+    IF rasioKonsentrasi > 0,5 THEN
+        OUTPUT Insight("Konsentrasi Pengeluaran", urgensi=neutral)
+    END IF
 ```
 
 **Keluaran:** Judul "Konsentrasi Pengeluaran", tingkat urgensi *neutral*, tombol aksi ke `/analytics`.
@@ -489,54 +428,47 @@ FUNGSI EvaluasiSP10(transaksiBulanIni):
 
 **Kondisi pemicu (pseudocode):**
 ```
-FUNGSI EvaluasiAN09(transaksiBulanIni, semuaKategori, kategoriPengeluaranTeratas):
-    kategorDiskresioner = kategori yang namanya mengandung:
-        'hiburan', 'jajan', 'pribadi', 'gaya hidup', atau 'hobi'
+Program Evaluasi Proyeksi Kebiasaan Tahunan (AN-09)
+Deklarasi
+    kategoriDiskresioner        : kumpulan kategori { hiburan, jajan, pribadi,
+                                                      gaya hidup, hobi }
+    totalPerKategoriDiskresioner: kamus { kategoriId → total nominal }
+    jumlahPerKategori           : kamus { kategoriId → jumlah transaksi }
+    kategoriTerpilih            : data kategori diskresioner dengan total tertinggi
+    proyeksiTahunan             : bilangan real
+    teksKonteks                 : teks
 
-    totalPerKategoriDiskresioner = {}
-    jumlahPerKategoriDiskresioner = {}
+Algoritma
+    FOR EACH transaksi bulan ini DO
+        IF tipe != 'EXPENSE' THEN SKIP
+        IF kategori IN kategoriDiskresioner THEN
+            totalPerKategoriDiskresioner[kategoriId] ← ... + nominal
+            jumlahPerKategori[kategoriId]            ← ... + 1
+        END IF
+    END FOR
 
-    UNTUK SETIAP transaksi DALAM transaksiBulanIni:
-        JIKA transaksi.tipe != 'EXPENSE' MAKA LEWATI
+    kategoriTerpilih ← kategori dengan total MAKSIMUM dari totalPerKategoriDiskresioner
 
-        kategori = CARI kategori berdasarkan transaksi.kategoriId
-        JIKA kategori ADA DAN kategori termasuk diskresioner MAKA
-            totalPerKategoriDiskresioner[kategori.id]  += transaksi.nominal
-            jumlahPerKategoriDiskresioner[kategori.id] += 1
+    { Fallback: jika tidak ada kategori diskresioner, gunakan kategori teratas }
+    IF kategoriTerpilih = null AND kategoriPengeluaranTeratas ADA THEN
+        kategoriTerpilih ← kategoriPengeluaranTeratas
+    END IF
 
-    -- Pilih kategori diskresioner dengan total tertinggi
-    kategoriTerpilih = CARI kategori dengan total MAKSIMUM dari totalPerKategoriDiskresioner
+    IF kategoriTerpilih ADA THEN
+        proyeksiTahunan ← totalPerKategoriDiskresioner[kategoriTerpilih.id] × 12
 
-    -- Fallback: jika tidak ada kategori diskresioner, gunakan kategori pengeluaran teratas
-    JIKA kategoriTerpilih TIDAK ADA DAN kategoriPengeluaranTeratas ADA MAKA
-        kategoriTerpilih = kategoriPengeluaranTeratas
+        IF proyeksiTahunan >= 1.000.000 THEN
+            rataRataPerTransaksi ← total / jumlahTransaksi
 
-    JIKA kategoriTerpilih ADA MAKA
-        totalBulanIni   = totalPerKategoriDiskresioner[kategoriTerpilih.id]
-        jumlahTransaksi = jumlahPerKategoriDiskresioner[kategoriTerpilih.id]
-        rataRataPerTranasksi = totalBulanIni / jumlahTransaksi
-        proyeksiTahunan = totalBulanIni * 12
+            IF jumlahTransaksi >= 5 THEN
+                teksKonteks ← "sudah {jumlah} kali transaksi berulang"
+            ELSE IF rataRataPerTransaksi >= 250.000 THEN
+                teksKonteks ← "nilai tiap transaksi cukup besar"
+            END IF
 
-        -- Hanya tampilkan jika proyeksi tahunan bermakna secara finansial
-        JIKA proyeksiTahunan >= 1.000.000 MAKA
-            teksKonteks = ''
-            JIKA jumlahTransaksi >= 5 MAKA
-                teksKonteks = 'Kamu sudah melakukan transaksi ini sebanyak 
-                               {jumlahTransaksi} kali secara berulang.'
-            JIKA TIDAK DAN rataRataPerTransaksi >= 250.000 MAKA
-                teksKonteks = 'Meski jarang, nilai tiap transaksinya cukup besar 
-                               (rata-rata {rataRataPerTransaksi}).'
-
-            HASILKAN Insight(
-                judul = 'Proyeksi Kebiasaan',
-                isi   = 'Bulan ini kategori {namaKategori} menjadi salah satu 
-                         pengeluaran terbesar dengan total {totalBulanIni}. 
-                         {teksKonteks} Jika pola ini berlanjut, estimasi tahunannya 
-                         dapat mencapai {proyeksiTahunan}. Pertimbangkan memantau 
-                         pola pengeluaran ini agar tetap terkendali.',
-                tingkatUrgensi = 'warning',
-                prioritas      = 2.5
-            )
+            OUTPUT Insight("Proyeksi Kebiasaan", urgensi=warning)
+        END IF
+    END IF
 ```
 
 **Keluaran:** Judul "Proyeksi Kebiasaan", tingkat urgensi *warning*, tombol aksi ke `/analytics`.

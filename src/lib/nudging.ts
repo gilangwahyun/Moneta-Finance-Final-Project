@@ -595,8 +595,17 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // Priority Triage (Weighted Sorting): Ascending sort to surface critical nudges first
-  return insights.sort((a, b) => a.priority - b.priority);
+  // Priority Triage (Weighted Sorting): Ascending sort to surface critical nudges first.
+  // Secondary & tertiary tie-breaking ensures a deterministic order every render,
+  // preventing insight cards from shuffling when React re-runs useMemo.
+  const severityRank: Record<NudgeSeverity, number> = { critical: 0, warning: 1, positive: 2, info: 3, neutral: 4 };
+  return insights.sort((a, b) => {
+    if (a.priority !== b.priority) return a.priority - b.priority;
+    const sA = severityRank[a.severity] ?? 99;
+    const sB = severityRank[b.severity] ?? 99;
+    if (sA !== sB) return sA - sB;
+    return a.title.localeCompare(b.title, 'id');
+  });
 }
 
 // ─── Budget Reallocation Recommendation ───────────────────

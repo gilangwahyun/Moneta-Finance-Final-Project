@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Budget, Transaction, Category } from '@/types/models.types';
 import { getBudgetsByPeriod } from '@/lib/local-db/repositories/budgets';
 import { getCurrentUser } from '@/lib/local-db/repositories/users';
@@ -32,10 +32,57 @@ export interface UseDashboardReturn {
   reload: () => Promise<void>;
 }
 
+// ─── Session Cache Helpers ─────────────────────────────────────────────────
+// The dashboardInsight is cached in sessionStorage per calendar-month key so
+// that navigating away and back does not cause it to flicker or change due to
+// async loading race conditions.  The cache is invalidated (cleared) whenever
+// a data-mutating event fires (new transaction or budget change).
+// ─────────────────────────────────────────────────────────────────────────────
+
+function getCacheKey(period: string) {
+  return `moneta-dash-insight-${period}`;
+}
+
+function readInsightCache(period: string): DashboardInsight | null {
+  try {
+    const raw = sessionStorage.getItem(getCacheKey(period));
+    if (!raw) return null;
+    return JSON.parse(raw) as DashboardInsight;
+  } catch {
+    return null;
+  }
+}
+
+function writeInsightCache(period: string, insight: DashboardInsight | null) {
+  try {
+    if (insight === null) {
+      sessionStorage.removeItem(getCacheKey(period));
+    } else {
+      sessionStorage.setItem(getCacheKey(period), JSON.stringify(insight));
+    }
+  } catch {
+    // sessionStorage may be unavailable in certain contexts — fail silently
+  }
+}
+
+function clearInsightCache(period: string) {
+  try {
+    sessionStorage.removeItem(getCacheKey(period));
+  } catch {
+    // fail silently
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function useDashboard({ transactions, allCategories }: UseDashboardProps): UseDashboardReturn {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [username, setUsername] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
+
+  // Tracks whether data is fully loaded so we only write the cache once
+  // both budgets AND transactions are available.
+  const dataReadyRef = useRef(false);
 
   const currentPeriod = useMemo(() => {
     const now = new Date();
@@ -57,10 +104,22 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
 
   useEffect(() => {
     load();
-    const handler = () => load();
-    window.addEventListener('moneta-transaction-updated', handler);
-    return () => window.removeEventListener('moneta-transaction-updated', handler);
-  }, [load]);
+
+    // When data changes, invalidate the cached insight so the next render
+    // recomputes it from fresh data and stores the new result.
+    const invalidateAndReload = () => {
+      clearInsightCache(currentPeriod);
+      dataReadyRef.current = false;
+      load();
+    };
+
+    window.addEventListener('moneta-transaction-updated', invalidateAndReload);
+    window.addEventListener('moneta-budget-updated', invalidateAndReload);
+    return () => {
+      window.removeEventListener('moneta-transaction-updated', invalidateAndReload);
+      window.removeEventListener('moneta-budget-updated', invalidateAndReload);
+    };
+  }, [load, currentPeriod]);
 
   const { totalBudget, totalSpent } = useMemo(() => {
     const totalBudget = budgets.reduce((sum, b) => sum + Number(b.amount), 0);
@@ -116,6 +175,16 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
   }, [totalBudget, totalSpent]);
 
   const dashboardInsight = useMemo((): DashboardInsight | null => {
+    // ── Guard: if data is still loading, return the cached insight if one exists,
+    // so the UI does not flicker to a fallback state between page navigations.
+    if (isLoading || transactions.length === 0 && budgets.length === 0) {
+      return readInsightCache(currentPeriod);
+    }
+
+    // ── Compute the fresh insight ──────────────────────────────────────────
+
+    let fresh: DashboardInsight | null = null;
+
     // 1. Reallocation (Critical)
     if (budgets.length > 0 && transactions.length > 0) {
       const allBudgetsInfo = budgets.map((b) => {
@@ -141,7 +210,7 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
       }
 
       if (recommendation) {
-        return {
+        fresh = {
           type: 'critical',
           title: 'Rekomendasi Subsidi Silang',
           message: `Anggaran ${recommendation.targetCategoryName} jebol. Pindahkan Rp${recommendation.recommendedAmount.toLocaleString('id-ID')} dari ${recommendation.sourceCategoryName}?`,
@@ -150,6 +219,8 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
             route: `/budgets?action=reallocate&sourceBudgetId=${recommendation.sourceBudgetId}&targetBudgetId=${recommendation.targetBudgetId}&amount=${recommendation.recommendedAmount}`,
           },
         };
+        writeInsightCache(currentPeriod, fresh);
+        return fresh;
       }
     }
 
@@ -170,11 +241,13 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
           .reduce((sum, t) => sum + Number(t.amount), 0);
         const limit = totalBudget > 0 ? totalBudget : totalIncomeThisMonth;
         if (limit > 0 && totalSpent > limit * 0.4) {
-          return {
+          fresh = {
             type: 'warning',
             title: 'Pengeluaran Awal Bulan',
             message: `${Math.round((totalSpent / limit) * 100)}% dari batas aman telah terpakai hanya dalam ${Math.max(1, daysSincePayday)} hari (setelah gajian).`,
           };
+          writeInsightCache(currentPeriod, fresh);
+          return fresh;
         }
       }
     }
@@ -187,12 +260,14 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
     const spentPct = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
 
     if (totalBudget > 0 && spentPct - timePassedPct > 10) {
-      return {
+      fresh = {
         type: 'warning',
         title: 'Kecepatan Pengeluaran Meningkat',
         message:
           'Laju pengeluaranmu lebih cepat dari kalender bulan ini. Pertimbangkan untuk mengatur ulang pengeluaran beberapa hari ke depan.',
       };
+      writeInsightCache(currentPeriod, fresh);
+      return fresh;
     }
 
     // 4. Weekend Trap (Warning)
@@ -206,11 +281,13 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
       if (d === 0 || d === 6) weekendTotal += amt;
     }
     if (weekTotal > 0 && (weekendTotal / weekTotal) > 0.7) {
-      return {
+      fresh = {
         type: 'warning',
         title: 'Pola Pengeluaran Akhir Pekan',
         message: `Sekitar ${Math.round((weekendTotal / weekTotal) * 100)}% pengeluaran minggumu terjadi di akhir pekan. Pastikan tetap sesuai dengan rencana anggaranmu, ya.`,
       };
+      writeInsightCache(currentPeriod, fresh);
+      return fresh;
     }
 
     // 5. Night Owl (Warning)
@@ -224,39 +301,41 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
       }
     }
     if (nightTotal >= 150_000) {
-      return {
+      fresh = {
         type: 'warning',
         title: 'Pengeluaran Larut Malam',
         message: `Tercatat Rp${nightTotal.toLocaleString('id-ID')} pengeluaran gaya hidup di larut malam. Kurangi kebiasaan checkout di jam tidur.`,
       };
+      writeInsightCache(currentPeriod, fresh);
+      return fresh;
     }
 
     // 6. Positive / Info Fallback
     if (totalBudget > 0) {
       if (totalSpent === 0) {
-        return {
+        fresh = {
           type: 'info',
           title: 'Mulai Mencatat',
           message: 'Anggaran bulan ini sudah siap. Catat setiap transaksi agar kamu bisa terus memantau keuanganmu.',
         };
-      }
-      if (spentPct <= timePassedPct) {
-        return {
+      } else if (spentPct <= timePassedPct) {
+        fresh = {
           type: 'positive',
           title: 'Keuangan Terkendali',
           message: 'Bagus! Laju pengeluaranmu masih sesuai dengan jadwal kalender bulan ini. Pertahankan!',
         };
       }
     } else {
-      return {
+      fresh = {
         type: 'info',
         title: 'Belum Ada Anggaran',
         message: 'Atur anggaran pertamamu untuk mendapatkan lebih banyak peringatan dan perlindungan pengeluaran.',
       };
     }
 
-    return null;
-  }, [transactions, budgets, allCategories, totalBudget, totalSpent, currentPeriod]);
+    writeInsightCache(currentPeriod, fresh);
+    return fresh;
+  }, [transactions, budgets, allCategories, totalBudget, totalSpent, currentPeriod, isLoading]);
 
   return {
     username,

@@ -8,6 +8,7 @@ import { getAllWallets } from '@/lib/local-db/repositories/wallets';
 import { getActiveTargets } from '@/lib/local-db/repositories/targets';
 import { useTimeFilter } from '@/providers/TimeFilterProvider';
 import { filterByDateRange } from '@/lib/utils/time-filter';
+import { getTargetEffectiveDateRange } from '@/lib/utils/target-helpers';
 import { useCategories } from '@/hooks/use-categories';
 import { generateNudges, findBudgetReallocationRecommendation, ReallocationRecommendation } from '@/lib/nudging';
 import { formatCurrency } from '@/lib/utils/helpers';
@@ -323,7 +324,7 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
       }
     }
 
-    // Fallback: If no discretionary category is found, just use the absolute highest expense category
+    // Fallback: Jika kategori "wants" tidak ditemukan, gunakan kategori pengeluaran tertinggi secara absolut
     if (maxCatTotal === 0 && topExpenseCategory) {
       const cat = allCategories.find((c) => c.name === topExpenseCategory.name);
       if (cat) {
@@ -677,7 +678,7 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
     if (budgets.length === 0) return null;
     const today = dayjs();
     const daysElapsed = today.date();
-    if (daysElapsed < 7) return null; // Need at least 1 week of data
+    if (daysElapsed < 7) return null; // Butuh minimal data 1 minggu
     const daysInMonth = today.daysInMonth();
     const daysRemaining = daysInMonth - daysElapsed;
     if (daysRemaining <= 0) return null;
@@ -688,7 +689,7 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
         .reduce((s, t) => s + Number(t.amount), 0);
       const ratio = spent / Number(budget.amount);
 
-      // Only trigger if under 80% (not yet caught by budget warning)
+      // Hanya aktif jika pengeluaran < 80% (belum terdeteksi oleh budget warning)
       if (ratio >= 0.8) continue;
 
       const spendingRate = spent / daysElapsed;
@@ -710,21 +711,39 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
 
   const targetGapAlert = useMemo(() => {
     if (allTargets.length === 0) return null;
-    const today = dayjs();
+    const today = new Date();
+    const todayDayjs = dayjs(today);
 
     for (const target of allTargets) {
       if (!target.isActive) continue;
-      const startDate = dayjs(target.startDate).startOf('day');
-      const endDate = target.endDate ? dayjs(target.endDate).endOf('day') : startDate.endOf('month');
 
-      const totalDays = Math.max(1, endDate.diff(startDate, 'day'));
-      const elapsedDays = today.diff(startDate, 'day');
-      const elapsedPct = elapsedDays / totalDays;
+      // Use the effective period for the CURRENT date (handles DAILY/WEEKLY/MONTHLY rollover)
+      const effectiveRange = getTargetEffectiveDateRange(target, today);
+      if (!effectiveRange) continue; // Target not started yet or not active for today
+
+      const { periodStart, periodEnd } = effectiveRange;
+      const periodStartDayjs = dayjs(periodStart);
+      const periodEndDayjs = dayjs(periodEnd);
+
+      // If today is already past the period end, skip (expired CUSTOM target — no more nudge)
+      if (todayDayjs.isAfter(periodEndDayjs)) continue;
+
+      const totalDays = Math.max(1, periodEndDayjs.diff(periodStartDayjs, 'day'));
+      const elapsedDays = todayDayjs.diff(periodStartDayjs, 'day');
+      // Clamp to [0, 1] — can never exceed 100%
+      const elapsedPct = Math.min(1, Math.max(0, elapsedDays / totalDays));
 
       if (elapsedPct < 0.3) continue;
 
-      const currentAmount = currentTxns
-        .filter((t) => t.type === 'INCOME' && t.categoryId === target.categoryId)
+      // Sum income transactions within the CURRENT period window
+      const periodStartMs = periodStart.getTime();
+      const periodEndMs = periodEnd.getTime();
+      const currentAmount = allTxns
+        .filter((t) => {
+          if (t.type !== 'INCOME' || t.categoryId !== target.categoryId) return false;
+          const tMs = dayjs(t.date).valueOf();
+          return tMs >= periodStartMs && tMs <= periodEndMs;
+        })
         .reduce((s, t) => s + Number(t.amount), 0);
 
       if (currentAmount === 0) {
@@ -732,27 +751,38 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
       }
     }
     return null;
-  }, [allTargets, currentTxns]);
+  }, [allTargets, allTxns]);
 
   const targetProgressImpact = useMemo(() => {
     if (allTargets.length === 0) return null;
+    const today = new Date();
+    const todayDayjs = dayjs(today);
 
     for (const target of allTargets) {
       if (!target.isActive) continue;
       const targetAmount = Number(target.targetAmount);
 
-      const start = dayjs(target.startDate).startOf('day').valueOf();
-      const end = target.endDate ? dayjs(target.endDate).endOf('day').valueOf() : dayjs().endOf('day').valueOf();
+      // Use the effective period for the CURRENT date (handles rollover correctly)
+      const effectiveRange = getTargetEffectiveDateRange(target, today);
+      if (!effectiveRange) continue; // Target not active for today
+
+      const { periodStart, periodEnd } = effectiveRange;
+
+      // If today is past the period end, skip expired CUSTOM targets
+      if (todayDayjs.isAfter(dayjs(periodEnd))) continue;
+
+      const startMs = periodStart.getTime();
+      const endMs = periodEnd.getTime();
 
       const expenseInTargetPeriod = allTxns
         .filter((t) => {
           if (t.type !== 'EXPENSE') return false;
-          const tDate = dayjs(t.date).valueOf();
-          return tDate >= start && tDate <= end;
+          const tMs = dayjs(t.date).valueOf();
+          return tMs >= startMs && tMs <= endMs;
         })
         .reduce((s, t) => s + Number(t.amount), 0);
 
-      // Trigger if expense > 80% of target income
+      // Trigger if expense > 80% of target income amount
       if (expenseInTargetPeriod > targetAmount * 0.8) {
         return {
           targetName: target.name,
@@ -1113,10 +1143,20 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
       }
     }
 
-    if (reallocationInsight) {
-      return [reallocationInsight, ...rawNudgeInsights];
-    }
-    return rawNudgeInsights;
+    const combined = reallocationInsight
+      ? [reallocationInsight, ...rawNudgeInsights]
+      : [...rawNudgeInsights];
+
+    // Deterministic secondary sort on top of the priority sort done inside generateNudges,
+    // ensuring the reallocation insight (priority -1) always leads and ties are stable.
+    const severityRank: Record<string, number> = { critical: 0, warning: 1, positive: 2, info: 3, neutral: 4 };
+    return combined.sort((a, b) => {
+      if (a.priority !== b.priority) return a.priority - b.priority;
+      const sA = severityRank[a.severity] ?? 99;
+      const sB = severityRank[b.severity] ?? 99;
+      if (sA !== sB) return sA - sB;
+      return a.title.localeCompare(b.title, 'id');
+    });
   }, [rawNudgeInsights, budgets, currentTxns, allCategories]);
 
   return {

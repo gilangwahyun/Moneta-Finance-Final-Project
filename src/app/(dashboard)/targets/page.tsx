@@ -5,7 +5,7 @@ import { useTargets } from '@/hooks/use-targets';
 import { TargetModal } from '@/components/targets/TargetModal';
 import { FinancialTarget } from '@/types/models.types';
 import { formatCurrency, formatDate } from '@/lib/utils/helpers';
-import { Plus, Target as TargetIcon, Trash2, Edit2, AlertCircle } from 'lucide-react';
+import { Plus, Target as TargetIcon, Trash2, Edit2, AlertCircle, Info, X } from 'lucide-react';
 import { EntityActionMenu } from '@/components/ui/EntityActionMenu';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 import { FilterBottomSheet } from '@/components/ui/FilterBottomSheet';
@@ -22,7 +22,20 @@ export default function TargetsPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  type StatusFilter = 'ALL' | 'NOT_STARTED' | 'SAFE' | 'WARNING' | 'DANGER';
+  // ── Info Banner (dismiss per session) ────────────────────────────────────
+  const BANNER_KEY = 'moneta-targets-banner-dismissed';
+  const [isBannerDismissed, setIsBannerDismissed] = useState<boolean>(() => {
+    try { return sessionStorage.getItem(BANNER_KEY) === '1'; } catch { return false; }
+  });
+
+  const dismissBanner = () => {
+    try { sessionStorage.setItem(BANNER_KEY, '1'); } catch { /* ignore */ }
+    setIsBannerDismissed(true);
+  };
+
+  // ─────────────────────────────────────────────────────────────────────────
+
+  type StatusFilter = 'ALL' | 'NOT_STARTED' | 'SAFE' | 'WARNING' | 'DANGER' | 'EXPIRED';
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [showStatusSheet, setShowStatusSheet] = useState(false);
@@ -33,6 +46,7 @@ export default function TargetsPage() {
       { value: 'SAFE', label: 'Belum Tercapai' },
       { value: 'WARNING', label: 'Hampir Tercapai' },
       { value: 'DANGER', label: 'Tercapai' },
+      { value: 'EXPIRED', label: 'Periode Berakhir' },
       { value: 'NOT_STARTED', label: 'Belum Aktif' },
     ],
     []
@@ -40,10 +54,12 @@ export default function TargetsPage() {
 
   const targetsWithStats = useMemo(() => {
     return targets.map((target) => {
-      let status: 'NOT_STARTED' | 'SAFE' | 'WARNING' | 'DANGER' = 'SAFE';
+      let status: 'NOT_STARTED' | 'SAFE' | 'WARNING' | 'DANGER' | 'EXPIRED' = 'SAFE';
 
       if (target.progress.isNotStarted) {
         status = 'NOT_STARTED';
+      } else if (target.progress.isExpired) {
+        status = 'EXPIRED';
       } else if (target.progress.percentage >= 100) {
         status = 'DANGER';
       } else if (target.progress.percentage >= 80) {
@@ -102,6 +118,25 @@ export default function TargetsPage() {
           Tambah Target Pemasukan
         </button>
       </div>
+
+      {/* ── Info Banner: Periodic Reset ──────────────────────────────── */}
+      {!isBannerDismissed && (
+        <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50/80 px-4 py-3.5 dark:border-blue-800/50 dark:bg-blue-950/20">
+          <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500 dark:text-blue-400" />
+          <p className="flex-1 text-sm leading-relaxed text-blue-800 dark:text-blue-200/80">
+            <span className="font-semibold">Target bersifat periodik.</span>{' '}
+            Progress target harian, mingguan, dan bulanan otomatis direset setiap awal periode baru.
+            Target dengan periode khusus (<em>Custom</em>) berhenti berjalan setelah tanggal selesainya.
+          </p>
+          <button
+            aria-label="Tutup informasi"
+            onClick={dismissBanner}
+            className="mt-0.5 shrink-0 rounded-lg p-0.5 text-blue-500 transition hover:bg-blue-100 dark:hover:bg-blue-900/40"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3">
         {/* Status Filter - Desktop */}
@@ -180,6 +215,10 @@ export default function TargetsPage() {
               progressColor = 'bg-slate-300 dark:bg-slate-600';
               statusText = 'Belum Aktif';
               statusTextColor = 'text-slate-600 dark:text-slate-400';
+            } else if (target.progress.isExpired) {
+              progressColor = 'bg-slate-400 dark:bg-slate-600';
+              statusText = 'Periode Berakhir';
+              statusTextColor = 'text-slate-500 dark:text-slate-400';
             } else if (target.progress.percentage >= 100) {
               progressColor = 'bg-emerald-500';
               statusText = 'Tercapai';
@@ -235,6 +274,7 @@ export default function TargetsPage() {
                           statusText === 'Tercapai' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                           statusText === 'Hampir Tercapai' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
                           statusText === 'Belum Aktif' ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400' :
+                          statusText === 'Periode Berakhir' ? 'bg-slate-100 text-slate-500 dark:bg-slate-800/60 dark:text-slate-500' :
                           'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
                         }`}>
                           {statusText}
