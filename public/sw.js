@@ -361,7 +361,7 @@ async function markNotificationAsReadInIDB(clientId) {
               const cursor = req.result;
               if (cursor) {
                 const item = cursor.value;
-                if (!item.isRead && (item.logId === clientId || item.clientId === clientId || item.id === clientId || item.clientId === Number(clientId))) {
+                if (!item.isRead && (item.logId === clientId || item.clientId === clientId || String(item.id) === String(clientId) || item.id === Number(clientId))) {
                   cursor.update({ ...item, isRead: true });
                 }
                 cursor.continue();
@@ -589,7 +589,8 @@ async function triggerLocalNotification(title, body, type, logId, tag, gateway, 
     type: type === "DIGEST" ? "DIGEST" : "INSTANT",
     createdAt: now,
     isRead: false,
-    logId: logId || null,
+    logId: finalClientId,
+    clientId: finalClientId,
   };
 
   try {

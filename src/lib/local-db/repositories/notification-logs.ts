@@ -231,7 +231,11 @@ export async function markLogsSynced(clientIds: string[]): Promise<void> {
 export async function markLogRead(clientId: string): Promise<void> {
   const db = await getDB();
   await new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(STORES.NOTIFICATION_LOGS, 'readwrite');
+    const storeNames: string[] = [STORES.NOTIFICATION_LOGS];
+    if (db.objectStoreNames.contains(STORES.NOTIFICATION_INBOX)) {
+      storeNames.push(STORES.NOTIFICATION_INBOX);
+    }
+    const tx = db.transaction(storeNames, 'readwrite');
     const store = tx.objectStore(STORES.NOTIFICATION_LOGS);
     const req = store.get(clientId);
     req.onsuccess = () => {
@@ -246,6 +250,26 @@ export async function markLogRead(clientId: string): Promise<void> {
         enqueueChange('notification_log', 'update', clientId, { readAt: now, updatedAt: now }).catch(console.error);
       }
     };
+
+    if (db.objectStoreNames.contains(STORES.NOTIFICATION_INBOX)) {
+      try {
+        const inboxStore = tx.objectStore(STORES.NOTIFICATION_INBOX);
+        const cursorReq = inboxStore.openCursor();
+        cursorReq.onsuccess = () => {
+          const cursor = cursorReq.result;
+          if (cursor) {
+            const item = cursor.value;
+            if (!item.isRead && (item.logId === clientId || (item as any).clientId === clientId || String(item.id) === String(clientId) || (item as any).clientId === Number(clientId))) {
+              cursor.update({ ...item, isRead: true });
+            }
+            cursor.continue();
+          }
+        };
+      } catch (err) {
+        console.warn('[LocalDB] Could not update inbox isRead status:', err);
+      }
+    }
+
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
@@ -256,7 +280,11 @@ export async function markAllLogsRead(userId: string): Promise<void> {
   const db = await getDB();
   const now = new Date().toISOString();
   await new Promise<void>((resolve, reject) => {
-    const tx = db.transaction(STORES.NOTIFICATION_LOGS, 'readwrite');
+    const storeNames: string[] = [STORES.NOTIFICATION_LOGS];
+    if (db.objectStoreNames.contains(STORES.NOTIFICATION_INBOX)) {
+      storeNames.push(STORES.NOTIFICATION_INBOX);
+    }
+    const tx = db.transaction(storeNames, 'readwrite');
     const store = tx.objectStore(STORES.NOTIFICATION_LOGS);
     const index = store.index('by_userId');
     const req = index.getAll(userId);
@@ -273,6 +301,26 @@ export async function markAllLogsRead(userId: string): Promise<void> {
         }
       }
     };
+
+    if (db.objectStoreNames.contains(STORES.NOTIFICATION_INBOX)) {
+      try {
+        const inboxStore = tx.objectStore(STORES.NOTIFICATION_INBOX);
+        const cursorReq = inboxStore.openCursor();
+        cursorReq.onsuccess = () => {
+          const cursor = cursorReq.result;
+          if (cursor) {
+            const item = cursor.value;
+            if (!item.isRead) {
+              cursor.update({ ...item, isRead: true });
+            }
+            cursor.continue();
+          }
+        };
+      } catch (err) {
+        console.warn('[LocalDB] Could not update inbox markAllRead:', err);
+      }
+    }
+
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });

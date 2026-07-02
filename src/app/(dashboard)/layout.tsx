@@ -217,31 +217,52 @@ export default function DashboardLayout({
     };
   }, [router, fetchUnreadCount, scheduleSync]);
 
-  //********** Cold-start notifRead param: app was closed when notification was clicked.
-  //********** SW opened a new window with ?notifRead=<clientId>. Process it once on mount.
+  //********** Handle notifRead param from URL on initial mount, navigation, or mobile background resume (focus/visibilitychange)
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search);
-    const notifReadId = params.get("notifRead");
-    if (!notifReadId) return;
 
-    console.log("[Layout] notifRead param detected — clientId:", notifReadId);
-    // Remove param from URL cleanly (replace state, no reload)
-    const cleanUrl = window.location.pathname + window.location.search.replace(/[?&]notifRead=[^&]+/, "").replace(/^&/, "?");
-    window.history.replaceState(null, "", cleanUrl || window.location.pathname);
+    const checkAndMarkNotifRead = () => {
+      const params = new URLSearchParams(window.location.search);
+      const notifReadId = params.get("notifRead");
+      if (notifReadId) {
+        console.log("[Layout] notifRead param detected — clientId:", notifReadId);
+        const cleanUrl = window.location.pathname + window.location.search.replace(/[?&]notifRead=[^&]+/, "").replace(/^&/, "?");
+        window.history.replaceState(null, "", cleanUrl || window.location.pathname);
 
-    (async () => {
-      try {
-        await markLogRead(notifReadId);
-        console.log("[Layout] Cold-start markLogRead completed for clientId:", notifReadId);
-        scheduleSync();
+        (async () => {
+          try {
+            await markLogRead(notifReadId);
+            console.log("[Layout] markLogRead completed for clientId:", notifReadId);
+            scheduleSync();
+          } catch (e) {
+            console.warn("[Layout] notifRead handler error:", e);
+          }
+          fetchUnreadCount();
+        })();
+      } else {
+        // Even if no notifRead param, refresh unread count on resume/focus
         fetchUnreadCount();
-      } catch (e) {
-        console.warn("[Layout] Cold-start notifRead handler error:", e);
       }
-    })();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Run once on mount
+    };
+
+    // 1. Run check immediately on mount or when pathname changes
+    checkAndMarkNotifRead();
+
+    // 2. Run check whenever app resumes from mobile background
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        checkAndMarkNotifRead();
+      }
+    };
+
+    window.addEventListener("focus", checkAndMarkNotifRead);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", checkAndMarkNotifRead);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [pathname, markLogRead, scheduleSync, fetchUnreadCount]);
 
   //********** When hydration pulls new data, reload so hooks re-fetch
   useEffect(() => {

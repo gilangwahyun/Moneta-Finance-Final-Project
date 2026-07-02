@@ -137,7 +137,7 @@ async function incrementTodayCountInIDB(currentCount) {
  * Membuka main IDB TANPA menentukan versi (buka versi saat ini).
  * Ini aman: tidak memicu onupgradeneeded, tidak ada version conflict.
  */
-async function logToNotificationInbox(title, body, notifType, status) {
+async function logToNotificationInbox(title, body, notifType, status, logId) {
   try {
     const db = await new Promise((resolve, reject) => {
       // Buka tanpa versi = buka versi tertinggi yang sudah ada
@@ -156,6 +156,8 @@ async function logToNotificationInbox(title, body, notifType, status) {
           isRead: false,
           status, // 'received' | 'suppressed'
           createdAt: new Date().toISOString(),
+          logId: logId || null,
+          clientId: logId || null,
         });
         tx.oncomplete = () => resolve(undefined);
         tx.onerror = () => resolve(undefined); // Non-fatal
@@ -208,7 +210,7 @@ async function checkCapAndShowNotification(payload) {
     );
 
     // Log 'suppressed' ke notification_inbox (Q3: audit trail)
-    await logToNotificationInbox(title, body, notifType, "suppressed");
+    await logToNotificationInbox(title, body, notifType, "suppressed", logId);
 
     // TIDAK memanggil showNotification — notifikasi ditahan
     return;
@@ -233,7 +235,7 @@ async function checkCapAndShowNotification(payload) {
   // Dilakukan SETELAH showNotification agar tidak increment jika gagal
   await self.registration.showNotification(title, options);
   await incrementTodayCountInIDB(todayCount);
-  await logToNotificationInbox(title, body, notifType, "received");
+  await logToNotificationInbox(title, body, notifType, "received", logId);
 
   console.log(
     `[SW] Notification shown. Today: ${todayCount + 1}/${dailyCap}`
@@ -327,7 +329,7 @@ async function markNotificationAsReadInIDB(clientId: string) {
               const cursor = req.result;
               if (cursor) {
                 const item = cursor.value;
-                if (!item.isRead && (item.logId === clientId || item.clientId === clientId || item.id === clientId || item.clientId === Number(clientId))) {
+                if (!item.isRead && (item.logId === clientId || item.clientId === clientId || String(item.id) === String(clientId) || item.id === Number(clientId))) {
                   cursor.update({ ...item, isRead: true });
                 }
                 cursor.continue();
