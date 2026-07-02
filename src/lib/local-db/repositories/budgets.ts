@@ -267,6 +267,18 @@ export async function deleteBudget(clientId: string): Promise<void> {
   await enqueueChange("budget", "delete", clientId, { ...softDeleted });
 }
 
+// ─── Hard Delete (Sync use only) ────────────────────────
+export async function hardDeleteBudget(clientId: string): Promise<void> {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORES.BUDGETS, "readwrite");
+    const store = tx.objectStore(STORES.BUDGETS);
+    const request = store.delete(clientId);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
 export interface ReallocationInput {
   /** clientId of the source budget (limit will be decremented) */
   sourceClientId: string;
@@ -309,6 +321,13 @@ export async function reallocateBudget(
   }
   if (!destination) {
     throw new Error(`REALLOC_DESTINATION_NOT_FOUND: ${destinationClientId}`);
+  }
+
+  if (amount <= 0 || isNaN(amount)) {
+    throw new Error(`REALLOC_INVALID_AMOUNT: Amount must be greater than 0`);
+  }
+  if (amount > source.amount) {
+    throw new Error(`REALLOC_EXCEEDS_LIMIT: Amount (${amount}) exceeds source budget limit (${source.amount})`);
   }
 
   // ── 2. Apply mutations ────────────────────────────────

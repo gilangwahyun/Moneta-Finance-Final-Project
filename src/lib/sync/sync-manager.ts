@@ -16,15 +16,15 @@ import {
   markEntryAttempt,
   recoverQuarantinedNotificationLogs,
 } from '@/lib/local-db/repositories/sync-queue';
-import { upsertCategory, getCategoryById, bulkUpsertCategories } from '@/lib/local-db/repositories/categories';
+import { upsertCategory, getCategoryById, hardDeleteCategory, bulkUpsertCategories } from '@/lib/local-db/repositories/categories';
 import {
   upsertTransaction,
   getTransactionById,
   hardDeleteTransaction,
   bulkUpsertTransactions,
 } from '@/lib/local-db/repositories/transactions';
-import { upsertWallet, getWalletById, bulkUpsertWallets } from '@/lib/local-db/repositories/wallets';
-import { upsertBudget, getBudgetById, getPendingBudgets, deleteBudget, bulkUpsertBudgets, deduplicateBudgets } from '@/lib/local-db/repositories/budgets';
+import { upsertWallet, getWalletById, hardDeleteWallet, bulkUpsertWallets } from '@/lib/local-db/repositories/wallets';
+import { upsertBudget, getBudgetById, getPendingBudgets, deleteBudget, hardDeleteBudget, bulkUpsertBudgets, deduplicateBudgets } from '@/lib/local-db/repositories/budgets';
 import { upsertTarget, getTargetById, hardDeleteTarget, deleteTarget, bulkUpsertTargets } from '@/lib/local-db/repositories/targets';
 import {
   upsertNotificationLog,
@@ -149,20 +149,41 @@ export async function pushChanges(): Promise<SyncResult> {
     //********** Handle conflicts - apply server version to local DB
     for (const conflict of pushResult.conflicts) {
       if (conflict.entity === 'category') {
-        await upsertCategory(conflict.serverVersion as Category, true);
+        if (!conflict.serverVersion.clientId) {
+          await hardDeleteCategory(conflict.clientId);
+        } else {
+          if (conflict.clientId !== conflict.serverVersion.clientId) {
+            await hardDeleteCategory(conflict.clientId);
+          }
+          await upsertCategory(conflict.serverVersion as Category, true);
+        }
       } else if (conflict.entity === 'transaction') {
         if (!conflict.serverVersion.clientId) {
           await hardDeleteTransaction(conflict.clientId);
         } else {
+          if (conflict.clientId !== conflict.serverVersion.clientId) {
+            await hardDeleteTransaction(conflict.clientId);
+          }
           await upsertTransaction(conflict.serverVersion as Transaction, true);
         }
       } else if (conflict.entity === 'budget') {
-        if (conflict.clientId !== conflict.serverVersion.clientId) {
-          await deleteBudget(conflict.clientId);
+        if (!conflict.serverVersion.clientId) {
+          await hardDeleteBudget(conflict.clientId);
+        } else {
+          if (conflict.clientId !== conflict.serverVersion.clientId) {
+            await hardDeleteBudget(conflict.clientId); // Fix: use hardDelete so it doesn't enqueue a soft delete
+          }
+          await upsertBudget(conflict.serverVersion as Budget, true);
         }
-        await upsertBudget(conflict.serverVersion as Budget, true);
       } else if (conflict.entity === 'wallet') {
-        await upsertWallet(conflict.serverVersion as Wallet, true);
+        if (!conflict.serverVersion.clientId) {
+          await hardDeleteWallet(conflict.clientId);
+        } else {
+          if (conflict.clientId !== conflict.serverVersion.clientId) {
+            await hardDeleteWallet(conflict.clientId);
+          }
+          await upsertWallet(conflict.serverVersion as Wallet, true);
+        }
       } else if (conflict.entity === 'financial_target') {
         if (!conflict.serverVersion.clientId) {
           await hardDeleteTarget(conflict.clientId);

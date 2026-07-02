@@ -20,6 +20,7 @@ import {
 } from '@/lib/local-db/notification-prefs';
 import { formatCurrency, generateClientId } from '@/lib/utils/helpers';
 import { isTargetActiveForDate } from '@/lib/utils/target-helpers';
+import { calculateWalletBalance } from '@/lib/utils/wallet-utils';
 import { showSyncToast } from '@/lib/utils/show-toast';
 
 const BUDGET_CRITICAL_PRIORITY = 0.1;
@@ -274,17 +275,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
 
       for (const w of allWallets) {
         if (w.type === 'INVESTASI') continue;
-        let balance = Number(w.initialBalance || 0);
-        for (const t of allTxns) {
-          if (t.walletId === w.clientId) {
-            if (t.type === 'INCOME') balance += Number(t.amount);
-            else if (t.type === 'EXPENSE') balance -= Number(t.amount);
-            else if (t.type === 'TRANSFER') balance -= Number(t.amount);
-          }
-          if (t.type === 'TRANSFER' && t.targetWalletId === w.clientId) {
-            balance += Number(t.amount);
-          }
-        }
+        const balance = calculateWalletBalance(w, allTxns);
 
         if (balance < threshold) {
           return { walletName: w.name, currentBalance: balance, walletId: w.clientId! };

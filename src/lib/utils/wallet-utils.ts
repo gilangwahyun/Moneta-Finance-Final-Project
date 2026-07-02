@@ -18,19 +18,22 @@ export function calculateWalletBalance(
   allTransactions: Transaction[]
 ): number {
   const relevant = allTransactions.filter((t) => !t.deletedAt);
-  let balance = Number(wallet.initialBalance);
+  let balance = Number(wallet.initialBalance || 0);
+
+  const matchesWallet = (id: string | null | undefined) =>
+    id === wallet.clientId || (!!wallet.id && id === wallet.id);
 
   for (const t of relevant) {
     const amount = Number(t.amount);
-    if (t.type === "INCOME" && t.walletId === wallet.clientId) {
+    if (t.type === "INCOME" && matchesWallet(t.walletId)) {
       balance += amount;
-    } else if (t.type === "EXPENSE" && t.walletId === wallet.clientId) {
+    } else if (t.type === "EXPENSE" && matchesWallet(t.walletId)) {
       balance -= amount;
     } else if (t.type === "TRANSFER") {
-      if (t.walletId === wallet.clientId) {
+      if (matchesWallet(t.walletId)) {
         balance -= amount; // money leaving this wallet
       }
-      if (t.targetWalletId === wallet.clientId) {
+      if (matchesWallet(t.targetWalletId)) {
         balance += amount; // money arriving at this wallet
       }
     }

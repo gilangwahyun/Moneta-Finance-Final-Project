@@ -158,6 +158,18 @@ export async function deleteCategory(clientId: string): Promise<boolean> {
   return true;
 }
 
+// ─── Hard Delete (Sync use only) ────────────────────────
+export async function hardDeleteCategory(clientId: string): Promise<void> {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORES.CATEGORIES, "readwrite");
+    const store = tx.objectStore(STORES.CATEGORIES);
+    const request = store.delete(clientId);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
 // ─── Read ───────────────────────────────────────────────
 
 /**

@@ -132,6 +132,18 @@ export async function deleteWallet(clientId: string): Promise<boolean> {
   return true;
 }
 
+// ─── Hard Delete (Sync use only) ────────────────────────
+export async function hardDeleteWallet(clientId: string): Promise<void> {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORES.WALLETS, "readwrite");
+    const store = tx.objectStore(STORES.WALLETS);
+    const request = store.delete(clientId);
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
 // ─── Read ────────────────────────────────────────────────
 
 /**
