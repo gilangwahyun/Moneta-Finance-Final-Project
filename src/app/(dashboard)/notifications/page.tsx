@@ -217,11 +217,13 @@ function EmptyState() {
  * Individual notification item component.
  * Handles read-state styling and rendering embedded CTA buttons.
  */
-function NotificationListItem({ item, onMarkRead, onNavigate }: { item: DisplayNotification; onMarkRead: (item: DisplayNotification) => void; onNavigate: (item: DisplayNotification) => void }) {
+function NotificationListItem({ item, onMarkRead, onNavigate }: { item: DisplayNotification; onMarkRead: (item: DisplayNotification) => Promise<void> | void; onNavigate: (item: DisplayNotification) => void }) {
   return (
     <button
-      onClick={() => {
-        if (item.isUnread) onMarkRead(item);
+      onClick={async () => {
+        if (item.isUnread) {
+          await onMarkRead(item);
+        }
         onNavigate(item);
       }}
       className={`group w-full rounded-xl border text-left transition-all duration-200 ${
@@ -270,9 +272,11 @@ function NotificationListItem({ item, onMarkRead, onNavigate }: { item: DisplayN
           {item.actionType === 'REALLOCATE_BUDGET' && item.ctaRoute && (
             <div className="mt-3">
               <button
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
-                  if (item.isUnread) onMarkRead(item);
+                  if (item.isUnread) {
+                    await onMarkRead(item);
+                  }
                   onNavigate(item);
                 }}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-600 transition-colors hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20"

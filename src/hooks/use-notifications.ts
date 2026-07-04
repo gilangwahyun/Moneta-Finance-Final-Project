@@ -44,6 +44,10 @@ export function useNotifications() {
     setLogs(prev => prev.map(log => log.clientId === clientId ? { ...log, readAt: new Date().toISOString() } : log));
     try {
       await repoMarkLogRead(clientId);
+      fetchUnreadCount();
+      if (typeof window !== 'undefined') {
+        window.dispatchEvent(new CustomEvent('moneta-notification-updated'));
+      }
     } catch (err) {
       console.error(err);
       fetchUnreadCount();
@@ -59,6 +63,10 @@ export function useNotifications() {
       const user = await getCurrentUser();
       if (user) {
         await repoMarkAllLogsRead(user.id);
+        fetchUnreadCount();
+        if (typeof window !== 'undefined') {
+          window.dispatchEvent(new CustomEvent('moneta-notification-updated'));
+        }
       }
     } catch (err) {
       console.error(err);

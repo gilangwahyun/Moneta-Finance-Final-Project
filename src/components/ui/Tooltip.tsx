@@ -1,7 +1,7 @@
 /********** Imports **********/
 "use client";
 
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 
 /********** Types **********/
 interface TooltipProps {
@@ -13,16 +13,17 @@ interface TooltipProps {
 
 /********** Component **********/
 /**
- * A pure CSS/Tailwind tooltip component.
+ * A pure CSS/Tailwind tooltip component with mobile tap support.
  *
- * Renders `children` as the trigger and shows `content` on hover and focus.
- * Works on both mouse and touch (tap to toggle via focus).
+ * Renders `children` as the trigger and shows `content` on hover, focus, or mobile tap.
+ * Works on both mouse and touch (tap to toggle).
  * Keyboard accessible via tab focus.
  *
  * @param props - Tooltip configuration.
  * @returns A tooltip wrapper element.
  */
 export function Tooltip({ content, children, position = "top" }: TooltipProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const isTop = position === "top";
 
   /********** Render **********/
@@ -31,6 +32,11 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       {/* Trigger */}
       <span
         tabIndex={0}
+        onClick={(e) => {
+          e.stopPropagation();
+          setIsOpen((prev) => !prev);
+        }}
+        onBlur={() => setIsOpen(false)}
         className="group/tooltip cursor-help outline-none"
         role="tooltip"
         aria-label={content}
@@ -52,8 +58,10 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
             isTop
               ? "after:absolute after:left-1/2 after:top-full after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-white dark:after:border-t-slate-800 after:content-['']"
               : "after:absolute after:bottom-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-b-white dark:after:border-b-slate-800 after:content-['']",
-            // Visibility — hidden until parent group/tooltip is hovered/focused
-            "opacity-0 transition-opacity duration-150 group-hover/tooltip:opacity-100 group-focus/tooltip:opacity-100",
+            // Visibility — hidden until parent group/tooltip is hovered/focused or tapped on mobile
+            isOpen
+              ? "opacity-100 transition-opacity duration-150"
+              : "opacity-0 transition-opacity duration-150 group-hover/tooltip:opacity-100 group-focus/tooltip:opacity-100",
           ].join(" ")}
         >
           {content}
