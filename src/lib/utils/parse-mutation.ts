@@ -47,6 +47,11 @@ const EXCLUSION_PATTERNS: RegExp[] = [
   //********** BCA-style noref: e.g. "123456789012345"
   /\bNO\.?\s*REF[:\s]+[\w\d]+/gi,
   /\bREFERENCE[:\s]+[\w\d]+/gi,
+  //********** Account balance lines (Saldo, Sisa Saldo, Saldo Akhir, Saldo Rekening, Balance, Sisa)
+  //********** Strip these out so Math.max doesn't pick account balance over transaction amount!
+  /\b(?:SISA\s+)?SALDO(?:\s+\w+)?\s*[:=-]?\s*(?:Rp\.?|IDR)?\s*[\d,.]+/gi,
+  /\b(?:AVAIL\s+)?BALANCE(?:\s+\w+)?\s*[:=-]?\s*(?:Rp\.?|IDR)?\s*[\d,.]+/gi,
+  /\bSISA\s*[:=-]?\s*(?:Rp\.?|IDR)?\s*[\d,.]+/gi,
 ];
 
 //********** START: AMOUNT_PATTERNS **********
