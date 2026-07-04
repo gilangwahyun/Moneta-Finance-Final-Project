@@ -91,14 +91,16 @@ function normalizeAmount(raw: string): number {
 
   let normalized: string;
 
-  if (lastComma > lastDot) {
-    //********** Indonesian notation: dots = thousands, comma = decimal
-    //********** e.g. "1.500.000,00" -> remove dots, replace comma with dot
-    normalized = s.replace(/\./g, "").replace(",", ".");
-  } else if (lastDot > lastComma) {
-    //********** Western notation: commas = thousands, dot = decimal
-    //********** e.g. "1,500,000.00" -> remove commas
-    normalized = s.replace(/,/g, "");
+  if (lastDot !== -1 && lastComma !== -1) {
+    if (lastComma > lastDot) {
+      //********** Indonesian notation: dots = thousands, comma = decimal
+      //********** e.g. "1.500.000,00" -> remove dots, replace comma with dot
+      normalized = s.replace(/\./g, "").replace(",", ".");
+    } else {
+      //********** Western notation: commas = thousands, dot = decimal
+      //********** e.g. "1,500,000.00" -> remove commas
+      normalized = s.replace(/,/g, "");
+    }
   } else {
     //********** No separator or only one type -> treat as integer
     normalized = s.replace(/[,\.]/g, "");
