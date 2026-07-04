@@ -10,8 +10,6 @@ import { showSyncToast, showDeleteToast } from '@/lib/utils/show-toast';
 import { useBudgets } from '@/hooks/use-budgets';
 import { useBudgetActions } from '@/hooks/use-budget-actions';
 
-import { getCategoryIcon } from '@/lib/utils/icons';
-import { DynamicIcon } from '@/components/ui/DynamicIcon';
 import {
   Wallet,
   Plus,
@@ -19,20 +17,16 @@ import {
   ChevronRight,
   AlertCircle,
   ChevronDown,
-  Trash2,
   ArrowDownRight,
   CheckCircle2,
-  ArrowRightLeft,
-  Info,
 } from 'lucide-react';
+import { BudgetCard } from '@/components/budgets/BudgetCard';
 import { BudgetModal } from '@/components/budgets/BudgetModal';
 import { ReallocateModal } from '@/components/budgets/ReallocateModal';
 import { CompactSummaryRow } from '@/components/ui/CompactSummaryRow';
-import { EntityActionMenu } from '@/components/ui/EntityActionMenu';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 import { FilterBottomSheet } from '@/components/ui/FilterBottomSheet';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
-import { Tooltip } from '@/components/ui/Tooltip';
 import { useSearchParams } from 'next/navigation';
 
 /********** Page Component **********/
@@ -342,173 +336,15 @@ export default function BudgetsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filteredBudgets.map((b) => {
-            const clampedPercentage = Math.min(100, b.percentage);
-
-            // Semantic Colors
-            let progressColor = 'bg-emerald-500';
-            let statusText = 'Aman';
-            let statusTextColor = 'text-emerald-600 dark:text-emerald-400';
-
-            if (b.status === 'WARNING') {
-              progressColor = 'bg-amber-500';
-              statusText = 'Mendekati Batas';
-              statusTextColor = 'text-amber-600 dark:text-amber-400';
-            } else if (b.status === 'DANGER') {
-              progressColor = 'bg-rose-500';
-              statusText = 'Melebihi Batas';
-              statusTextColor = 'text-rose-600 dark:text-rose-400';
-            }
-
-            return (
-              <div
-                key={b.clientId}
-                className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700"
-              >
-                {/* Mobile touch target for opening action menu */}
-                <div
-                  className="absolute inset-0 z-0 sm:hidden"
-                  onClick={(e) => {
-                    const btn = e.currentTarget.parentElement?.querySelector('[aria-label="Buka menu aksi"]') as HTMLButtonElement;
-                    if (btn) btn.click();
-                  }}
-                />
-
-                <div className="relative z-10 flex flex-col p-4 sm:p-5 outline-none pointer-events-none sm:pointer-events-auto">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex min-w-0 items-center gap-3">
-                      {/* Icon */}
-                      <div
-                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-                        style={{
-                          backgroundColor: b.category?.color ? `${b.category.color}20` : 'rgb(241 245 249)',
-                        }}
-                      >
-                        {(() => {
-                          const iconName = b.category?.icon;
-                          return iconName ? (
-                            <DynamicIcon iconName={iconName} color={b.category?.color} className="h-5 w-5" />
-                          ) : (
-                            getCategoryIcon(b.category?.name || 'Budget', 'h-5 w-5', b.category?.color)
-                          );
-                        })()}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-base font-semibold text-slate-900 dark:text-slate-50">
-                          {b.category?.name || 'Kategori tidak diketahui'}
-                        </p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400">Batas Bulanan</p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-3 shrink-0">
-                      <div className="text-right">
-                        <span
-                          className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${
-                            b.status === 'DANGER'
-                              ? 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400'
-                              : b.status === 'WARNING'
-                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
-                          }`}
-                        >
-                          {statusText}
-                        </span>
-                      </div>
-
-                      <div className="pointer-events-auto flex md:opacity-0 md:group-hover:opacity-100 md:focus-within:opacity-100 transition-opacity">
-                        <EntityActionMenu
-                          title={b.category?.name || 'Anggaran'}
-                          subtitle={`Batas: ${formatCurrency(Number(b.amount))}`}
-                          onEdit={() => openEditModal(b)}
-                          onDelete={() => setDeleteConfirmId(b.clientId!)}
-                          extraActions={
-                            Number(b.amount) - b.spentAmount > 0
-                              ? [
-                                  {
-                                    label: 'Subsidi Silang',
-                                    icon: <ArrowRightLeft />,
-                                    onClick: () => openReallocateModal(b.clientId!),
-                                  },
-                                ]
-                              : undefined
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Metriks */}
-                  <div className="mt-4 flex items-end justify-between">
-                    <div className="flex items-baseline gap-1.5 text-sm">
-                      <span className="font-bold text-slate-800 dark:text-slate-100 text-base">{formatCurrency(b.spentAmount)}</span>
-                      <span className="text-slate-600 dark:text-slate-400">dari</span>
-                      <span className="font-medium text-slate-600 dark:text-slate-400">{formatCurrency(Number(b.amount))}</span>
-                    </div>
-                  </div>
-
-                  {/* Progress Bar */}
-                  <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ease-out ${progressColor}`}
-                      style={{ width: `${clampedPercentage}%` }}
-                    />
-                  </div>
-
-                  {/* Ritme Pengeluaran */}
-                  <div className="mt-4 border-t border-slate-100 pt-3 dark:border-slate-800/60">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-slate-600 dark:text-slate-400 flex items-center gap-1.5">
-                        Ritme Pengeluaran
-                        <Tooltip content="Kalkulasi Ideal: (Batas Bulanan ÷ Total Hari Bulan Ini) × Hari Berjalan. Semua transaksi sejak awal bulan diakumulasikan.">
-                          <Info className="h-3.5 w-3.5 text-slate-600 transition-colors hover:text-slate-600 dark:hover:text-slate-300" />
-                        </Tooltip>
-                      </span>
-                      <span
-                        className={`font-semibold ${
-                          b.spentAmount === 0
-                            ? 'text-slate-600 dark:text-slate-400'
-                            : b.rhythm.status === 'OVER_BUDGET'
-                              ? 'text-rose-600 dark:text-rose-400'
-                              : b.rhythm.status === 'OFF_TRACK'
-                                ? 'text-amber-600 dark:text-amber-400'
-                                : 'text-emerald-600 dark:text-emerald-400'
-                        }`}
-                      >
-                        {b.spentAmount === 0
-                          ? 'Belum ada pengeluaran'
-                          : b.rhythm.status === 'OVER_BUDGET'
-                            ? 'Melebihi anggaran'
-                            : b.rhythm.status === 'OFF_TRACK'
-                              ? 'Lebih cepat dari rencana'
-                              : 'Sesuai ritme'}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-xs">
-                      <span className="text-slate-600 dark:text-slate-400">Batas harian:</span>
-                      <span className="font-medium text-slate-700 dark:text-slate-300">
-                        {formatCurrency(b.rhythm.dailyAllowance)}
-                      </span>
-                    </div>
-                    <div className="mt-1 flex items-center justify-between text-xs">
-                      <span className="text-slate-600 dark:text-slate-400">Total ideal saat ini:</span>
-                      <span className="font-medium text-slate-700 dark:text-slate-300">
-                        {formatCurrency(b.rhythm.idealUsageUntilToday)}
-                      </span>
-                    </div>
-                    {(b.rhythm.status === 'OFF_TRACK' || (b.rhythm.projectedMonthlyUsage > Number(b.amount) && b.percentage < 100)) && (
-                      <div className="mt-1 flex items-center justify-between text-xs">
-                        <span className="text-slate-600 dark:text-slate-400">Proyeksi akhir bulan:</span>
-                        <span className="font-medium text-amber-600 dark:text-amber-400">
-                          {formatCurrency(b.rhythm.projectedMonthlyUsage)}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {filteredBudgets.map((b) => (
+            <BudgetCard
+              key={b.clientId}
+              budget={b}
+              onEdit={openEditModal}
+              onDelete={(clientId) => setDeleteConfirmId(clientId)}
+              onReallocate={openReallocateModal}
+            />
+          ))}
         </div>
       )}
 

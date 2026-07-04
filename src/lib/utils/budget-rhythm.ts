@@ -10,6 +10,8 @@ export interface BudgetRhythm {
   projectedMonthlyUsage: number;
   rhythmRatio: number; // >1 means spending faster than ideal
   status: RhythmStatus;
+  daysLeft: number;
+  dailySafeRemaining: number;
 }
 
 /**
@@ -59,6 +61,10 @@ export function calculateBudgetRhythm(
     status = "OFF_TRACK";
   }
 
+  const daysLeft = Math.max(1, daysInMonth - currentDay + 1);
+  const remainingBudget = Math.max(0, amount - spentAmount);
+  const dailySafeRemaining = remainingBudget / daysLeft;
+
   return {
     daysInMonth,
     currentDay,
@@ -66,6 +72,8 @@ export function calculateBudgetRhythm(
     idealUsageUntilToday,
     projectedMonthlyUsage,
     rhythmRatio,
-    status
+    status,
+    daysLeft,
+    dailySafeRemaining
   };
 }
