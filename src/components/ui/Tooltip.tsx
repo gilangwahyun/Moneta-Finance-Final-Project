@@ -31,7 +31,7 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       {/* Trigger */}
       <span
         tabIndex={0}
-        className="group cursor-help outline-none"
+        className="group/tooltip cursor-help outline-none"
         role="tooltip"
         aria-label={content}
       >
@@ -52,8 +52,8 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
             isTop
               ? "after:absolute after:left-1/2 after:top-full after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-white dark:after:border-t-slate-800 after:content-['']"
               : "after:absolute after:bottom-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-b-white dark:after:border-b-slate-800 after:content-['']",
-            // Visibility — hidden until parent group is hovered/focused
-            "opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus:opacity-100",
+            // Visibility — hidden until parent group/tooltip is hovered/focused
+            "opacity-0 transition-opacity duration-150 group-hover/tooltip:opacity-100 group-focus/tooltip:opacity-100",
           ].join(" ")}
         >
           {content}

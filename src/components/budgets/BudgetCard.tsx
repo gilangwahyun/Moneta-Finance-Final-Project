@@ -159,10 +159,7 @@ export function BudgetCard({
                 : 'bg-slate-50/80 border-slate-200/60 dark:bg-slate-800/40 dark:border-slate-700/60'
             }`}
           >
-            <div className="flex items-center gap-2 text-xs">
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white dark:bg-slate-800 shadow-2xs text-xs">
-                💡
-              </span>
+            <div className="flex items-center gap-1.5 text-xs">
               <span className="text-slate-600 dark:text-slate-400 font-medium">
                 Jajan Aman:
               </span>
