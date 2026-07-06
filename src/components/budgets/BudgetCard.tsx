@@ -160,8 +160,11 @@ export function BudgetCard({
             }`}
           >
             <div className="flex items-center gap-1.5 text-xs">
-              <span className="text-slate-600 dark:text-slate-400 font-medium">
-                Jajan Aman:
+              <span className="text-slate-600 dark:text-slate-400 font-medium flex items-center gap-1">
+                Alokasi Harian:
+                <Tooltip content="Proyeksi batas pengeluaran harian adaptif (Sisa Anggaran ÷ Sisa Hari). Berlaku universal sebagai laju pembakaran (burn rate) kapasitas finansial harian Anda.">
+                  <Info className="h-3 w-3 text-slate-400 transition-colors hover:text-slate-600 dark:hover:text-slate-300" />
+                </Tooltip>
               </span>
               <span
                 className={`font-bold ${

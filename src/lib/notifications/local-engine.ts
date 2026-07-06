@@ -186,7 +186,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
 
     // Phase 1 Rules
 
-    // [SP-08] Recurring Merchant Growth
+    // [SP-07] Recurring Merchant Growth
     const recurringMerchantGrowth = (() => {
       const currentExp = currentTxns.filter((t) => t.type === 'EXPENSE' && t.description);
       const prevExp = prevTxns.filter((t) => t.type === 'EXPENSE' && t.description);

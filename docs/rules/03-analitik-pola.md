@@ -333,13 +333,13 @@ Algoritma
 
 ---
 
-## Rule SP-09 — Pola Waktu Pengeluaran (Morning vs Evening)
+## Rule SP-08 — Pola Waktu Pengeluaran (Morning vs Evening)
 
 **Entitas yang dipantau:** Transaksi Pengeluaran (bulan berjalan, dikelompokkan per sesi hari)
 
 **Kondisi pemicu (pseudocode):**
 ```
-Program Evaluasi Pola Waktu Pengeluaran (SP-09)
+Program Evaluasi Pola Waktu Pengeluaran (SP-08)
 Deklarasi
     totalPagi    : bilangan real  { pengeluaran sesi pagi: jam 05:00 – 11:59 }
     totalMalam   : bilangan real  { pengeluaran sesi malam: jam 17:00 – 21:59 }
@@ -380,13 +380,13 @@ Algoritma
 
 ---
 
-## Rule SP-10 — Konsentrasi Pengeluaran (Day-of-Month Clustering)
+## Rule SP-09 — Konsentrasi Pengeluaran (Day-of-Month Clustering)
 
 **Entitas yang dipantau:** Transaksi Pengeluaran (bulan berjalan, dikelompokkan per tanggal)
 
 **Kondisi pemicu (pseudocode):**
 ```
-Program Evaluasi Konsentrasi Pengeluaran (SP-10)
+Program Evaluasi Konsentrasi Pengeluaran (SP-09)
 Deklarasi
     totalPerTanggal  : kamus { nomor tanggal → total nominal pengeluaran }
     totalKeseluruhan : bilangan real

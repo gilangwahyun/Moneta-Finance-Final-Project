@@ -301,8 +301,8 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
       expect(rule).toBeUndefined();
     });
 
-    // SP-08: Recurring Merchant Growth
-    test('[SP-08] VALID: recurringMerchantGrowth >= 2x triggers "Kenaikan Transaksi Rutin"', async () => {
+    // SP-07: Recurring Merchant Growth
+    test('[SP-07] VALID: recurringMerchantGrowth >= 2x triggers "Kenaikan Transaksi Rutin"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         recurringMerchantGrowth: { merchantName: 'GrabFood', currentCount: 6, prevCount: 2, amount: 600_000 },
@@ -312,14 +312,14 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
       expect(rule.severity).toBe('info');
     });
 
-    test('[SP-08] INVALID: null recurringMerchantGrowth does NOT trigger rule', async () => {
+    test('[SP-07] INVALID: null recurringMerchantGrowth does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, recurringMerchantGrowth: null });
       const rule = insights.find((i: any) => i.title === 'Kenaikan Transaksi Rutin');
       expect(rule).toBeUndefined();
     });
 
-    // SP-09: Morning vs Evening
-    test('[SP-09] VALID: morningVsEvening > 60% triggers "Pola Waktu Pengeluaran"', async () => {
+    // SP-08: Morning vs Evening
+    test('[SP-08] VALID: morningVsEvening > 60% triggers "Pola Waktu Pengeluaran"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         morningVsEvening: { dominantSession: 'malam', ratio: 0.65, total: 800_000 },
@@ -329,14 +329,14 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
       expect(rule.severity).toBe('neutral');
     });
 
-    test('[SP-09] INVALID: null morningVsEvening does NOT trigger rule', async () => {
+    test('[SP-08] INVALID: null morningVsEvening does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, morningVsEvening: null });
       const rule = insights.find((i: any) => i.title === 'Pola Waktu Pengeluaran');
       expect(rule).toBeUndefined();
     });
 
-    // SP-10: Day of Month Clustering
-    test('[SP-10] VALID: dayOfMonthClustering > 50% triggers "Konsentrasi Pengeluaran"', async () => {
+    // SP-09: Day of Month Clustering
+    test('[SP-09] VALID: dayOfMonthClustering > 50% triggers "Konsentrasi Pengeluaran"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         dayOfMonthClustering: { ratio: 0.65, topDays: [1, 15, 28], totalAmount: 1_300_000 },
@@ -346,7 +346,7 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
       expect(rule.severity).toBe('neutral');
     });
 
-    test('[SP-10] INVALID: null dayOfMonthClustering does NOT trigger rule', async () => {
+    test('[SP-09] INVALID: null dayOfMonthClustering does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, dayOfMonthClustering: null });
       const rule = insights.find((i: any) => i.title === 'Konsentrasi Pengeluaran');
       expect(rule).toBeUndefined();
@@ -765,7 +765,7 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
     });
 
     // Critical rules appear before non-critical
-    test('[PRIORITY] SP-03 (priority 2.1) appears before SP-08 (priority 3.2)', async () => {
+    test('[PRIORITY] SP-03 (priority 2.1) appears before SP-07 (priority 3.2)', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         recurringMerchantGrowth: { merchantName: 'Steam', currentCount: 5, prevCount: 2, amount: 500_000 },

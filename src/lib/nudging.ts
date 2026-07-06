@@ -309,7 +309,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
 
   // --- NEW PHASE 1 RULES ---
 
-  // [SP-08] Recurring Merchant Growth
+  // [SP-07] Recurring Merchant Growth
   if (recurringMerchantGrowth) {
     insights.push({
       priority: 3.2,
@@ -321,7 +321,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [SP-09] Morning vs Evening Spending
+  // [SP-08] Morning vs Evening Spending
   if (morningVsEvening) {
     insights.push({
       priority: 3.3,
@@ -333,7 +333,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [SP-10] Day-of-Month Clustering
+  // [SP-09] Day-of-Month Clustering
   if (dayOfMonthClustering) {
     insights.push({
       priority: 3.4,
