@@ -1,4 +1,20 @@
+/********** [START: Nudging Engine] **********/
+/********** Engine yang menerima parameter keuangan yang sudah dihitung
+ *  dan menghasilkan array NudgeInsight berurutan berdasarkan prioritas.
+ *  Tidak ada side effect — hanya komputasi murni.
+ *
+ *  Aturan dibagi per fase:
+ *  - Priority 1-2   : Anomali kritis (cashflow, budget, payday)
+ *  - Priority 3-3.9 : Insight perilaku (frekuensi, pola waktu, langganan)
+ *  - Priority 4+    : Tip netral ketika tidak ada anomali
+ */
+/********** [END: Nudging Engine] **********/
+
+/********** Imports **********/
+
 import { formatCurrency } from '@/lib/utils/helpers';
+
+/********** Types **********/
 
 export type NudgeSeverity = 'warning' | 'positive' | 'neutral' | 'critical' | 'info';
 
@@ -60,7 +76,7 @@ export interface NudgeEngineParams {
   nightOwl: { totalAmount: number } | null;
   subscriptions: { count: number; percentage: number } | null;
 
-  // Phase 1 Rules
+  /********** Phase 1 Rules */
   recurringMerchantGrowth?: { merchantName: string; currentCount: number; prevCount: number; amount: number } | null;
   morningVsEvening?: { dominantSession: 'pagi' | 'malam'; ratio: number; total: number } | null;
   dayOfMonthClustering?: { ratio: number; topDays: number[]; totalAmount: number } | null;
@@ -70,7 +86,7 @@ export interface NudgeEngineParams {
   incomeMomentum?: { currentIncome: number; avgPrevIncome: number } | null;
 
 
-  // Phase 2 Rules
+  /********** Phase 2 Rules */
   newCategoryEmergence?: { categoryName: string; categoryId: string; amount: number } | null;
   categoryDominanceShift?: { newTopName: string; newTopAmount: number; prevTopName: string; growthPct: number } | null;
   expenseConsistency?: { ratios: number[]; minRatio: number; maxRatio: number } | null;
@@ -80,18 +96,27 @@ export interface NudgeEngineParams {
   targetProgressImpact?: { targetName: string; targetId: string; expenseAmount: number; targetAmount: number; periodType: string } | null;
 
   
-  // Phase 3 — 3-Month History Rules
+  /********** Phase 3 — 3-Month History Rules */
   categoryCreep?: { categoryName: string; categoryId: string; currentAmount: number; growthPct: number } | null;
   savingsGapShrinking?: { netNow: number; netThen: number; dropPct: number } | null;
   budgetAccuracyAlert?: { categoryName: string; budgetId: string; budgetAmount: number; avgExpense: number } | null;
   categorySpike?: { categoryName: string; categoryId: string; currentAmount: number; avgAmount: number; spikePct: number } | null;
 
-  // Phase 4 — Low Priority / High Complexity Rules
+  /********** Phase 4 — Low Priority / High Complexity Rules */
   budgetRecovery?: { categoryName: string; budgetId: string; savedAmount: number } | null;
   targetStreak?: { targetName: string; targetId: string; streakCount: number } | null;
   walletCategoryPattern?: { walletName: string; categoryName: string; percentage: number } | null;
 }
 
+/********** Main Logic **********/
+
+/**
+ * Menghasilkan array NudgeInsight berdasarkan parameter keuangan yang sudah dihitung.
+ * Insight diurutkan secara ascending berdasarkan prioritas — semakin kecil = semakin kritis.
+ *
+ * @param params - Semua indikator keuangan yang sudah dihitung dari luar.
+ * @returns Array NudgeInsight yang siap ditampilkan.
+ */
 export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
   const {
     current,
@@ -125,7 +150,9 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
 
   const insights: NudgeInsight[] = [];
 
-  // Priority 1: Payday Leak
+  /********** [START: Insight Priority 1 — Anomali Kritis] **********/
+
+  /********** Priority 1: Payday Leak — boros di awal bulan setelah gajian. */
   if (paydayLeak) {
     insights.push({
       priority: 1,
@@ -137,12 +164,12 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // Priority 1.1: Expense vs income ratio
+  /********** Priority 1.1: Expense vs income ratio — deteksi cashflow negatif. */
   const netCashflow = current.income - current.expense;
   const expenseRatio = current.income > 0 ? current.expense / current.income : 0;
 
   if (current.income <= 0 && current.expense > 0) {
-    // Case A — Income is missing
+    /********** Case A — Tidak ada pemasukan yang tercatat. */
     insights.push({
       priority: 1.1,
       severity: 'critical',
@@ -152,7 +179,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       ctaRoute: '/transactions',
     });
   } else if (current.income > 0 && current.expense > current.income) {
-    // Case B — Net cashflow deficit
+    /********** Case B — Cashflow defisit (pengeluaran melebihi pemasukan). */
     insights.push({
       priority: 1.1,
       severity: 'critical',
@@ -162,7 +189,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       ctaRoute: '/analytics',
     });
   } else if (current.income > 0 && current.expense <= current.income && expenseRatio >= 0.8) {
-    // Case C — High expense ratio
+    /********** Case C — Rasio pengeluaran tinggi (>= 80% pemasukan). */
     insights.push({
       priority: 1.1,
       severity: 'warning',
@@ -173,7 +200,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // Priority 2: Weekend vs Weekday Ratio
+  /********** Priority 2: Weekend vs Weekday Ratio — dominasi pengeluaran di akhir pekan. */
   if (weekendTrap) {
     insights.push({
       priority: 2,
@@ -185,7 +212,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // Priority 2.1: Night-Owl Spending
+  /********** Priority 2.1: Night-Owl Spending — belanja banyak di larut malam. */
   if (nightOwl) {
     insights.push({
       priority: 2.1,
@@ -197,7 +224,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // Priority 2.2: Loss-aversion / Nominal Framing (Top category spike)
+  /********** Priority 2.2: Loss-aversion / Nominal Framing (Top category spike) — kategori lonjak. */
   if (topExpenseCategory && topExpenseCategory.prevValue > 0) {
     const spike = Math.round(((topExpenseCategory.value - topExpenseCategory.prevValue) / topExpenseCategory.prevValue) * 100);
     if (spike >= 20) {
@@ -213,7 +240,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     }
   }
 
-  // Priority 2.5: Snowball Projection (Counterfactuals)
+  /********** Priority 2.5: Snowball Projection (Counterfactuals) — proyeksi pengeluaran tahunan. */
   if (wantsProjection) {
     let bodyText = `Bulan ini kategori ${wantsProjection.categoryName} menjadi salah satu pengeluaran terbesar dengan total ${formatCurrency(wantsProjection.monthlyTotal)}. `;
 
@@ -235,7 +262,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // Priority 3: Latte Factor (Frequency Detection)
+  /********** Priority 3: Latte Factor (Frequency Detection) — transaksi kecil yang sering berulang. */
   if (frequentTxn) {
     insights.push({
       priority: 3,
@@ -247,7 +274,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // Priority 3.1: Subscription Cannibalization
+  /********** Priority 3.1: Subscription Cannibalization — terlalu banyak tagihan rutin. */
   if (subscriptions) {
     insights.push({
       priority: 3.1,
@@ -259,7 +286,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // Priority 3.5: Positive reinforcement (Net savings this period)
+  /********** Priority 3.5: Positive reinforcement (Net savings this period) — apresiasi jika hemat. */
   if (weeklySavings > 0) {
     insights.push({
       priority: 3.5,
@@ -271,7 +298,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // Priority 3.6: Mental Accounting / Target Mapping (Income increase)
+  /********** Priority 3.6: Mental Accounting / Target Mapping (Income increase) — pemasukan naik signifikan. */
   if (prev.income > 0 && current.income > prev.income) {
     const pct = Math.round(((current.income - prev.income) / prev.income) * 100);
     if (pct >= 10) {
@@ -288,7 +315,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     }
   }
 
-  // Priority 3.8: Peak Spending Day (Time-Series Pattern)
+  /********** Priority 3.8: Peak Spending Day (Time-Series Pattern) — hari paling boros. */
   if (peakDay) {
     let bodyText = '';
     if (peakDay.dominantCategoryName) {
@@ -307,9 +334,11 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // --- NEW PHASE 1 RULES ---
+  /********** [END: Insight Priority 1 — Anomali Kritis] **********/
 
-  // [SP-07] Recurring Merchant Growth
+  /********** [START: Phase 1 Rules — Insight Perilaku Bulan Ini] **********/
+
+  /********** [SP-07] Recurring Merchant Growth — frekuensi merchant meningkat. */
   if (recurringMerchantGrowth) {
     insights.push({
       priority: 3.2,
@@ -321,7 +350,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [SP-08] Morning vs Evening Spending
+  /********** [SP-08] Morning vs Evening Spending — dominasi waktu sesi pengeluaran. */
   if (morningVsEvening) {
     insights.push({
       priority: 3.3,
@@ -333,7 +362,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [SP-09] Day-of-Month Clustering
+  /********** [SP-09] Day-of-Month Clustering — pengeluaran terkonsentrasi pada hari tertentu. */
   if (dayOfMonthClustering) {
     insights.push({
       priority: 3.4,
@@ -345,7 +374,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [BG-03] Zero Budget Category
+  /********** [BG-03] Zero Budget Category — pengeluaran di kategori tanpa anggaran. */
   if (zeroBudgetCategory) {
     insights.push({
       priority: 1.5,
@@ -358,7 +387,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [BG-04] Smart Budget Suggestion
+  /********** [BG-04] Smart Budget Suggestion — saran buat anggaran berdasarkan histori. */
   if (smartBudgetSuggestion) {
     insights.push({
       priority: 1.6,
@@ -371,7 +400,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [WL-03] Single Wallet Usage Pattern
+  /********** [WL-03] Single Wallet Usage Pattern — satu dompet mendominasi transaksi. */
   if (singleWalletUsage) {
     insights.push({
       priority: 3.9,
@@ -383,7 +412,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [AN-08] Income Momentum Alert
+  /********** [AN-08] Income Momentum Alert — pemasukan di bawah rata-rata. */
   if (incomeMomentum) {
     insights.push({
       priority: 1.7,
@@ -397,11 +426,11 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
 
 
 
-  // --- NEW PHASE 2 RULES ---
+  /********** [END: Phase 1 Rules — Insight Perilaku Bulan Ini] **********/
 
+  /********** [START: Phase 2 Rules — Proyeksi & Target] **********/
 
-
-  // [BG-01] Budget Runway Projection
+  /********** [BG-01] Budget Runway Projection — anggaran berisiko habis lebih awal. */
   if (budgetRunway) {
     insights.push({
       priority: 1.9,
@@ -413,7 +442,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [FT-01] Target Gap Alert
+  /********** [FT-01] Target Gap Alert — target berjalan tapi belum ada progres. */
   if (targetGapAlert) {
     insights.push({
       priority: 2.3,
@@ -425,7 +454,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [FT-02] Target Progress Impact (Burn Rate vs Target)
+  /********** [FT-02] Target Progress Impact (Burn Rate vs Target) — pengeluaran vs target pemasukan. */
   if (targetProgressImpact) {
     let timeframeStr = 'periode ini';
     if (targetProgressImpact.periodType === 'DAILY') timeframeStr = 'hari ini';
@@ -442,7 +471,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [AN-04] New Category Emergence
+  /********** [AN-04] New Category Emergence — kategori pengeluaran baru muncul. */
   if (newCategoryEmergence) {
     insights.push({
       priority: 2.6,
@@ -454,7 +483,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [AN-05] Category Dominance Shift
+  /********** [AN-05] Category Dominance Shift — pergeseran kategori pengeluaran terbesar. */
   if (categoryDominanceShift) {
     insights.push({
       priority: 2.7,
@@ -466,7 +495,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [AN-07] Discretionary Drift
+  /********** [AN-07] Discretionary Drift — porsi pengeluaran gaya hidup meningkat. */
   if (discretionaryDrift) {
     insights.push({
       priority: 2.8,
@@ -478,11 +507,11 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // ==========================================
-  // PHASE 3 RULES — Multi-Month Historical
-  // ==========================================
+  /********** [END: Phase 2 Rules — Proyeksi & Target] **********/
 
-  // [AN-02] Category Creep
+  /********** [START: Phase 3 Rules — Histori Multi-Bulan] **********/
+
+  /********** [AN-02] Category Creep — pengeluaran merayap naik >10%/bulan selama 3 bulan. */
   if (params.categoryCreep) {
     insights.push({
       priority: 2.9,
@@ -494,7 +523,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [AN-03] Savings Gap Shrinking
+  /********** [AN-03] Savings Gap Shrinking — selisih bersih terus menyusut. */
   if (params.savingsGapShrinking) {
     insights.push({
       priority: 3.1,
@@ -506,7 +535,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [BG-05] Budget Accuracy
+  /********** [BG-05] Budget Accuracy — anggaran secara konsisten terlampaui >20%. */
   if (params.budgetAccuracyAlert) {
     insights.push({
       priority: 3.2,
@@ -518,7 +547,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [SP-04] Category Spike (Refinement)
+  /********** [SP-04] Category Spike (Refinement) — lonjakan dibanding rata-rata 3 bulan. */
   if (params.categorySpike) {
     insights.push({
       priority: 3.3,
@@ -530,11 +559,11 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // ==========================================
-  // PHASE 4 RULES — Pattern & Streak
-  // ==========================================
+  /********** [END: Phase 3 Rules — Histori Multi-Bulan] **********/
 
-  // [BG-02] Budget Recovery
+  /********** [START: Phase 4 Rules — Pola & Streak Positif] **********/
+
+  /********** [BG-02] Budget Recovery — berhasil menekan pengeluaran kembali ke batas. */
   if (params.budgetRecovery) {
     insights.push({
       priority: 3.4,
@@ -546,7 +575,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [FT-03] Target Streak
+  /********** [FT-03] Target Streak — berhasil capai target berturut-turut. */
   if (params.targetStreak) {
     insights.push({
       priority: 3.5,
@@ -558,10 +587,10 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [WL-04] Wallet-Category Usage Pattern
+  /********** [WL-04] Wallet-Category Usage Pattern — info penggunaan dompet dominan. */
   if (params.walletCategoryPattern) {
     insights.push({
-      priority: 3.8, // Low priority insight
+      priority: 3.8, /********** Prioritas rendah — insight informatif. */
       severity: 'neutral',
       title: 'Pola Penggunaan Dompet',
       body: `Sekadar info: ${params.walletCategoryPattern.percentage}% pengeluaran '${params.walletCategoryPattern.categoryName}'-mu selalu menggunakan dompet '${params.walletCategoryPattern.walletName}'.`,
@@ -570,7 +599,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // [AN-06] Expense-to-Income Consistency
+  /********** [AN-06] Expense-to-Income Consistency — rasio pengeluaran tidak konsisten. */
   if (expenseConsistency) {
     const [r1, r2, r3] = expenseConsistency.ratios.map(r => Math.round(r * 100));
     insights.push({
@@ -583,7 +612,9 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // Priority 4: Empathetic Neutral tip (When no anomalies)
+  /********** [END: Phase 4 Rules — Pola & Streak Positif] **********/
+
+  /********** Priority 4: Tip netral empatis ketika tidak ada anomali. */
   if (insights.length === 0 && current.expense > 0) {
     insights.push({
       priority: 4,
@@ -595,9 +626,10 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  // Priority Triage (Weighted Sorting): Ascending sort to surface critical nudges first.
-  // Secondary & tertiary tie-breaking ensures a deterministic order every render,
-  // preventing insight cards from shuffling when React re-runs useMemo.
+  /********** Priority Triage (Weighted Sorting): Sort ascending agar nudge kritis muncul duluan.
+   *  Tie-breaking sekunder & tersier memastikan urutan deterministik di setiap render,
+   *  mencegah kartu insight mengacak saat React menjalankan ulang useMemo.
+   */
   const severityRank: Record<NudgeSeverity, number> = { critical: 0, warning: 1, positive: 2, info: 3, neutral: 4 };
   return insights.sort((a, b) => {
     if (a.priority !== b.priority) return a.priority - b.priority;
@@ -608,7 +640,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
   });
 }
 
-// ─── Budget Reallocation Recommendation ───────────────────
+/********** [START: Budget Reallocation Recommendation] **********/
 
 export interface ReallocationRecommendation {
   sourceBudgetId: string;
@@ -620,12 +652,25 @@ export interface ReallocationRecommendation {
   recommendedAmount: number;
 }
 
+/**
+ * Mencari budget lain yang bisa menjadi sumber realokasi untuk
+ * menutupi defisit budget target.
+ *
+ * Aturan ketat:
+ * - Budget sumber harus punya sisa >= 70% sebelum transfer.
+ * - Budget sumber harus punya sisa >= 50% setelah transfer.
+ * - Jumlah yang direkomendasikan = min(defisit, maksimum yang bisa ditransfer).
+ *
+ * @param targetBudget - Budget yang sedang defisit (spent >= limit).
+ * @param allBudgets - Semua budget user bulan ini.
+ * @returns Rekomendasi realokasi, atau null jika tidak ada kandidat yang memenuhi syarat.
+ */
 export function findBudgetReallocationRecommendation(
   targetBudget: { id: string; categoryId: string; limit: number; spent: number; name: string },
   allBudgets: Array<{ id: string; categoryId: string; limit: number; spent: number; name: string }>
 ): ReallocationRecommendation | null {
   
-  // We only recommend if target budget is 100% or more utilized
+  /********** Hanya rekomendasikan jika target budget sudah terpakai 100% atau lebih. */
   if (targetBudget.spent < targetBudget.limit) return null;
   
   const targetDeficit = targetBudget.spent - targetBudget.limit;
@@ -642,10 +687,10 @@ export function findBudgetReallocationRecommendation(
 
     const remainingRatioBefore = remainingAmount / b.limit;
     
-    // Strict numerical rule: source must have at least 70% remaining before transfer
+    /********** Aturan ketat: sumber harus punya sisa >= 70% sebelum transfer. */
     if (remainingRatioBefore < 0.7) continue;
 
-    // Strict numerical rule: source must have at least 50% remaining after transfer
+    /********** Aturan ketat: sumber harus punya sisa >= 50% setelah transfer. */
     const maxTransferable = remainingAmount - (b.limit * 0.5);
     if (maxTransferable <= 0) continue;
     
@@ -655,7 +700,7 @@ export function findBudgetReallocationRecommendation(
 
     const afterTransferRemainingRatio = (remainingAmount - recommendedAmount) / b.limit;
 
-    // Priority criteria
+    /********** Kriteria prioritas sumber terbaik. */
     const isBetterSource = 
       afterTransferRemainingRatio > bestScore.afterTransferRatio ||
       (afterTransferRemainingRatio === bestScore.afterTransferRatio && maxTransferable > bestScore.maxTransferable) ||
@@ -682,3 +727,4 @@ export function findBudgetReallocationRecommendation(
 
   return bestSource;
 }
+/********** [END: Budget Reallocation Recommendation] **********/

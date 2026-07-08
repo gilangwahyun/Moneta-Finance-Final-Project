@@ -1,28 +1,32 @@
-// ─── Budget Gateway Evaluation Engine ────────────────────
-// @deprecated This module is a legacy parallel notification engine.
-//
-// REASON FOR DEPRECATION:
-//   - This engine read notification preferences from localStorage (stale, device-local).
-//   - It called showNotification() without creating notification_logs IDB entries,
-//     making its alerts invisible in the in-app Notifications page.
-//   - Its active entry point (evaluateAndFireBudgetGateway in sw/register.ts) was
-//     a dead export — never called from any app code path.
-//   - Budget threshold detection (20%, 50%, 100%) is fully covered by local-engine.ts,
-//     which correctly writes notification_logs first, then gates push on deliveryMode.
-//
-// DO NOT add new callers to this module.
-// DO NOT use evaluateBudgetGateways() or readNotifPrefsFromLS() for delivery decisions.
-// Use resolveDeliveryMode() from notification-prefs.ts and local-engine.ts instead.
-//
-// This file is retained for reference only. It will be removed in a future cleanup.
+/********** [START: Budget Gateway Evaluation Engine] **********/
+/********** @deprecated Modul ini adalah legacy notification engine yang paralel.
+ *
+ *  ALASAN DEPRECATED:
+ *  - Engine ini membaca preferensi notifikasi dari localStorage (stale, device-local).
+ *  - Engine memanggil showNotification() tanpa membuat entri notification_logs di IDB,
+ *    sehingga alert-nya tidak terlihat di halaman Notifikasi in-app.
+ *  - Entry point aktifnya (evaluateAndFireBudgetGateway di sw/register.ts) adalah
+ *    dead export — tidak pernah dipanggil dari jalur kode app manapun.
+ *  - Deteksi threshold budget (20%, 50%, 100%) sudah ditangani sepenuhnya oleh local-engine.ts,
+ *    yang dengan benar menulis notification_logs terlebih dahulu, lalu gating push pada deliveryMode.
+ *
+ *  JANGAN tambahkan pemanggil baru ke modul ini.
+ *  JANGAN gunakan evaluateBudgetGateways() atau readNotifPrefsFromLS() untuk keputusan delivery.
+ *  Gunakan resolveDeliveryMode() dari notification-prefs.ts dan local-engine.ts sebagai gantinya.
+ *
+ *  File ini dipertahankan hanya sebagai referensi. Akan dihapus pada fase cleanup berikutnya.
+ */
+/********** [END: Budget Gateway Evaluation Engine] **********/
 
-//   Format: { [categoryId]: { t1Fired: string | null, t2Fired: string | null, deficitFired: string | null } }
-//   Value = tanggal ISO 'YYYY-MM-DD' kapan threshold tersebut terakhir dikirim.
-//   Auto-reset: jika tanggal tidak sama dengan hari ini, dianggap belum dikirim.
+/********** Format state kategori:
+ *  { [categoryId]: { t1Fired: string | null, t2Fired: string | null, deficitFired: string | null } }
+ *  Value = tanggal ISO 'YYYY-MM-DD' kapan threshold tersebut terakhir dikirim.
+ *  Auto-reset: jika tanggal tidak sama dengan hari ini, dianggap belum dikirim.
+ */
 
-import { DEFAULT_DAILY_CAP } from "@/lib/local-db/notification-prefs";
+import { DEFAULT_DAILY_CAP } from '@/lib/local-db/notification-prefs';
 
-// ─── Types ────────────────────────────────────────────────
+/********** Types **********/
 
 export type GatewayTier = "T1" | "T2" | "DEFICIT" | null;
 
@@ -43,22 +47,22 @@ interface CategoryGatewayState {
 
 type GatewayStateMap = Record<string, CategoryGatewayState>;
 
-// ─── Constants ────────────────────────────────────────────
+/********** Constants **********/
 
-const GATEWAY_STATE_KEY = "moneta-gateway-state";
-const SUPPRESSION_LOG_KEY = "moneta-suppression-log";
+const GATEWAY_STATE_KEY = 'moneta-gateway-state';
+const SUPPRESSION_LOG_KEY = 'moneta-suppression-log';
 
-// Threshold definitions (sisa anggaran sebagai persentase)
-const TIER_1_THRESHOLD = 50; // Sisa <= 50% → Tier 1
-const TIER_2_THRESHOLD = 20; // Sisa <= 20% → Tier 2
+/********** Threshold definitions (sisa anggaran sebagai persentase). */
+const TIER_1_THRESHOLD = 50; /********** Sisa <= 50% → Tier 1 */
+const TIER_2_THRESHOLD = 20; /********** Sisa <= 20% → Tier 2 */
 
-// ─── Helper: format Rupiah ────────────────────────────────
+/********** Helpers **********/
 
 function fmtRupiah(amount: number): string {
-  return "Rp " + Math.round(amount).toLocaleString("id-ID");
+  return 'Rp ' + Math.round(amount).toLocaleString('id-ID');
 }
 
-// ─── Gateway State (localStorage) ────────────────────────
+/********** Gateway State (localStorage) **********/
 
 function loadGatewayState(): GatewayStateMap {
   if (typeof window === "undefined") return {};
@@ -96,7 +100,7 @@ function hasFiredToday(firedAt: string | null): boolean {
   return firedAt.startsWith(today);
 }
 
-// ─── Suppression Audit Trail ─────────────────────────────
+/********** Suppression Audit Trail **********/
 
 function logSuppression(
   categoryId: string,
@@ -129,7 +133,7 @@ function logSuppression(
   } catch {}
 }
 
-// ─── Core Evaluator ───────────────────────────────────────
+/********** Core Evaluator **********/
 
 /**
  * Evaluasi apakah notifikasi gateway perlu dikirim setelah transaksi baru.
@@ -160,12 +164,12 @@ export function evaluateBudgetGateways(
   const remainingAmount = budgetAmount - spentAmount;
   const remainingPct = (remainingAmount / budgetAmount) * 100;
 
-  // ── Cek preferensi pengguna ────────────────────────────
+  /********** Cek preferensi pengguna. */
   const prefs = { dailyDigest: false, instantAlerts: true, dailyCap: DEFAULT_DAILY_CAP };
 
-  // Jika "Ringkasan Berkala" aktif, SUPRESI semua real-time alert
+  /********** Jika "Ringkasan Berkala" aktif, supresi semua real-time alert. */
   if (prefs?.dailyDigest) {
-    // Catat supresi untuk audit trail
+    /********** Catat supresi untuk audit trail. */
     logSuppression(
       categoryId,
       categoryName,
@@ -188,21 +192,21 @@ export function evaluateBudgetGateways(
     };
   }
 
-  // ── Tentukan tier yang terlampaui ─────────────────────
+  /********** Tentukan tier yang terlampaui. */
   let tier: GatewayTier = null;
 
   if (remainingPct <= 0) {
-    tier = "DEFICIT"; // >= 100% spent
+    tier = 'DEFICIT'; /********** >= 100% spent. */
   } else if (remainingPct <= TIER_2_THRESHOLD) {
-    tier = "T2"; // Sisa <= 20%
+    tier = 'T2'; /********** Sisa <= 20%. */
   } else if (remainingPct <= TIER_1_THRESHOLD) {
-    tier = "T1"; // Sisa <= 50%
+    tier = 'T1'; /********** Sisa <= 50%. */
   }
 
-  // Transaksi normal (sisa > 50%) — selalu hening di OS level
+  /********** Transaksi normal (sisa > 50%) — selalu hening di OS level. */
   if (!tier) return SILENT;
 
-  // ── Cek apakah threshold ini sudah pernah dikirim hari ini ──
+  /********** Cek apakah threshold ini sudah pernah dikirim hari ini. */
   const state = loadGatewayState();
   const catState = getCategoryState(state, categoryId);
 
@@ -225,8 +229,8 @@ export function evaluateBudgetGateways(
     };
   }
 
-  // ── Cek daily cap ─────────────────────────────────────
-  // Daily cap dibaca dari prefs; jika sudah habis, supresi
+  /********** Cek daily cap. */
+  /********** Daily cap dibaca dari prefs; jika sudah habis, supresi. */
   const dailyCap = prefs?.dailyCap ?? DEFAULT_DAILY_CAP;
   const today = new Date().toISOString().substring(0, 10);
   const countKey = "moneta-notification-daily-count";
@@ -253,24 +257,24 @@ export function evaluateBudgetGateways(
     };
   }
 
-  // ── Bangun teks notifikasi ─────────────────────────────
+  /********** Bangun teks notifikasi. */
   let title: string;
   let body: string;
   const remainingFmt = fmtRupiah(Math.max(0, remainingAmount));
 
-  if (tier === "DEFICIT") {
-    title = "Peringatan Batas Anggaran";
+  if (tier === 'DEFICIT') {
+    title = 'Peringatan Batas Anggaran';
     body = `Anggaran ${categoryName} kamu sudah habis. Sisa ${fmtRupiah(0)} dari ${fmtRupiah(budgetAmount)}. Pertimbangkan realokasi dari kategori lain.`;
-  } else if (tier === "T2") {
-    title = "Peringatan Batas Anggaran";
+  } else if (tier === 'T2') {
+    title = 'Peringatan Batas Anggaran';
     body = `Sisa anggaran ${categoryName} kamu kritis, tinggal ${remainingFmt}. Pertimbangkan kembali pengeluaran berikutnya.`;
   } else {
-    // T1
-    title = "Pengingat Anggaran";
+    /********** T1 */
+    title = 'Pengingat Anggaran';
     body = `Sudah separuh anggaran ${categoryName} terpakai. Sisa anggaran: ${remainingFmt}. Pertahankan ritme pengeluaranmu.`;
   }
 
-  // ── Rekam threshold sebagai sudah dikirim ──────────────
+  /********** Rekam threshold sebagai sudah dikirim. */
   const today2 = new Date().toISOString().substring(0, 10);
   const newCatState: CategoryGatewayState = { ...catState };
   if (tier === "T1") newCatState.t1Fired = today2;

@@ -1,13 +1,18 @@
-//********** START: Service Worker Registration **********
-//********** Client-side utility to register the service worker,
-//********** set up Background Sync, and handle SW lifecycle events.
-//**********
-//********** Usage:
-//**********   import { registerServiceWorker } from "@/lib/sw/register";
-//**********   registerServiceWorker({ onSyncTriggered: () => performSync() });
-//********** END: Service Worker Registration **********
+/********** [START: Service Worker Registration] **********/
+/********** Utilitas sisi klien untuk mendaftarkan service worker,
+ *  menyiapkan Background Sync, dan menangani lifecycle events SW.
+ *
+ *  Penggunaan:
+ *    import { registerServiceWorker } from "@/lib/sw/register";
+ *    registerServiceWorker({ onSyncTriggered: () => performSync() });
+ */
+/********** [END: Service Worker Registration] **********/
+
+/********** Imports **********/
 
 import { csrfFetch } from '@/lib/utils/csrf-fetch';
+
+/********** Types **********/
 
 export interface SWRegistrationOptions {
   /** Called when the SW sends a SYNC_TRIGGERED message */
@@ -22,10 +27,14 @@ export interface SWRegistrationOptions {
 
 let swRegistration: ServiceWorkerRegistration | null = null;
 
-//********** CORE **********
+/********** Core Functions **********/
+
 /**
- * Register the service worker and set up event listeners.
- * Safe to call multiple times - only registers once.
+ * Mendaftarkan service worker dan menyiapkan event listener-nya.
+ * Aman dipanggil berkali-kali — hanya mendaftar sekali.
+ *
+ * @param options - Opsi callback untuk berbagai event lifecycle SW.
+ * @returns ServiceWorkerRegistration jika berhasil, atau null.
  */
 export async function registerServiceWorker(options: SWRegistrationOptions = {}): Promise<ServiceWorkerRegistration | null> {
   if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
@@ -43,21 +52,21 @@ export async function registerServiceWorker(options: SWRegistrationOptions = {})
 
     options.onRegistered?.(registration);
 
-    //********** Listen for new service worker versions
+    /********** Listen untuk versi service worker yang baru tersedia. */
     registration.addEventListener('updatefound', () => {
       const newWorker = registration.installing;
       if (!newWorker) return;
 
       newWorker.addEventListener('statechange', () => {
         if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          //********** New version available - notify the app
+          /********** Versi baru tersedia — beritahu aplikasi. */
           console.log('[SW Register] New version available');
           options.onUpdateAvailable?.(registration);
         }
       });
     });
 
-    //********** Listen for messages from the service worker
+    /********** Listen untuk pesan yang dikirim dari service worker. */
     navigator.serviceWorker.addEventListener('message', async (event) => {
       const { type, payload } = event.data || {};
 
@@ -66,7 +75,7 @@ export async function registerServiceWorker(options: SWRegistrationOptions = {})
         options.onSyncTriggered?.();
       }
 
-      //********** Persist notification to local IndexedDB inbox
+      /********** Simpan notifikasi ke IndexedDB inbox lokal. */
       if (type === 'ADD_TO_INBOX' && payload) {
         try {
           const { addToInbox } = await import('@/lib/local-db/repositories/notification-inbox');
@@ -85,7 +94,7 @@ export async function registerServiceWorker(options: SWRegistrationOptions = {})
 
       if (type === 'SW_NAVIGATE' && event.data.path) {
         console.log('[SW Register] Navigating to:', event.data.path);
-        // Minimal fallback navigation (can be intercepted by App router if handled at context level, but safe as fallback)
+        /********** Fallback navigasi minimal — bisa di-intercept oleh App router di level context. */
         window.location.href = event.data.path;
       }
 
@@ -94,7 +103,7 @@ export async function registerServiceWorker(options: SWRegistrationOptions = {})
         try {
           const { markLogRead } = await import('@/lib/local-db/repositories/notification-logs');
           await markLogRead(event.data.notificationClientId);
-          // Optional: fire an event so the UI refreshes immediately
+          /********** Trigger event agar UI langsung refresh. */
           window.dispatchEvent(new Event('moneta-notification-updated'));
         } catch (err) {
           console.warn('[SW Register] Failed to mark log read:', err);
@@ -111,9 +120,11 @@ export async function registerServiceWorker(options: SWRegistrationOptions = {})
 }
 
 /**
- * Request a one-shot Background Sync.
- * When the browser regains connectivity, the SW will fire
- * a "sync" event with the tag "moneta-sync".
+ * Meminta one-shot Background Sync.
+ * Saat browser mendapatkan koneksi kembali, SW akan menembak event
+ * "sync" dengan tag "moneta-sync".
+ *
+ * @returns `true` jika berhasil mendaftar background sync.
  */
 export async function requestBackgroundSync(): Promise<boolean> {
   if (!swRegistration) {
@@ -122,7 +133,7 @@ export async function requestBackgroundSync(): Promise<boolean> {
   }
 
   try {
-    //********** Check if Background Sync is supported
+    /********** Cek apakah Background Sync API didukung. */
     if ('sync' in swRegistration) {
       await (swRegistration as unknown as { sync: { register: (tag: string) => Promise<void> } }).sync.register('moneta-sync');
       console.log('[SW Register] Background sync registered');
@@ -138,11 +149,14 @@ export async function requestBackgroundSync(): Promise<boolean> {
 }
 
 /**
- * Request Periodic Background Sync (if supported).
- * This allows the app to sync periodically even when not open.
+ * Meminta Periodic Background Sync (jika didukung).
+ * Mengizinkan app untuk sync secara berkala meskipun tidak sedang dibuka.
+ *
+ * @param intervalMs - Interval minimum dalam milidetik (default: 1 jam).
+ * @returns `true` jika berhasil mendaftar periodic sync.
  */
 export async function requestPeriodicSync(
-  intervalMs: number = 60 * 60 * 1000, // Default: 1 hour
+  intervalMs: number = 60 * 60 * 1000, /********** Default: 1 jam. */
 ): Promise<boolean> {
   if (!swRegistration) return false;
 
@@ -169,7 +183,9 @@ export async function requestPeriodicSync(
 }
 
 /**
- * Send a message to the active service worker.
+ * Mengirim pesan ke service worker yang aktif.
+ *
+ * @param message - Object pesan yang akan dikirim.
  */
 export function sendMessageToSW(message: Record<string, unknown>): void {
   if (navigator.serviceWorker.controller) {
@@ -178,14 +194,14 @@ export function sendMessageToSW(message: Record<string, unknown>): void {
 }
 
 /**
- * Tell the waiting SW to skip waiting and take control.
+ * Memberitahu SW yang sedang menunggu untuk skip waiting dan mengambil kendali.
  */
 export function skipWaiting(): void {
   sendMessageToSW({ type: 'SKIP_WAITING' });
 }
 
 /**
- * Manually trigger sync via the service worker.
+ * Memicu sync secara manual melalui service worker.
  */
 export function triggerSWSync(): void {
   sendMessageToSW({ type: 'TRIGGER_SYNC' });
@@ -262,12 +278,13 @@ export async function evaluateAndFireBudgetGateway(
   budgetAmount: number,
 ): Promise<void> {
   if (!navigator.serviceWorker?.controller) {
-    //********** SW belum aktif - tidak bisa kirim notifikasi OS
+    /********** SW belum aktif — tidak bisa kirim notifikasi OS. */
     return;
   }
 
-  //********** Guard: izin notifikasi OS belum diberikan pengguna
-  //********** showNotification() akan throw jika dipanggil tanpa izin 'granted'
+  /********** Guard: izin notifikasi OS belum diberikan pengguna.
+   *  showNotification() akan throw jika dipanggil tanpa izin 'granted'.
+   */
   if (typeof Notification === 'undefined' || Notification.permission !== 'granted') {
     console.log('[Gateway] Izin notifikasi belum diberikan — dilewati.');
     return;
@@ -293,22 +310,22 @@ export async function evaluateAndFireBudgetGateway(
       sendInstantNudge(result.title, result.body, result.tier);
     }
 
-    //********** Increment counter harian setelah notifikasi terkirim
+    /********** Increment counter harian setelah notifikasi terkirim. */
     incrementDailyNotifCount();
   } catch (err) {
     console.warn('[Gateway] evaluateAndFireBudgetGateway gagal:', err);
   }
 }
 
-//********** Digest timer state **********
+/********** Digest Timer State **********/
 let _digestTimerId: ReturnType<typeof setInterval> | null = null;
 
 /**
- * Start the daily digest check timer.
- * Checks every 5 minutes whether it's time to fire the digest.
- * Safe to call multiple times — clears previous timer.
+ * Memulai timer pemeriksaan daily digest.
+ * Memeriksa setiap 5 menit apakah sudah waktunya mengirim digest.
+ * Aman dipanggil berkali-kali — membersihkan timer sebelumnya.
  *
- * @param userId The current user's ID (for IDB aggregation)
+ * @param userId - ID user saat ini (untuk agregasi IDB).
  */
 export async function startDigestTimer(userId: string): Promise<void> {
   if (_digestTimerId !== null) clearInterval(_digestTimerId);
@@ -317,8 +334,9 @@ export async function startDigestTimer(userId: string): Promise<void> {
 
   async function checkAndFire() {
     try {
-      // Use IDB as the authoritative source for notification settings.
-      // This avoids a network round-trip and works offline.
+      /********** Pakai IDB sebagai sumber kebenaran untuk pengaturan notifikasi.
+       *  Menghindari network round-trip dan berfungsi offline.
+       */
       const { getNotificationSettings } = await import('@/lib/local-db/repositories/notification-settings');
       const { resolveDeliveryMode } = await import('@/lib/local-db/notification-prefs');
       const settings = await getNotificationSettings(userId);
@@ -335,7 +353,7 @@ export async function startDigestTimer(userId: string): Promise<void> {
       console.log(`[DigestTimer] now=${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')} digestTime=${digestTime} mode=${rawMode} resolved=${mode}`);
 
       if (mode !== 'DIGEST') {
-        // Only fire digest in DIGEST mode. Skip silently in INSTANT or NONE.
+        /********** Hanya kirim digest dalam mode DIGEST. Skip diam-diam di INSTANT atau NONE. */
         return;
       }
 
@@ -344,7 +362,7 @@ export async function startDigestTimer(userId: string): Promise<void> {
       const wibDateStr = wibNow.dateStr;
       const DIGEST_FIRED_KEY = `DIGEST_FIRED:${userId}`;
 
-      // Read last-fired timestamp from localStorage
+      /********** Baca timestamp last-fired dari localStorage. */
       const lastFiredRaw = localStorage.getItem(DIGEST_FIRED_KEY);
       let lastFired = null;
       try {
@@ -352,7 +370,7 @@ export async function startDigestTimer(userId: string): Promise<void> {
           lastFired = JSON.parse(lastFiredRaw);
         }
       } catch(e) {
-        // Fallback for old ISO string format or malformed data
+        /********** Fallback untuk format string ISO lama atau data yang rusak. */
         if (lastFiredRaw && lastFiredRaw.includes('T')) {
            const oldDate = new Date(lastFiredRaw);
            if (!isNaN(oldDate.getTime())) {
@@ -365,7 +383,7 @@ export async function startDigestTimer(userId: string): Promise<void> {
 
       const digestFiredKey = `DIGEST:${userId}:${wibDateStr}:${digestTime}`;
 
-      // Explicit requested debug logging
+      /********** Logging debug eksplisit yang diminta. */
       console.log(`[DigestTimer] wibDate=${wibDateStr} digestTime=${digestTime} firedKey=${digestFiredKey}`);
       console.log(`[DigestTimer] shouldFire=${shouldFire} reason=${reason}`);
       
@@ -373,15 +391,17 @@ export async function startDigestTimer(userId: string): Promise<void> {
         return;
       }
 
-      // Build the digest from today's notification logs (not transaction data)
+      /********** Bangun digest dari log notifikasi hari ini (bukan data transaksi). */
       const digest = await buildLogDigest(userId);
 
       console.log(`[DigestTimer] shouldFireDigest=${shouldFire} eligibleLogs=${digest.logCount} lastFiredRaw=${lastFiredRaw}`);
 
       if (!digest.hasEligibleLogs) {
-        // No eligible logs today — do not send an empty digest.
-        // Do NOT set lastFiredAt here: if more logs arrive before digest time,
-        console.log('[SW Register] Digest skipped — no eligible notification logs today.');
+        /********** Tidak ada log hari ini — jangan kirim digest kosong.
+         *  Jangan set lastFiredAt di sini: jika log baru masuk sebelum jam digest,
+         *  timer berikutnya masih bisa mengirim.
+         */
+        console.log('[SW Register] Digest dilewati — tidak ada log notifikasi hari ini.');
         return;
       }
 
@@ -453,7 +473,7 @@ export async function startDigestTimer(userId: string): Promise<void> {
 
         incrementTodayCountInLS();
         
-        // Store last fired digest key only after successful showNotification
+        /********** Simpan timestamp last-fired HANYA setelah showNotification berhasil. */
         const newFiredRecord = {
           digestDateKey: wibDateStr,
           digestTime: digestTime,
@@ -480,19 +500,24 @@ export async function startDigestTimer(userId: string): Promise<void> {
 }
 
 /**
- * Get the current service worker registration.
+ * Mendapatkan registrasi service worker yang aktif.
+ *
+ * @returns ServiceWorkerRegistration aktif, atau null jika belum terdaftar.
  */
 export function getRegistration(): ServiceWorkerRegistration | null {
   return swRegistration;
 }
 
-//********** Push Notification Subscription **********
+/********** Push Notification Subscription **********/
 
 /**
- * Converts a base64url-encoded VAPID public key string (from your .env)
- * into the Uint8Array format required by pushManager.subscribe().
+ * Mengkonversi string VAPID public key yang diencoding base64url (dari .env)
+ * ke format Uint8Array yang dibutuhkan oleh pushManager.subscribe().
  *
- * Source: https://web.dev/push-notifications-subscribing-a-user/
+ * Sumber: https://web.dev/push-notifications-subscribing-a-user/
+ *
+ * @param base64String - VAPID public key dalam format base64url.
+ * @returns ArrayBuffer yang siap digunakan sebagai applicationServerKey.
  */
 export function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
@@ -557,7 +582,9 @@ export async function subscribeToPushNotifications(registration: ServiceWorkerRe
       return { success: false, reason: 'Konfigurasi Web Push tidak valid. VAPID public key tidak tersedia atau salah.' };
     }
 
-    // Always call getSubscription() first to prevent duplicate/unnecessary subscribe() calls
+    /********** Selalu panggil getSubscription() terlebih dahulu
+     *  untuk mencegah duplikasi atau pemanggilan subscribe() yang tidak perlu.
+     */
     let pushSubscription = await registration.pushManager.getSubscription();
 
     if (!pushSubscription) {
@@ -573,7 +600,7 @@ export async function subscribeToPushNotifications(registration: ServiceWorkerRe
         if (subErr.name === 'AbortError') {
           pushSubscription = await registration.pushManager.getSubscription();
           if (!pushSubscription) {
-            // One controlled recovery retry
+            /********** Satu kali retry yang terkontrol setelah AbortError. */
             await new Promise((res) => setTimeout(res, 500));
             try {
               pushSubscription = await registration.pushManager.subscribe({
@@ -604,7 +631,7 @@ export async function subscribeToPushNotifications(registration: ServiceWorkerRe
       return { success: false, reason: 'Tidak dapat memperoleh PushSubscription dari browser.' };
     }
 
-    // Send the subscription to the server for storage
+    /********** Kirim subscription ke server untuk disimpan. */
     const response = await csrfFetch('/api/notifications/subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -615,7 +642,7 @@ export async function subscribeToPushNotifications(registration: ServiceWorkerRe
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
 
-      // Improve diagnostics for CSRF failure
+      /********** Perbaiki diagnostik untuk kegagalan CSRF. */
       if (errorData?.error?.code === 'CSRF_VALIDATION_FAILED') {
         return {
           success: false,
@@ -647,13 +674,13 @@ export async function subscribeToPushNotifications(registration: ServiceWorkerRe
 }
 
 /**
- * Unsubscribes the current browser from Web Push and removes the
- * subscription from the server.
+ * Membatalkan langganan browser dari Web Push dan menghapus subscription
+ * dari server.
  *
- * Call this when the user explicitly opts out of notifications.
+ * Panggil ini saat user secara eksplisit menonaktifkan notifikasi.
  *
- * @param registration - An active ServiceWorkerRegistration
- * @returns true if successfully unsubscribed, false otherwise
+ * @param registration - ServiceWorkerRegistration yang aktif.
+ * @returns `true` jika berhasil unsubscribe, `false` jika gagal.
  */
 export async function unsubscribeFromPushNotifications(registration: ServiceWorkerRegistration): Promise<boolean> {
   try {
@@ -665,14 +692,14 @@ export async function unsubscribeFromPushNotifications(registration: ServiceWork
 
     const endpoint = subscription.endpoint;
 
-    //********** 1. Unsubscribe at the browser/PushManager level
+    /********** Langkah 1: Unsubscribe di level browser/PushManager. */
     const unsubscribed = await subscription.unsubscribe();
     if (!unsubscribed) {
       console.error('[SW Register] browser unsubscribe() returned false');
       return false;
     }
 
-    //********** 2. Remove from the server DB
+    /********** Langkah 2: Hapus dari server DB. */
     await csrfFetch('/api/notifications/subscribe', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },

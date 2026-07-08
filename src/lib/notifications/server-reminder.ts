@@ -1,32 +1,42 @@
-import { prisma } from "../db/prisma";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
+/********** [START: Server Reminder] **********/
+/********** Logika sisi server untuk menentukan user mana yang belum mencatat
+ *  transaksi hari ini dan perlu diingatkan lewat push notification harian.
+ */
+/********** [END: Server Reminder] **********/
 
-// Initialize dayjs plugins
+/********** Imports **********/
+
+import { prisma } from '../db/prisma';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+/********** Inisialisasi plugin dayjs untuk timezone support. */
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
+/********** Main Logic **********/
+
 /**
- * Query Prisma for users who are due for a reminder today.
- * Criteria:
+ * Mencari user yang sudah waktunya menerima pengingat hari ini dari Prisma.
+ * Kriteria:
  *   - settings.dailyReminder = true
- *   - user has at least one active web push subscription
- *   - user has NO transactions created today (WIB time boundary)
- * 
- * @param targetTimeWIB ISO timestamp string of the "current" time to evaluate against, or undefined to use now.
- * @returns Array of user IDs.
+ *   - user memiliki minimal satu web push subscription aktif
+ *   - user TIDAK memiliki transaksi yang dibuat hari ini (batas waktu WIB)
+ *
+ * @param targetTimeWIB - ISO timestamp string waktu yang digunakan sebagai referensi, atau undefined untuk menggunakan waktu sekarang.
+ * @returns Array of user ID.
  */
 export async function getUsersDueForReminder(targetTimeWIB?: string): Promise<string[]> {
-  const now = targetTimeWIB ? dayjs(targetTimeWIB).tz("Asia/Jakarta") : dayjs().tz("Asia/Jakarta");
+  const now = targetTimeWIB ? dayjs(targetTimeWIB).tz('Asia/Jakarta') : dayjs().tz('Asia/Jakarta');
   
-  // 1. Fetch eligible user settings
+  /********** Langkah 1: Ambil user yang mengaktifkan daily reminder dan punya subscription. */
   const eligibleSettings = await prisma.notificationSettings.findMany({
     where: {
       dailyReminder: true,
       user: {
         notificationSubscriptions: {
-          some: {} // Must have at least one active subscription
+          some: {} /********** Harus punya minimal satu subscription aktif. */
         }
       }
     },
@@ -41,12 +51,13 @@ export async function getUsersDueForReminder(targetTimeWIB?: string): Promise<st
 
   const userIds = eligibleSettings.map(s => s.userId);
 
-  // 2. Filter out users who HAVE created transactions today.
-  // Because Transaction.date is a @db.Date column, we MUST query it using a Date object 
-  // whose UTC date-part exactly matches the local YYYY-MM-DD string.
-  // Using startOfDayWIB / endOfDayWIB causes Prisma to extract the UTC date-part of those bounds, 
-  // which bleeds into the previous day.
-  const localDateString = now.format("YYYY-MM-DD");
+  /********** Langkah 2: Filter user yang SUDAH membuat transaksi hari ini.
+   *  Karena kolom Transaction.date adalah @db.Date, kita HARUS query dengan objek Date
+   *  yang bagian tanggal UTC-nya persis cocok dengan string YYYY-MM-DD lokal.
+   *  Menggunakan startOfDayWIB/endOfDayWIB bisa menyebabkan Prisma mengekstrak
+   *  tanggal UTC yang meleset ke hari sebelumnya.
+   */
+  const localDateString = now.format('YYYY-MM-DD');
   const targetDateUTC = new Date(`${localDateString}T00:00:00.000Z`);
 
   const transactionsToday = await prisma.transaction.findMany({
@@ -63,6 +74,6 @@ export async function getUsersDueForReminder(targetTimeWIB?: string): Promise<st
 
   const usersWithTransactionsToday = new Set(transactionsToday.map(tx => tx.userId));
   
-  // 3. Return candidates who have NO transactions
+  /********** Langkah 3: Kembalikan user yang TIDAK memiliki transaksi hari ini. */
   return userIds.filter(id => !usersWithTransactionsToday.has(id));
 }

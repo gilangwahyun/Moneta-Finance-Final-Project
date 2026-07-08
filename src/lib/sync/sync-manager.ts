@@ -1,17 +1,17 @@
-//********** START: Sync Manager **********
-//********** Orchestrates the push/pull sync cycle between IndexedDB and
-//********** the server API using the sync_queue for reliable mutation tracking.
-//**********
-//********** Flow:
-//********** 1. pushChanges() - Read sync_queue, POST to /api/sync/push, dequeue
-//********** 2. pullUpdates() - GET /api/sync/pull, merge into IndexedDB
-//********** 3. performFullSync() - push then pull sequentially
-//********** END: Sync Manager **********
+/********** [START: Sync Manager] **********/
+/********** Mengorkestrasi siklus push/pull sync antara IndexedDB dan
+ *  server API menggunakan sync_queue untuk pelacakan mutasi yang andal.
+ *
+ *  Alur:
+ *  1. pushChanges()     — Baca sync_queue, POST ke /api/sync/push, dequeue
+ *  2. pullUpdates()     — GET /api/sync/pull, merge ke IndexedDB
+ *  3. performFullSync() — push lalu pull secara berurutan
+ */
+/********** [END: Sync Manager] **********/
 
 import {
   getAllPending,
   dequeueProcessed,
-  getPendingByEntity,
   enqueueChange,
   markEntryAttempt,
   recoverQuarantinedNotificationLogs,
@@ -24,8 +24,15 @@ import {
   bulkUpsertTransactions,
 } from '@/lib/local-db/repositories/transactions';
 import { upsertWallet, getWalletById, hardDeleteWallet, bulkUpsertWallets } from '@/lib/local-db/repositories/wallets';
-import { upsertBudget, getBudgetById, getPendingBudgets, deleteBudget, hardDeleteBudget, bulkUpsertBudgets, deduplicateBudgets } from '@/lib/local-db/repositories/budgets';
-import { upsertTarget, getTargetById, hardDeleteTarget, deleteTarget, bulkUpsertTargets } from '@/lib/local-db/repositories/targets';
+import {
+  upsertBudget,
+  getBudgetById,
+  getPendingBudgets,
+  hardDeleteBudget,
+  bulkUpsertBudgets,
+  deduplicateBudgets,
+} from '@/lib/local-db/repositories/budgets';
+import { upsertTarget, getTargetById, hardDeleteTarget, bulkUpsertTargets } from '@/lib/local-db/repositories/targets';
 import {
   upsertNotificationLog,
   deleteNotificationLog,
@@ -54,28 +61,39 @@ export interface SyncResult {
   error?: string;
 }
 
-//********** START: Push Changes **********
-//********** Reads all entries from sync_queue, groups by entity, and
-//********** sends them to the server in bulk. On success, dequeues
-//********** the processed entries.
-//********** END: Push Changes **********
+/********** [START: Push Changes] **********/
+/********** Membaca semua entri dari sync_queue, mengelompokkan per entitas,
+ *  lalu mengirimnya ke server secara bulk. Jika berhasil, entri yang sudah
+ *  diproses akan didequeue dari antrian.
+ */
+/********** [END: Push Changes] **********/
 
+/**
+ * Mengirim semua perubahan lokal yang tertunda ke server.
+ * Membaca sync_queue, menyusun payload, POST ke /api/sync/push,
+ * lalu menangani konflik dan mendequeue entri yang berhasil.
+ *
+ * @returns SyncResult berisi jumlah item yang di-push dan konflik yang terjadi.
+ */
 export async function pushChanges(): Promise<SyncResult> {
   const result: SyncResult = { state: 'idle', pushed: 0, pulled: 0, conflicts: 0 };
 
   try {
-    //********** Step 0: Clean up any duplicate budgets in IDB (same categoryId+period)
-    //********** This prevents server-side unique constraint violations that cause
-    //********** the entire sync push to fail and get stuck.
+    /********** [START: Deduplikasi budget lokal sebelum push] **********/
+    /********** Mencegah constraint violation unik di server (categoryId+period)
+     *  yang dapat menyebabkan seluruh push gagal dan terjebak di antrian.
+     */
     try {
       await deduplicateBudgets();
     } catch (dedupeErr) {
-      console.warn('[Sync] deduplicateBudgets failed (non-fatal):', dedupeErr);
+      console.warn('[Sync] deduplicateBudgets gagal (non-fatal):', dedupeErr);
     }
+    /********** [END: Deduplikasi budget lokal sebelum push] **********/
 
-    //********** Recover orphaned budgets
-    //********** Since previous sync logic omitted budgets, they may have
-    //********** been dequeued while still PENDING. Re-enqueue them here safely.
+    /********** [START: Recovery budget orphan] **********/
+    /********** Budget yang pernah di-dequeue saat masih PENDING perlu
+     *  di-enqueue ulang agar tidak hilang dari siklus push berikutnya.
+     */
     const pendingBudgets = await getPendingBudgets();
     if (pendingBudgets.length > 0) {
       const queuedItems = await getAllPending();
@@ -83,18 +101,19 @@ export async function pushChanges(): Promise<SyncResult> {
 
       for (const b of pendingBudgets) {
         if (!queuedBudgetClientIds.has(b.clientId)) {
-          console.log(`[Sync] Recovering orphaned budget: ${b.clientId}`);
+          console.log(`[Sync] Recovery budget orphan: ${b.clientId}`);
           await enqueueChange('budget', 'update', b.clientId, { ...b });
         }
       }
     }
+    /********** [END: Recovery budget orphan] **********/
 
-    //********** Recover quarantined notification logs caused by the post-push crash bug
+    /********** Pulihkan notification log yang terjebak di kuarantin akibat bug crash post-push. */
     await recoverQuarantinedNotificationLogs();
 
     const pending = await getAllPending();
 
-    //********** Filter out permanently failed/quarantined entries
+    /********** Filter entri yang sudah gagal permanen atau sudah melebihi batas retry. */
     const MAX_RETRIES = 3;
     const activePending = pending.filter((e) => !e.failedAt && (e.retryCount ?? 0) < MAX_RETRIES);
 
@@ -102,10 +121,10 @@ export async function pushChanges(): Promise<SyncResult> {
       return result;
     }
 
-    //********** Group by entity and deduplicate - keep only the latest entry per clientId
+    /********** Kelompokkan dan deduplikasi — hanya simpan entri terbaru per clientId. */
     const latestByClientId = deduplicateQueue(activePending);
 
-    //********** Build the push payload
+    /********** Susun payload push dari entri yang sudah dideduplikasi. */
     const buildPayloadStart = performance.now();
     const payload = await buildPushPayload(latestByClientId);
     const buildPayloadEnd = performance.now();
@@ -120,12 +139,12 @@ export async function pushChanges(): Promise<SyncResult> {
       (!payload.notification_logs || payload.notification_logs.length === 0) &&
       (!payload.notification_settings || payload.notification_settings.length === 0)
     ) {
-      //********** Nothing to push - dequeue all
+      /********** Tidak ada yang perlu di-push — langsung dequeue semua. */
       await dequeueProcessed(activePending.map((e) => e.id!));
       return result;
     }
 
-    //********** POST to server
+    /********** POST payload ke server. */
     const pushRequestStart = performance.now();
     const response = await csrfFetch('/api/sync/push', {
       method: 'POST',
@@ -138,7 +157,7 @@ export async function pushChanges(): Promise<SyncResult> {
 
     if (!response.ok) {
       if (response.status === 401) {
-        //********** Not authenticated yet - skip silently
+        /********** Belum terautentikasi — lewati tanpa error. */
         return result;
       }
       throw new Error(`Push failed with status ${response.status}`);
@@ -146,7 +165,7 @@ export async function pushChanges(): Promise<SyncResult> {
 
     const pushResult: SyncPushResponse = await response.json();
 
-    //********** Handle conflicts - apply server version to local DB
+    /********** Tangani konflik — terapkan versi server ke lokal DB. */
     for (const conflict of pushResult.conflicts) {
       if (conflict.entity === 'category') {
         if (!conflict.serverVersion.clientId) {
@@ -171,7 +190,8 @@ export async function pushChanges(): Promise<SyncResult> {
           await hardDeleteBudget(conflict.clientId);
         } else {
           if (conflict.clientId !== conflict.serverVersion.clientId) {
-            await hardDeleteBudget(conflict.clientId); // Fix: use hardDelete so it doesn't enqueue a soft delete
+            /********** Pakai hardDelete agar tidak men-enqueue soft delete tambahan. */
+            await hardDeleteBudget(conflict.clientId);
           }
           await upsertBudget(conflict.serverVersion as Budget, true);
         }
@@ -189,7 +209,8 @@ export async function pushChanges(): Promise<SyncResult> {
           await hardDeleteTarget(conflict.clientId);
         } else {
           if (conflict.clientId !== conflict.serverVersion.clientId) {
-            await hardDeleteTarget(conflict.clientId); // Fix: use hardDelete so it doesn't enqueue a soft delete
+            /********** Pakai hardDelete agar tidak men-enqueue soft delete tambahan. */
+            await hardDeleteTarget(conflict.clientId);
           }
           await upsertTarget(conflict.serverVersion as import('@/types/models.types').FinancialTarget, true);
         }
@@ -203,10 +224,10 @@ export async function pushChanges(): Promise<SyncResult> {
       }
     }
 
-    //********** Mark successfully pushed items as SYNCED in local DB
+    /********** Tandai item yang berhasil di-push sebagai SYNCED di lokal DB. */
     if (!pushResult.synced) {
       console.warn(
-        "[Sync] Server response missing explicit 'synced' acknowledgement. Treating as legacy/incompatible response to prevent false success.",
+        "[Sync] Server response tidak memiliki 'synced' acknowledgement. Dianggap response legacy — hindari false success.",
       );
       throw new Error('Sync response missing explicit synced acknowledgement');
     }
@@ -234,7 +255,7 @@ export async function pushChanges(): Promise<SyncResult> {
         processedIdsToDequeue.push(entry.id!);
 
         if (isAcknowledged && !isConflicted) {
-          //********** No conflict and explicitly acknowledged - mark entity as SYNCED
+          /********** Tidak ada konflik dan sudah di-acknowledge — tandai entitas sebagai SYNCED. */
           if (entry.entity === 'category') {
             const cat = await getCategoryById(entry.clientId);
             if (cat) {
@@ -276,11 +297,11 @@ export async function pushChanges(): Promise<SyncResult> {
           }
         }
       } else {
-        console.warn(`[Sync] Item not acknowledged by server and had no conflict. Keeping in queue: ${entry.entity} ${entry.clientId}`);
+        console.warn(`[Sync] Item tidak di-acknowledge server dan tidak ada konflik. Tetap di antrian: ${entry.entity} ${entry.clientId}`);
       }
     }
 
-    //********** Dequeue ONLY processed entries
+    /********** Hanya dequeue entri yang sudah diproses. */
     if (processedIdsToDequeue.length > 0) {
       await dequeueProcessed(processedIdsToDequeue);
     }
@@ -292,11 +313,11 @@ export async function pushChanges(): Promise<SyncResult> {
 
     return result;
   } catch (error) {
-    console.error('[Sync] Push error:', error);
+    console.error('[Sync] Error saat push:', error);
 
-    // Attempt to mark entries as failed/retried
+    /********** Coba tandai entri sebagai failed agar retry counter bertambah. */
     try {
-      // Retrieve the pending items again to mark them, or use the activePending list
+      /********** Ambil ulang item pending untuk ditandai, atau gunakan activePending. */
       const pendingItems = await getAllPending();
       const MAX_RETRIES = 3;
       const activePending = pendingItems.filter((e) => !e.failedAt && (e.retryCount ?? 0) < MAX_RETRIES);
@@ -307,7 +328,7 @@ export async function pushChanges(): Promise<SyncResult> {
         }
       }
     } catch (e) {
-      console.error('[Sync] Failed to mark sync queue attempts:', e);
+      console.error('[Sync] Gagal menandai sync queue attempts:', e);
     }
 
     result.state = 'error';
@@ -316,12 +337,18 @@ export async function pushChanges(): Promise<SyncResult> {
   }
 }
 
-//********** START: Pull Updates **********
-//********** Fetches delta updates from the server (records changed
-//********** since lastSyncedAt) and merges them into IndexedDB.
-//********** Respects locally pending changes during merge.
-//********** END: Pull Updates **********
+/********** [START: Pull Updates] **********/
+/********** Mengambil pembaruan delta dari server (record yang berubah sejak
+ *  lastSyncedAt) dan merge-nya ke IndexedDB. Menghormati perubahan lokal
+ *  yang masih pending saat proses merge berlangsung.
+ */
+/********** [END: Pull Updates] **********/
 
+/**
+ * Mengambil pembaruan dari server dan menggabungkannya ke lokal DB.
+ *
+ * @returns SyncResult berisi jumlah item yang di-pull dan konflik yang terjadi.
+ */
 export async function pullUpdates(): Promise<SyncResult> {
   const result: SyncResult = { state: 'idle', pushed: 0, pulled: 0, conflicts: 0 };
 
@@ -336,7 +363,7 @@ export async function pullUpdates(): Promise<SyncResult> {
 
     if (!response.ok) {
       if (response.status === 401) {
-        //********** Not authenticated yet - skip silently
+        /********** Belum terautentikasi — lewati tanpa error. */
         return result;
       }
       throw new Error(`Pull failed with status ${response.status}`);
@@ -353,11 +380,11 @@ export async function pullUpdates(): Promise<SyncResult> {
     const applyStartTotal = performance.now();
     let partialErrors: string[] = [];
 
-    // Dependency flags
+    /********** Flag dependensi — entity yang bergantung pada wallet/kategori bisa diskip jika parent gagal. */
     let walletsSuccess = true;
     let categoriesSuccess = true;
 
-    //********** Merge wallets
+    /********** Merge wallets **********/
     try {
       const applyWalletsStart = performance.now();
       if (pullData.wallets && pullData.wallets.length > 0) {
@@ -390,7 +417,7 @@ export async function pullUpdates(): Promise<SyncResult> {
       partialErrors.push('Wallets apply failed');
     }
 
-    //********** Merge categories
+    /********** Merge categories **********/
     try {
       if (pullData.categories && pullData.categories.length > 0) {
         const categoriesToApply: Category[] = [];
@@ -422,9 +449,10 @@ export async function pullUpdates(): Promise<SyncResult> {
       partialErrors.push('Categories apply failed');
     }
 
-    //********** Merge transactions
+    /********** Merge transactions **********/
     try {
       if (!walletsSuccess || !categoriesSuccess) {
+        /********** Skip transaksi kalau parent dependencies (wallets/categories) gagal. */
         throw new Error('Skipped transactions because parent dependencies (wallets/categories) failed.');
       }
       if (pullData.transactions && pullData.transactions.length > 0) {
@@ -456,9 +484,10 @@ export async function pullUpdates(): Promise<SyncResult> {
       partialErrors.push(err instanceof Error ? err.message : 'Transactions apply failed');
     }
 
-    //********** Merge budgets
+    /********** Merge budgets **********/
     try {
       if (!categoriesSuccess) {
+        /********** Skip budget kalau kategori gagal — budget bergantung pada kategorId. */
         throw new Error('Skipped budgets because categories failed.');
       }
       if (pullData.budgets && pullData.budgets.length > 0) {
@@ -491,9 +520,10 @@ export async function pullUpdates(): Promise<SyncResult> {
       partialErrors.push(err instanceof Error ? err.message : 'Budgets apply failed');
     }
 
-    //********** Merge financial targets
+    /********** Merge financial targets **********/
     try {
       if (!categoriesSuccess) {
+        /********** Skip targets kalau kategori gagal. */
         throw new Error('Skipped financial targets because categories failed.');
       }
       if (pullData.financial_targets && pullData.financial_targets.length > 0) {
@@ -527,7 +557,7 @@ export async function pullUpdates(): Promise<SyncResult> {
       partialErrors.push(err instanceof Error ? err.message : 'Targets apply failed');
     }
 
-    //********** Merge notification logs
+    /********** Merge notification logs **********/
     try {
       if (pullData.notification_logs && pullData.notification_logs.length > 0) {
         const logsToApply: any[] = [];
@@ -558,7 +588,7 @@ export async function pullUpdates(): Promise<SyncResult> {
       partialErrors.push('Notification logs apply failed');
     }
 
-    //********** Merge notification settings
+    /********** Merge notification settings **********/
     try {
       if (pullData.notification_settings && pullData.notification_settings.length > 0) {
         const settingsToApply: any[] = [];
@@ -591,11 +621,11 @@ export async function pullUpdates(): Promise<SyncResult> {
     }
 
     if (partialErrors.length > 0) {
-      console.warn('[Sync] Pull completed with partial errors:', partialErrors);
-      // We do not throw so we don't completely fail the sync state if some data succeeded
+      console.warn('[Sync] Pull selesai dengan partial error:', partialErrors);
+      /********** Tidak throw agar sync tidak gagal total jika sebagian data berhasil. */
     }
 
-    //********** Update last synced timestamp
+    /********** Perbarui timestamp last synced. */
     await setLastSyncedAt(pullData.serverTime);
     // console.log(`[Sync] Pull complete. New serverTime: ${pullData.serverTime}`);
 
@@ -615,10 +645,17 @@ export async function pullUpdates(): Promise<SyncResult> {
   }
 }
 
-//********** START: Full Sync **********
-//********** Push first (so local changes reach the server), then pull.
-//********** END: Full Sync **********
+/********** [START: Full Sync] **********/
+/********** Push dulu agar perubahan lokal sampai ke server, baru pull.
+ *  Urutan ini penting untuk mencegah kehilangan data.
+ */
+/********** [END: Full Sync] **********/
 
+/**
+ * Menjalankan siklus sync penuh: push lalu pull.
+ *
+ * @returns SyncResult gabungan dari push dan pull.
+ */
 export async function performFullSync(): Promise<SyncResult> {
   const combinedResult: SyncResult = {
     state: 'idle',
@@ -628,7 +665,7 @@ export async function performFullSync(): Promise<SyncResult> {
   };
 
   try {
-    //********** Step 1: Push local changes
+    /********** Langkah 1: Push perubahan lokal ke server. */
     const pushResult = await pushChanges();
     combinedResult.pushed = pushResult.pushed;
     combinedResult.conflicts += pushResult.conflicts;
@@ -639,7 +676,7 @@ export async function performFullSync(): Promise<SyncResult> {
       return combinedResult;
     }
 
-    //********** Step 2: Pull server changes
+    /********** Langkah 2: Pull perubahan dari server. */
     const pullResult = await pullUpdates();
     combinedResult.pulled = pullResult.pulled;
     combinedResult.conflicts += pullResult.conflicts;
@@ -652,7 +689,7 @@ export async function performFullSync(): Promise<SyncResult> {
 
     combinedResult.state = 'idle';
 
-    //********** Dispatch events to trigger UI re-renders if anything was updated
+    /********** Dispatch event agar UI me-render ulang jika ada data yang berubah. */
     if (typeof window !== 'undefined' && (combinedResult.pushed > 0 || combinedResult.pulled > 0)) {
       window.dispatchEvent(new Event(SyncEvents.SYNC_COMPLETED));
     }
@@ -670,12 +707,15 @@ export async function performFullSync(): Promise<SyncResult> {
   }
 }
 
-//********** Helpers **********
+/********** Helpers **********/
 
 /**
- * Deduplicate queue entries by clientId — keep only the latest
- * entry for each entity+clientId pair. This prevents pushing
- * intermediate states when a record is edited multiple times.
+ * Mendeduplikasi entri antrian berdasarkan clientId — hanya menyimpan entri
+ * terbaru untuk setiap pasangan entity+clientId. Mencegah pengiriman state
+ * intermediate saat record diedit beberapa kali sebelum sync.
+ *
+ * @param entries - Daftar entri sync queue yang perlu dideduplikasi.
+ * @returns Array entri yang sudah bersih dari duplikat.
  */
 function deduplicateQueue(entries: SyncQueueEntry[]): SyncQueueEntry[] {
   const map = new Map<string, SyncQueueEntry>();
@@ -693,9 +733,12 @@ function deduplicateQueue(entries: SyncQueueEntry[]): SyncQueueEntry[] {
 }
 
 /**
- * Build the push payload from deduplicated queue entries.
- * Reads the current entity state from IndexedDB (not the snapshot
- * from the queue) to ensure we send the latest version.
+ * Membangun payload push dari entri antrian yang sudah dideduplikasi.
+ * Membaca state entitas saat ini dari IndexedDB (bukan snapshot dari antrian)
+ * untuk memastikan versi terbaru yang dikirim ke server.
+ *
+ * @param entries - Entri deduplikasi yang akan diproses menjadi payload.
+ * @returns SyncPushPayload siap kirim ke server.
  */
 async function buildPushPayload(entries: SyncQueueEntry[]): Promise<SyncPushPayload> {
   const categories: any[] = [];
@@ -734,9 +777,9 @@ async function buildPushPayload(entries: SyncQueueEntry[]): Promise<SyncPushPayl
     } else if (entry.entity === 'transaction') {
       const txn = await getTransactionById(entry.clientId);
       if (txn) {
-        // Guard: skip legacy transactions that predate the multi-wallet schema
+        /********** Guard: skip transaksi lama yang tidak punya walletId (pre-multi-wallet schema). */
         if (!txn.walletId) {
-          console.warn('[Sync] Skipping legacy transaction missing walletId:', txn.clientId);
+          console.warn('[Sync] Skip transaksi legacy yang tidak punya walletId:', txn.clientId);
           continue;
         }
         transactions.push({
@@ -754,7 +797,7 @@ async function buildPushPayload(entries: SyncQueueEntry[]): Promise<SyncPushPayl
         });
       } else if (entry.action === 'delete') {
         const data = (entry.data as any) || {};
-        // Tombstone fallback
+        /********** Tombstone fallback untuk transaksi yang sudah terhapus dari lokal. */
         transactions.push({
           clientId: entry.clientId,
           amount: data.amount ?? 0,
@@ -762,7 +805,7 @@ async function buildPushPayload(entries: SyncQueueEntry[]): Promise<SyncPushPayl
           description: data.description ?? 'Deleted',
           date: data.date ?? new Date().toISOString(),
           categoryId: data.categoryId ?? '',
-          walletId: data.walletId ?? 'legacy', // Safe fallback so API doesn't crash
+          walletId: data.walletId ?? 'legacy', /********** Safe fallback agar API tidak crash. */
           targetWalletId: data.targetWalletId,
           updatedAt: data.updatedAt ?? new Date().toISOString(),
           deletedAt: data.deletedAt ?? new Date().toISOString(),

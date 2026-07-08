@@ -1,25 +1,27 @@
-// ─── Daily Digest Aggregation Helper ────────────────────
-// Two separate concepts live in this file:
-//
-// 1. buildLogDigest(userId)
-//    The correct implementation of the DIGEST delivery mode.
-//    Reads today's notification_logs and produces ONE summary notification
-//    that the user receives as their "daily digest."
-//    Called by startDigestTimer() when deliveryMode === "DIGEST".
-//
-// 2. buildDailyExpenseSummary(userId)  [formerly buildDailyDigest]
-//    Produces a financial expense summary based on today's transactions.
-//    This is a DAILY_EXPENSE_SUMMARY notification event type — useful as a
-//    scheduled financial insight — but it is NOT the DIGEST delivery mechanism.
-//    Kept for reference; do not call from startDigestTimer().
-//
-// This runs entirely client-side from IndexedDB — no server call needed.
+/********** [START: Daily Digest Aggregation Helper] **********/
+/********** Dua konsep berbeda ada di file ini:
+ *
+ *  1. buildLogDigest(userId)
+ *     Implementasi benar dari delivery mode DIGEST.
+ *     Membaca notification_logs hari ini dan menghasilkan SATU notifikasi ringkasan.
+ *     Dipanggil oleh startDigestTimer() saat deliveryMode === "DIGEST".
+ *
+ *  2. buildDailyExpenseSummary(userId)  [dulu bernama buildDailyDigest]
+ *     Menghasilkan ringkasan pengeluaran harian berdasarkan transaksi hari ini.
+ *     Ini adalah event type DAILY_EXPENSE_SUMMARY — BUKAN mekanisme delivery DIGEST.
+ *     Dipertahankan untuk referensi; jangan panggil dari startDigestTimer().
+ *
+ *  Seluruh proses berjalan di sisi klien dari IndexedDB — tidak perlu server call.
+ */
+/********** [END: Daily Digest Aggregation Helper] **********/
 
-import { getDB } from "../local-db/index";
-import { STORES } from "../local-db/schema";
-import { getAllLogs } from "../local-db/repositories/notification-logs";
+/********** Imports **********/
 
-// ─── 1. Log-Based Digest (DIGEST delivery mode) ─────────────────────────────
+import { getDB } from '../local-db/index';
+import { STORES } from '../local-db/schema';
+import { getAllLogs } from '../local-db/repositories/notification-logs';
+
+/********** Types **********/
 
 export interface LogDigestResult {
   title: string;
@@ -29,36 +31,31 @@ export interface LogDigestResult {
   clientIds: string[];
 }
 
+/********** Helpers **********/
+
 /**
- * Build one digest notification that summarizes today's notification logs.
+ * Mengekstrak bagian-bagian tanggal dalam zona waktu WIB (Asia/Jakarta)
+ * secara andal menggunakan Intl.DateTimeFormat.
  *
- * This is the correct implementation of the DIGEST delivery mode:
- *   - Reads notification_logs for today (filtered by createdAt date).
- *   - Counts logs by severity to build a meaningful summary.
- *   - Returns hasEligibleLogs=false if there are no logs to summarize.
- *     The caller (startDigestTimer) must NOT send a digest if hasEligibleLogs is false.
- *
- * Short-term: uses createdAt date filter to identify today's logs.
- * Long-term (Phase 4): use digestSentAt to avoid including logs in multiple digests.
- *
- * @param userId  The current user's ID
+ * @param date - Objek Date yang akan dikonversi ke WIB.
+ * @returns Object berisi `year`, `month`, `day`, `hour`, `minute`, `dateStr`.
  */
 export function getWIBDateParts(date: Date) {
-  // Use Intl.DateTimeFormat to reliably extract parts in WIB
-  const parts = new Intl.DateTimeFormat("en-US", {
-    timeZone: "Asia/Jakarta",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false
+  /********** Pakai Intl.DateTimeFormat untuk ekstrak bagian tanggal secara andal di WIB. */
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Jakarta',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false,
   }).formatToParts(date);
   
   const map: Record<string, string> = {};
   for (const part of parts) map[part.type] = part.value;
   
-  // Fix "24" hour edge case with hour12: false
+  /********** Tangani edge case jam "24" yang muncul pada hour12: false. */
   const hour = parseInt(map.hour, 10);
   const normalizedHour = hour === 24 ? 0 : hour;
   
@@ -72,16 +69,26 @@ export function getWIBDateParts(date: Date) {
   };
 }
 
+/********** Main Logic **********/
+
 /**
- * Build a summary string/object containing the important insights for the day.
- * Includes user context (which insights triggered).
+ * Membangun satu notifikasi digest yang merangkum log notifikasi hari ini.
+ *
+ * Ini adalah implementasi benar dari delivery mode DIGEST:
+ * - Membaca notification_logs hari ini (difilter berdasarkan tanggal createdAt).
+ * - Menghitung log berdasarkan severity untuk membuat ringkasan yang bermakna.
+ * - Mengembalikan `hasEligibleLogs=false` jika tidak ada log untuk diringkas.
+ *   Pemanggil (startDigestTimer) tidak boleh mengirim digest jika `hasEligibleLogs` false.
+ *
+ * @param userId - ID user saat ini.
+ * @returns Objek LogDigestResult yang siap dikirim sebagai notifikasi.
  */
 export async function buildLogDigest(userId: string): Promise<LogDigestResult> {
   const allLogs = await getAllLogs(userId);
   const now = new Date();
   const todayWIBStr = getWIBDateParts(now).dateStr;
 
-  // Filter: logs created today (WIB time) with status='delivered', DIGEST mode, not a digest itself
+  /********** Filter: log hari ini (WIB), mode DIGEST, status 'delivered', bukan digest itu sendiri. */
   const todayLogs = allLogs.filter((log) => {
     if (log.deliveryModeAtCreation !== "DIGEST") return false;
     if (log.eventType === "DIGEST" || log.type === "DIGEST") return false;
@@ -96,18 +103,19 @@ export async function buildLogDigest(userId: string): Promise<LogDigestResult> {
     return { title: "", body: "", logCount: 0, hasEligibleLogs: false, clientIds: [] };
   }
 
-  // Digest ranking logic based on metadata
-  // 1. Highest deficitAmount
-  // 2. Reallocation recommendation
-  // 3. Highest usageRatio
-  // 4. Largest comparisonAmount
-  
+  /********** [START: Ranking digest] **********/
+  /********** Urutan prioritas:
+   *  4. Deficit tertinggi
+   *  3. Rekomendasi reallocation
+   *  2. Usage ratio tertinggi
+   *  1. Perbandingan jumlah terbesar
+   */
   let topLog = todayLogs[0];
   let highestDeficit = -1;
   let hasReallocation = false;
   let highestUsage = -1;
   let largestComparison = -1;
-  let rankingScore = -1; // 4: Deficit, 3: Reallocation, 2: Usage, 1: Comparison, 0: Other
+  let rankingScore = -1; /********** Skor: 4=Deficit, 3=Reallocation, 2=Usage, 1=Comparison, 0=Other. */
 
   for (const log of todayLogs) {
     const deficitAmount = log.deficitAmount ?? 0;
@@ -163,18 +171,20 @@ export async function buildLogDigest(userId: string): Promise<LogDigestResult> {
     body = `Ada ${todayLogs.length} pembaruan keuangan hari ini yang perlu kamu tinjau.`;
   }
 
+  /********** [END: Ranking digest] **********/
+
   return { title, body, logCount: todayLogs.length, hasEligibleLogs: true, clientIds: todayLogs.map(l => l.clientId) };
 }
 
-// ─── 2. Transaction Expense Summary (DAILY_EXPENSE_SUMMARY event type) ──────
-//
-// NOTE: This is NOT the DIGEST delivery mechanism.
-// It is a separate notification event type that summarizes today's transactions.
-// If the product wants to keep this feature, it should be treated as an event
-// (eventType = DAILY_EXPENSE_SUMMARY) that is then delivered via the active mode:
-//   - INSTANT: push at scheduled time
-//   - DIGEST:  include in the digest as one of the summarized events
-//   - OFF:     no push, log only
+/********** [START: Transaction Expense Summary] **********/
+/********** Ini BUKAN mekanisme delivery DIGEST.
+ *  Ini adalah event type terpisah (DAILY_EXPENSE_SUMMARY) yang merangkum transaksi hari ini.
+ *  Jika fitur ini dipertahankan, kirimkan sebagai event biasa berdasarkan delivery mode aktif:
+ *  - INSTANT: push pada waktu terjadwal
+ *  - DIGEST:  masukkan dalam digest sebagai salah satu event yang dirangkum
+ *  - OFF:     tidak ada push, hanya log
+ */
+/********** [END: Transaction Expense Summary] **********/
 
 interface DailyExpenseSummaryResult {
   title: string;
@@ -185,25 +195,29 @@ interface DailyExpenseSummaryResult {
 }
 
 /**
- * Format a number as Rupiah (e.g. 50000 → "Rp 50.000")
+ * Memformat angka sebagai string Rupiah (contoh: 50000 → "Rp 50.000").
+ *
+ * @param amount - Nominal dalam bentuk angka.
+ * @returns String Rupiah yang sudah diformat.
  */
 function fmtRupiah(amount: number): string {
-  return "Rp " + Math.round(amount).toLocaleString("id-ID");
+  return 'Rp ' + Math.round(amount).toLocaleString('id-ID');
 }
 
 /**
- * Aggregate today's transactions from IndexedDB and compute an expense summary.
+ * Mengagregasi transaksi hari ini dari IndexedDB dan menghitung ringkasan pengeluaran.
  *
- * @deprecated for use as DIGEST delivery — use buildLogDigest() for that.
- * This function produces a DAILY_EXPENSE_SUMMARY event type content.
- * @param userId  The current user's ID
+ * @deprecated Jangan gunakan sebagai mekanisme delivery DIGEST — gunakan buildLogDigest() untuk itu.
+ * Fungsi ini menghasilkan konten event type DAILY_EXPENSE_SUMMARY.
+ * @param userId - ID user saat ini.
+ * @returns Ringkasan pengeluaran harian.
  */
 export async function buildDailyExpenseSummary(
   userId: string
 ): Promise<DailyExpenseSummaryResult> {
   const db = await getDB();
 
-  // ── Fetch all non-deleted expense transactions for this user ──────────────
+  /********** Ambil semua transaksi expense user yang belum dihapus. */
   const allTxns = await new Promise<any[]>((resolve, reject) => {
     const tx = db.transaction(STORES.TRANSACTIONS, "readonly");
     const index = tx.objectStore(STORES.TRANSACTIONS).index("by_userId");
@@ -219,14 +233,14 @@ export async function buildDailyExpenseSummary(
 
   const today = new Date().toISOString().substring(0, 10);
 
-  // ── Today's expenses ──────────────────────────────────────────────────────
+  /********** Filter transaksi hari ini. */
   const todayTxns = allTxns.filter(
-    (t) => (t.date || "").substring(0, 10) === today
+    (t) => (t.date || '').substring(0, 10) === today
   );
   const todayTotal = todayTxns.reduce((s, t) => s + Number(t.amount), 0);
   const transactionCount = todayTxns.length;
 
-  // ── 7-day rolling average (excluding today) ───────────────────────────────
+  /********** Rata-rata rolling 7 hari (tidak termasuk hari ini). */
   const dayTotals: Record<string, number> = {};
   for (const t of allTxns) {
     const d = (t.date || "").substring(0, 10);
@@ -244,8 +258,8 @@ export async function buildDailyExpenseSummary(
   const weeklyAverage =
     past7.length > 0 ? past7.reduce((s, v) => s + v, 0) / past7.length : 0;
 
-  // ── Generate copy ─────────────────────────────────────────────────────────
-  const title = "Ringkasan Keuangan Hari Ini";
+  /********** Buat teks ringkasan berdasarkan perbandingan dengan rata-rata mingguan. */
+  const title = 'Ringkasan Keuangan Hari Ini';
   let body: string;
 
   if (transactionCount === 0) {
@@ -272,22 +286,23 @@ export async function buildDailyExpenseSummary(
   return { title, body, todayTotal, transactionCount, weeklyAverage };
 }
 
-// ─── Backward-compat alias ───────────────────────────────────────────────────
-// Existing callers of buildDailyDigest() continue to work.
-// Migrate to buildDailyExpenseSummary() in a future cleanup.
-/** @deprecated Use buildDailyExpenseSummary() or buildLogDigest() instead. */
+/********** Alias backward-compat — pemanggil buildDailyDigest() lama tetap berfungsi.
+ *  Migrasi ke buildDailyExpenseSummary() pada cleanup berikutnya.
+ */
+/** @deprecated Gunakan buildDailyExpenseSummary() atau buildLogDigest() sebagai gantinya. */
 export const buildDailyDigest = buildDailyExpenseSummary;
 
-// ─── Digest timing check ─────────────────────────────────────────────────────
+/********** [MULAI: Pemeriksaan Waktu Digest] **********/
 
 /**
- * Check whether the daily digest should fire right now.
- * Returns true if the current local time matches the user's digestTime
- * or is up to 5 minutes late, and today's digest has not yet been sent.
- * It will NEVER fire early.
+ * Memeriksa apakah daily digest perlu dikirim sekarang.
+ * Mengembalikan `true` jika waktu lokal saat ini cocok dengan digestTime user
+ * (atau terlambat hingga 5 menit), dan digest hari ini belum dikirim.
+ * Tidak akan pernah terlalu awal.
  *
- * @param digestTime  "HH:MM" string from user preferences
- * @param lastFiredAt ISO string of the last time the digest was fired (or null)
+ * @param digestTime - String "HH:MM" dari preferensi user.
+ * @param lastFired - Informasi kapan digest terakhir dikirim, atau null jika belum pernah.
+ * @returns Object berisi flag `shouldFire` dan `reason` penjelasan keputusan.
  */
 export function shouldFireDigest(
   digestTime: string,
@@ -305,18 +320,20 @@ export function shouldFireDigest(
   const wibNow = getWIBDateParts(now);
   const todayStr = wibNow.dateStr;
 
-  // Has this EXACT digest already fired today in WIB?
+  /********** Cek apakah digest untuk waktu ini sudah dikirim hari ini di WIB. */
   if (lastFired) {
     if (lastFired.digestDateKey === todayStr && lastFired.digestTime === digestTime) {
       return { shouldFire: false, reason: "already_fired_for_this_time_today" };
     }
   }
 
-  // Calculate minutes since midnight
+  /********** Hitung menit sejak tengah malam. */
   const nowMinutes = wibNow.hour * 60 + wibNow.minute;
   const digestMinutes = targetH * 60 + targetM;
   
-  // Tolerance diperbesar menjadi 15 menit agar bisa menangkap cron GitHub Actions yang berjalan pada menit ganjil (e.g. menit ke-7)
+  /********** Toleransi diperbesar jadi 15 menit agar menangkap cron GitHub Actions
+   *  yang berjalan pada menit ganjil (misal menit ke-7).
+   */
   const toleranceMinutes = 15;
   const diffMinutes = nowMinutes - digestMinutes;
   
@@ -334,10 +351,11 @@ export function shouldFireDigest(
 
   if (!isTimeMatch) {
     if (diffMinutes < 0) {
-      return { shouldFire: false, reason: "too_early" };
+      return { shouldFire: false, reason: 'too_early' };
     }
-    return { shouldFire: false, reason: "outside_time_window" };
+    return { shouldFire: false, reason: 'outside_time_window' };
   }
 
-  return { shouldFire: true, reason: "no_existing_fired_key" };
+  return { shouldFire: true, reason: 'no_existing_fired_key' };
 }
+/********** [END: Digest Timing Check] **********/

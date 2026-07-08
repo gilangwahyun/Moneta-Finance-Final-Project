@@ -1,11 +1,22 @@
-import { prisma } from "../db/prisma";
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
+/********** [START: Server Digest] **********/
+/********** Logika sisi server untuk menentukan user mana yang perlu menerima
+ *  digest harian, dan membangun isi ringkasan notifikasi dari notification_logs
+ *  yang belum dirangkum (digestSentAt = null).
+ */
+/********** [END: Server Digest] **********/
 
-// Initialize dayjs plugins
+/********** Imports **********/
+
+import { prisma } from '../db/prisma';
+import dayjs from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+import timezone from 'dayjs/plugin/timezone';
+
+/********** Inisialisasi plugin dayjs untuk timezone support. */
 dayjs.extend(utc);
 dayjs.extend(timezone);
+
+/********** Types **********/
 
 export interface DigestCandidate {
   userId: string;
@@ -20,45 +31,53 @@ export interface ServerDigestResult {
   logIds: string[];
 }
 
+/********** Helpers **********/
+
 /**
- * Format currency to Rupiah string
+ * Memformat angka sebagai string Rupiah (contoh: 50000 → "Rp 50.000").
+ *
+ * @param amount - Nominal dalam bentuk angka.
+ * @returns String Rupiah yang sudah diformat.
  */
 function fmtRupiah(amount: number): string {
-  return "Rp " + Math.round(amount).toLocaleString("id-ID");
+  return 'Rp ' + Math.round(amount).toLocaleString('id-ID');
 }
 
+/********** Main Logic **********/
+
 /**
- * Query Prisma for users who are due for a digest.
- * Criteria:
+ * Mencari user yang sudah waktunya menerima digest hari ini dari Prisma.
+ * Kriteria:
  *   - settings.isEnabled = true
  *   - settings.dailyDigest = true
- *   - digestTime matches current hour:minute in WIB (with a small buffer tolerance)
- *   - user has at least one push subscription
+ *   - digestTime cocok dengan jam:menit WIB saat ini (dengan toleransi jendela kecil)
+ *   - user memiliki minimal satu push subscription aktif
  *
- * @param targetTimeWIB ISO timestamp string of the "current" time to evaluate against, or undefined to use now.
- * @returns Array of candidate objects with userId and their configured digest time.
+ * @param targetTimeWIB - ISO timestamp string waktu yang digunakan sebagai referensi, atau undefined untuk menggunakan waktu sekarang.
+ * @returns Array candidate object berisi userId dan digestTime yang dikonfigurasi.
  */
 export async function getUsersDueForDigest(targetTimeWIB?: string): Promise<DigestCandidate[]> {
-  const now = targetTimeWIB ? dayjs(targetTimeWIB).tz("Asia/Jakarta") : dayjs().tz("Asia/Jakarta");
+  const now = targetTimeWIB ? dayjs(targetTimeWIB).tz('Asia/Jakarta') : dayjs().tz('Asia/Jakarta');
   
-  // Calculate window matching: current time minus up to 14 minutes.
-  // Because github actions cron runs every 15 mins.
+  /********** Hitung jendela waktu: waktu saat ini dikurangi hingga 14 menit.
+   *  Karena GitHub Actions cron berjalan setiap 15 menit.
+   */
   const timeWindow: string[] = [];
   for (let i = 0; i < 15; i++) {
-    timeWindow.push(now.subtract(i, 'minute').format("HH:mm"));
+    timeWindow.push(now.subtract(i, 'minute').format('HH:mm'));
   }
 
-  // 1. Fetch eligible user settings
+  /********** Langkah 1: Ambil pengaturan user yang memenuhi syarat. */
   const eligibleSettings = await prisma.notificationSettings.findMany({
     where: {
       isEnabled: true,
       dailyDigest: true,
       digestTime: {
-        in: timeWindow // matches any HH:mm inside the 15-minute cron window
+        in: timeWindow /********** Cocokkan HH:mm manapun dalam jendela 15 menit cron. */
       },
       user: {
         notificationSubscriptions: {
-          some: {} // Must have at least one active subscription
+          some: {} /********** Harus punya minimal satu subscription aktif. */
         }
       }
     },
@@ -74,17 +93,16 @@ export async function getUsersDueForDigest(targetTimeWIB?: string): Promise<Dige
 
   const userIds = eligibleSettings.map(s => s.userId);
 
-  // 2. Filter out users who have ALREADY received a DIGEST push today.
-  // We check this by looking for an existing NotificationLog of type "DIGEST" 
-  // created today (WIB time boundary).
-  
+  /********** Langkah 2: Filter user yang SUDAH menerima digest DIGEST hari ini.
+   *  Cek dengan mencari NotificationLog bertipe "DIGEST" yang dibuat hari ini (batas WIB).
+   */
   const startOfDayWIB = now.startOf("day").toDate();
   const endOfDayWIB = now.endOf("day").toDate();
 
   const sentDigestsToday = await prisma.notificationLog.findMany({
     where: {
       userId: { in: userIds },
-      eventType: "DIGEST", // The server sets this when sending
+      eventType: 'DIGEST', /********** Server menetapkan ini saat mengirim digest. */
       createdAt: {
         gte: startOfDayWIB,
         lte: endOfDayWIB
@@ -97,32 +115,34 @@ export async function getUsersDueForDigest(targetTimeWIB?: string): Promise<Dige
 
   const alreadySentUserIds = new Set(sentDigestsToday.map(log => log.userId));
   
-  // 3. Return the remaining candidates
+  /********** Langkah 3: Kembalikan candidate yang belum menerima digest hari ini. */
   return eligibleSettings.filter(s => !alreadySentUserIds.has(s.userId));
 }
 
 /**
- * Build the digest content for a specific user.
- * Fetches all un-digested logs from Prisma for the given day,
- * and formats them into a single LogDigestResult following the 
- * ranking logic (critical deficit -> reallocation -> usage warning -> comparison spike).
+ * Membangun konten digest untuk user tertentu.
+ * Mengambil semua log yang belum dirangkum dari Prisma untuk hari yang ditentukan,
+ * lalu memformatnya menjadi satu LogDigestResult mengikuti logika ranking:
+ * (deficit kritis > reallocation > usage warning > comparison spike).
  *
- * @param userId The User ID
- * @param dateWIB The reference day to build the digest for
+ * @param userId - ID user.
+ * @param dateWIB - Hari referensi untuk membangun digest.
+ * @returns Konten digest siap pakai.
  */
 export async function buildServerDigestContent(
   userId: string,
   dateWIB: string = new Date().toISOString()
 ): Promise<ServerDigestResult> {
-  const targetDay = dayjs(dateWIB).tz("Asia/Jakarta");
-  const startOfDay = targetDay.startOf("day").toDate();
-  const endOfDay = targetDay.endOf("day").toDate();
+  const targetDay = dayjs(dateWIB).tz('Asia/Jakarta');
+  const startOfDay = targetDay.startOf('day').toDate();
+  const endOfDay = targetDay.endOf('day').toDate();
 
-  // Find eligible logs:
-  // - Mode was 'DIGEST'
-  // - Not a digest itself
-  // - Has not been included in a digest yet (digestSentAt = null)
-  // - Created within the target day
+  /********** Ambil log yang memenuhi syarat:
+   *  - Mode DIGEST saat pembuatan log
+   *  - Bukan log digest itu sendiri
+   *  - Belum dimasukkan ke digest manapun (digestSentAt = null)
+   *  - Dibuat dalam hari target
+   */
   const eligibleLogs = await prisma.notificationLog.findMany({
     where: {
       userId: userId,
@@ -141,14 +161,14 @@ export async function buildServerDigestContent(
     return { title: "", body: "", logCount: 0, hasEligibleLogs: false, logIds: [] };
   }
 
-  // Rank the logs to pick the primary focus for the summary body
+  /********** Tentukan log utama sebagai fokus utama ringkasan berdasarkan ranking. */
   let topLog = eligibleLogs[0];
   let highestDeficit = -1;
   let hasReallocation = false;
   let highestUsage = -1;
   let largestComparison = -1;
   let rankingScore = -1; 
-  // Scores: 4=Deficit, 3=Reallocation, 2=Usage, 1=Comparison, 0=Other
+  /********** Skor: 4=Deficit, 3=Reallocation, 2=Usage, 1=Comparison, 0=Other. */
 
   for (const log of eligibleLogs) {
     const deficitAmount = log.deficitAmount ?? 0;
@@ -214,11 +234,11 @@ export async function buildServerDigestContent(
 }
 
 /**
- * Mark a batch of notification logs as "digested" by setting the digestSentAt timestamp.
- * This prevents them from being summarized again in future digests.
- * 
- * @param logIds Array of Prisma database IDs
- * @param sentAt Date object representing when the digest was sent
+ * Menandai batch notification logs sebagai "sudah dirangkum" dengan mengatur timestamp digestSentAt.
+ * Mencegah log yang sama masuk ke ringkasan digest berikutnya.
+ *
+ * @param logIds - Array ID database Prisma.
+ * @param sentAt - Objek Date yang merepresentasikan waktu pengiriman digest.
  */
 export async function markLogsAsDigested(logIds: string[], sentAt: Date = new Date()): Promise<void> {
   if (logIds.length === 0) return;
@@ -229,7 +249,7 @@ export async function markLogsAsDigested(logIds: string[], sentAt: Date = new Da
     },
     data: {
       digestSentAt: sentAt,
-      // Touch updatedAt to ensure mobile clients pull this sync down
+      /********** Touch updatedAt agar klien mobile menarik update sync ini. */
       updatedAt: sentAt 
     }
   });

@@ -1,18 +1,21 @@
-//********** START: Conflict Resolver **********
-//********** Implements timestamp-based "last write wins" conflict resolution.
-//**********
-//********** Used by both the sync manager (client-side) and the API
-//********** endpoint (server-side) when conflicts arise between
-//********** client and server versions of the same record.
-//********** END: Conflict Resolver **********
+/********** [START: Conflict Resolver] **********/
+/********** Mengimplementasikan strategi resolusi konflik "last write wins"
+ *  berbasis timestamp updatedAt. Digunakan oleh sync manager (sisi klien)
+ *  dan API endpoint (sisi server) saat terjadi konflik antara versi klien
+ *  dan server untuk record yang sama.
+ */
+/********** [END: Conflict Resolver] **********/
 
-//********** TYPES **********
+/********** Imports **********/
+
+/********** Types **********/
+
 export interface ConflictPair<T extends { updatedAt: string }> {
   clientVersion: T;
   serverVersion: T;
 }
 
-export type Resolution = "client_wins" | "server_wins";
+export type Resolution = 'client_wins' | 'server_wins';
 
 export interface ConflictResult<T> {
   winner: T;
@@ -20,10 +23,14 @@ export interface ConflictResult<T> {
   resolution: Resolution;
 }
 
-//********** UTILS **********
+/********** Main Logic **********/
+
 /**
- * Resolve a conflict between client and server versions using
- * the "last write wins" strategy based on `updatedAt` timestamps.
+ * Menyelesaikan konflik antara versi klien dan server menggunakan strategi
+ * "last write wins" berdasarkan timestamp `updatedAt`.
+ *
+ * @param pair - Object berisi `clientVersion` dan `serverVersion`.
+ * @returns Result berisi pemenang, pecundang, dan hasil resolusi.
  */
 export function resolveConflict<T extends { updatedAt: string }>(
   pair: ConflictPair<T>
@@ -35,36 +42,39 @@ export function resolveConflict<T extends { updatedAt: string }>(
     return {
       winner: pair.clientVersion,
       loser: pair.serverVersion,
-      resolution: "client_wins",
+      resolution: 'client_wins',
     };
   } else {
     return {
       winner: pair.serverVersion,
       loser: pair.clientVersion,
-      resolution: "server_wins",
+      resolution: 'server_wins',
     };
   }
 }
 
 /**
- * Check whether a server record should overwrite a local record
- * during a pull operation.
+ * Menentukan apakah record server harus menimpa record lokal saat operasi pull.
  *
- * Returns true if:
- *  - The local record doesn't exist
- *  - The local record is already SYNCED (no pending local changes)
- *  - The server version has a newer updatedAt timestamp
+ * Mengembalikan `true` jika:
+ * - Record lokal tidak ada
+ * - Record lokal sudah berstatus SYNCED (tidak ada perubahan lokal yang pending)
+ * - Versi server memiliki timestamp `updatedAt` yang lebih baru
+ *
+ * @param local - Record lokal saat ini, atau `undefined` jika belum ada.
+ * @param server - Record versi server yang akan di-pull.
+ * @returns `true` jika record server boleh menimpa lokal.
  */
 export function shouldOverwriteLocal<
   T extends { updatedAt: string; syncStatus?: string }
 >(local: T | undefined, server: T): boolean {
-  //********** No local version - always accept server
+  /********** Tidak ada versi lokal — selalu terima dari server. */
   if (!local) return true;
 
-  //********** Local is already synced - safe to overwrite
-  if (local.syncStatus === "SYNCED") return true;
+  /********** Lokal sudah SYNCED — aman untuk ditimpa. */
+  if (local.syncStatus === 'SYNCED') return true;
 
-  //********** Local has pending changes - compare timestamps
+  /********** Lokal masih PENDING — bandingkan timestamp terlebih dahulu. */
   const localTime = new Date(local.updatedAt).getTime();
   const serverTime = new Date(server.updatedAt).getTime();
 

@@ -1,4 +1,16 @@
+/********** [START: Local Notification Engine] **********/
+/********** Engine notifikasi sisi klien yang mengevaluasi nudge dari transaksi baru,
+ *  menulis log ke IndexedDB, menampilkan toast di UI, dan memutuskan apakah
+ *  perlu mengirim push notification berdasarkan delivery mode dan daily cap.
+ *
+ *  Dua fungsi utama:
+ *  - evaluateAndTriggerNudges(txn)  — evaluasi insight anggaran & finansial
+ *  - evaluateTargetNudges(txn)       — evaluasi progres target keuangan
+ */
+/********** [END: Local Notification Engine] **********/
+
 import dayjs from 'dayjs';
+
 import { Transaction } from '@/types/models.types';
 import { getAllTransactions } from '@/lib/local-db/repositories/transactions';
 import { getBudgetsByPeriod } from '@/lib/local-db/repositories/budgets';
@@ -23,11 +35,20 @@ import { isTargetActiveForDate } from '@/lib/utils/target-helpers';
 import { calculateWalletBalance } from '@/lib/utils/wallet-utils';
 import { showSyncToast } from '@/lib/utils/show-toast';
 
+/********** Constants **********/
+
 const BUDGET_CRITICAL_PRIORITY = 0.1;
 const BUDGET_WARNING_PRIORITY = 0.2;
 const BUDGET_INFO_PRIORITY = 0.3;
 
-// Helper to sum income and expense
+/********** Helpers **********/
+
+/**
+ * Menjumlahkan total pemasukan dan pengeluaran dari daftar transaksi.
+ *
+ * @param txns - Array transaksi yang akan dijumlahkan.
+ * @returns Object berisi `income`, `expense`, dan `net`.
+ */
 function sumByType(txns: Transaction[]) {
   let income = 0,
     expense = 0;
@@ -38,7 +59,14 @@ function sumByType(txns: Transaction[]) {
   return { income, expense, net: income - expense };
 }
 
-// Generate dedupe key based on priority
+/**
+ * Membuat dedupe key berdasarkan prioritas insight untuk mencegah notifikasi duplikat.
+ *
+ * @param insight - Data nudge yang akan dievaluasi.
+ * @param userId - ID user saat ini.
+ * @param tx - Transaksi pemicu evaluasi.
+ * @returns String unik yang merepresentasikan notifikasi ini.
+ */
 function getDedupeKey(insight: NudgeInsight, userId: string, tx: Transaction): string {
   if (insight.dedupeKeyOverride) {
     return insight.dedupeKeyOverride;
@@ -46,7 +74,9 @@ function getDedupeKey(insight: NudgeInsight, userId: string, tx: Transaction): s
 
   const monthStr = dayjs(tx.date).format('YYYY-MM');
 
-  // Budget usage nudges currently use priority 0.1, 0.2, and 0.3, so they must not fall back to GENERIC_NUDGE.
+  /********** Nudge penggunaan budget memakai prioritas 0.1, 0.2, dan 0.3 — tidak boleh
+   *  jatuh ke GENERIC_NUDGE karena key yang berbeda akan lolos cek dedupe.
+   */
   if (
     insight.priority === BUDGET_CRITICAL_PRIORITY ||
     insight.priority === BUDGET_WARNING_PRIORITY ||
@@ -87,14 +117,25 @@ function getDedupeKey(insight: NudgeInsight, userId: string, tx: Transaction): s
   return `GENERIC_NUDGE:${userId}:${insight.title.replace(/\s+/g, '')}:${monthStr}`;
 }
 
-export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
+/********** Main Logic **********/
+
+/**
+ * Mengevaluasi nudge keuangan berdasarkan transaksi yang baru dibuat,
+ * lalu menulis log notifikasi ke IndexedDB dan (jika memenuhi syarat) mengirim
+ * push notification melalui Service Worker.
+ *
+ * @param createdTxn - Transaksi yang baru saja dibuat oleh user.
+ * @sideeffect Menulis ke IndexedDB (notification_logs), menampilkan toast, dan
+ *   memperbarui counter push harian di localStorage.
+ */
+export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise<void> {
   console.log('[LocalEngine] Starting evaluateAndTriggerNudges for txn:', createdTxn.clientId);
   try {
     const userId = createdTxn.userId;
     const now = dayjs(createdTxn.date);
     const currentPeriodStr = now.format('YYYY-MM');
 
-    // Fetch all necessary local data
+    /********** Ambil semua data lokal yang diperlukan secara paralel. */
     const [allTxns, budgets, allCategories, allWallets] = await Promise.all([
       getAllTransactions(userId),
       getBudgetsByPeriod(userId, currentPeriodStr),
@@ -102,18 +143,18 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       getAllWallets(userId),
     ]);
 
-    // Current period transactions
+    /********** Filter transaksi berdasarkan periode saat ini dan periode sebelumnya. */
     const currentTxns = allTxns.filter((t) => dayjs(t.date).format('YYYY-MM') === currentPeriodStr);
-
-    // Previous period transactions
     const prevPeriodStr = now.subtract(1, 'month').format('YYYY-MM');
     const prevTxns = allTxns.filter((t) => dayjs(t.date).format('YYYY-MM') === prevPeriodStr);
 
     const current = sumByType(currentTxns);
     const prev = sumByType(prevTxns);
 
-    // Compute basic indicators for generateNudges
-    // 1. Payday leak
+    /********** [START: Komputasi indikator nudge dasar] **********/
+    /********** Hitung berbagai indikator finansial yang dibutuhkan oleh generateNudges(). */
+
+    /********** 1. Payday Leak — boros setelah gajian. */
     const paydayLeak = (() => {
       const thirtyDaysAgo = dayjs().subtract(30, 'day');
       const incomes = allTxns.filter((t) => t.type === 'INCOME' && dayjs(t.date).isAfter(thirtyDaysAgo));
@@ -133,7 +174,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       return null;
     })();
 
-    // 2. Weekend Trap
+    /********** 2. Weekend Trap — pengeluaran dominan di akhir pekan. */
     const weekendTrap = (() => {
       const thisWeekExpenses = currentTxns.filter((t) => t.type === 'EXPENSE' && dayjs(t.date).isSame(dayjs(), 'week'));
       let weekTotal = 0,
@@ -148,7 +189,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       return null;
     })();
 
-    // 3. Top Expense Category Spike
+    /********** 3. Top Expense Category Spike — kategori pengeluaran terbesar. */
     const topExpenseCategory = (() => {
       const relevant = currentTxns.filter((t) => t.type === 'EXPENSE' && t.categoryId);
       const grouped: Record<string, number> = {};
@@ -168,7 +209,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       return { name: cat?.name || 'Lainnya', value: topValue, prevValue };
     })();
 
-    // 4. Night Owl
+    /********** 4. Night Owl — belanja banyak di jam larut malam. */
     const nightOwl = (() => {
       const wantsRegex = /(hiburan|jajan|pribadi|gaya hidup|hobi)/i;
       let nightTotal = 0;
@@ -184,9 +225,9 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       return null;
     })();
 
-    // Phase 1 Rules
+    /********** Phase 1 Rules — aturan analisis tambahan berbasis histori pendek. */
 
-    // [SP-07] Recurring Merchant Growth
+    /********** [SP-07] Recurring Merchant Growth — frekuensi merchant yang meningkat. */
     const recurringMerchantGrowth = (() => {
       const currentExp = currentTxns.filter((t) => t.type === 'EXPENSE' && t.description);
       const prevExp = prevTxns.filter((t) => t.type === 'EXPENSE' && t.description);
@@ -230,7 +271,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       return topMerchant;
     })();
 
-    // [BG-03] Zero Budget Category
+    /********** [BG-03] Zero Budget Category — kategori yang sudah ada pengeluaran tapi belum ada budget. */
     const zeroBudgetCategory = (() => {
       const expenses = currentTxns.filter((t) => t.type === 'EXPENSE' && t.categoryId);
       const catTotals: Record<string, number> = {};
@@ -247,7 +288,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       return null;
     })();
 
-    // [AN-08] Income Momentum Alert
+    /********** [AN-08] Income Momentum Alert — pemasukan bulan ini jauh di bawah rata-rata. */
     const incomeMomentum = (() => {
       const incomes = currentTxns.filter((t) => t.type === 'INCOME');
       const currentIncome = incomes.reduce((s, t) => s + Number(t.amount), 0);
@@ -263,7 +304,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       return null;
     })();
 
-    // [WL-02] Low Cash Warning
+    /********** [WL-02] Low Cash Warning — saldo dompet menipis. */
     const lowCashWarning = (() => {
       if (allWallets.length === 0) return null;
 
@@ -284,8 +325,9 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       return null;
     })();
 
-    // We can compute others, but let's keep it robust enough for the ones we need.
-    // Pass null for complex ones we skip to save performance unless necessary.
+    /********** Kita bisa komputasi indikator lainnya, tapi cukupkan yang kritis
+     *  untuk menjaga performa. Pass null untuk yang kompleks jika tidak dibutuhkan.
+     */
     const nudgeInsights = generateNudges({
       current,
       prev,
@@ -303,12 +345,15 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       incomeMomentum,
     });
 
-    // Evaluate Budget Limits
-    // Instant budget warnings are scoped to the transaction category
-    // to avoid cross-category notification mismatch.
+    /********** [END: Komputasi indikator nudge dasar] **********/
+
+    /********** [START: Evaluasi batas anggaran per kategori] **********/
+    /********** Hanya evaluasi budget yang cocok dengan kategori transaksi yang dibuat,
+     *  untuk menghindari mismatch notifikasi antar kategori.
+     */
     for (const budget of budgets) {
       if (!budget.categoryId) continue;
-      // Only evaluate the budget that matches the created transaction
+      /********** Hanya evaluasi budget yang sesuai dengan kategori transaksi yang dibuat. */
       if (budget.categoryId !== createdTxn.categoryId) continue;
 
       const spent = currentTxns
@@ -320,7 +365,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       const cat = allCategories.find((c) => c.clientId === budget.categoryId);
       const catName = cat?.name || 'Kategori';
 
-      // --- Calculate Historical Comparison Data ---
+      /********** Hitung data perbandingan historis untuk konteks notifikasi. */
       const today = dayjs().format('YYYY-MM-DD');
       const yesterday = dayjs().subtract(1, 'day').format('YYYY-MM-DD');
       const lastWeekSameDay = dayjs().subtract(7, 'day').format('YYYY-MM-DD');
@@ -338,7 +383,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       const last7DaysAmount = catTxns
         .filter((t) => {
           const d = dayjs(t.date);
-          // last 7 days excluding today
+          /********** 7 hari terakhir tidak termasuk hari ini. */
           return d.isAfter(dayjs().subtract(8, 'day').endOf('day')) && d.isBefore(dayjs().startOf('day'));
         })
         .reduce((sum, t) => sum + Number(t.amount), 0);
@@ -443,7 +488,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
           ctaRoute: mergedCtaRoute,
           relatedBudgetId: budget.clientId,
           relatedCategoryId: budget.categoryId,
-          threshold: 101, // arbitrary number for >100%
+          threshold: 101, /********** Nilai arbitrary untuk kondisi > 100%. */
           budgetUpdatedAt: budget.updatedAt,
           actionType,
           sourceBudgetId,
@@ -503,7 +548,9 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       }
     }
 
-    // Evaluate Wallet Limits (WL-01, WL-02)
+    /********** [END: Evaluasi batas anggaran per kategori] **********/
+
+    /********** [START: Evaluasi batas dompet] **********/
     if (lowCashWarning) {
       nudgeInsights.push({
         priority: 0.5,
@@ -556,13 +603,16 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       });
     }
 
-    // Sort by priority to evaluate the most important nudges first
+    /********** [END: Evaluasi batas dompet] **********/
+
+    /********** Urutkan berdasarkan prioritas agar nudge paling penting dievaluasi lebih dahulu. */
     nudgeInsights.sort((a, b) => a.priority - b.priority);
 
     console.log('[LocalEngine] Generated nudges:', nudgeInsights.length);
 
-    // ── Read settings once outside the loop ────────────────
-    // (fetched here so we do not hit IDB on every dedupe-skipped insight)
+    /********** Baca pengaturan notifikasi sekali di luar loop agar tidak hit IDB
+     *  pada setiap insight yang sudah di-skip oleh dedupe.
+     */
     const settings = await getNotificationSettings(userId);
     const deliveryMode = resolveDeliveryMode(settings);
     const rawDailyCap = settings?.dailyCap;
@@ -582,9 +632,10 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
       );
 
       if (!exists) {
-        // ── STEP 1: Create notification log (always, independent of delivery mode) ──
-        // Log creation must not be blocked by delivery mode or daily push cap.
-        // The in-app Notifications page shows these logs regardless of device push state.
+        /********** [START: Langkah 1 — Buat log notifikasi] **********/
+        /********** Log selalu dibuat terlepas dari delivery mode atau daily push cap.
+         *  Halaman Notifikasi menampilkan log ini meskipun push device tidak dikirim.
+         */
         const logId = crypto.randomUUID();
         const now = new Date().toISOString();
 
@@ -630,30 +681,38 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
           sourceCategoryName: insight.sourceCategoryName,
           targetCategoryName: insight.targetCategoryName,
         });
-        console.log(`[LocalEngine] Log created in IDB — logId: ${logId}`);
+        console.log(`[LocalEngine] Log dibuat di IDB — logId: ${logId}`);
+        /********** [END: Langkah 1 — Buat log notifikasi] **********/
 
-        // ── STEP 2: In-app UI updates (always, regardless of delivery mode) ────
+        /********** [START: Langkah 2 — Update UI] **********/
+        /********** Selalu tampilkan toast dan trigger event UI,
+         *  terlepas dari delivery mode.
+         */
         showSyncToast(insight.title, insight.body);
         if (typeof window !== 'undefined') {
           window.dispatchEvent(new Event('moneta-notification-updated'));
         }
+        /********** [END: Langkah 2 — Update UI] **********/
 
-        // ── STEP 3: Delivery Decision — gate system push on delivery mode ────
-        // Only one push attempt per transaction evaluation (break after decision).
+        /********** [START: Langkah 3 — Keputusan delivery] **********/
+        /********** Gate push notifikasi berdasarkan delivery mode.
+         *  Hanya satu percobaan push per evaluasi transaksi.
+         */
 
         if (deliveryMode === 'NONE') {
-          // OFF mode: logs exist in Notifications page; no device notification.
-          console.log('[LocalEngine] Push skipped — reason: mode_off');
+          /********** Mode OFF: log ada di halaman Notifikasi, tapi tidak ada push device. */
+          console.log('[LocalEngine] Push dilewati — alasan: mode_off');
           break;
         }
 
         if (deliveryMode === 'DIGEST') {
-          // DIGEST mode: logs exist; individual pushes suppressed; digest fires later.
-          console.log('[LocalEngine] Push skipped — reason: digest_mode_active');
+          /********** Mode DIGEST: log ada, push individual ditahan, digest dikirim nanti. */
+          console.log('[LocalEngine] Push dilewati — alasan: digest_mode_active');
           break;
         }
+        /********** [END: Langkah 3 — Keputusan delivery] **********/
 
-        // ── STEP 4: INSTANT mode — check push prerequisites ─────────────────
+        /********** [START: Langkah 4 — Prasyarat push INSTANT] **********/
         if (typeof window === 'undefined' || !('serviceWorker' in navigator)) {
           console.log('[LocalEngine] Push skipped — reason: service_worker_unavailable');
           break;
@@ -664,8 +723,9 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
           break;
         }
 
-        // Daily push cap: use localStorage counter (counts actual pushes, not logs).
-        // This ensures cap limits device notifications and never blocks log creation.
+        /********** Daily push cap: pakai counter localStorage (hitung push aktual, bukan log).
+         *  Cap hanya membatasi notifikasi device, tidak pernah memblokir pembuatan log.
+         */
         const { count: todayPushCount } = readTodayCountFromLS();
         const capReached = isDailyCapReached(todayPushCount, dailyCap);
         const isUnlimited = dailyCap === null;
@@ -685,11 +745,16 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
           break;
         }
 
-        // ── STEP 4.5: Global Cooldowns (Inter-rule gap & Info weekly cap) ──
+        /********** [END: Langkah 4 — Prasyarat push INSTANT] **********/
+
+        /********** [START: Langkah 4.5 — Global Cooldowns] **********/
+        /********** 1. Inter-rule gap (30 menit) — dilewati untuk notifikasi critical.
+         *  2. Info weekly cap (maks 2 per minggu).
+         */
         const isCritical = insight.priority === BUDGET_CRITICAL_PRIORITY || insight.severity === 'critical';
         const nowMs = Date.now();
 
-        // 1. Inter-rule gap (30 minutes) - bypassed for critical
+        /********** Cooldown 1: Inter-rule gap 30 menit — skip untuk critical. */
         if (!isCritical) {
           const lastPushIso = readLastPushTsFromLS();
           if (lastPushIso) {
@@ -702,7 +767,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
           }
         }
 
-        // 2. Info Weekly Cap (Max 2 per week)
+        /********** Cooldown 2: Info Weekly Cap (maks 2 notifikasi info per minggu). */
         let currentWeekStr = dayjs().format('YYYY-ww');
         if (insight.severity === 'info') {
           const weeklyInfoCount = readWeeklyInfoCountFromLS(currentWeekStr);
@@ -712,7 +777,9 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
           }
         }
 
-        // ── STEP 5: Execute push via Service Worker ──────────────────────────
+        /********** [END: Langkah 4.5 — Global Cooldowns] **********/
+
+        /********** [START: Langkah 5 — Kirim push via Service Worker] **********/
         try {
           const reg = await navigator.serviceWorker.ready;
 
@@ -740,8 +807,9 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
             },
           } as any);
 
-          // Increment push counter ONLY after successful showNotification.
-          // This counter represents device notifications sent, not logs created.
+          /********** Increment counter HANYA setelah showNotification berhasil.
+           *  Counter ini merepresentasikan notifikasi device yang terkirim, bukan log yang dibuat.
+           */
           incrementTodayCountInLS();
           setLastPushTsInLS(new Date().toISOString());
           if (insight.severity === 'info') {
@@ -749,21 +817,29 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction) {
           }
           const { markLogPushed } = await import('@/lib/local-db/repositories/notification-logs');
           await markLogPushed(logId, new Date().toISOString());
-          console.log('[LocalEngine] Push delivered successfully.');
+          console.log('[LocalEngine] Push berhasil dikirim.');
         } catch (swErr: any) {
-          console.error('[LocalEngine] Push skipped — reason: show_notification_error:', swErr.name, swErr.message);
+          console.error('[LocalEngine] Push dilewati — alasan: show_notification_error:', swErr.name, swErr.message);
         }
+        /********** [END: Langkah 5 — Kirim push via Service Worker] **********/
 
-        // One push attempt per transaction — intentional to avoid spamming.
+        /********** Satu percobaan push per transaksi — disengaja agar tidak spam. */
         break;
       }
     }
   } catch (err) {
-    console.error('[LocalEngine] Failed to evaluate nudges:', err);
+    console.error('[LocalEngine] Gagal mengevaluasi nudge:', err);
   }
 }
 
-export async function evaluateTargetNudges(createdTxn: Transaction) {
+/**
+ * Mengevaluasi progres target keuangan berdasarkan transaksi pemasukan yang baru dibuat.
+ * Mengirim notifikasi jika target mencapai 80% atau 100%.
+ *
+ * @param createdTxn - Transaksi yang baru saja dibuat oleh user.
+ * @sideeffect Menulis ke IndexedDB (notification_logs) dan mengirim push via Service Worker.
+ */
+export async function evaluateTargetNudges(createdTxn: Transaction): Promise<void> {
   console.log('[LocalEngine] Starting evaluateTargetNudges for txn:', createdTxn.clientId);
   try {
     const userId = createdTxn.userId;
@@ -835,7 +911,7 @@ export async function evaluateTargetNudges(createdTxn: Transaction) {
             syncStatus: 'PENDING',
           });
 
-          // Notify UI to update bell icon
+          /********** Beritahu UI untuk update icon bell. */
           if (typeof window !== 'undefined') {
             window.dispatchEvent(new Event('moneta-notification-updated'));
           }
@@ -847,12 +923,12 @@ export async function evaluateTargetNudges(createdTxn: Transaction) {
           const capReached = isDailyCapReached(currentCap.count, maxCap);
 
           if (!capReached) {
-            // Toast fallback for UI feedback
+            /********** Toast fallback untuk feedback UI. */
             import('sonner').then(({ toast }) => {
               toast.success(title, { description: body });
             });
 
-            // Service worker push
+            /********** Kirim push via service worker. */
             if (typeof window !== 'undefined' && 'serviceWorker' in navigator && Notification.permission === 'granted') {
               try {
                 const reg = await navigator.serviceWorker.ready;
@@ -887,6 +963,6 @@ export async function evaluateTargetNudges(createdTxn: Transaction) {
       }
     }
   } catch (err) {
-    console.error('[LocalEngine] Failed to evaluate target nudges:', err);
+    console.error('[LocalEngine] Gagal mengevaluasi target nudge:', err);
   }
 }
