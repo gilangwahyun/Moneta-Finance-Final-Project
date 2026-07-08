@@ -1,10 +1,9 @@
-"use client";
+/*
+ * File: src/hooks/use-wallets.ts
+ * Description: Hook kustom React untuk mengelola data dompet atau akun keuangan lokal melalui IndexedDB serta memantau perubahan saldo secara real-time.
+ */
 
-//********** START: useWallets Hook **********
-//********** Provides reactive access to the user's wallets from IndexedDB.
-//********** Re-renders on 'moneta-transaction-updated' window events so that
-//********** wallet balances stay live whenever transactions change.
-//********** END: useWallets Hook **********
+"use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { Wallet, Transaction } from "@/types/models.types";
@@ -13,32 +12,35 @@ import { calculateWalletBalance, calculateTotalBalance } from "@/lib/utils/walle
 import { getCurrentUser } from "@/lib/local-db/repositories/users";
 import { getAllTransactions } from "@/lib/local-db/repositories/transactions";
 
-//********** TYPES **********
+/********** Tipe Data & Antarmuka **********/
+
 interface UseWalletsReturn {
-  //********** Array of wallets
+  /* Daftar dompet atau akun keuangan milik pengguna */
   wallets: Wallet[];
-  //********** needed for balance calc
+  /* Daftar transaksi yang dibutuhkan untuk mengalkulasi saldo terkini */
   transactions: Transaction[];
-  //********** Whether data is loading
+  /* Status indikator apakah data sedang dimuat */
   isLoading: boolean;
-  //********** Error message
+  /* Pesan error jika terjadi kegagalan operasi */
   error: string | null;
-  //********** Total balance across all wallets
+  /* Total akumulasi saldo dari seluruh dompet aktif */
   totalBalance: number;
-  //********** Get specific wallet balance
+  /* Menghitung saldo terkini dari suatu dompet spesifik */
   getWalletBalance: (wallet: Wallet) => number;
-  //********** Add new wallet
+  /* Menambahkan dompet baru ke dalam sistem */
   addNewWallet: (input: Omit<AddWalletInput, "userId">) => Promise<void>;
-  //********** Edit existing wallet
+  /* Memperbarui rincian dompet yang sudah ada */
   editWallet: (input: UpdateWalletInput) => Promise<void>;
-  //********** Remove wallet
+  /* Menghapus dompet dari sistem lokal */
   removeWallet: (clientId: string) => Promise<void>;
 }
 
-//********** HOOK **********
+/********** Hook Utama (useWallets) **********/
+
 /**
- * React hook for managing wallets through IndexedDB.
- * @returns Object containing wallets state and methods.
+ * Hook kustom untuk memuat dan memantau dompet keuangan pengguna dari IndexedDB serta menghitung saldonya secara dinamis berdasarkan histori transaksi.
+ *
+ * @returns Objek berisi daftar dompet, transaksi, status pemuatan, total saldo, dan metode mutasi dompet.
  */
 export function useWallets(): UseWalletsReturn {
   const [wallets, setWallets] = useState<Wallet[]>([]);
@@ -67,7 +69,7 @@ export function useWallets(): UseWalletsReturn {
   useEffect(() => {
     load();
 
-    //********** Re-render when transactions or wallets change from any page
+    /* Muat ulang data saat transaksi atau dompet berubah dari halaman atau komponen lain */
     const handler = () => load();
     window.addEventListener("moneta-transaction-updated", handler);
     return () => window.removeEventListener("moneta-transaction-updated", handler);
@@ -76,6 +78,9 @@ export function useWallets(): UseWalletsReturn {
   const dispatch = () =>
     window.dispatchEvent(new CustomEvent("moneta-transaction-updated"));
 
+  /********** Operasi Mutasi Dompet (CRUD) **********/
+
+  /********** [START: Tambah Dompet Baru & Perbarui UI] **********/
   const addNewWallet = useCallback(async (input: Omit<AddWalletInput, "userId">) => {
     const user = await getCurrentUser();
     if (!user) throw new Error("Pengguna tidak ditemukan.");
@@ -83,18 +88,25 @@ export function useWallets(): UseWalletsReturn {
     dispatch();
     await load();
   }, [load]);
+  /********** [END: Tambah Dompet Baru & Perbarui UI] **********/
 
+  /********** [START: Edit Dompet & Perbarui UI] **********/
   const editWallet = useCallback(async (input: UpdateWalletInput) => {
     await updateWallet(input);
     dispatch();
     await load();
   }, [load]);
+  /********** [END: Edit Dompet & Perbarui UI] **********/
 
+  /********** [START: Hapus Dompet & Perbarui UI] **********/
   const removeWallet = useCallback(async (clientId: string) => {
     await deleteWallet(clientId);
     dispatch();
     await load();
   }, [load]);
+  /********** [END: Hapus Dompet & Perbarui UI] **********/
+
+  /********** Kalkulasi Saldo Dompet **********/
 
   const getWalletBalance = useCallback(
     (wallet: Wallet) => calculateWalletBalance(wallet, transactions),
@@ -102,6 +114,8 @@ export function useWallets(): UseWalletsReturn {
   );
 
   const totalBalance = calculateTotalBalance(wallets, transactions);
+
+  /********** Pengembalian Data Hook **********/
 
   return {
     wallets,

@@ -1,8 +1,7 @@
-//********** START: useTransactions Hook **********
-//********** React hook for managing transactions through IndexedDB.
-//********** Local-first: reads/writes exclusively to IndexedDB, never
-//********** directly to the server API.
-//********** END: useTransactions Hook **********
+/*
+ * File: src/hooks/use-transactions.ts
+ * Description: Hook kustom React untuk mengelola transaksi keuangan lokal melalui IndexedDB dengan pendekatan local-first, termasuk operasi penambahan, pembaruan, penghapusan, dan kalkulasi total bulanan.
+ */
 
 "use client";
 
@@ -25,7 +24,8 @@ import { getCurrentUser } from "@/lib/local-db/repositories/users";
 import { SyncEvents } from "@/lib/sync/events";
 import { useSyncContext } from "@/providers/SyncProvider";
 
-//********** TYPES **********
+/********** Tipe Data & Antarmuka **********/
+
 export interface MonthlyTotals {
   totalIncome: number;
   totalExpense: number;
@@ -33,32 +33,34 @@ export interface MonthlyTotals {
 }
 
 export interface UseTransactionsReturn {
-  //********** Recent transactions (sorted by date desc)
+  /* Daftar transaksi terbaru (diurutkan berdasarkan tanggal menurun) */
   transactions: Transaction[];
-  //********** Current month totals
+  /* Total akumulasi pendapatan dan pengeluaran bulan berjalan */
   monthlyTotals: MonthlyTotals;
-  //********** Whether data is currently loading
+  /* Status indikator apakah data sedang dimuat */
   isLoading: boolean;
-  //********** Error message if any operation failed
+  /* Pesan error jika terjadi kegagalan operasi */
   error: string | null;
-  //********** Record a new transaction
+  /* Merekam transaksi baru ke dalam database lokal */
   recordTransaction: (
     input: Omit<AddTransactionInput, "userId">
   ) => Promise<Transaction | null>;
-  //********** Update an existing transaction
+  /* Memperbarui data transaksi yang sudah ada */
   editTransaction: (
     input: UpdateTransactionInput
   ) => Promise<Transaction | null>;
-  //********** Soft-delete a transaction
+  /* Menghapus (soft-delete) transaksi dari sistem */
   removeTransaction: (clientId: string) => Promise<boolean>;
-  //********** Force reload from IndexedDB
+  /* Memuat ulang data dari IndexedDB */
   refresh: () => Promise<void>;
 }
 
-//********** HOOK **********
+/********** Hook Utama (useTransactions) **********/
+
 /**
- * React hook for managing transactions through IndexedDB.
- * @returns Object containing transactions state and methods.
+ * Hook kustom untuk mengelola transaksi secara local-first, memelihara pembaruan optimistik pada antarmuka pengguna, serta menjadwalkan sinkronisasi latar belakang.
+ *
+ * @returns Objek yang berisi daftar transaksi, total bulanan, status loading, dan metode mutasi transaksi.
  */
 export function useTransactions(): UseTransactionsReturn {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -71,14 +73,13 @@ export function useTransactions(): UseTransactionsReturn {
   const [error, setError] = useState<string | null>(null);
   const { scheduleSync } = useSyncContext();
 
-  //********** Load data from IndexedDB **********
+  /* Memuat data transaksi dan kategori dari IndexedDB */
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
 
       const user = await getCurrentUser();
-      // console.log(`[useTransactions] Loading data for user: ${user?.username || "NONE"}`);
       
       if (!user) {
         setTransactions([]);
@@ -87,7 +88,7 @@ export function useTransactions(): UseTransactionsReturn {
       }
 
       const [recent, totals, allCategories] = await Promise.all([
-        getRecentTransactions(user.id, 500), // Load up to 500 so past-month txns (e.g. May) remain visible when filter changes
+        getRecentTransactions(user.id, 500), /* Muat hingga 500 transaksi agar filter bulan lalu tetap memiliki data */
         getCurrentMonthTotals(user.id),
         getAllCategoriesIncludingDeleted(user.id),
       ]);
@@ -98,7 +99,6 @@ export function useTransactions(): UseTransactionsReturn {
         category: txn.categoryId ? categoriesMap.get(txn.categoryId) : undefined
       }));
 
-      // console.log(`[useTransactions] Loaded ${recent.length} txns, totals:`, totals);
       setTransactions(recentWithCategories);
       setMonthlyTotals(totals);
     } catch (err) {
@@ -112,7 +112,7 @@ export function useTransactions(): UseTransactionsReturn {
   useEffect(() => {
     loadData();
 
-    //********** Listen for custom event from other instances
+    /* Dengarkan event pembaruan dari instance atau komponen lain */
     const handleUpdate = () => {
       loadData();
     };
@@ -129,7 +129,7 @@ export function useTransactions(): UseTransactionsReturn {
     };
   }, [loadData]);
 
-  //********** Create **********
+  /********** [START: Rekam Transaksi Baru & Pembaruan Optimistik] **********/
   const recordTransaction = useCallback(
     async (
       input: Omit<AddTransactionInput, "userId">
@@ -144,10 +144,10 @@ export function useTransactions(): UseTransactionsReturn {
 
         const created = await addTransaction({ ...input, userId: user.id });
 
-        //********** Optimistic update - add to the top of the list
+        /* Pembaruan optimistik — tambahkan transaksi baru ke posisi teratas daftar */
         setTransactions((prev) => [created, ...prev]);
 
-        //********** Update monthly totals optimistically - TRANSFER excluded from P&L
+        /* Perbarui total bulanan secara optimistik — transaksi jenis TRANSFER diabaikan dari laba rugi */
         setMonthlyTotals((prev) => {
           const isCurrentMonth = isInCurrentMonth(created.date);
           if (!isCurrentMonth || created.type === "TRANSFER") return prev;
@@ -178,8 +178,9 @@ export function useTransactions(): UseTransactionsReturn {
     },
     [scheduleSync]
   );
+  /********** [END: Rekam Transaksi Baru & Pembaruan Optimistik] **********/
 
-  //********** Update **********
+  /********** [START: Edit Transaksi & Pembaruan Ulang Total] **********/
   const editTransaction = useCallback(
     async (input: UpdateTransactionInput): Promise<Transaction | null> => {
       try {
@@ -194,7 +195,7 @@ export function useTransactions(): UseTransactionsReturn {
           prev.map((t) => (t.clientId === updated.clientId ? updated : t))
         );
 
-        //********** Reload totals (too complex to optimistically recalculate)
+        /* Muat ulang total bulanan dari database (terlalu kompleks untuk dihitung optimistik) */
         const user = await getCurrentUser();
         if (user) {
           const totals = await getCurrentMonthTotals(user.id);
@@ -212,14 +213,15 @@ export function useTransactions(): UseTransactionsReturn {
     },
     [scheduleSync]
   );
+  /********** [END: Edit Transaksi & Pembaruan Ulang Total] **********/
 
-  //********** Delete **********
+  /********** [START: Hapus Transaksi & Pembaruan Optimistik] **********/
   const removeTransaction = useCallback(
     async (clientId: string): Promise<boolean> => {
       try {
         setError(null);
 
-        //********** Get the transaction before deleting for optimistic totals update
+        /* Ambil data transaksi sebelum dihapus untuk perhitungan pembaruan optimistik total bulanan */
         const toDelete = transactions.find((t) => t.clientId === clientId);
 
         const success = await deleteTransaction(clientId);
@@ -228,10 +230,10 @@ export function useTransactions(): UseTransactionsReturn {
           return false;
         }
 
-        //********** Optimistic update
+        /* Pembaruan optimistik daftar transaksi */
         setTransactions((prev) => prev.filter((t) => t.clientId !== clientId));
 
-        //********** Update monthly totals optimistically - TRANSFER excluded from P&L
+        /* Perbarui total bulanan secara optimistik — TRANSFER diabaikan dari laba rugi */
         if (toDelete && isInCurrentMonth(toDelete.date) && toDelete.type !== "TRANSFER") {
           setMonthlyTotals((prev) => {
             if (toDelete.type === "INCOME") {
@@ -261,6 +263,9 @@ export function useTransactions(): UseTransactionsReturn {
     },
     [scheduleSync, transactions]
   );
+  /********** [END: Hapus Transaksi & Pembaruan Optimistik] **********/
+
+  /********** Pengembalian Data Hook **********/
 
   return {
     transactions,
@@ -274,8 +279,14 @@ export function useTransactions(): UseTransactionsReturn {
   };
 }
 
-//********** HELPERS **********
+/********** Helper Internal **********/
 
+/**
+ * Memeriksa apakah string tanggal yang diberikan berada dalam bulan dan tahun berjalan saat ini.
+ *
+ * @param dateStr - String tanggal dalam format yang dapat diparsing oleh Date.
+ * @returns boolean `true` apabila tanggal berada pada bulan berjalan, atau `false` jika sebaliknya.
+ */
 function isInCurrentMonth(dateStr: string): boolean {
   const now = new Date();
   const date = new Date(dateStr);

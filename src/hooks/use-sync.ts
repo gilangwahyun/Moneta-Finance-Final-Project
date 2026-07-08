@@ -1,8 +1,7 @@
-//********** START: useSync Hook **********
-//********** Provides sync state, pending count, and control functions
-//********** to React components. Integrates with the sync queue controller
-//********** and service worker registration.
-//********** END: useSync Hook **********
+/*
+ * File: src/hooks/use-sync.ts
+ * Description: Hook kustom React untuk mengelola status sinkronisasi, antrean mutasi lokal, integrasi Service Worker, dan pemantauan status koneksi secara real-time.
+ */
 
 "use client";
 
@@ -23,29 +22,36 @@ import {
   requestBackgroundSync,
 } from "@/lib/sw/register";
 
-//********** TYPES **********
+/********** Tipe Data & Antarmuka **********/
+
 export interface UseSyncReturn {
-  //********** Current sync state
+  /* Status sinkronisasi saat ini */
   syncState: SyncState;
-  //********** Whether the browser is online
+  /* Status koneksi jaringan browser */
   isOnline: boolean;
-  //********** Number of active pending mutations in the sync queue
+  /* Jumlah mutasi aktif yang sedang menunggu antrean sinkronisasi */
   pendingCount: number;
-  //********** Number of quarantined items that failed sync
+  /* Jumlah item yang diisolasi (quarantine) akibat kegagalan berulang */
   quarantinedCount: number;
-  //********** Lightweight summary of queue items
+  /* Ringkasan entitas dalam antrean sinkronisasi */
   queueSummary: SyncQueueSummary[];
-  //********** ISO timestamp of the last successful sync
+  /* Timestamp ISO sinkronisasi sukses terakhir */
   lastSyncedAt: string | null;
-  //********** Last sync result (includes pushed/pulled/conflicts counts)
+  /* Hasil dari proses sinkronisasi terakhir (jumlah push, pull, dan konflik) */
   lastResult: SyncResult | null;
-  //********** Force an immediate sync cycle
+  /* Memicu proses sinkronisasi secara instan */
   triggerSync: () => Promise<void>;
-  //********** Schedule a debounced sync (call after mutations)
+  /* Menjadwalkan sinkronisasi dengan debounce (dipanggil setelah mutasi data lokal) */
   scheduleSync: () => void;
 }
 
-//********** HOOK **********
+/********** Hook Utama (useSync) **********/
+
+/**
+ * Hook kustom untuk memantau status sinkronisasi lokal dan remote, menghitung antrean mutasi yang tertunda, serta mengelola siklus sinkronisasi latar belakang.
+ *
+ * @returns Objek yang berisi status jaringan, jumlah antrean sinkronisasi, dan fungsi kontrol untuk memicu sinkronisasi.
+ */
 export function useSync(): UseSyncReturn {
   const isOnline = useOnlineStatus();
   const [syncState, setSyncState] = useState<SyncState>("idle");
@@ -56,7 +62,7 @@ export function useSync(): UseSyncReturn {
   const [lastResult, setLastResult] = useState<SyncResult | null>(null);
   const initializedRef = useRef(false);
 
-  //********** Refresh the pending count from IndexedDB
+  /* Memperbarui jumlah mutasi yang tertunda dari IndexedDB */
   const refreshPendingCount = useCallback(async () => {
     try {
       const activeCount = await getPendingCount();
@@ -66,21 +72,21 @@ export function useSync(): UseSyncReturn {
       setQuarantinedCount(failedCount);
       setQueueSummary(summary);
     } catch {
-      //********** IndexedDB not available (SSR) - ignore
+      /* IndexedDB tidak tersedia pada lingkungan SSR — abaikan tanpa error */
     }
   }, []);
 
-  //********** Refresh the last synced timestamp
+  /* Memperbarui timestamp sinkronisasi terakhir dari database lokal */
   const refreshLastSynced = useCallback(async () => {
     try {
       const ts = await getLastSyncedAt();
       setLastSynced(ts);
     } catch {
-      //********** Ignore
+      /* Abaikan tanpa error */
     }
   }, []);
 
-  //********** Callback for sync results
+  /* Callback yang dijalankan ketika siklus sinkronisasi selesai */
   const handleSyncResult = useCallback(
     (result: SyncResult) => {
       setLastResult(result);
@@ -90,24 +96,24 @@ export function useSync(): UseSyncReturn {
     [refreshPendingCount, refreshLastSynced]
   );
 
-  //********** Initialize: register SW + start periodic sync
+  /********** [START: Inisialisasi Service Worker & Sinkronisasi Berkala] **********/
   useEffect(() => {
     if (initializedRef.current) return;
     initializedRef.current = true;
 
-    //********** Register service worker
+    /* Daftarkan service worker untuk menerima pemicu sinkronisasi latar belakang */
     registerServiceWorker({
       onSyncTriggered: () => {
-        //********** Background sync fired - trigger a full sync
+        /* Sinkronisasi latar belakang dipicu — jalankan sinkronisasi penuh saat ini juga */
         forceSyncNow(setSyncState, handleSyncResult);
       },
     });
 
-    //********** Load initial state
+    /* Muat status awal antrean dari IndexedDB */
     refreshPendingCount();
     refreshLastSynced();
 
-    //********** Start periodic sync if online
+    /* Mulai sinkronisasi berkala jika browser dalam keadaan online */
     if (navigator.onLine) {
       startPeriodicSync(setSyncState, handleSyncResult);
     }
@@ -116,8 +122,9 @@ export function useSync(): UseSyncReturn {
       cleanupSync();
     };
   }, [handleSyncResult, refreshPendingCount, refreshLastSynced]);
+  /********** [END: Inisialisasi Service Worker & Sinkronisasi Berkala] **********/
 
-  //********** Auto-sync when coming back online
+  /* Sinkronisasi otomatis begitu koneksi internet kembali aktif */
   useEffect(() => {
     if (isOnline) {
       setSyncState((prev) => (prev === "offline" ? "idle" : prev));
@@ -129,24 +136,26 @@ export function useSync(): UseSyncReturn {
     }
   }, [isOnline, handleSyncResult]);
 
-  //********** Manual sync trigger
+  /* Memicu siklus sinkronisasi secara manual */
   const triggerSync = useCallback(async () => {
     if (!isOnline) {
       setSyncState("offline");
-      //********** Request background sync for when connectivity returns
+      /* Minta sinkronisasi latar belakang agar dijalankan saat koneksi kembali normal */
       await requestBackgroundSync();
       return;
     }
     await forceSyncNow(setSyncState, handleSyncResult);
   }, [isOnline, handleSyncResult]);
 
-  //********** Debounced sync (call after every mutation)
+  /* Menjadwalkan sinkronisasi dengan debounce (dipanggil setiap kali terjadi mutasi lokal) */
   const scheduleSync = useCallback(() => {
-    refreshPendingCount(); //********** Update UI immediately
+    refreshPendingCount(); /* Perbarui antrean antarmuka pengguna saat ini juga */
     if (isOnline) {
       scheduleSyncCycle(setSyncState, handleSyncResult);
     }
   }, [isOnline, handleSyncResult, refreshPendingCount]);
+
+  /********** Pengembalian Data Hook **********/
 
   return {
     syncState,

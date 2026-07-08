@@ -1,10 +1,23 @@
+/*
+ * File: src/hooks/use-auth-user.ts
+ * Description: Hook kustom React untuk mengelola sesi autentikasi dan profil pengguna lokal menggunakan IndexedDB.
+ */
+
 import { useState, useEffect, useCallback } from 'react';
 import { User } from '@/types/models.types';
 
+/********** Hook Utama (useAuthUser) **********/
+
+/**
+ * Hook kustom untuk memuat, memperbarui, dan menghapus sesi pengguna lokal di dalam IndexedDB.
+ *
+ * @returns Objek berisi profil pengguna, status loading, status autentikasi, dan metode pengelolaan sesi lokal.
+ */
 export function useAuthUser() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  /* Muat profil pengguna aktif dari database lokal */
   const loadUser = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -21,6 +34,7 @@ export function useAuthUser() {
     }
   }, []);
 
+  /* Simpan atau perbarui data sesi pengguna secara lokal */
   const upsertLocalUser = useCallback(async (userData: User) => {
     try {
       const { upsertUser } = await import('@/lib/local-db/repositories/users');
@@ -32,6 +46,7 @@ export function useAuthUser() {
     }
   }, []);
 
+  /* Bersihkan sesi lokal saat pengguna keluar dari aplikasi */
   const clearLocalUser = useCallback(async () => {
     try {
       const { clearLocalSession } = await import('@/lib/local-db/repositories/users');
@@ -46,6 +61,8 @@ export function useAuthUser() {
   useEffect(() => {
     loadUser();
   }, [loadUser]);
+
+  /********** Pengembalian Data Hook **********/
 
   return {
     user,

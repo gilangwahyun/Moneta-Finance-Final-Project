@@ -1,4 +1,8 @@
-// ─── useTargets Hook ──────────────────────────
+/*
+ * File: src/hooks/use-targets.ts
+ * Description: Hook kustom React untuk mengelola target atau tujuan keuangan (saving targets / financial goals) lokal melalui IndexedDB serta menghitung progres pencapaiannya.
+ */
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -17,20 +21,36 @@ import { getCurrentUser } from "@/lib/local-db/repositories/users";
 import { useSyncContext } from "@/providers/SyncProvider";
 import { SyncEvents } from "@/lib/sync/events";
 
+/********** Tipe Data & Antarmuka **********/
+
 export interface TargetWithProgress extends FinancialTarget {
   progress: TargetProgress;
 }
 
 export interface UseTargetsReturn {
+  /* Daftar target keuangan beserta detail progres pencapaiannya */
   targets: TargetWithProgress[];
+  /* Status indikator apakah data target sedang dimuat */
   isLoading: boolean;
+  /* Pesan error jika terjadi kegagalan operasi */
   error: string | null;
+  /* Merekam atau menambah target keuangan baru */
   recordTarget: (input: Omit<AddTargetInput, "userId">) => Promise<FinancialTarget | null>;
+  /* Memperbarui data target keuangan yang sudah ada */
   editTarget: (input: UpdateTargetInput) => Promise<FinancialTarget | null>;
+  /* Menghapus target keuangan dari sistem */
   removeTarget: (clientId: string) => Promise<boolean>;
+  /* Memuat ulang data dari IndexedDB */
   refresh: () => Promise<void>;
 }
 
+/********** Hook Utama (useTargets) **********/
+
+/**
+ * Hook kustom untuk memuat target keuangan pengguna, mengalkulasi akumulasi progres dari transaksi terkait, serta menyediakan fungsi mutasi (CRUD).
+ *
+ * @returns Objek berisi daftar target, status loading, error, dan metode mutasi target.
+ */
 export function useTargets(): UseTargetsReturn {
   const [targets, setTargets] = useState<TargetWithProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -77,7 +97,7 @@ export function useTargets(): UseTargetsReturn {
   useEffect(() => {
     loadData();
     const handleUpdate = () => loadData();
-    // Update UI proactively without waiting for full sync to finish
+    /* Perbarui UI secara proaktif tanpa menunggu proses sinkronisasi penuh selesai */
     window.addEventListener(SyncEvents.TARGET_UPDATED, handleUpdate);
     window.addEventListener(SyncEvents.CATEGORY_UPDATED, handleUpdate);
     window.addEventListener(SyncEvents.TRANSACTION_UPDATED, handleUpdate);
@@ -91,6 +111,7 @@ export function useTargets(): UseTargetsReturn {
     };
   }, [loadData]);
 
+  /********** [START: Buat Target Baru & Jadwalkan Sinkronisasi] **********/
   const recordTarget = useCallback(
     async (input: Omit<AddTargetInput, "userId">) => {
       try {
@@ -107,7 +128,9 @@ export function useTargets(): UseTargetsReturn {
     },
     [scheduleSync, loadData]
   );
+  /********** [END: Buat Target Baru & Jadwalkan Sinkronisasi] **********/
 
+  /********** [START: Edit Target & Jadwalkan Sinkronisasi] **********/
   const editTarget = useCallback(
     async (input: UpdateTargetInput) => {
       try {
@@ -122,7 +145,9 @@ export function useTargets(): UseTargetsReturn {
     },
     [scheduleSync, loadData]
   );
+  /********** [END: Edit Target & Jadwalkan Sinkronisasi] **********/
 
+  /********** [START: Hapus Target & Jadwalkan Sinkronisasi] **********/
   const removeTarget = useCallback(
     async (clientId: string) => {
       try {
@@ -137,6 +162,9 @@ export function useTargets(): UseTargetsReturn {
     },
     [scheduleSync, loadData]
   );
+  /********** [END: Hapus Target & Jadwalkan Sinkronisasi] **********/
+
+  /********** Pengembalian Data Hook **********/
 
   return { targets, isLoading, error, recordTarget, editTarget, removeTarget, refresh: loadData };
 }

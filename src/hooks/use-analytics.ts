@@ -1,3 +1,8 @@
+/*
+ * File: src/hooks/use-analytics.ts
+ * Description: Hook kustom React untuk mengelola, menghitung, dan menyajikan metrik analitik keuangan secara menyeluruh, termasuk kalkulasi grafik, deteksi anomali, proyeksi, dan rekomendasi realokasi anggaran.
+ */
+
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
 import { Transaction, Budget, Wallet, FinancialTarget } from '@/types/models.types';
@@ -14,19 +19,29 @@ import { generateNudges, findBudgetReallocationRecommendation, ReallocationRecom
 import { calculateWalletBalance } from '@/lib/utils/wallet-utils';
 import { formatCurrency } from '@/lib/utils/helpers';
 
+/********** Konstanta & Palet Warna **********/
+
 export const CHART_PALETTE = [
-  '#6366f1', // indigo-500
-  '#14b8a6', // teal-500
-  '#f59e0b', // amber-500
-  '#f43f5e', // rose-500
-  '#06b6d4', // cyan-500
-  '#8b5cf6', // violet-500
-  '#10b981', // emerald-500
-  '#fb923c', // orange-400
-  '#64748b', // slate-500
-  '#ec4899', // pink-500
+  '#6366f1', /* indigo-500 */
+  '#14b8a6', /* teal-500 */
+  '#f59e0b', /* amber-500 */
+  '#f43f5e', /* rose-500 */
+  '#06b6d4', /* cyan-500 */
+  '#8b5cf6', /* violet-500 */
+  '#10b981', /* emerald-500 */
+  '#fb923c', /* orange-400 */
+  '#64748b', /* slate-500 */
+  '#ec4899', /* pink-500 */
 ];
 
+/********** Helper Kalkulasi **********/
+
+/**
+ * Menghitung total pendapatan, pengeluaran, dan saldo bersih dari daftar transaksi.
+ *
+ * @param txns - Array transaksi yang akan dihitung totalnya.
+ * @returns Objek yang berisi total income, total expense, dan net balance.
+ */
 export function sumByType(txns: Transaction[]) {
   let income = 0,
     expense = 0;
@@ -37,6 +52,14 @@ export function sumByType(txns: Transaction[]) {
   return { income, expense, net: income - expense };
 }
 
+/********** Hook Utama (useAnalytics) **********/
+
+/**
+ * Hook kustom untuk memuat data keuangan lokal dan menghitung berbagai metrik analitik seperti grafik donat, grafik tren, heatmap, serta rekomendasi nudge.
+ *
+ * @param donutMode - Mode tampilan grafik donat, apakah untuk pengeluaran ('EXPENSE') atau pendapatan ('INCOME').
+ * @returns Objek yang berisi status loading, data transaksi, dan seluruh hasil kalkulasi analitik keuangan.
+ */
 export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
   const { comparison } = useTimeFilter();
   const [allTxns, setAllTxns] = useState<Transaction[]>([]);
@@ -357,7 +380,7 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
     return null;
   }, [currentTxns, allCategories, topExpenseCategory]);
 
-  // --- NEW PHASE 1 INDICATORS ---
+  /********** Indikator Phase 1 — Insight Perilaku Bulan Ini **********/
 
   const recurringMerchantGrowth = useMemo(() => {
     const currentExp = currentTxns.filter((t) => t.type === 'EXPENSE' && t.description);
@@ -549,7 +572,7 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
     return null;
   }, [allWallets, allTxns]);
 
-  // --- NEW PHASE 2 INDICATORS ---
+  /********** Indikator Phase 2 — Proyeksi & Target **********/
 
   const newCategoryEmergence = useMemo(() => {
     const now = dayjs();
@@ -787,9 +810,7 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
     return null;
   }, [allTargets, allTxns]);
 
-  // =========================================================================
-  // PHASE 3: 3-MONTH HISTORICAL RULES
-  // =========================================================================
+  /********** Indikator Phase 3 — Histori Multi-Bulan **********/
 
   const categoryCreep = useMemo(() => {
     if (allTxns.length === 0 || allCategories.length === 0) return null;
@@ -923,9 +944,7 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
     return null;
   }, [allTxns, currentTxns, allCategories]);
 
-  // =========================================================================
-  // PHASE 4: PATTERNS & STREAKS (Low Priority / High Complexity)
-  // =========================================================================
+  /********** Indikator Phase 4 — Pola & Streak Positif **********/
 
   const budgetRecovery = useMemo(() => {
     if (budgets.length === 0 || allTxns.length === 0) return null;
@@ -1138,8 +1157,10 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
       ? [reallocationInsight, ...rawNudgeInsights]
       : [...rawNudgeInsights];
 
-    // Deterministic secondary sort on top of the priority sort done inside generateNudges,
-    // ensuring the reallocation insight (priority -1) always leads and ties are stable.
+    /*
+     * Pengurutan sekunder yang deterministik di atas pengurutan prioritas dari generateNudges,
+     * untuk memastikan rekomendasi realokasi (prioritas -1) selalu berada di urutan pertama.
+     */
     const severityRank: Record<string, number> = { critical: 0, warning: 1, positive: 2, info: 3, neutral: 4 };
     return combined.sort((a, b) => {
       if (a.priority !== b.priority) return a.priority - b.priority;
@@ -1149,6 +1170,8 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
       return a.title.localeCompare(b.title, 'id');
     });
   }, [rawNudgeInsights, budgets, currentTxns, allCategories]);
+
+  /********** Pengembalian Data Hook **********/
 
   return {
     allTxns,

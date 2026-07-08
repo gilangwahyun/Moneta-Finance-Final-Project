@@ -1,3 +1,8 @@
+/*
+ * File: src/hooks/use-dashboard.ts
+ * Description: Hook kustom React untuk mengelola dan menghitung ringkasan data dasbor utama, termasuk progres anggaran darurat, batas aman pengeluaran harian, serta analisis wawasan pintar (dashboard insight).
+ */
+
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Budget, Transaction, Category } from '@/types/models.types';
 import { getBudgetsByPeriod } from '@/lib/local-db/repositories/budgets';
@@ -5,6 +10,8 @@ import { getCurrentUser } from '@/lib/local-db/repositories/users';
 import { BudgetProgressItem } from '@/components/budgets/UrgentBudgetProgressBar';
 import { findBudgetReallocationRecommendation } from '@/lib/nudging';
 import dayjs from 'dayjs';
+
+/********** Tipe Data & Antarmuka **********/
 
 export interface UseDashboardProps {
   transactions: Transaction[];
@@ -32,12 +39,14 @@ export interface UseDashboardReturn {
   reload: () => Promise<void>;
 }
 
-// ─── Session Cache Helpers ─────────────────────────────────────────────────
-// The dashboardInsight is cached in sessionStorage per calendar-month key so
-// that navigating away and back does not cause it to flicker or change due to
-// async loading race conditions.  The cache is invalidated (cleared) whenever
-// a data-mutating event fires (new transaction or budget change).
-// ─────────────────────────────────────────────────────────────────────────────
+/********** Utilitas Cache Sesi **********/
+
+/*
+ * dashboardInsight disimpan dalam cache di sessionStorage per bulan kalender agar navigasi
+ * keluar dan kembali tidak menyebabkan kedipan (flicker) atau perubahan akibat race condition saat
+ * pemuatan asinkron. Cache akan dibersihkan (invalidated) setiap kali terjadi mutasi data
+ * (seperti transaksi baru atau perubahan anggaran).
+ */
 
 function getCacheKey(period: string) {
   return `moneta-dash-insight-${period}`;
@@ -61,7 +70,7 @@ function writeInsightCache(period: string, insight: DashboardInsight | null) {
       sessionStorage.setItem(getCacheKey(period), JSON.stringify(insight));
     }
   } catch {
-    // sessionStorage may be unavailable in certain contexts — fail silently
+    /* sessionStorage mungkin tidak tersedia di beberapa lingkungan — abaikan tanpa error */
   }
 }
 
@@ -69,19 +78,24 @@ function clearInsightCache(period: string) {
   try {
     sessionStorage.removeItem(getCacheKey(period));
   } catch {
-    // fail silently
+    /* Abaikan tanpa error */
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
+/********** Hook Utama (useDashboard) **********/
 
+/**
+ * Hook kustom untuk memuat data dasbor, memantau progres anggaran yang mendesak, mengalkulasi batas aman pengeluaran harian, dan menghasilkan wawasan keuangan cerdas.
+ *
+ * @param props - Properti yang berisi daftar transaksi dan semua kategori.
+ * @returns Objek yang berisi informasi username, progres anggaran, total pengeluaran dan anggaran, serta insight dasbor.
+ */
 export function useDashboard({ transactions, allCategories }: UseDashboardProps): UseDashboardReturn {
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [username, setUsername] = useState<string>('');
   const [isLoading, setIsLoading] = useState(true);
 
-  // Tracks whether data is fully loaded so we only write the cache once
-  // both budgets AND transactions are available.
+  /* Lacak apakah data sudah sepenuhnya dimuat agar cache hanya ditulis setelah anggaran dan transaksi siap */
   const dataReadyRef = useRef(false);
 
   const currentPeriod = useMemo(() => {
@@ -105,8 +119,7 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
   useEffect(() => {
     load();
 
-    // When data changes, invalidate the cached insight so the next render
-    // recomputes it from fresh data and stores the new result.
+    /* Ketika terjadi mutasi data, bersihkan cache agar render berikutnya mengalkulasi ulang wawasan terbaru */
     const invalidateAndReload = () => {
       clearInsightCache(currentPeriod);
       dataReadyRef.current = false;
@@ -185,7 +198,7 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
 
     let fresh: DashboardInsight | null = null;
 
-    // 1. Reallocation (Critical)
+    /********** [START: Langkah 1 — Deteksi Realokasi Anggaran (Kritis)] **********/
     if (budgets.length > 0 && transactions.length > 0) {
       const allBudgetsInfo = budgets.map((b) => {
         const bCat = allCategories.find((c) => c.clientId === b.categoryId);
@@ -223,12 +236,13 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
         return fresh;
       }
     }
+    /********** [END: Langkah 1 — Deteksi Realokasi Anggaran (Kritis)] **********/
 
     const thirtyDaysAgo = dayjs().subtract(30, 'day');
     const allIncomes = transactions.filter((t) => t.type === 'INCOME' && dayjs(t.date).isAfter(thirtyDaysAgo));
     const currentExpTxns = transactions.filter((t) => t.type === 'EXPENSE' && t.date.startsWith(currentPeriod));
 
-    // 2. Payday Leak (Warning)
+    /********** [START: Langkah 2 — Deteksi Kebocoran Awal Bulan (Payday Leak)] **********/
     if (allIncomes.length > 0) {
       let maxIncome = allIncomes[0];
       for (const inc of allIncomes) {
@@ -251,8 +265,9 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
         }
       }
     }
+    /********** [END: Langkah 2 — Deteksi Kebocoran Awal Bulan (Payday Leak)] **********/
 
-    // 3. Burn Rate Warning
+    /********** [START: Langkah 3 — Deteksi Kecepatan Pengeluaran (Burn Rate)] **********/
     const now = new Date();
     const currentDay = now.getDate();
     const daysInMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
@@ -269,8 +284,9 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
       writeInsightCache(currentPeriod, fresh);
       return fresh;
     }
+    /********** [END: Langkah 3 — Deteksi Kecepatan Pengeluaran (Burn Rate)] **********/
 
-    // 4. Weekend Trap (Warning)
+    /********** [START: Langkah 4 — Deteksi Jebakan Akhir Pekan (Weekend Trap)] **********/
     const thisWeekExpenses = currentExpTxns.filter((t) => dayjs(t.date).isSame(dayjs(), 'week'));
     let weekTotal = 0,
       weekendTotal = 0;
@@ -289,8 +305,9 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
       writeInsightCache(currentPeriod, fresh);
       return fresh;
     }
+    /********** [END: Langkah 4 — Deteksi Jebakan Akhir Pekan (Weekend Trap)] **********/
 
-    // 5. Night Owl (Warning)
+    /********** [START: Langkah 5 — Deteksi Pengeluaran Larut Malam (Night Owl)] **********/
     const wantsRegex = /(hiburan|jajan|pribadi|gaya hidup|hobi)/i;
     let nightTotal = 0;
     for (const tx of currentExpTxns) {
@@ -309,8 +326,9 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
       writeInsightCache(currentPeriod, fresh);
       return fresh;
     }
+    /********** [END: Langkah 5 — Deteksi Pengeluaran Larut Malam (Night Owl)] **********/
 
-    // 6. Positive / Info Fallback
+    /********** [START: Langkah 6 — Fallback Status Positif atau Info] **********/
     if (totalBudget > 0) {
       if (totalSpent === 0) {
         fresh = {
@@ -332,10 +350,13 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
         message: 'Atur anggaran pertamamu untuk mendapatkan lebih banyak peringatan dan perlindungan pengeluaran.',
       };
     }
+    /********** [END: Langkah 6 — Fallback Status Positif atau Info] **********/
 
     writeInsightCache(currentPeriod, fresh);
     return fresh;
   }, [transactions, budgets, allCategories, totalBudget, totalSpent, currentPeriod, isLoading]);
+
+  /********** Pengembalian Data Hook **********/
 
   return {
     username,

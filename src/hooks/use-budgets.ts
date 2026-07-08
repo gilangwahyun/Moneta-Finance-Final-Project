@@ -1,3 +1,8 @@
+/*
+ * File: src/hooks/use-budgets.ts
+ * Description: Hook kustom React untuk memuat, mengelola, dan memantau anggaran bulanan pengguna beserta statistik penggunaan, status keamanan, dan analisis ritme pengeluaran.
+ */
+
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { getCurrentUser } from '@/lib/local-db/repositories/users';
 import { getBudgetsByPeriod } from '@/lib/local-db/repositories/budgets';
@@ -6,6 +11,8 @@ import { getTransactionsByMonth } from '@/lib/local-db/transaction-queries';
 import { Budget, User, Transaction, Category } from '@/types/models.types';
 import { calculateBudgetRhythm, BudgetRhythm } from '@/lib/utils/budget-rhythm';
 import { SyncEvents } from '@/lib/sync/events';
+
+/********** Tipe Data & Antarmuka **********/
 
 export interface BudgetWithStats extends Budget {
   category?: Category;
@@ -24,6 +31,14 @@ export interface UseBudgetsReturn {
   reload: () => Promise<void>;
 }
 
+/********** Hook Utama (useBudgets) **********/
+
+/**
+ * Hook kustom untuk mengambil anggaran pada periode bulan tertentu dan menghitung statistik penggunaannya terhadap transaksi terkait.
+ *
+ * @param selectedMonth - Objek tanggal yang menunjukkan bulan dan tahun anggaran yang ingin dipantau.
+ * @returns Objek berisi profil pengguna, daftar anggaran mentah dan beserta statistik, transaksi, dan status pembaruan data.
+ */
 export function useBudgets(selectedMonth: Date): UseBudgetsReturn {
   const [user, setUser] = useState<User | null>(null);
   const [budgets, setBudgets] = useState<Budget[]>([]);
@@ -43,7 +58,7 @@ export function useBudgets(selectedMonth: Date): UseBudgetsReturn {
     
     setBudgets(data);
     
-    // Load transactions for the selected month to calculate usage
+    /* Muat transaksi untuk bulan yang dipilih guna mengalkulasi persentase penggunaan */
     const [year, month] = period.split("-").map(Number);
     const txns = await getTransactionsByMonth(userId, year, month - 1);
     setTransactions(txns);
@@ -87,8 +102,11 @@ export function useBudgets(selectedMonth: Date): UseBudgetsReturn {
     };
   }, [currentPeriod, loadBudgets]);
 
+  /********** Kalkulasi Statistik Anggaran & Ritme **********/
+
   const budgetsWithStats = useMemo(() => {
     return budgets.map((budget) => {
+      /********** [START: Kalkulasi Penggunaan, Status, dan Ritme Anggaran] **********/
       const category = allCategories.find((c) => c.clientId === budget.categoryId || c.id === budget.categoryId);
       
       const spentAmount = transactions.reduce((acc, txn) => {
@@ -98,7 +116,7 @@ export function useBudgets(selectedMonth: Date): UseBudgetsReturn {
         return acc;
       }, 0);
 
-      const limit = Number(budget.amount) || 1; // guard against div by zero
+      const limit = Number(budget.amount) || 1; /* Lindungi dari kemungkinan pembagian dengan nol */
       let percentage = (spentAmount / limit) * 100;
       if (percentage < 0) percentage = 0;
       
@@ -116,8 +134,11 @@ export function useBudgets(selectedMonth: Date): UseBudgetsReturn {
         status,
         rhythm
       };
+      /********** [END: Kalkulasi Penggunaan, Status, dan Ritme Anggaran] **********/
     });
   }, [budgets, transactions, currentPeriod, allCategories]);
+
+  /********** Pengembalian Data Hook **********/
 
   return {
     user,

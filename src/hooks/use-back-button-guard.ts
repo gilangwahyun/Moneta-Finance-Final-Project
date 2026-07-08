@@ -1,35 +1,36 @@
-//********** START: useBackButtonGuard **********
-//********** Bug 2 Fix: Aligned with standard sequential web history (Pinterest PWA
-//********** pattern). The back button now navigates naturally through Next.js router
-//********** history. Only when the user reaches the root view with no more internal
-//********** pages to go back to, the guard intercepts and shows the exit dialog.
-//**********
-//********** Key change from previous version:
-//**********   - Removed aggressive pushState dummy that prevented ALL back navigation
-//**********   - Now pushes ONE dummy state only at the root route (/ or /dashboard)
-//**********   - Inner-page presses navigate naturally (no interception)
-//**********   - Root-page presses show exit confirm, then use graceful OS exit
-//********** END: useBackButtonGuard **********
+/*
+ * File: src/hooks/use-back-button-guard.ts
+ * Description: Hook kustom React untuk mengelola navigasi tombol kembali (back button) pada PWA standalone dengan pola Pinterest, mencegah keluar aplikasi secara tidak sengaja di rute utama.
+ */
 
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
 import { usePathname } from "next/navigation";
 
-//********** Root paths that trigger the exit guard (not internal app routes)
+/********** Konfigurasi Path Utama **********/
+
+/* Path utama yang memicu pelindung keluar aplikasi (bukan rute internal aplikasi) */
 const ROOT_PATHS = new Set(["/", "/dashboard"]);
 
-//********** HOOK **********
+/********** Hook Utama (useBackButtonGuard) **********/
+
+/**
+ * Hook kustom untuk memantau penekanan tombol kembali browser/OS pada mode PWA, menampilkan dialog konfirmasi keluar saat berada di halaman utama.
+ *
+ * @returns Objek berisi status dialog konfirmasi, fungsi konfirmasi keluar, dan fungsi pembatalan.
+ */
 export function useBackButtonGuard() {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const pathname = usePathname();
   const handlerRef = useRef<((e: PopStateEvent) => void) | null>(null);
   const isExitingRef = useRef(false);
-  //********** Track whether dummy guard state is currently pushed
+  /* Lacak apakah status penjaga dummy saat ini sudah dimasukkan ke history */
   const guardPushedRef = useRef(false);
 
+  /********** [START: Inisialisasi Penanganan Navigasi Kembali PWA] **********/
   useEffect(() => {
-    //********** Only activate in PWA standalone mode
+    /* Hanya aktifkan pelindung pada mode PWA standalone */
     const isStandalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       ("standalone" in window.navigator &&
@@ -40,22 +41,20 @@ export function useBackButtonGuard() {
 
     const isAtRoot = ROOT_PATHS.has(pathname);
 
-    //********** Remove any previously registered handler before re-registering
+    /* Hapus event listener yang terdaftar sebelumnya sebelum mendaftarkan ulang */
     if (handlerRef.current) {
       window.removeEventListener("popstate", handlerRef.current);
       handlerRef.current = null;
     }
 
     if (!isAtRoot) {
-      //********** Inner page: do NOT push a guard state
-      //********** Let the browser handle back navigation naturally.
-      //********** This is the Pinterest pattern: back goes to the previous page.
+      /* Halaman internal: JANGAN dorong status penjaga ke history.
+       * Biarkan browser menangani navigasi kembali secara alami (pola Pinterest). */
       guardPushedRef.current = false;
       return;
     }
 
-    //********** Root page: push ONE dummy guard state
-    //********** This ensures pressing back fires popstate instead of exiting directly.
+    /* Halaman utama: dorong SATU status penjaga dummy agar penekanan kembali memicu popstate */
     if (!guardPushedRef.current) {
       history.pushState({ pwaGuard: true }, "");
       guardPushedRef.current = true;
@@ -64,13 +63,12 @@ export function useBackButtonGuard() {
     const handlePopState = (e: PopStateEvent) => {
       if (isExitingRef.current) return;
 
-      //********** Only intercept when we're still on the root path
+      /* Hanya hadang ketika pengguna masih berada di rute utama */
       if (!ROOT_PATHS.has(window.location.pathname)) {
-        //********** Not at root - the navigation already happened, nothing to do
         return;
       }
 
-      //********** Re-push to keep the guard active for the next press
+      /* Dorong kembali status agar penjaga tetap aktif untuk penekanan berikutnya */
       history.pushState({ pwaGuard: true }, "");
       setShowExitConfirm(true);
     };
@@ -85,12 +83,14 @@ export function useBackButtonGuard() {
       }
     };
   }, [pathname]);
+  /********** [END: Inisialisasi Penanganan Navigasi Kembali PWA] **********/
 
+  /********** [START: Eksekusi Keluar dari Aplikasi PWA] **********/
   const confirmExit = useCallback(() => {
     if (isExitingRef.current) return;
     isExitingRef.current = true;
 
-    //********** Remove listener before navigating to prevent re-trigger
+    /* Hapus listener sebelum navigasi untuk mencegah pemicuan ulang */
     if (handlerRef.current) {
       window.removeEventListener("popstate", handlerRef.current);
       handlerRef.current = null;
@@ -98,20 +98,17 @@ export function useBackButtonGuard() {
     guardPushedRef.current = false;
     setShowExitConfirm(false);
 
-    //********** Step 1: Try standard PWA close
+    /* Langkah 1: Coba penutupan standar PWA */
     window.close();
 
-    //********** Step 2: Graceful fallback - navigate back past all entries.
-    //********** The OS standalone container treats this as "closed".
+    /* Langkah 2: Fallback anggun — navigasi mundur melewati seluruh entri history */
     setTimeout(() => {
       const isStandalone = window.matchMedia("(display-mode: standalone)").matches;
       if (isStandalone) {
-        //********** Navigate back past all history so the OS container minimizes/closes
         const steps = window.history.length;
         if (steps > 1) {
           window.history.go(-steps);
         } else {
-          //********** Only one entry - replace with a neutral state
           window.history.replaceState(null, "", "/");
           window.history.go(-1);
         }
@@ -120,12 +117,15 @@ export function useBackButtonGuard() {
       }
     }, 200);
   }, []);
+  /********** [END: Eksekusi Keluar dari Aplikasi PWA] **********/
 
   const cancelExit = useCallback(() => {
     setShowExitConfirm(false);
     isExitingRef.current = false;
-    //********** Guard state was already re-pushed by handlePopState
+    /* Status penjaga sudah didorong kembali oleh handlePopState */
   }, []);
+
+  /********** Pengembalian Data Hook **********/
 
   return { showExitConfirm, confirmExit, cancelExit };
 }

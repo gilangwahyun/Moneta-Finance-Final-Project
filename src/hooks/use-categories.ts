@@ -1,14 +1,7 @@
-//********** START: useCategories Hook **********
-//********** React hook for managing categories through IndexedDB.
-//********** The UI reads/writes exclusively through this hook - never
-//********** directly to the server API.
-//**********
-//********** This hook:
-//********** 1. Loads categories from IndexedDB on mount
-//********** 2. Provides CRUD operations that write to IndexedDB + enqueue sync
-//********** 3. Triggers background sync after every mutation
-//********** 4. Tracks loading/error state for the UI
-//********** END: useCategories Hook **********
+/*
+ * File: src/hooks/use-categories.ts
+ * Description: Hook kustom React untuk mengelola kategori keuangan lokal melalui IndexedDB secara local-first, mencakup operasi pemuatan, penambahan, pembaruan, dan penghapusan.
+ */
 
 "use client";
 
@@ -28,34 +21,37 @@ import { useSyncContext } from "@/providers/SyncProvider";
 
 export type { AddCategoryInput, UpdateCategoryInput };
 
-//********** TYPES **********
+/********** Tipe Data & Antarmuka **********/
+
 export interface UseCategoriesReturn {
-  //********** Active (non-deleted) categories
+  /* Daftar kategori aktif yang tidak dihapus */
   categories: Category[];
-  //********** ALL categories including soft-deleted (for lookups)
+  /* Seluruh daftar kategori termasuk yang sudah dihapus (soft-deleted) untuk keperluan referensi */
   allCategories: Category[];
-  //********** Income categories only (active)
+  /* Daftar kategori khusus untuk tipe pendapatan (INCOME) */
   incomeCategories: Category[];
-  //********** Expense categories only (active)
+  /* Daftar kategori khusus untuk tipe pengeluaran (EXPENSE) */
   expenseCategories: Category[];
-  //********** Whether categories are currently loading
+  /* Status indikator apakah data kategori sedang dimuat */
   isLoading: boolean;
-  //********** Error message if any operation failed
+  /* Pesan error jika terjadi kegagalan operasi */
   error: string | null;
-  //********** Create a new category
+  /* Membuat kategori baru ke dalam database lokal */
   createCategory: (input: Omit<AddCategoryInput, "userId">) => Promise<Category | null>;
-  //********** Update an existing category
+  /* Memperbarui data kategori yang sudah ada */
   editCategory: (input: UpdateCategoryInput) => Promise<Category | null>;
-  //********** Soft-delete a category
+  /* Menghapus (soft-delete) kategori dari sistem */
   removeCategory: (clientId: string) => Promise<boolean>;
-  //********** Force reload from IndexedDB
+  /* Memuat ulang data dari IndexedDB */
   refresh: () => Promise<void>;
 }
 
-//********** HOOK **********
+/********** Hook Utama (useCategories) **********/
+
 /**
- * React hook for managing categories through IndexedDB.
- * @returns Object containing categories state and methods.
+ * Hook kustom untuk mengelola data kategori secara local-first dengan dukungan pembaruan antarmuka optimistik serta sinkronisasi latar belakang otomatis.
+ *
+ * @returns Objek berisi daftar kategori aktif dan turunan, status loading, error, serta fungsi CRUD kategori.
  */
 export function useCategories(): UseCategoriesReturn {
   const [categories, setCategories] = useState<Category[]>([]);
@@ -64,7 +60,7 @@ export function useCategories(): UseCategoriesReturn {
   const [error, setError] = useState<string | null>(null);
   const { scheduleSync } = useSyncContext();
 
-  //********** Load categories from IndexedDB **********
+  /* Memuat daftar kategori dari IndexedDB */
   const loadCategories = useCallback(async () => {
     try {
       setIsLoading(true);
@@ -80,7 +76,7 @@ export function useCategories(): UseCategoriesReturn {
       const result = await getAllCategories(user.id);
       const all = await getAllCategoriesIncludingDeleted(user.id);
 
-      //********** Sort: defaults first, then alphabetical
+      /* Urutkan: kategori default terlebih dahulu, kemudian secara abjad */
       const sortFn = (a: Category, b: Category) => {
         if (a.isDefault !== b.isDefault) return a.isDefault ? -1 : 1;
         return a.name.localeCompare(b.name);
@@ -99,12 +95,11 @@ export function useCategories(): UseCategoriesReturn {
     }
   }, []);
 
-  //********** Load on mount and listen to updates
+  /* Muat data saat komponen dimount dan dengarkan event pembaruan */
   useEffect(() => {
     loadCategories();
 
     const handleUpdate = () => {
-      // console.log("[useCategories] Received update event, reloading...");
       loadCategories();
     };
 
@@ -114,7 +109,7 @@ export function useCategories(): UseCategoriesReturn {
     };
   }, [loadCategories]);
 
-  //********** Create **********
+  /********** [START: Buat Kategori Baru & Pembaruan Optimistik] **********/
   const createCategory = useCallback(
     async (input: Omit<AddCategoryInput, "userId">): Promise<Category | null> => {
       try {
@@ -127,7 +122,7 @@ export function useCategories(): UseCategoriesReturn {
 
         const created = await addCategory({ ...input, userId: user.id });
 
-        //********** Optimistic UI update
+        /* Pembaruan optimistik antarmuka pengguna */
         setCategories((prev) =>
           [...prev, created].sort((a, b) => {
             if (a.isDefault !== b.isDefault) return a.isDefault ? -1 : 1;
@@ -135,10 +130,10 @@ export function useCategories(): UseCategoriesReturn {
           })
         );
 
-        //********** Schedule background sync
+        /* Jadwalkan sinkronisasi latar belakang */
         scheduleSync();
         
-        //********** Notify other mounted hooks
+        /* Beri tahu hook atau komponen lain yang sedang aktif */
         window.dispatchEvent(new Event("moneta-category-updated"));
 
         return created;
@@ -150,8 +145,9 @@ export function useCategories(): UseCategoriesReturn {
     },
     [scheduleSync]
   );
+  /********** [END: Buat Kategori Baru & Pembaruan Optimistik] **********/
 
-  //********** Update **********
+  /********** [START: Edit Kategori & Pembaruan Optimistik] **********/
   const editCategory = useCallback(
     async (input: UpdateCategoryInput): Promise<Category | null> => {
       try {
@@ -162,7 +158,7 @@ export function useCategories(): UseCategoriesReturn {
           return null;
         }
 
-        //********** Optimistic UI update
+        /* Pembaruan optimistik antarmuka pengguna */
         setCategories((prev) =>
           prev
             .map((c) => (c.clientId === updated.clientId ? updated : c))
@@ -183,8 +179,9 @@ export function useCategories(): UseCategoriesReturn {
     },
     [scheduleSync]
   );
+  /********** [END: Edit Kategori & Pembaruan Optimistik] **********/
 
-  //********** Delete **********
+  /********** [START: Hapus Kategori & Pembaruan Optimistik] **********/
   const removeCategory = useCallback(
     async (clientId: string): Promise<boolean> => {
       try {
@@ -195,7 +192,7 @@ export function useCategories(): UseCategoriesReturn {
           return false;
         }
 
-        //********** Optimistic UI update - remove from list
+        /* Pembaruan optimistik antarmuka pengguna — hapus dari daftar aktif */
         setCategories((prev) => prev.filter((c) => c.clientId !== clientId));
 
         scheduleSync();
@@ -209,10 +206,13 @@ export function useCategories(): UseCategoriesReturn {
     },
     [scheduleSync]
   );
+  /********** [END: Hapus Kategori & Pembaruan Optimistik] **********/
 
-  //********** Derived data **********
+  /********** Kalkulasi Data Turunan **********/
   const incomeCategories = categories.filter((c) => c.type === "INCOME");
   const expenseCategories = categories.filter((c) => c.type === "EXPENSE");
+
+  /********** Pengembalian Data Hook **********/
 
   return {
     categories,

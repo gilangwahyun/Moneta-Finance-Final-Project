@@ -1,22 +1,25 @@
-//********** START: useOnlineStatus Hook **********
-//********** Tracks whether the browser is online or offline.
-//********** Useful for showing connectivity indicators and triggering sync.
-//********** END: useOnlineStatus Hook **********
+/*
+ * File: src/hooks/use-online-status.ts
+ * Description: Hook kustom React untuk memantau status konektivitas jaringan (online/offline) browser secara real-time.
+ */
 
 "use client";
 
 import { useState, useEffect } from "react";
 
-//********** HOOK **********
+/********** Hook Utama (useOnlineStatus) **********/
+
 /**
- * Tracks whether the browser is online or offline.
- * @returns boolean indicating if the browser is online
+ * Hook kustom untuk melacak status koneksi jaringan browser apakah sedang terhubung ke internet (online) atau terputus (offline).
+ *
+ * @returns boolean `true` jika browser terhubung ke jaringan (online), atau `false` jika offline.
  */
 export function useOnlineStatus(): boolean {
   const [isOnline, setIsOnline] = useState<boolean>(
     typeof navigator !== "undefined" ? navigator.onLine : true
   );
 
+  /* Dengarkan perubahan status konektivitas jaringan browser */
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -29,6 +32,8 @@ export function useOnlineStatus(): boolean {
       window.removeEventListener("offline", handleOffline);
     };
   }, []);
+
+  /********** Pengembalian Data Hook **********/
 
   return isOnline;
 }
