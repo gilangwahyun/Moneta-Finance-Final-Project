@@ -3,10 +3,19 @@ import { prisma } from "@/lib/db/prisma";
 import { getAuthUser } from "@/lib/auth/middleware";
 import { validateCsrfToken } from "@/lib/auth/csrf";
 
-// Outline Next.js API Route for CRUD on Budgets
-// In an offline-first app, this acts as the sync endpoint for Budget entries
-// from the sync_queue, or as a direct API fallback.
+/********** Next.js API Route untuk operasi CRUD pada Anggaran (Budgets).
+ *  Dalam aplikasi offline-first, endpoint ini berfungsi sebagai fallback API langsung
+ *  atau endpoint sinkronisasi untuk entri budget dari sync queue.
+ */
 
+/********** GET /api/budgets **********/
+
+/**
+ * Mengambil daftar anggaran milik user yang sedang aktif.
+ *
+ * @param request - NextRequest yang memuat token autentikasi dan parameter query `period` (opsional).
+ * @returns NextResponse berisi array data anggaran, atau error 401/500 jika gagal.
+ */
 export async function GET(request: NextRequest) {
   try {
     const tokenPayload = await getAuthUser(request);
@@ -32,6 +41,14 @@ export async function GET(request: NextRequest) {
   }
 }
 
+/********** POST /api/budgets **********/
+
+/**
+ * Membuat atau memperbarui anggaran (budget) secara tunggal maupun massal.
+ *
+ * @param request - NextRequest berisi body JSON berupa satu entri budget atau array entri budget.
+ * @returns NextResponse berisi hasil pemrosesan (processed count dan array data).
+ */
 export async function POST(request: NextRequest) {
   try {
     const tokenPayload = await getAuthUser(request);
@@ -39,21 +56,21 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
-    // ── CSRF check ─────────────────────────────────────
+    /********** Pengecekan Token CSRF. */
     const csrfError = validateCsrfToken(request);
     if (csrfError) return csrfError;
 
     const userId = tokenPayload.sub;
     const body = await request.json();
     
-    // Support bulk operations (from sync queue) or single operations
+    /********** Mendukung operasi massal (dari sync queue) atau operasi tunggal. */
     const entries = Array.isArray(body) ? body : [body];
     const results = [];
 
     for (const data of entries) {
       const { clientId, amount, period, categoryId, deletedAt, syncStatus } = data;
 
-      // Ensure the category exists for the user
+      /********** Pastikan kategori ada dan dimiliki oleh user. */
       const category = await prisma.category.findUnique({
         where: { clientId: categoryId },
       });
@@ -63,7 +80,7 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
-      // Upsert the budget
+      /********** Lakukan upsert (perbarui jika ada, buat baru jika belum) pada budget. */
       const existing = await prisma.budget.findUnique({
         where: { clientId },
       });
@@ -74,7 +91,7 @@ export async function POST(request: NextRequest) {
           data: {
             amount,
             period,
-            categoryId: category.id, // map clientId to server ID
+            categoryId: category.id, /* Peta clientId ke ID server. */
             syncStatus: syncStatus || "SYNCED",
             deletedAt: deletedAt ? new Date(deletedAt) : null,
           }

@@ -1,4 +1,3 @@
-/********** [START: Sync Manager] **********/
 /********** Mengorkestrasi siklus push/pull sync antara IndexedDB dan
  *  server API menggunakan sync_queue untuk pelacakan mutasi yang andal.
  *
@@ -7,7 +6,6 @@
  *  2. pullUpdates()     — GET /api/sync/pull, merge ke IndexedDB
  *  3. performFullSync() — push lalu pull secara berurutan
  */
-/********** [END: Sync Manager] **********/
 
 import {
   getAllPending,

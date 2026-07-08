@@ -1,10 +1,8 @@
-// ─── Transactions IndexedDB Repository ──────────────────
-// Full CRUD operations for transactions in the local IndexedDB store.
-//
-// Architecture: Local-First
-//   - UI reads/writes ONLY to IndexedDB through these functions
-//   - All mutations auto-enqueue to sync_queue
-//   - The sync engine pushes queued changes to the server
+/*
+ * File: src/lib/local-db/repositories/transactions.ts
+ * Description: Repositori lokal IndexedDB untuk manajemen operasi CRUD transaksi,
+ * mendukung arsitektur offline-first dengan antrean sinkronisasi otomatis.
+ */
 
 import { getDB } from '../index';
 import { STORES } from '../schema';
@@ -13,7 +11,7 @@ import { enqueueChange } from './sync-queue';
 import { generateClientId } from '@/lib/utils/helpers';
 import { evaluateAndTriggerNudges, evaluateTargetNudges } from '@/lib/notifications/local-engine';
 
-/********** Create **********/
+/********** Tipe dan Operasi Pembuatan (Create) **********/
 
 export interface AddTransactionInput {
   amount: number;
@@ -28,10 +26,11 @@ export interface AddTransactionInput {
 }
 
 /**
- * Record a new transaction with a client-generated UUID.
- * Automatically sets syncStatus to PENDING and enqueues for sync.
+ * Mencatat transaksi baru dengan UUID lokal yang dibuat oleh klien.
+ * Secara otomatis mengatur syncStatus ke PENDING dan memasukkannya ke antrean sinkronisasi.
  *
- * @returns The created transaction (with its clientId)
+ * @param input - Data input transaksi (amount, type, description, note, date, walletId, dll).
+ * @returns Promise berisi objek Transaction yang baru dibuat.
  */
 export async function addTransaction(input: AddTransactionInput): Promise<Transaction> {
   const now = new Date().toISOString();
@@ -69,8 +68,7 @@ export async function addTransaction(input: AddTransactionInput): Promise<Transa
     ...transaction,
   });
 
-  /********** Trigger offline-first notification evaluation */
-  //********** We fire this asynchronously so it doesn't block the UI return. */
+  /********** Memicu evaluasi notifikasi offline-first secara asinkron (tanpa memblokir UI). */
   evaluateAndTriggerNudges(transaction).catch((err) => {
     console.error('[TransactionsRepo] evaluateAndTriggerNudges failed:', err);
   });
@@ -81,7 +79,7 @@ export async function addTransaction(input: AddTransactionInput): Promise<Transa
   return transaction;
 }
 
-// ─── Update ─────────────────────────────────────────────
+/********** Operasi Pembaruan (Update) **********/
 
 export interface UpdateTransactionInput {
   clientId: string;
@@ -96,10 +94,11 @@ export interface UpdateTransactionInput {
 }
 
 /**
- * Update specific fields of an existing transaction.
- * Marks as PENDING and enqueues the mutation for sync.
+ * Memperbarui field tertentu dari transaksi yang sudah ada.
+ * Menandai status sinkronisasi sebagai PENDING dan memasukkan mutasi ke antrean sinkronisasi.
  *
- * @returns The updated transaction, or null if not found
+ * @param input - Data perubahan transaksi berdasarkan clientId.
+ * @returns Promise berisi objek Transaction yang diperbarui, atau null jika tidak ditemukan.
  */
 export async function updateTransaction(input: UpdateTransactionInput): Promise<Transaction | null> {
   const existing = await getTransactionById(input.clientId);
@@ -141,10 +140,13 @@ export async function updateTransaction(input: UpdateTransactionInput): Promise<
   return updated;
 }
 
-// ─── Soft Delete ────────────────────────────────────────
+/********** Operasi Penghapusan (Delete) **********/
 
 /**
- * Soft-delete a transaction by setting deletedAt timestamp.
+ * Melakukan soft-delete pada transaksi dengan menandai timestamp deletedAt.
+ *
+ * @param clientId - ID lokal unik dari transaksi yang akan dihapus.
+ * @returns Promise berisi boolean yang menunjukkan apakah rekod ditemukan dan dihapus.
  */
 export async function deleteTransaction(clientId: string): Promise<boolean> {
   const existing = await getTransactionById(clientId);
@@ -174,8 +176,11 @@ export async function deleteTransaction(clientId: string): Promise<boolean> {
 }
 
 /**
- * Hard-delete a transaction from IndexedDB.
- * Used during conflict resolution when the server rejects a transaction.
+ * Menghapus transaksi secara permanen dari IndexedDB lokal.
+ * Digunakan saat resolusi konflik ketika server menolak transaksi.
+ *
+ * @param clientId - ID lokal unik dari transaksi yang akan dihapus permanen.
+ * @returns Promise void setelah rekod dihapus.
  */
 export async function hardDeleteTransaction(clientId: string): Promise<void> {
   const db = await getDB();
@@ -188,10 +193,13 @@ export async function hardDeleteTransaction(clientId: string): Promise<void> {
   });
 }
 
-// ─── Query Helpers ───────────────────────────────────────────────
+/********** Helper Kueri Pencarian (Query Helpers) **********/
 
 /**
- * Get all non-deleted transactions for a user.
+ * Mengambil seluruh transaksi aktif (tidak terhapus) milik seorang pengguna.
+ *
+ * @param userId - ID pengguna pemilik transaksi.
+ * @returns Promise berisi array Transaction.
  */
 export async function getAllTransactions(userId: string): Promise<Transaction[]> {
   const db = await getDB();
@@ -210,7 +218,10 @@ export async function getAllTransactions(userId: string): Promise<Transaction[]>
 }
 
 /**
- * Get a single transaction by clientId.
+ * Mengambil satu transaksi berdasarkan clientId lokal.
+ *
+ * @param clientId - ID lokal unik transaksi.
+ * @returns Promise berisi Transaction jika ditemukan, atau undefined.
  */
 export async function getTransactionById(clientId: string): Promise<Transaction | undefined> {
   const db = await getDB();
@@ -225,25 +236,34 @@ export async function getTransactionById(clientId: string): Promise<Transaction 
 }
 
 /**
- * Get transactions within a date range for a user.
+ * Mengambil daftar transaksi dalam rentang tanggal tertentu untuk seorang pengguna.
+ *
+ * @param userId - ID pengguna.
+ * @param startDate - Tanggal awal dalam format YYYY-MM-DD.
+ * @param endDate - Tanggal akhir dalam format YYYY-MM-DD.
+ * @returns Promise berisi array Transaction dalam rentang tersebut.
  */
 export async function getTransactionsByDateRange(userId: string, startDate: string, endDate: string): Promise<Transaction[]> {
   const all = await getAllTransactions(userId);
   return all.filter((t) => {
-    // Normalize: take only YYYY-MM-DD portion for comparison
+    /********** Normalisasi: ambil bagian YYYY-MM-DD saja untuk perbandingan. */
     const txnDate = t.date.substring(0, 10);
     return txnDate >= startDate && txnDate <= endDate;
   });
 }
 
 /**
- * Get recent transactions, sorted by date descending.
+ * Mengambil transaksi terbaru, diurutkan menurun berdasarkan tanggal.
+ *
+ * @param userId - ID pengguna.
+ * @param limit - Jumlah maksimal transaksi yang diambil (default 20).
+ * @returns Promise berisi array Transaction terbaru.
  */
 export async function getRecentTransactions(userId: string, limit: number = 20): Promise<Transaction[]> {
   const all = await getAllTransactions(userId);
   return all
     .sort((a, b) => {
-      // Sort by date desc, then by createdAt desc
+      /********** Urutkan berdasarkan tanggal menurun, kemudian createdAt menurun. */
       const dateCmp = b.date.localeCompare(a.date);
       if (dateCmp !== 0) return dateCmp;
       return b.createdAt.localeCompare(a.createdAt);
@@ -251,10 +271,14 @@ export async function getRecentTransactions(userId: string, limit: number = 20):
     .slice(0, limit);
 }
 
-// ─── Sync Helpers ───────────────────────────────────────
+/********** Helper Sinkronisasi (Sync Helpers) **********/
 
 /**
- * Low-level upsert — used by the sync engine to apply server data.
+ * Upsert tingkat rendah (low-level) — digunakan oleh mesin sinkronisasi untuk menerapkan data dari server.
+ *
+ * @param transaction - Objek Transaction dari server.
+ * @param skipQueue - Jika true, perubahan tidak akan dimasukkan kembali ke antrean sinkronisasi.
+ * @returns Promise void setelah penyimpanan selesai.
  */
 export async function upsertTransaction(transaction: Transaction, skipQueue: boolean = false): Promise<void> {
   const db = await getDB();
@@ -279,7 +303,10 @@ export async function upsertTransaction(transaction: Transaction, skipQueue: boo
 }
 
 /**
- * Bulk upsert transactions — used by the sync engine to apply multiple server records in one IDB transaction.
+ * Upsert transaksi secara massal — digunakan oleh mesin sinkronisasi untuk menerapkan banyak rekod sekaligus dalam satu transaksi IDB.
+ *
+ * @param transactions - Array objek Transaction dari server.
+ * @returns Promise void setelah semua rekod disimpan.
  */
 export async function bulkUpsertTransactions(transactions: Transaction[]): Promise<void> {
   if (transactions.length === 0) return;
@@ -296,7 +323,9 @@ export async function bulkUpsertTransactions(transactions: Transaction[]): Promi
 }
 
 /**
- * Get all transactions with PENDING sync status.
+ * Mengambil semua transaksi dengan status sinkronisasi PENDING.
+ *
+ * @returns Promise berisi array Transaction yang berstatus PENDING.
  */
 export async function getPendingTransactions(): Promise<Transaction[]> {
   const db = await getDB();

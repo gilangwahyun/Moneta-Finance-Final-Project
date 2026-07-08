@@ -1,20 +1,24 @@
-// ─── IndexedDB Initialization ───────────────────────────
-// Opens (or creates) the local IndexedDB database using the
-// schema defined in schema.ts.
-//
-// handles version migrations and connection state.
+/*
+ * File: src/lib/local-db/index.ts
+ * Description: Modul inisialisasi dan pengelola koneksi IndexedDB lokal,
+ * menangani pembukaan database, migrasi skema/versi, serta penanganan konflik antar-tab.
+ */
 
 import { DB_NAME, DB_VERSION, STORE_SCHEMAS, STORES } from "./schema";
+
+/********** Koneksi & Inisialisasi Database **********/
 
 let dbPromise: Promise<IDBDatabase> | null = null;
 
 /**
- * Open or return the existing IndexedDB database connection.
- * Creates object stores and indexes on first open / version upgrade.
+ * Membuka atau mengembalikan koneksi database IndexedDB yang sudah ada (singleton pattern).
+ * Otomatis membuat object store dan indeks pada saat pertama kali dibuka atau saat upgrade versi.
+ *
+ * @returns Promise berisi instance IDBDatabase yang aktif.
  */
 export function getDB(): Promise<IDBDatabase> {
   if (dbPromise) {
-    // console.log("[DB] Returning existing dbPromise");
+    /* console.log("[DB] Returning existing dbPromise"); */
     return dbPromise;
   }
 
@@ -28,7 +32,7 @@ export function getDB(): Promise<IDBDatabase> {
 
       const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-      // Handle blockages (e.g. another tab has an older version open)
+      /********** Tangani pemblokiran (misalnya tab lain sedang membuka versi lama). */
       request.onblocked = (event) => {
         console.warn("[DB] Database open BLOCKED by another connection. Please close other tabs of this app.", event);
         alert("Database upgrade blocked. Please close other tabs of Moneta and refresh.");
@@ -56,7 +60,7 @@ export function getDB(): Promise<IDBDatabase> {
             if (!existingIndexes.includes(index.name)) {
               console.log(`[DB] Creating index: ${index.name} on ${schema.name}`);
               
-              // If adding a unique index to an existing store, clear the store first to avoid constraint errors
+              /********** Jika menambahkan indeks unik ke store yang sudah ada, kosongkan store terlebih dahulu untuk menghindari error konstrain. */
               if (schema.name === STORES.NOTIFICATION_LOGS && index.name === "by_dedupeKey") {
                  console.log("[DB] Clearing notification_logs to allow creation of unique index by_dedupeKey");
                  store.clear();
@@ -72,12 +76,12 @@ export function getDB(): Promise<IDBDatabase> {
         const db = request.result;
         console.log("[DB] Success: Connection established");
 
-        // Handle version changes requested by other tabs/workers
+        /********** Tangani perubahan versi yang diminta oleh tab atau service worker lain. */
         db.onversionchange = () => {
           console.warn("[DB] Version change detected. Closing connection to allow upgrade.");
           db.close();
           dbPromise = null;
-          window.location.reload(); // Refresh to get the new version
+          window.location.reload(); /* Muat ulang halaman untuk menggunakan versi baru */
         };
 
         resolve(db);
@@ -98,8 +102,11 @@ export function getDB(): Promise<IDBDatabase> {
   return dbPromise;
 }
 
+/********** Penutupan Koneksi **********/
+
 /**
- * Close and reset the database connection.
+ * Menutup dan mereset koneksi database secara manual.
+ * Digunakan saat reset data lokal atau logout.
  */
 export function closeDB(): void {
   if (dbPromise) {

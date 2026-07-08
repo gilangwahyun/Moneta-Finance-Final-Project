@@ -1,10 +1,8 @@
-/********** [START: Conflict Resolver] **********/
 /********** Mengimplementasikan strategi resolusi konflik "last write wins"
  *  berbasis timestamp updatedAt. Digunakan oleh sync manager (sisi klien)
  *  dan API endpoint (sisi server) saat terjadi konflik antara versi klien
  *  dan server untuk record yang sama.
  */
-/********** [END: Conflict Resolver] **********/
 
 /********** Imports **********/
 

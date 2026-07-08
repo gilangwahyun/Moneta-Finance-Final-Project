@@ -1,7 +1,7 @@
-// ─── POST /api/auth/register ────────────────────────────
-// Creates a new user with hashed password, copies default
-// categories to their account, and returns JWT.
-// Rate-limited: 5 req/60min per IP.
+/********** Handler API (POST /api/auth/register) yang membuat user baru dengan kata sandi ter-hash,
+ *  menyalin kategori default ke akun mereka, dan mengembalikan token JWT.
+ *  Dibatasi rate-limit: 5 req/60menit per IP.
+ */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/prisma';
@@ -14,9 +14,17 @@ import { randomUUID } from 'crypto';
 import { checkRateLimit, getClientIP, rateLimitResponse, REGISTER_IP_LIMIT } from '@/lib/auth/rate-limiter';
 import { MIN_USERNAME_LENGTH, MAX_USERNAME_LENGTH, USERNAME_PATTERN } from '@/lib/utils/constants';
 
+/********** POST /api/auth/register **********/
+
+/**
+ * Memproses pendaftaran akun pengguna baru.
+ *
+ * @param request - NextRequest berisi body JSON (`email`, `username`, dan `password`).
+ * @returns NextResponse dengan cookie autentikasi dan data user jika sukses, atau pesan error jika gagal/rate-limited.
+ */
 export async function POST(request: NextRequest) {
   try {
-    // ── Rate limit: IP check (before body parsing) ──────
+    /********** 1. Pengecekan Rate Limit per IP (sebelum parsing body). */
     const ip = getClientIP(request);
     const ipResult = checkRateLimit(`register:ip:${ip}`, REGISTER_IP_LIMIT);
     if (!ipResult.allowed) {
@@ -30,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     const { email, username, password } = await request.json();
 
-    // ── Field presence validation ───────────────────────
+    /********** 2. Validasi Kelengkapan Data. */
     if (!email || !username || !password) {
       return NextResponse.json(
         { success: false, error: { code: 'VALIDATION_ERROR', message: 'Email, username, dan kata sandi wajib diisi.' } },
@@ -38,7 +46,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Email format validation ─────────────────────────
+    /********** 3. Validasi Format Alamat Email. */
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const trimmedEmail = email.trim().toLowerCase();
 
@@ -49,7 +57,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Username validation ─────────────────────────────
+    /********** 4. Validasi Format Username. */
     const trimmedUsername = username.trim();
 
     if (trimmedUsername.length < MIN_USERNAME_LENGTH) {
@@ -73,7 +81,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Password validation ─────────────────────────────
+    /********** 5. Validasi Panjang Kata Sandi. */
     if (password.length < 6) {
       return NextResponse.json(
         { success: false, error: { code: 'VALIDATION_ERROR', message: 'Kata sandi minimal 6 karakter.' } },
@@ -81,8 +89,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Uniqueness check (email OR username) ─────────────
-    // Single query with OR — returns the conflicting record if any exists.
+    /********** 6. Pengecekan Keunikan Akun (Email ATAU Username). */
+    /********** Satu query menggunakan OR — mengembalikan rekod yang konflik jika sudah ada. */
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ email: trimmedEmail }, { username: trimmedUsername }],
@@ -104,19 +112,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: { code: 'USER_EXISTS', message } }, { status: 409 });
     }
 
-    // ── Create user + default categories (atomic) ────────
+    /********** Pembuatan Akun & Kategori Default (Atomik) **********/
+    /********** Transaksi atomik untuk membuat user dan kategori default sekaligus. */
     const passwordHash = await hashPassword(password);
 
     const user = await prisma.$transaction(async (tx) => {
-      // 1. Create the user
+      /********** Buat rekod user baru di database. */
       const newUser = await tx.user.create({
         data: { email: trimmedEmail, username: trimmedUsername, passwordHash },
       });
 
-      // 2. Copy all default categories to the new user
+      /********** Salin semua kategori default ke akun user baru. */
       await tx.category.createMany({
         data: DEFAULT_CATEGORIES.map((cat) => ({
-          clientId: randomUUID(), // Server-generated clientId for defaults
+          clientId: randomUUID(), /* ClientId dari server untuk kategori default. */
           name: cat.name,
           type: cat.type,
           icon: cat.icon,
@@ -130,10 +139,10 @@ export async function POST(request: NextRequest) {
       return newUser;
     });
 
-    // Sign JWT
+    /********** Buat dan tangani penandatanganan token JWT. */
     const token = await signToken({ userId: user.id, username: user.username });
 
-    // Build response payload (include email for client-side IndexedDB store)
+    /********** Susun payload respons (termasuk email untuk penyimpanan IndexedDB sisi klien). */
     const response = NextResponse.json(
       {
         success: true,
@@ -150,18 +159,18 @@ export async function POST(request: NextRequest) {
       { status: 201 },
     );
 
-    // Detect actual HTTPS
+    /********** Deteksi koneksi HTTPS aktual. */
     const isSecure = request.headers.get('x-forwarded-proto') === 'https' || request.url.startsWith('https://');
 
     response.cookies.set(AUTH_COOKIE_NAME, token, {
       httpOnly: true,
       secure: isSecure,
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7, /* 7 hari. */
       path: '/',
     });
 
-    // Set CSRF cookie (double-submit defense)
+    /********** Pasang cookie CSRF sebagai perlindungan double-submit. */
     setCsrfCookie(response, generateCsrfToken(), isSecure);
 
     return response;

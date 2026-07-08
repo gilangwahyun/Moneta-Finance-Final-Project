@@ -1,30 +1,44 @@
+/*
+ * File: src/lib/local-db/repositories/budgets.ts
+ * Description: Repositori lokal IndexedDB untuk manajemen data anggaran (budgets),
+ * termasuk operasi CRUD, deduping, dan subsidi silang (reallokasi).
+ */
+
 import { getDB } from "../index";
 import { STORES } from "../schema";
 import { Budget } from "@/types/models.types";
 import { enqueueChange } from "./sync-queue";
 import { generateClientId } from "@/lib/utils/helpers";
 
+/********** Tipe dan Antarmuka Data **********/
+
 export interface UpsertBudgetInput {
   clientId?: string;
   amount: number;
-  period: string; // YYYY-MM
+  period: string; /* Format YYYY-MM */
   categoryId: string;
   userId: string;
 }
 
+/********** Operasi Utama (CRUD UI) **********/
+
 /**
- * Set a budget for a given category and period (UI function).
- * Enqueues the change for synchronization.
+ * Mengatur atau memperbarui batas anggaran untuk kategori dan periode tertentu (fungsi UI).
+ * Perubahan akan dimasukkan ke dalam antrean sinkronisasi (sync queue).
  *
- * Prevents duplicate budgets: if a budget already exists for the same
- * categoryId + period, it will be updated instead of creating a new one.
+ * Mencegah anggaran duplikat: jika anggaran untuk kombinasi categoryId + period sudah ada,
+ * maka rekod tersebut akan diperbarui, bukan membuat rekod baru.
+ *
+ * @param input - Data input anggaran (amount, period, categoryId, userId, dan clientId opsional).
+ * @returns Promise berisi objek Budget yang baru atau diperbarui.
  */
 export async function setBudget(input: UpsertBudgetInput): Promise<Budget> {
-  // 1. Try to find by explicit clientId (edit mode)
+  /********** 1. Coba cari berdasarkan clientId eksplicit (mode edit). */
   let existing = input.clientId ? await getBudgetById(input.clientId) : null;
 
-  // 2. If not found by clientId, check for an existing budget with same category+period
-  //    This prevents creating duplicates when the user clicks "Atur Anggaran" again.
+  /********** 2. Jika tidak ditemukan berdasarkan clientId, cek apakah ada budget dengan kategori+periode yang sama.
+   * Hal ini mencegah duplikasi saat pengguna menekan tombol "Atur Anggaran" berulang kali.
+   */
   if (!existing) {
     existing = await getBudgetByCategoryAndPeriod(input.userId, input.categoryId, input.period) ?? null;
   }
@@ -65,6 +79,12 @@ export async function setBudget(input: UpsertBudgetInput): Promise<Budget> {
   return budget;
 }
 
+/**
+ * Mengambil satu anggaran berdasarkan clientId dari IndexedDB lokal.
+ *
+ * @param clientId - ID unik lokal dari anggaran yang dicari.
+ * @returns Promise berisi Budget jika ditemukan, atau undefined.
+ */
 export async function getBudgetById(clientId: string): Promise<Budget | undefined> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
@@ -76,6 +96,13 @@ export async function getBudgetById(clientId: string): Promise<Budget | undefine
   });
 }
 
+/**
+ * Mengambil daftar seluruh anggaran aktif milik user untuk periode tertentu.
+ *
+ * @param userId - ID pengguna pemilik anggaran.
+ * @param period - Periode anggaran dalam format YYYY-MM.
+ * @returns Promise berisi array Budget.
+ */
 export async function getBudgetsByPeriod(userId: string, period: string): Promise<Budget[]> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
@@ -93,8 +120,13 @@ export async function getBudgetsByPeriod(userId: string, period: string): Promis
 }
 
 /**
- * Find an existing (non-deleted) budget by categoryId and period for a user.
- * Used to prevent creating duplicate budgets.
+ * Mencari anggaran aktif (tidak terhapus) berdasarkan categoryId dan periode untuk seorang user.
+ * Digunakan untuk mencegah penambahan anggaran duplikat.
+ *
+ * @param userId - ID pengguna pemilik anggaran.
+ * @param categoryId - ID kategori anggaran.
+ * @param period - Periode anggaran dalam format YYYY-MM.
+ * @returns Promise berisi Budget jika ditemukan, atau undefined jika tidak.
  */
 export async function getBudgetByCategoryAndPeriod(
   userId: string,
@@ -105,6 +137,14 @@ export async function getBudgetByCategoryAndPeriod(
   return budgets.find((b) => b.categoryId === categoryId);
 }
 
+/********** Operasi Sinkronisasi & Low-Level **********/
+
+/**
+ * Menerapkan data anggaran dari server secara langsung ke IDB lokal tanpa memicu sync queue.
+ *
+ * @param budget - Objek Budget dari server.
+ * @returns Promise void setelah penyimpanan selesai.
+ */
 export async function applyServerBudget(budget: Budget): Promise<void> {
   const db = await getDB();
   await new Promise<void>((resolve, reject) => {
@@ -117,8 +157,11 @@ export async function applyServerBudget(budget: Budget): Promise<void> {
 }
 
 /**
- * Low-level upsert — used by the sync engine to apply server data.
- * Pass `skipQueue: true` to avoid re-enqueuing server-applied changes.
+ * Upsert tingkat rendah (low-level) — digunakan oleh mesin sinkronisasi untuk menerapkan data dari server.
+ *
+ * @param budget - Objek Budget dari server yang akan di-upsert.
+ * @param skipQueue - Jika true, perubahan tidak akan dimasukkan kembali ke antrean sinkronisasi.
+ * @returns Promise void setelah penyimpanan selesai.
  */
 export async function upsertBudget(
   budget: Budget,
@@ -146,7 +189,10 @@ export async function upsertBudget(
 }
 
 /**
- * Bulk upsert budgets — used by the sync engine to apply multiple server records in one IDB transaction.
+ * Upsert anggaran secara massal — digunakan oleh mesin sinkronisasi untuk menerapkan banyak rekod sekaligus dalam satu transaksi IDB.
+ *
+ * @param budgets - Array objek Budget dari server.
+ * @returns Promise void setelah semua rekod disimpan.
  */
 export async function bulkUpsertBudgets(budgets: Budget[]): Promise<void> {
   if (budgets.length === 0) return;
@@ -163,8 +209,10 @@ export async function bulkUpsertBudgets(budgets: Budget[]): Promise<void> {
 }
 
 /**
- * Get all budgets with PENDING sync status.
- * Used to recover orphaned budgets.
+ * Mengambil semua anggaran dengan status sinkronisasi "PENDING".
+ * Digunakan untuk memulihkan atau menyinkronkan ulang anggaran yang belum terkirim.
+ *
+ * @returns Promise berisi array Budget yang berstatus PENDING.
  */
 export async function getPendingBudgets(): Promise<Budget[]> {
   const db = await getDB();
@@ -180,14 +228,16 @@ export async function getPendingBudgets(): Promise<Budget[]> {
 }
 
 /**
- * Clean up duplicate budgets that share the same categoryId + period.
- * Keeps the one with the most recent updatedAt; soft-deletes the rest.
- * Called during sync startup to prevent constraint violations on the server.
+ * Membersihkan anggaran duplikat yang memiliki kombinasi categoryId + period yang sama.
+ * Rekod dengan updatedAt terbaru akan dipertahankan, sedangkan sisanya akan di-soft-delete.
+ * Dipanggil saat awal proses sinkronisasi untuk mencegah pelanggaran constraint di server.
+ *
+ * @returns Promise berisi jumlah anggaran duplikat yang dihapus.
  */
 export async function deduplicateBudgets(): Promise<number> {
   const db = await getDB();
 
-  // Read all non-deleted budgets
+  /********** Ambil semua anggaran yang belum terhapus dari IDB. */
   const all = await new Promise<Budget[]>((resolve, reject) => {
     const tx = db.transaction(STORES.BUDGETS, "readonly");
     const store = tx.objectStore(STORES.BUDGETS);
@@ -196,7 +246,7 @@ export async function deduplicateBudgets(): Promise<number> {
     req.onerror = () => reject(req.error);
   });
 
-  // Group by userId + period + categoryId
+  /********** Kelompokkan anggaran berdasarkan userId + period + categoryId. */
   const groups = new Map<string, Budget[]>();
   for (const b of all) {
     const key = `${b.userId}_${b.period}_${b.categoryId}`;
@@ -211,7 +261,7 @@ export async function deduplicateBudgets(): Promise<number> {
   for (const [, list] of groups) {
     if (list.length <= 1) continue;
 
-    // Sort descending by updatedAt — keep the first (most recent)
+    /********** Urutkan menurun berdasarkan updatedAt — pertahankan yang pertama (paling baru). */
     list.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
     const [_keep, ...dupes] = list;
 
@@ -242,8 +292,14 @@ export async function deduplicateBudgets(): Promise<number> {
   return removed;
 }
 
-// ─── Budget Reallocation (Subsidi Silang) ────────────────
+/********** Subsidi Silang (Reallokasi Anggaran) **********/
 
+/**
+ * Melakukan soft-delete pada anggaran dengan menandai deletedAt dan memasukkannya ke antrean sinkronisasi.
+ *
+ * @param clientId - ID unik lokal dari anggaran yang akan dihapus.
+ * @returns Promise void setelah proses hapus dan antrean selesai.
+ */
 export async function deleteBudget(clientId: string): Promise<void> {
   const existing = await getBudgetById(clientId);
   if (!existing) return;
@@ -267,7 +323,14 @@ export async function deleteBudget(clientId: string): Promise<void> {
   await enqueueChange("budget", "delete", clientId, { ...softDeleted });
 }
 
-// ─── Hard Delete (Sync use only) ────────────────────────
+/********** Penghapusan Permanen (Khusus Sinkronisasi) **********/
+
+/**
+ * Menghapus rekod anggaran secara permanen dari IndexedDB lokal.
+ *
+ * @param clientId - ID unik lokal dari anggaran yang akan dihapus permanen.
+ * @returns Promise void setelah rekod dihapus dari store IDB.
+ */
 export async function hardDeleteBudget(clientId: string): Promise<void> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
@@ -294,23 +357,25 @@ export interface ReallocationResult {
 }
 
 /**
- * Atomically transfer `amount` of monthly budget limit from the source
- * category to the destination category within the same period.
+ * Memindahkan batas anggaran bulanan secara atomik dari kategori sumber ke kategori tujuan pada periode yang sama.
  *
- * Validation contract (caller MUST pre-compute and enforce):
- *   - amount > 0
- *   - amount <= source.amount - spentAmount  (true remaining, not raw limit)
+ * Kontrak Validasi (wajib dihitung dan dipastikan oleh pemanggil):
+ * - amount > 0
+ * - amount <= source.amount - spentAmount (sisa anggaran aktual yang belum terpakai, bukan batas total)
  *
- * Both IDB writes happen inside a single readwrite transaction so that
- * a partial failure leaves neither record in an inconsistent state.
- * After a successful write, both records are enqueued in the sync_queue.
+ * Kedua penulisan ke IDB dilakukan dalam satu transaksi readwrite agar kegagalan parsial
+ * tidak menyebabkan data tidak konsisten. Setelah sukses, kedua perubahan dimasukkan ke sync_queue.
+ *
+ * @param input - Data reallokasi (sourceClientId, destinationClientId, dan amount).
+ * @returns Promise berisi hasil reallokasi (rekod sumber dan tujuan yang diperbarui).
+ * @throws Error jika sumber/tujuan tidak ditemukan atau nominal tidak valid.
  */
 export async function reallocateBudget(
   input: ReallocationInput
 ): Promise<ReallocationResult> {
   const { sourceClientId, destinationClientId, amount } = input;
 
-  // ── 1. Read current records ────────────────────────────
+  /********** 1. Ambil data anggaran sumber dan tujuan saat ini. */
   const [source, destination] = await Promise.all([
     getBudgetById(sourceClientId),
     getBudgetById(destinationClientId),
@@ -330,7 +395,7 @@ export async function reallocateBudget(
     throw new Error(`REALLOC_EXCEEDS_LIMIT: Amount (${amount}) exceeds source budget limit (${source.amount})`);
   }
 
-  // ── 2. Apply mutations ────────────────────────────────
+  /********** 2. Buat objek mutasi baru dengan nominal yang diperbarui. */
   const now = new Date().toISOString();
 
   const updatedSource: Budget = {
@@ -347,7 +412,7 @@ export async function reallocateBudget(
     updatedAt: now,
   };
 
-  // ── 3. Write both records in one IDB transaction ───────
+  /********** 3. Simpan kedua rekod dalam satu transaksi IDB readwrite. */
   const db = await getDB();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORES.BUDGETS, "readwrite");
@@ -361,9 +426,10 @@ export async function reallocateBudget(
     tx.onabort = () => reject(tx.error);
   });
 
-  // ── 4. Enqueue both mutations for sync ─────────────────
-  // Two separate queue entries so the sync engine can process
-  // each as a standard budget "update" operation.
+  /********** 4. Masukkan kedua mutasi ke antrean sinkronisasi.
+   * Dua entri antrean terpisah agar mesin sinkronisasi dapat memproses
+   * masing-masing sebagai operasi pembaruan (update) standar.
+   */
   await enqueueChange("budget", "update", updatedSource.clientId, {
     ...updatedSource,
   });

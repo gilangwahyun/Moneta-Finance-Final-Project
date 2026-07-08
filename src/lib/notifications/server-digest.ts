@@ -1,9 +1,7 @@
-/********** [START: Server Digest] **********/
 /********** Logika sisi server untuk menentukan user mana yang perlu menerima
  *  digest harian, dan membangun isi ringkasan notifikasi dari notification_logs
  *  yang belum dirangkum (digestSentAt = null).
  */
-/********** [END: Server Digest] **********/
 
 /********** Imports **********/
 

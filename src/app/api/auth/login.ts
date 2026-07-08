@@ -1,7 +1,7 @@
-// ─── POST /api/auth/login ───────────────────────────────
-// Verifies credentials and returns JWT in httpOnly cookie.
-// Accepts either email or username as the `identifier` field.
-// Rate-limited: 10 req/15min per IP, 20 req/15min per identifier.
+/********** Handler API (POST /api/auth/login) yang memverifikasi kredensial dan mengembalikan token JWT dalam httpOnly cookie.
+ *  Menerima email atau username pada field `identifier`.
+ *  Dibatasi rate-limit: 10 req/15menit per IP, 20 req/15menit per identifier.
+ */
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
@@ -17,9 +17,17 @@ import {
   LOGIN_USERNAME_LIMIT,
 } from "@/lib/auth/rate-limiter";
 
+/********** POST /api/auth/login **********/
+
+/**
+ * Memproses permintaan login pengguna.
+ *
+ * @param request - NextRequest berisi body JSON (`identifier` dan `password`).
+ * @returns NextResponse dengan cookie autentikasi dan data user jika sukses, atau pesan error jika gagal/rate-limited.
+ */
 export async function POST(request: NextRequest) {
   try {
-    // ── Rate limit: IP check (before body parsing) ──────
+    /********** 1. Pengecekan Rate Limit per IP (sebelum parsing body). */
     const ip = getClientIP(request);
     const ipResult = checkRateLimit(`login:ip:${ip}`, LOGIN_IP_LIMIT);
     if (!ipResult.allowed) {
@@ -33,7 +41,7 @@ export async function POST(request: NextRequest) {
 
     const { identifier, password } = await request.json();
 
-    // ── Validation ──────────────────────────────────────
+    /********** 2. Validasi Parameter Input. */
     if (!identifier || !password) {
       return NextResponse.json(
         { success: false, error: { code: "VALIDATION_ERROR", message: "Identitas (email atau username) dan kata sandi wajib diisi." } },
@@ -41,8 +49,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Rate limit: per-identifier check (after parsing) ─
-    // Normalise so "User@Example.com" and "user@example.com" hit the same bucket.
+    /********** 3. Pengecekan Rate Limit per Identifier (setelah parsing body). */
+    /********** Normalisasi agar karakter huruf besar/kecil masuk ke bucket yang sama. */
     const normalizedIdentifier = identifier.trim().toLowerCase();
     const identifierResult = checkRateLimit(
       `login:user:${normalizedIdentifier}`,
@@ -57,9 +65,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Find user by email OR username ──────────────────
-    // We query both fields so users can log in with either one.
-    // Email comparison is case-insensitive (stored lowercase at register time).
+    /********** Pencarian User & Pembuktian Kredensial **********/
+    /********** Cari user berdasarkan email ATAU username (case-insensitive untuk email). */
     const user = await prisma.user.findFirst({
       where: {
         OR: [
@@ -69,7 +76,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Generic error — don't reveal whether the account exists
+    /* Error generik — jangan ungkap apakah akun ada atau tidak demi keamanan. */
     const invalidCredentialsResponse = NextResponse.json(
       { success: false, error: { code: "INVALID_CREDENTIALS", message: "Email/username atau kata sandi salah." } },
       { status: 401 }
@@ -79,16 +86,17 @@ export async function POST(request: NextRequest) {
       return invalidCredentialsResponse;
     }
 
-    // ── Verify password ─────────────────────────────────
+    /********** Verifikasi kecocokan kata sandi dengan hash di DB. */
     const isValid = await verifyPassword(password, user.passwordHash);
     if (!isValid) {
       return invalidCredentialsResponse;
     }
 
-    // ── Sign JWT ────────────────────────────────────────
+    /********** Pembuatan Session & Respons **********/
+    /********** Buat dan tangani penandatanganan token JWT. */
     const token = await signToken({ userId: user.id, username: user.username });
 
-    // ── Build response ──────────────────────────────────
+    /********** Susun respons JSON yang memuat data user. */
     const response = NextResponse.json({
       success: true,
       data: {
@@ -102,7 +110,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    // Detect actual HTTPS (works for LAN/HTTP access in production mode)
+    /********** Deteksi koneksi HTTPS aktual (kompatibel untuk akses LAN/HTTP di mode produksi). */
     const isSecure =
       request.headers.get("x-forwarded-proto") === "https" ||
       request.url.startsWith("https://");
@@ -111,11 +119,11 @@ export async function POST(request: NextRequest) {
       httpOnly: true,
       secure: isSecure,
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: 60 * 60 * 24 * 7, /* 7 hari. */
       path: "/",
     });
 
-    // Set CSRF cookie (double-submit defense)
+    /********** Pasang cookie CSRF sebagai perlindungan double-submit. */
     setCsrfCookie(response, generateCsrfToken(), isSecure);
 
     return response;

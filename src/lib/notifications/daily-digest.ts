@@ -1,4 +1,3 @@
-/********** [START: Daily Digest Aggregation Helper] **********/
 /********** Dua konsep berbeda ada di file ini:
  *
  *  1. buildLogDigest(userId)
@@ -13,7 +12,6 @@
  *
  *  Seluruh proses berjalan di sisi klien dari IndexedDB — tidak perlu server call.
  */
-/********** [END: Daily Digest Aggregation Helper] **********/
 
 /********** Imports **********/
 
@@ -292,7 +290,7 @@ export async function buildDailyExpenseSummary(
 /** @deprecated Gunakan buildDailyExpenseSummary() atau buildLogDigest() sebagai gantinya. */
 export const buildDailyDigest = buildDailyExpenseSummary;
 
-/********** [MULAI: Pemeriksaan Waktu Digest] **********/
+/********** Pemeriksaan Waktu Digest **********/
 
 /**
  * Memeriksa apakah daily digest perlu dikirim sekarang.
@@ -358,4 +356,3 @@ export function shouldFireDigest(
 
   return { shouldFire: true, reason: 'no_existing_fired_key' };
 }
-/********** [END: Digest Timing Check] **********/

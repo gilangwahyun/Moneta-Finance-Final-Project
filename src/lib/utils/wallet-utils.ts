@@ -1,17 +1,28 @@
+/*
+ * File: src/lib/utils/wallet-utils.ts
+ * Description: Kumpulan utilitas untuk menghitung saldo saat ini pada dompet tunggal
+ * maupun akumulasi total saldo seluruh dompet aktif berdasarkan riwayat transaksi.
+ */
+
 import { Wallet, Transaction } from "@/types/models.types";
 
+/********** Kalkulasi Saldo Per Dompet **********/
+
 /**
- * Calculate the current balance of a wallet from its transaction history.
- *
- * Formula:
+ * Menghitung saldo saat ini untuk suatu dompet berdasarkan riwayat transaksinya.
+ * Rumus perhitungan:
  *   initialBalance
- *   + SUM(INCOME where walletId === this wallet)
- *   - SUM(EXPENSE where walletId === this wallet)
- *   + SUM(TRANSFER where targetWalletId === this wallet)   ← money coming in
- *   - SUM(TRANSFER where walletId === this wallet)          ← money going out
+ *   + SUM(INCOME di mana walletId === dompet ini)
+ *   - SUM(EXPENSE di mana walletId === dompet ini)
+ *   + SUM(TRANSFER di mana targetWalletId === dompet ini) ← uang masuk
+ *   - SUM(TRANSFER di mana walletId === dompet ini)       ← uang keluar
  *
- * TRANSFER transactions are excluded from income/expense totals but
- * ARE included in wallet balance calculations.
+ * Transaksi TRANSFER dikecualikan dari total pemasukan/pengeluaran tetapi
+ * TETAP dimasukkan dalam perhitungan mutasi saldo dompet.
+ *
+ * @param wallet - Objek dompet (Wallet) yang akan dihitung saldonya.
+ * @param allTransactions - Seluruh daftar transaksi pengguna.
+ * @returns Nominal saldo terkini dompet.
  */
 export function calculateWalletBalance(
   wallet: Wallet,
@@ -31,10 +42,10 @@ export function calculateWalletBalance(
       balance -= amount;
     } else if (t.type === "TRANSFER") {
       if (matchesWallet(t.walletId)) {
-        balance -= amount; // money leaving this wallet
+        balance -= amount; /* Uang keluar dari dompet ini */
       }
       if (matchesWallet(t.targetWalletId)) {
-        balance += amount; // money arriving at this wallet
+        balance += amount; /* Uang masuk ke dompet ini */
       }
     }
   }
@@ -42,9 +53,15 @@ export function calculateWalletBalance(
   return balance;
 }
 
+/********** Kalkulasi Total Saldo Keseluruhan **********/
+
 /**
- * Get the aggregate total balance across ALL active wallets.
- * This replaces the old monthlyTotals.netBalance for the Total Saldo card.
+ * Menghitung akumulasi total saldo dari SELURUH dompet yang aktif.
+ * Menggantikan nilai monthlyTotals.netBalance pada kartu ringkasan Total Saldo di dasbor.
+ *
+ * @param wallets - Daftar seluruh dompet pengguna.
+ * @param allTransactions - Seluruh daftar transaksi pengguna.
+ * @returns Total akumulasi saldo semua dompet.
  */
 export function calculateTotalBalance(
   wallets: Wallet[],

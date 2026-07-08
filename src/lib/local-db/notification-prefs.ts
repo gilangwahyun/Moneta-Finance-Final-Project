@@ -1,4 +1,12 @@
+/*
+ * File: src/lib/local-db/notification-prefs.ts
+ * Description: Modul pengelola preferensi notifikasi pengguna secara lokal,
+ * menangani resolusi mode pengiriman, batas harian (daily cap), penyimpanan ke IndexedDB, dan sinkronisasi server.
+ */
+
 import { saveNotificationSettings, getNotificationSettings, NotificationSettingsRecord } from './repositories/notification-settings';
+
+/********** Tipe Data & Antarmuka **********/
 
 export type DeliveryMode = 'INSTANT' | 'BATCH' | 'NONE';
 
@@ -7,10 +15,10 @@ export interface LocalNotificationPrefs {
   dailyDigest: boolean;
   dailyReminder: boolean;
   deliveryMode: DeliveryMode;
-  digestTime: string; // "HH:MM"
-  dailyCap: number; // 1–5
+  digestTime: string; /* Format jam "HH:MM" */
+  dailyCap: number; /* Batas notifikasi harian (misal: 1–5) */
   userId?: string;
-  updatedAt: string; // ISO timestamp
+  updatedAt: string; /* Format timestamp ISO */
 }
 
 export interface DailyNotifCount {
@@ -18,20 +26,19 @@ export interface DailyNotifCount {
   count: number;
 }
 
-// ─── Canonical Delivery Mode Resolver ────────────────────
-// Single source of truth for reading delivery mode from any
-// settings object (IDB record, localStorage prefs, or null).
-//
-// Rules:
-//  - deliveryMode "INSTANT"        → "INSTANT"
-//  - deliveryMode "BATCH" or "DIGEST" → "DIGEST"  (BATCH is backward-compat alias)
-//  - deliveryMode "NONE"           → "NONE"
-//  - No deliveryMode (legacy data) → derive from instantAlerts / dailyDigest booleans
-//  - null settings                 → "NONE"
-//
-// All delivery decision code must call this instead of reading
-// instantAlerts or dailyDigest directly.
+/********** Resolusi Mode Pengiriman (Delivery Mode) **********/
 
+/**
+ * Resolusi kanonik untuk menentukan mode pengiriman dari berbagai sumber pengaturan (IDB, localStorage, atau null).
+ * Aturan konversi:
+ * - "INSTANT" -> "INSTANT"
+ * - "BATCH" atau "DIGEST" -> "DIGEST"
+ * - "NONE" -> "NONE"
+ * - Data lama tanpa deliveryMode diputuskan berdasarkan boolean instantAlerts / dailyDigest.
+ *
+ * @param settings - Objek pengaturan notifikasi lokal.
+ * @returns Mode pengiriman kanonik ('NONE' | 'INSTANT' | 'DIGEST').
+ */
 export function resolveDeliveryMode(
   settings: {
     deliveryMode?: string;
@@ -45,8 +52,8 @@ export function resolveDeliveryMode(
   if (dm === 'INSTANT') return 'INSTANT';
   if (dm === 'BATCH' || dm === 'DIGEST') return 'DIGEST';
 
-  // Legacy fallback: records created before deliveryMode was introduced
-  // treat the boolean pair as the source of truth.
+  /********** Fallback data lama: untuk rekod yang dibuat sebelum adanya deliveryMode. */
+  /* Gunakan kombinasi boolean sebagai acuan */
   if (settings.instantAlerts === true && settings.dailyDigest !== true) return 'INSTANT';
   if (settings.dailyDigest === true) return 'DIGEST';
 
@@ -67,23 +74,39 @@ export const DEFAULT_NOTIF_PREFS: LocalNotificationPrefs = {
   updatedAt: new Date().toISOString(),
 };
 
-// ─── Daily Cap Helpers ─────────────────────────────────────
+/********** Helper Batas Harian (Daily Cap) **********/
 
+/**
+ * Menormalisasi nilai batas notifikasi harian.
+ *
+ * @param value - Nilai batas harian input.
+ * @returns Angka batas harian atau null jika tidak terbatas.
+ */
 export function normalizeDailyCap(value: number | undefined | null): number | null {
-  if (value === -1 || value === null) return null; // unlimited
+  if (value === -1 || value === null) return null; /* Tidak terbatas */
   if (typeof value === 'number' && value > 0) return value;
   return DEFAULT_DAILY_CAP;
 }
 
+/**
+ * Mengecek apakah batas notifikasi harian sudah tercapai.
+ *
+ * @param currentPushCount - Jumlah notifikasi terkirim hari ini.
+ * @param normalizedDailyCap - Batas harian ternormalisasi.
+ * @returns Boolean true jika batas sudah tercapai.
+ */
 export function isDailyCapReached(currentPushCount: number, normalizedDailyCap: number | null): boolean {
   if (normalizedDailyCap === null) return false;
   return currentPushCount >= normalizedDailyCap;
 }
 
-// ─── localStorage API (Daily Count Only) ──────────────────
+/********** Operasi localStorage (Penghitung Harian) **********/
 
-
-
+/**
+ * Membaca jumlah notifikasi terkirim hari ini dari localStorage.
+ *
+ * @returns Objek DailyNotifCount untuk hari ini.
+ */
 export function readTodayCountFromLS(): DailyNotifCount {
   const today = new Date().toISOString().split('T')[0];
   if (typeof window === 'undefined') return { date: today, count: 0 };
@@ -97,6 +120,9 @@ export function readTodayCountFromLS(): DailyNotifCount {
   }
 }
 
+/**
+ * Menambah jumlah penghitung notifikasi hari ini di localStorage sebanyak 1.
+ */
 export function incrementTodayCountInLS(): void {
   if (typeof window === 'undefined') return;
   const current = readTodayCountFromLS();
@@ -105,16 +131,32 @@ export function incrementTodayCountInLS(): void {
   } catch {}
 }
 
+/**
+ * Membaca timestamp pengiriman notifikasi terakhir dari localStorage.
+ *
+ * @returns ISO string timestamp atau null.
+ */
 export function readLastPushTsFromLS(): string | null {
   if (typeof window === 'undefined') return null;
   return localStorage.getItem('moneta-last-push-ts');
 }
 
+/**
+ * Menyimpan timestamp pengiriman notifikasi terakhir ke localStorage.
+ *
+ * @param isoString - Format waktu ISO string.
+ */
 export function setLastPushTsInLS(isoString: string): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem('moneta-last-push-ts', isoString);
 }
 
+/**
+ * Membaca jumlah notifikasi info mingguan untuk minggu tertentu dari localStorage.
+ *
+ * @param weekStr - Identifier minggu (misal: "2026-W28").
+ * @returns Jumlah notifikasi info yang sudah dikirim minggu ini.
+ */
 export function readWeeklyInfoCountFromLS(weekStr: string): number {
   if (typeof window === 'undefined') return 0;
   try {
@@ -125,6 +167,11 @@ export function readWeeklyInfoCountFromLS(weekStr: string): number {
   }
 }
 
+/**
+ * Menambah jumlah penghitung notifikasi info mingguan di localStorage.
+ *
+ * @param weekStr - Identifier minggu.
+ */
 export function incrementWeeklyInfoCountInLS(weekStr: string): void {
   if (typeof window === 'undefined') return;
   const current = readWeeklyInfoCountFromLS(weekStr);
@@ -133,11 +180,18 @@ export function incrementWeeklyInfoCountInLS(weekStr: string): void {
   } catch {}
 }
 
-// ─── Primary Save Method ─────────────────────────────────
+/********** Operasi Penyimpanan & Sinkronisasi **********/
 
+/**
+ * Menyimpan preferensi notifikasi sebagai kebenaran mutlak (absolute truth) ke IndexedDB utama dan antrean sinkronisasi.
+ *
+ * @param prefs - Objek preferensi notifikasi yang akan disimpan.
+ * @param skipSyncQueue - Jika true, perubahan tidak akan dimasukkan ke antrean sinkronisasi.
+ * @returns Promise void setelah preferensi disimpan.
+ */
 export async function saveNotifPrefs(prefs: LocalNotificationPrefs, skipSyncQueue = false): Promise<void> {
 
-  // 2. Save to Main IndexedDB as absolute truth (and enqueue sync)
+  /********** Simpan ke IndexedDB utama dan masukkan ke antrean sinkronisasi. */
   if (prefs.userId) {
     const record: NotificationSettingsRecord = {
       clientId: `notification-settings:${prefs.userId}`,
@@ -156,7 +210,14 @@ export async function saveNotifPrefs(prefs: LocalNotificationPrefs, skipSyncQueu
   }
 }
 
-// Helper to hydrate from server push/pull
+/********** Helper untuk melakukan hidrasi data preferensi dari server. */
+
+/**
+ * menyinkronkan dan menggabungkan preferensi notifikasi dari server ke dalam penyimpanan lokal.
+ *
+ * @param serverPrefs - Data preferensi notifikasi yang diterima dari server.
+ * @returns Promise berisi objek LocalNotificationPrefs yang diperbarui.
+ */
 export async function syncServerPrefsToLocal(serverPrefs: {
   instantAlerts: boolean;
   dailyDigest: boolean;
@@ -180,7 +241,7 @@ export async function syncServerPrefsToLocal(serverPrefs: {
     updatedAt: serverPrefs.updatedAt || new Date().toISOString(),
   };
 
-  // skipSyncQueue = true because it came from the server
+  /* skipSyncQueue diatur true karena data berasal dari server */
   await saveNotifPrefs(merged, true);
   return merged;
 }

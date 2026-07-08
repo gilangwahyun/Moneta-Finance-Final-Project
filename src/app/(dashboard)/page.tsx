@@ -1,6 +1,5 @@
 'use client';
 
-/********** [START: Dashboard Page - Modul 1: Anti-Illusion Dashboard] **********/
 /**********
  * Tujuan Penelitian:
  *   Menerapkan serangkaian Digital Nudge berbasis UCD untuk melawan
@@ -24,7 +23,6 @@
  *   - Toggle saldo: useState lokal, TIDAK di-persist ke localStorage.
  *     Direset ke hidden setiap sesi - menjaga konsistensi nudge.
  **********/
-/********** [END: Dashboard Page - Modul 1: Anti-Illusion Dashboard] **********/
 
 /********** Imports **********/
 

@@ -1,4 +1,3 @@
-/********** [START: Nudging Engine] **********/
 /********** Engine yang menerima parameter keuangan yang sudah dihitung
  *  dan menghasilkan array NudgeInsight berurutan berdasarkan prioritas.
  *  Tidak ada side effect — hanya komputasi murni.
@@ -8,7 +7,6 @@
  *  - Priority 3-3.9 : Insight perilaku (frekuensi, pola waktu, langganan)
  *  - Priority 4+    : Tip netral ketika tidak ada anomali
  */
-/********** [END: Nudging Engine] **********/
 
 /********** Imports **********/
 

@@ -1,17 +1,24 @@
-// ─── User Local Storage Repository ──────────────────────
-// Stores the authenticated user info in IndexedDB sync_meta store.
-// This is NOT for multi-user data — just caching the current session.
+/*
+ * File: src/lib/local-db/repositories/users.ts
+ * Description: Repositori lokal IndexedDB untuk penyimpanan sesi user aktif (di store sync_meta),
+ * mengelola data cache pengguna, waktu sinkronisasi terakhir, serta pemicu migrasi dan provisi dompet.
+ */
 
 import { getDB } from "../index";
 import { STORES } from "../schema";
 import { User } from "@/types/models.types";
 
+/********** Operasi Pengguna (User Session) **********/
+
 const USER_KEY = "current_user";
 const LAST_SYNCED_KEY = "last_synced_at";
 
 /**
- * Save the current authenticated user locally.
- * Also auto-provisions a default "Tunai" wallet if the user has none.
+ * Menyimpan data pengguna aktif ke dalam penyimpanan lokal (sync_meta).
+ * Secara otomatis memprovisi dompet default "Tunai" jika belum ada dan menjalankan migrasi v5.
+ *
+ * @param user - Objek User dari hasil autentikasi.
+ * @returns Promise void setelah user disimpan dan inisialisasi selesai.
  */
 export async function upsertUser(user: User): Promise<void> {
   const db = await getDB();
@@ -23,12 +30,12 @@ export async function upsertUser(user: User): Promise<void> {
     tx.onerror = () => reject(tx.error);
   });
 
-  // Lazy import avoids circular dependency (wallets.ts imports from users.ts via getCurrentUser)
+  /********** Impor secara lazy untuk menghindari circular dependency dengan wallets.ts. */
   const { provisionDefaultWallet } = await import("./wallets");
   await provisionDefaultWallet(user.id);
 
-  // Run once-per-device migration: fix legacy transactions missing walletId
-  // (transactions created before the multi-wallet v5 schema)
+  /********** Jalankan migrasi sekali per perangkat: perbaiki transaksi lama yang belum memiliki walletId. */
+  /* Transaksi yang dibuat sebelum skema multi-dompet v5 */
   const { runV5WalletMigration } = await import("../migrations/v5-wallet-migration");
   await runV5WalletMigration(user.id).catch((err) =>
     console.error("[Migration v5] Failed:", err)
@@ -36,7 +43,9 @@ export async function upsertUser(user: User): Promise<void> {
 }
 
 /**
- * Retrieve the current authenticated user from local storage.
+ * Mengambil informasi pengguna yang saat ini terautentikasi dari penyimpanan lokal.
+ *
+ * @returns Promise berisi User aktif jika ada, atau null.
  */
 export async function getCurrentUser(): Promise<User | null> {
   const db = await getDB();
@@ -53,8 +62,13 @@ export async function getCurrentUser(): Promise<User | null> {
   });
 }
 
+/********** Metadata Sinkronisasi & Sesi **********/
+
 /**
- * Save the last sync timestamp.
+ * Menyimpan timestamp waktu sinkronisasi terakhir berhasil dilakukan.
+ *
+ * @param timestamp - Format waktu ISO string.
+ * @returns Promise void setelah waktu disimpan.
  */
 export async function setLastSyncedAt(timestamp: string): Promise<void> {
   const db = await getDB();
@@ -69,7 +83,9 @@ export async function setLastSyncedAt(timestamp: string): Promise<void> {
 }
 
 /**
- * Get the last sync timestamp.
+ * Mengambil timestamp kapan sinkronisasi terakhir kali berhasil dilakukan.
+ *
+ * @returns Promise berisi ISO string waktu sinkronisasi, atau null.
  */
 export async function getLastSyncedAt(): Promise<string | null> {
   const db = await getDB();
@@ -87,7 +103,9 @@ export async function getLastSyncedAt(): Promise<string | null> {
 }
 
 /**
- * Clear all local session data (used on logout).
+ * Menghapus seluruh data sesi lokal di store sync_meta (digunakan saat logout).
+ *
+ * @returns Promise void setelah penyimpanan lokal dikosongkan.
  */
 export async function clearLocalSession(): Promise<void> {
   const db = await getDB();

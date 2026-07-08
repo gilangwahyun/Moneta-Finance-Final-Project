@@ -1,4 +1,12 @@
+/*
+ * File: src/lib/utils/budget-rhythm.ts
+ * Description: Utilitas kalkulasi ritme dan kecepatan pengeluaran anggaran bulanan,
+ * menghitung estimasi pengeluaran ideal harian, proyeksi bulanan, serta status anggaran (ON_TRACK, OFF_TRACK, OVER_BUDGET).
+ */
+
 import dayjs from "dayjs";
+
+/********** Tipe Data & Antarmuka **********/
 
 export type RhythmStatus = "ON_TRACK" | "OFF_TRACK" | "OVER_BUDGET";
 
@@ -8,18 +16,22 @@ export interface BudgetRhythm {
   dailyAllowance: number;
   idealUsageUntilToday: number;
   projectedMonthlyUsage: number;
-  rhythmRatio: number; // >1 means spending faster than ideal
+  rhythmRatio: number; /* > 1 berarti pengeluaran lebih cepat dari batas ideal */
   status: RhythmStatus;
   daysLeft: number;
   dailySafeRemaining: number;
 }
 
+/********** Kalkulasi Ritme Anggaran (calculateBudgetRhythm) **********/
+
 /**
- * Calculates the rhythm of budget spending.
- * @param amount The total budget limit for the period.
- * @param spentAmount The total spent amount in the period.
- * @param period The period in "YYYY-MM" format.
- * @param todayDate (Optional) The current date, defaults to now.
+ * Menghitung ritme pengeluaran anggaran bulanan.
+ *
+ * @param amount - Batas total anggaran untuk periode tersebut.
+ * @param spentAmount - Total pengeluaran yang telah terpakai.
+ * @param period - Periode bulan dalam format "YYYY-MM".
+ * @param todayDate - Tanggal referensi evaluasi (default: tanggal saat ini).
+ * @returns Objek BudgetRhythm yang memuat status, estimasi harian aman, dan rasio kecepatan.
  */
 export function calculateBudgetRhythm(
   amount: number,
@@ -40,24 +52,24 @@ export function calculateBudgetRhythm(
   } else if (isPastMonth) {
     currentDay = daysInMonth;
   } else {
-    // Future month
+    /********** Bulan di masa depan. */
     currentDay = 0;
   }
 
   const dailyAllowance = amount / daysInMonth;
   const idealUsageUntilToday = currentDay * dailyAllowance;
   
-  // Projection based on average daily spent so far
+  /********** Proyeksi pengeluaran akhir bulan berdasarkan rata-rata harian sejauh ini. */
   const projectedMonthlyUsage = currentDay > 0 ? (spentAmount / currentDay) * daysInMonth : 0;
   
-  // Rhythm ratio: > 1.0 means spending faster than ideal
+  /********** Rasio ritme: > 1.0 berarti kecepatan pengeluaran melebihi laju ideal. */
   const rhythmRatio = idealUsageUntilToday > 0 ? (spentAmount / idealUsageUntilToday) : (spentAmount > 0 ? Infinity : 0);
   
   let status: RhythmStatus = "ON_TRACK";
   if (spentAmount >= amount) {
     status = "OVER_BUDGET";
   } else if (rhythmRatio > 1.1) {
-    // 10% faster than ideal triggers a warning
+    /********** Pengeluaran 10% lebih cepat dari ideal akan memicu peringatan (OFF_TRACK). */
     status = "OFF_TRACK";
   }
 

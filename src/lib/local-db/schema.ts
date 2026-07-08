@@ -1,9 +1,13 @@
-// ─── IndexedDB Schema & Constants ───────────────────────
-// Single source of truth for the local DB structure.
-// When adding new stores or indexes, bump the DB_VERSION.
+/*
+ * File: src/lib/local-db/schema.ts
+ * Description: Skema dan konstanta IndexedDB lokal sebagai sumber kebenaran tunggal (single source of truth),
+ * mendefinisikan nama store, key path, serta daftar indeks untuk migrasi versi database.
+ */
+
+/********** Konstanta & Nama Store **********/
 
 export const DB_NAME = "moneta-finance";
-export const DB_VERSION = 12; // v11: Add financial_targets store
+export const DB_VERSION = 12; /* v11: Penambahan store financial_targets */
 
 export const STORES = {
   CATEGORIES: "categories",
@@ -17,6 +21,8 @@ export const STORES = {
   NOTIFICATION_SETTINGS: "notification_settings",
   FINANCIAL_TARGETS: "financial_targets",
 } as const;
+
+/********** Definisi Skema Store **********/
 
 export interface StoreSchema {
   name: string;
@@ -91,7 +97,7 @@ export const STORE_SCHEMAS: StoreSchema[] = [
     ],
   },
   {
-    // ── Notification Inbox (v6) ────────────────────────
+    /* Notification Inbox (v6) */
     name: STORES.NOTIFICATION_INBOX,
     keyPath: "id",
     autoIncrement: true,
@@ -102,8 +108,8 @@ export const STORE_SCHEMAS: StoreSchema[] = [
     ],
   },
   {
-    // ── Notification Logs (v7) ─────────────────────────
-    // Offline-first sync capable. Research audit trail + system alerts.
+    /* Notification Logs (v7) */
+    /* Mendukung sinkronisasi offline-first untuk jejak audit riset dan peringatan sistem */
     name: STORES.NOTIFICATION_LOGS,
     keyPath: "clientId",
     indexes: [
@@ -115,7 +121,7 @@ export const STORE_SCHEMAS: StoreSchema[] = [
     ],
   },
   {
-    // ── Notification Settings (v10) ────────────────────────
+    /* Notification Settings (v10) */
     name: STORES.NOTIFICATION_SETTINGS,
     keyPath: "clientId",
     indexes: [
@@ -125,7 +131,7 @@ export const STORE_SCHEMAS: StoreSchema[] = [
     ],
   },
   {
-    // ── Financial Targets (v11) ────────────────────────────
+    /* Financial Targets (v11) */
     name: STORES.FINANCIAL_TARGETS,
     keyPath: "clientId",
     indexes: [

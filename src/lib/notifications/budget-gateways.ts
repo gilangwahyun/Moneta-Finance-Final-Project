@@ -1,4 +1,3 @@
-/********** [START: Budget Gateway Evaluation Engine] **********/
 /********** @deprecated Modul ini adalah legacy notification engine yang paralel.
  *
  *  ALASAN DEPRECATED:
@@ -16,7 +15,6 @@
  *
  *  File ini dipertahankan hanya sebagai referensi. Akan dihapus pada fase cleanup berikutnya.
  */
-/********** [END: Budget Gateway Evaluation Engine] **********/
 
 /********** Format state kategori:
  *  { [categoryId]: { t1Fired: string | null, t2Fired: string | null, deficitFired: string | null } }

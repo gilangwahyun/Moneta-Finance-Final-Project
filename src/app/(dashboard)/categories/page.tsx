@@ -1,6 +1,5 @@
 'use client';
 
-/********** [START: Halaman Manajemen Kategori] **********/
 /**********
  * Halaman pengaturan untuk operasi CRUD pada kategori transaksi.
  *
@@ -14,7 +13,6 @@
  *   - DynamicIcon digunakan untuk render ikon dari string yang tersimpan di DB
  *   - Form builder seragam dengan CategoryBuilder di TransactionModal
  **********/
-/********** [END: Halaman Manajemen Kategori] **********/
 
 /********** Imports **********/
 

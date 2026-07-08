@@ -1,18 +1,25 @@
-// ─── GET /api/export ────────────────────────────────────
-// Exports ALL transactions for the authenticated user as XLSX.
-//
-// Architecture Decision: Data is pulled directly from PostgreSQL
-// (not IndexedDB) to guarantee a complete, definitive dataset
-// even if the user has cleared their local cache.
+/********** Handler API (GET /api/export) yang mengekspor SELURUH transaksi pengguna dalam format XLSX.
+ *
+ *  Keputusan Arsitektur: Data diambil langsung dari database PostgreSQL (bukan IndexedDB)
+ *  untuk menjamin keutuhan dan kelengkapan dataset resmi, bahkan jika cache lokal klien telah dihapus.
+ */
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { getAuthUser } from "@/lib/auth/middleware";
 import * as XLSX from "xlsx";
 
+/********** GET /api/export **********/
+
+/**
+ * Memproses permintaan ekspor data transaksi pengguna ke file Excel (.xlsx).
+ *
+ * @param request - NextRequest dari pengguna yang terautentikasi.
+ * @returns Response berupa file unduhan XLSX berisikan sheet Ringkasan dan sheet Transaksi, atau pesan error jika gagal.
+ */
 export async function GET(request: NextRequest) {
   try {
-    // ── Auth check ────────────────────────────────────
+    /********** 1. Pengecekan Autentikasi. */
     const tokenPayload = await getAuthUser(request);
     if (!tokenPayload || !tokenPayload.sub) {
       return NextResponse.json(
@@ -23,7 +30,8 @@ export async function GET(request: NextRequest) {
 
     const userId = tokenPayload.sub;
 
-    // ── Fetch all non-deleted transactions with relations ──
+    /********** Pengambilan Data Transaksi **********/
+    /********** Mengambil semua transaksi aktif (tidak terhapus) beserta relasi kategori dan dompet. */
     const transactions = await prisma.transaction.findMany({
       where: {
         userId,
@@ -50,7 +58,7 @@ export async function GET(request: NextRequest) {
       orderBy: { date: "desc" },
     });
 
-    // ── Check if transactions exist ─────────────────────
+    /********** Validasi eksistensi data transaksi. */
     if (transactions.length === 0) {
       return NextResponse.json(
         { success: false, error: { code: "NO_DATA", message: "Tidak ada transaksi untuk diekspor." } },
@@ -58,11 +66,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // ── Formatting Helpers ─────────────────────────────
-    // Using standard accounting format for safety. The user's system locale will dictate . or , for thousands separator.
+    /********** Pengaturan & Helper Pemformatan **********/
+    /********** Menggunakan format standar akuntansi agar kompatibel di berbagai locale sistem. */
     const rupiahFormatSummary = '"Rp" #,##0;"-Rp" #,##0;"Rp" 0;@';
     const numberFormat = '#,##0;-#,##0;0;@';
-    // Use standard date format supported by all Excel locales for date columns
+    /* Format tanggal standar yang kompatibel di semua locale Excel. */
     const dateFormat = '[$-id-ID]dd mmmm yyyy;@';
 
     function formatIndonesianDateStr(dateVal: Date | string): string {
@@ -86,7 +94,7 @@ export async function GET(request: NextRequest) {
       return `${hours}:${minutes}`;
     }
 
-    // ── Calculate Summary Metrics ──────────────────────
+    /********** Perhitungan Metrik Ringkasan **********/
     const totalTransactions = transactions.length;
     let totalIncome = 0;
     let totalExpense = 0;
@@ -136,7 +144,7 @@ export async function GET(request: NextRequest) {
       filename = `moneta-transaksi-${formatYMD(minDate)}_sampai_${formatYMD(maxDate)}.xlsx`;
     }
 
-    // ── Sheet 1: Ringkasan ─────────────────────────────
+    /********** Penyusunan Sheet 1 (Ringkasan) **********/
     const summaryRows = [
       ["LAPORAN KEUANGAN MONETA"],
       [],
@@ -162,13 +170,13 @@ export async function GET(request: NextRequest) {
 
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
     
-    // Set widths for Ringkasan
+    /********** Atur lebar kolom sheet Ringkasan. */
     wsSummary["!cols"] = [
-      { wch: 35 }, // Labels
-      { wch: 45 }  // Values
+      { wch: 35 }, /* Label */
+      { wch: 45 }  /* Nilai */
     ];
 
-    // Format currencies in Ringkasan
+    /********** Format angka mata uang pada cell tertentu di sheet Ringkasan. */
     const summaryCurrencyCells = ["B15", "B16", "B17", "B18", "B20"];
     summaryCurrencyCells.forEach(cell => {
       if (wsSummary[cell]) {
@@ -177,14 +185,14 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Merge title cells in Ringkasan
+    /********** Gabungkan cell untuk judul laporan di sheet Ringkasan. */
     wsSummary["!merges"] = [
       { s: { r: 0, c: 0 }, e: { r: 0, c: 1 } }
     ];
 
-    // ── Sheet 2: Transaksi ─────────────────────────────
+    /********** Penyusunan Sheet 2 (Transaksi) **********/
     const transRows = transactions.map((t) => {
-      // Pass real Date object for Excel sorting/filtering
+      /********** Gunakan objek Date asli agar Excel dapat mengurutkan dan memvalidasi tanggal. */
       const tDate = new Date(t.date);
       const tTime = formatWaktuDicatat(t.createdAt);
       
@@ -201,7 +209,7 @@ export async function GET(request: NextRequest) {
       }
 
       const descText = t.description || "";
-      const noteText = t.note || "-"; // Empty note shown as "-"
+      const noteText = t.note || "-"; /* Catatan kosong ditampilkan sebagai "-" */
       
       const nominalVal = Number(t.amount);
       
@@ -210,7 +218,7 @@ export async function GET(request: NextRequest) {
         arusKasVal = nominalVal;
       } else if (t.type === "EXPENSE") {
         arusKasVal = -nominalVal;
-      } // Transfer left as null
+      } /* Untuk transfer, dibiarkan null. */
 
       return [
         tDate,
@@ -238,61 +246,61 @@ export async function GET(request: NextRequest) {
     ];
     const wsTransData = [transHeaders, ...transRows];
     
-    // Tell SheetJS to process dates properly
+    /********** Instruksikan SheetJS untuk memproses tanggal dengan benar. */
     const wsTrans = XLSX.utils.aoa_to_sheet(wsTransData, { cellDates: true });
 
-    // Set widths for Transaksi
+    /********** Atur lebar kolom sheet Transaksi. */
     wsTrans["!cols"] = [
-      { wch: 20 }, // Tanggal
-      { wch: 15 }, // Waktu Dicatat
-      { wch: 18 }, // Jenis Transaksi
-      { wch: 20 }, // Kategori
-      { wch: 35 }, // Dompet
-      { wch: 35 }, // Deskripsi
-      { wch: 18 }, // Nominal (Rp)
-      { wch: 18 }, // Arus Kas (Rp)
-      { wch: 35 }  // Catatan
+      { wch: 20 }, /* Tanggal */
+      { wch: 15 }, /* Waktu Dicatat */
+      { wch: 18 }, /* Jenis Transaksi */
+      { wch: 20 }, /* Kategori */
+      { wch: 35 }, /* Dompet */
+      { wch: 35 }, /* Deskripsi */
+      { wch: 18 }, /* Nominal (Rp) */
+      { wch: 18 }, /* Arus Kas (Rp) */
+      { wch: 35 }  /* Catatan */
     ];
 
-    // Freeze top row and setup Auto Filter
+    /********** Pembekuan baris header dan konfigurasi Auto Filter. */
     const endRow = transactions.length + 1;
     wsTrans["!views"] = [{ state: "frozen", ySplit: 1 }];
     wsTrans["!autofilter"] = { ref: `A1:I${endRow}` };
 
-    // Format data cells in Transaksi sheet
+    /********** Format tipe dan tampilan data pada sheet Transaksi. */
     const startRow = 2;
     for (let r = startRow; r <= endRow; r++) {
-      // Column A: Tanggal (format as Date)
+      /* Kolom A: Tanggal (sebagai Date) */
       const dateCell = wsTrans[`A${r}`];
       if (dateCell && dateCell.t === 'd') {
         dateCell.z = dateFormat;
       }
 
-      // Column G: Nominal
+      /* Kolom G: Nominal */
       const nominalCell = wsTrans[`G${r}`];
       if (nominalCell) {
         nominalCell.t = "n";
         nominalCell.z = numberFormat;
       }
 
-      // Column H: Arus Kas
+      /* Kolom H: Arus Kas */
       const arusKasCell = wsTrans[`H${r}`];
       if (arusKasCell) {
         if (arusKasCell.v !== null && arusKasCell.v !== undefined) {
           arusKasCell.t = "n";
           arusKasCell.z = numberFormat;
         } else {
-          // If transfer, set empty string to avoid rendering 0
+          /* Jika transfer, pasang string kosong agar tidak menampilkan 0. */
           arusKasCell.t = "s";
           arusKasCell.v = "";
         }
       }
     }
 
-    // ── Build Workbook ────────────────────────────────
+    /********** Pembuatan & Penulisan Workbook **********/
     const wb = XLSX.utils.book_new();
     
-    // Add workbook metadata for polished feel
+    /********** Tambahkan metadata workbook untuk tampilan profesional. */
     wb.Props = {
       Title: "Laporan Keuangan Moneta",
       Author: "Moneta",
@@ -304,7 +312,7 @@ export async function GET(request: NextRequest) {
 
     const excelBuffer = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
 
-    // ── Return XLSX Response ──────────────────────────
+    /********** Kembalikan file buffer XLSX sebagai respons unduhan. */
     return new Response(excelBuffer, {
       status: 200,
       headers: {

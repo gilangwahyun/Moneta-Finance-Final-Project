@@ -1,19 +1,8 @@
-// ─── Categories IndexedDB Repository ────────────────────
-// Full CRUD operations for categories in the local IndexedDB store.
-//
-// Architecture: Local-First
-//   - UI reads/writes ONLY to IndexedDB through these functions
-//   - All mutations auto-enqueue to sync_queue
-//   - The sync engine pushes queued changes to the server
-//
-// Functions:
-//   addCategory()       — Create a new category (generates clientId)
-//   updateCategory()    — Update an existing category's fields
-//   deleteCategory()    — Soft-delete (sets deletedAt)
-//   getAllCategories()   — List all active (non-deleted) categories
-//   getCategoryById()   — Get one category by clientId
-//   upsertCategory()    — Low-level put (used by sync engine)
-//   getPendingCategories() — Get PENDING items for sync
+/*
+ * File: src/lib/local-db/repositories/categories.ts
+ * Description: Repositori lokal IndexedDB untuk manajemen operasi CRUD kategori,
+ * mendukung arsitektur offline-first dan sinkronisasi ke server.
+ */
 
 import { getDB } from "../index";
 import { STORES } from "../schema";
@@ -21,7 +10,7 @@ import { Category, CategoryType } from "@/types/models.types";
 import { enqueueChange } from "./sync-queue";
 import { generateClientId } from "@/lib/utils/helpers";
 
-// ─── Create ─────────────────────────────────────────────
+/********** Tipe dan Operasi Pembuatan (Create) **********/
 
 export interface AddCategoryInput {
   name: string;
@@ -32,10 +21,11 @@ export interface AddCategoryInput {
 }
 
 /**
- * Create a new category with a client-generated UUID.
- * Automatically sets syncStatus to PENDING and enqueues for sync.
+ * Membuat kategori baru dengan UUID lokal yang dibuat oleh klien.
+ * Secara otomatis mengatur syncStatus ke PENDING dan memasukkannya ke antrean sinkronisasi.
  *
- * @returns The created category (with its clientId)
+ * @param input - Data input kategori (name, type, icon, color, userId).
+ * @returns Promise berisi objek Category yang dibuat.
  */
 export async function addCategory(input: AddCategoryInput): Promise<Category> {
   const now = new Date().toISOString();
@@ -65,7 +55,7 @@ export async function addCategory(input: AddCategoryInput): Promise<Category> {
     tx.onerror = () => reject(tx.error);
   });
 
-  // Enqueue for sync
+  /********** Masukkan mutasi ke antrean sinkronisasi. */
   await enqueueChange("category", "create", category.clientId, {
     ...category,
   });
@@ -73,7 +63,7 @@ export async function addCategory(input: AddCategoryInput): Promise<Category> {
   return category;
 }
 
-// ─── Update ─────────────────────────────────────────────
+/********** Operasi Pembaruan (Update) **********/
 
 export interface UpdateCategoryInput {
   clientId: string;
@@ -84,10 +74,11 @@ export interface UpdateCategoryInput {
 }
 
 /**
- * Update specific fields of an existing category.
- * Marks as PENDING and enqueues the mutation for sync.
+ * Memperbarui field tertentu dari kategori yang sudah ada.
+ * Menandai status sinkronisasi sebagai PENDING dan memasukkan mutasi ke antrean sinkronisasi.
  *
- * @returns The updated category, or null if not found
+ * @param input - Data perubahan kategori berdasarkan clientId.
+ * @returns Promise berisi objek Category yang diperbarui, atau null jika tidak ditemukan.
  */
 export async function updateCategory(
   input: UpdateCategoryInput
@@ -116,7 +107,7 @@ export async function updateCategory(
     tx.onerror = () => reject(tx.error);
   });
 
-  // Enqueue for sync
+  /********** Masukkan mutasi ke antrean sinkronisasi. */
   await enqueueChange("category", "update", updated.clientId, {
     ...updated,
   });
@@ -124,12 +115,15 @@ export async function updateCategory(
   return updated;
 }
 
-// ─── Soft Delete ────────────────────────────────────────
+/********** Operasi Penghapusan (Delete) **********/
 
 /**
- * Soft-delete a category by setting deletedAt timestamp.
- * The record remains in IndexedDB but is filtered out of UI queries.
- * The sync engine will propagate the deletion to the server.
+ * Melakukan soft-delete pada kategori dengan menandai timestamp deletedAt.
+ * Rekod tetap ada di IDB namun tidak akan muncul pada kueri UI.
+ * Mesin sinkronisasi akan meneruskan penghapusan ini ke server.
+ *
+ * @param clientId - ID lokal unik dari kategori yang akan dihapus.
+ * @returns Promise berisi boolean yang menunjukkan apakah rekod ditemukan dan dihapus.
  */
 export async function deleteCategory(clientId: string): Promise<boolean> {
   const existing = await getCategoryById(clientId);
@@ -152,13 +146,20 @@ export async function deleteCategory(clientId: string): Promise<boolean> {
     tx.onerror = () => reject(tx.error);
   });
 
-  // Enqueue the delete
+  /********** Masukkan penghapusan ke antrean sinkronisasi. */
   await enqueueChange("category", "delete", clientId, { ...updated });
 
   return true;
 }
 
-// ─── Hard Delete (Sync use only) ────────────────────────
+/********** Penghapusan Permanen (Khusus Sinkronisasi) **********/
+
+/**
+ * Menghapus rekod kategori secara permanen dari IndexedDB lokal.
+ *
+ * @param clientId - ID lokal unik dari kategori yang akan dihapus permanen.
+ * @returns Promise void setelah rekod dihapus.
+ */
 export async function hardDeleteCategory(clientId: string): Promise<void> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
@@ -170,10 +171,13 @@ export async function hardDeleteCategory(clientId: string): Promise<void> {
   });
 }
 
-// ─── Read ───────────────────────────────────────────────
+/********** Operasi Pembacaan (Read) **********/
 
 /**
- * Get all non-deleted categories for a user.
+ * Mengambil seluruh kategori aktif (tidak terhapus) milik seorang pengguna.
+ *
+ * @param userId - ID pengguna pemilik kategori.
+ * @returns Promise berisi array Category aktif.
  */
 export async function getAllCategories(userId: string): Promise<Category[]> {
   const db = await getDB();
@@ -194,8 +198,11 @@ export async function getAllCategories(userId: string): Promise<Category[]> {
 }
 
 /**
- * Get ALL categories for a user, including soft-deleted ones.
- * Used for category name lookups in transaction history.
+ * Mengambil SELURUH kategori milik pengguna, termasuk yang sudah di-soft-delete.
+ * Digunakan untuk pencarian nama kategori pada riwayat transaksi lama.
+ *
+ * @param userId - ID pengguna.
+ * @returns Promise berisi array seluruh Category.
  */
 export async function getAllCategoriesIncludingDeleted(userId: string): Promise<Category[]> {
   const db = await getDB();
@@ -211,7 +218,11 @@ export async function getAllCategoriesIncludingDeleted(userId: string): Promise<
 }
 
 /**
- * Get categories filtered by type (INCOME or EXPENSE).
+ * Mengambil daftar kategori aktif berdasarkan tipe (INCOME atau EXPENSE).
+ *
+ * @param userId - ID pengguna.
+ * @param type - Tipe kategori yang dicari.
+ * @returns Promise berisi array Category sesuai tipe.
  */
 export async function getCategoriesByType(
   userId: string,
@@ -222,7 +233,10 @@ export async function getCategoriesByType(
 }
 
 /**
- * Get a single category by clientId.
+ * Mengambil satu kategori berdasarkan clientId lokal.
+ *
+ * @param clientId - ID lokal unik kategori.
+ * @returns Promise berisi Category jika ditemukan, atau undefined.
  */
 export async function getCategoryById(
   clientId: string
@@ -238,11 +252,14 @@ export async function getCategoryById(
   });
 }
 
-// ─── Sync Helpers ───────────────────────────────────────
+/********** Helper Sinkronisasi (Sync Helpers) **********/
 
 /**
- * Low-level upsert — used by the sync engine to apply server data.
- * Pass `skipQueue: true` to avoid re-enqueuing server-applied changes.
+ * Upsert tingkat rendah (low-level) — digunakan oleh mesin sinkronisasi untuk menerapkan data dari server.
+ *
+ * @param category - Objek Category dari server.
+ * @param skipQueue - Jika true, perubahan tidak akan dimasukkan kembali ke antrean sinkronisasi.
+ * @returns Promise void setelah penyimpanan selesai.
  */
 export async function upsertCategory(
   category: Category,
@@ -270,7 +287,10 @@ export async function upsertCategory(
 }
 
 /**
- * Bulk upsert categories — used by the sync engine to apply multiple server records in one IDB transaction.
+ * Upsert kategori secara massal — digunakan oleh mesin sinkronisasi untuk menerapkan banyak rekod sekaligus dalam satu transaksi IDB.
+ *
+ * @param categories - Array objek Category dari server.
+ * @returns Promise void setelah semua rekod disimpan.
  */
 export async function bulkUpsertCategories(categories: Category[]): Promise<void> {
   if (categories.length === 0) return;
@@ -287,7 +307,9 @@ export async function bulkUpsertCategories(categories: Category[]): Promise<void
 }
 
 /**
- * Get all categories with PENDING sync status.
+ * Mengambil semua kategori dengan status sinkronisasi PENDING.
+ *
+ * @returns Promise berisi array Category yang berstatus PENDING.
  */
 export async function getPendingCategories(): Promise<Category[]> {
   const db = await getDB();

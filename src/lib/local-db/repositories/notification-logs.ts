@@ -1,14 +1,18 @@
-// ─── Notification Logs Repository ─────────────────────────
-// Research audit trail for every notification attempt.
-// Records both 'delivered' and 'suppressed' events for UCD analysis.
+/*
+ * File: src/lib/local-db/repositories/notification-logs.ts
+ * Description: Repositori lokal IndexedDB untuk pencatatan jejak audit (audit trail) setiap upaya notifikasi,
+ * merekam event yang 'delivered' maupun 'suppressed' untuk kebutuhan analisis UCD dan sinkronisasi.
+ */
 
 import { getDB } from '../index';
 import { STORES } from '../schema';
 import { enqueueChange } from './sync-queue';
 
+/********** Tipe Data & Antarmuka **********/
+
 export interface NotificationLogRecord {
-  clientId: string; // Unique ID for offline-first
-  dedupeKey: string; // To prevent duplicate alerts
+  clientId: string; /* ID unik untuk arsitektur offline-first */
+  dedupeKey: string; /* Kunci untuk mencegah peringatan ganda */
   userId: string;
   title: string;
   body: string;
@@ -21,7 +25,7 @@ export interface NotificationLogRecord {
   relatedBudgetId?: string;
   suppressionReason?: string;
   deliveryModeAtCreation?: string;
-  createdAt: string; // ISO
+  createdAt: string; /* Format timestamp ISO */
   pushedAt?: string;
   digestSentAt?: string;
   eventType?: string;
@@ -36,7 +40,7 @@ export interface NotificationLogRecord {
   syncStatus: 'PENDING' | 'SYNCED';
   updatedAt: string;
   
-  // Metadata fields for digest and analytics
+  /* Field metadata untuk rangkuman (digest) dan analitik */
   categoryName?: string;
   usageRatio?: number;
   budgetLimit?: number;
@@ -49,7 +53,16 @@ export interface NotificationLogRecord {
   targetCategoryName?: string;
 }
 
-/** Write or update a log record in IDB. Used by app/SW. Enqueues for sync. */
+/********** Operasi Upsert & Penyimpanan **********/
+
+/**
+ * Menyimpan atau memperbarui rekod log notifikasi di IndexedDB.
+ * Digunakan oleh aplikasi maupun Service Worker, dan otomatis memasukkan mutasi ke antrean sinkronisasi.
+ *
+ * @param record - Objek NotificationLogRecord yang akan disimpan.
+ * @param skipSyncQueue - Jika true, perubahan tidak akan dimasukkan ke antrean sinkronisasi.
+ * @returns Promise void setelah penyimpanan selesai.
+ */
 export async function upsertNotificationLog(record: NotificationLogRecord, skipSyncQueue = false): Promise<void> {
   const db = await getDB();
 
@@ -76,7 +89,7 @@ export async function upsertNotificationLog(record: NotificationLogRecord, skipS
     if (error?.name === 'ConstraintError') {
       console.warn('[LocalDB] ConstraintError in upsertNotificationLog. Deleting old record with same dedupeKey and retrying...');
 
-      // Delete the conflicting record manually using an index lookup
+      /********** Hapus rekod yang konflik secara manual menggunakan pencarian indeks. */
       await new Promise<void>((resolve) => {
         const tx = db.transaction(STORES.NOTIFICATION_LOGS, 'readwrite');
         const store = tx.objectStore(STORES.NOTIFICATION_LOGS);
@@ -89,10 +102,10 @@ export async function upsertNotificationLog(record: NotificationLogRecord, skipS
           }
         };
         tx.oncomplete = () => resolve();
-        tx.onerror = () => resolve(); // Ignore errors during cleanup
+        tx.onerror = () => resolve(); /* Abaikan error saat pembersihan */
       });
 
-      // Retry the upsert
+      /********** Coba kembali operasi upsert setelah pembersihan. */
       await new Promise<void>((resolve, reject) => {
         const tx = db.transaction(STORES.NOTIFICATION_LOGS, 'readwrite');
         const req = tx.objectStore(STORES.NOTIFICATION_LOGS).put(record);
@@ -110,7 +123,10 @@ export async function upsertNotificationLog(record: NotificationLogRecord, skipS
 }
 
 /**
- * Bulk upsert notification logs — used by the sync engine to apply multiple server records in one IDB transaction.
+ * Upsert log notifikasi secara massal — digunakan oleh mesin sinkronisasi untuk menerapkan banyak rekod sekaligus dalam satu transaksi IDB.
+ *
+ * @param records - Array objek NotificationLogRecord dari server.
+ * @returns Promise void setelah semua rekod disimpan.
  */
 export async function bulkUpsertNotificationLogs(records: NotificationLogRecord[]): Promise<void> {
   if (records.length === 0) return;
@@ -126,7 +142,14 @@ export async function bulkUpsertNotificationLogs(records: NotificationLogRecord[
   });
 }
 
-/** Get a notification log by its clientId */
+/********** Operasi Pembacaan & Penghapusan **********/
+
+/**
+ * Mengambil rekod log notifikasi berdasarkan clientId lokal.
+ *
+ * @param clientId - ID lokal unik log notifikasi.
+ * @returns Promise berisi NotificationLogRecord jika ditemukan, atau undefined.
+ */
 export async function getNotificationLogById(clientId: string): Promise<NotificationLogRecord | undefined> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
@@ -139,7 +162,13 @@ export async function getNotificationLogById(clientId: string): Promise<Notifica
   });
 }
 
-/** Delete a notification log by clientId. Used during conflict resolution. */
+/**
+ * Menghapus log notifikasi dari IndexedDB berdasarkan clientId.
+ * Digunakan saat resolusi konflik sinkronisasi.
+ *
+ * @param clientId - ID lokal unik log notifikasi.
+ * @returns Promise void setelah rekod dihapus.
+ */
 export async function deleteNotificationLog(clientId: string): Promise<void> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
@@ -151,7 +180,12 @@ export async function deleteNotificationLog(clientId: string): Promise<void> {
   });
 }
 
-/** Check if a notification with this dedupeKey already exists locally. */
+/**
+ * Mengecek apakah notifikasi dengan dedupeKey tertentu sudah ada di database lokal.
+ *
+ * @param dedupeKey - Kunci unik deduplikasi notifikasi.
+ * @returns Promise berisi boolean (true jika sudah ada).
+ */
 export async function checkDedupeKeyExists(dedupeKey: string): Promise<boolean> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
@@ -164,7 +198,12 @@ export async function checkDedupeKeyExists(dedupeKey: string): Promise<boolean> 
   });
 }
 
-/** Count today's delivered notifications for a user (global cap check). */
+/**
+ * Menghitung jumlah notifikasi yang berhasil dikirim hari ini untuk seorang pengguna (pengecekan batas global).
+ *
+ * @param userId - ID pengguna.
+ * @returns Promise berisi jumlah notifikasi terkirim hari ini.
+ */
 export async function countTodayDelivered(userId: string): Promise<number> {
   const db = await getDB();
   const today = new Date().toISOString().split('T')[0];
@@ -181,7 +220,11 @@ export async function countTodayDelivered(userId: string): Promise<number> {
   });
 }
 
-/** Get all unsynced log records for bulk server sync. */
+/**
+ * Mengambil semua rekod log yang belum tersinkronisasi (berstatus PENDING) untuk sinkronisasi massal ke server.
+ *
+ * @returns Promise berisi array NotificationLogRecord yang belum tersinkron.
+ */
 export async function getUnsyncedLogs(): Promise<NotificationLogRecord[]> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
@@ -193,7 +236,12 @@ export async function getUnsyncedLogs(): Promise<NotificationLogRecord[]> {
   });
 }
 
-/** Get all logs for the current user. */
+/**
+ * Mengambil seluruh riwayat log notifikasi untuk pengguna tertentu.
+ *
+ * @param userId - ID pengguna.
+ * @returns Promise berisi array seluruh NotificationLogRecord milik pengguna.
+ */
 export async function getAllLogs(userId: string): Promise<NotificationLogRecord[]> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
@@ -205,7 +253,14 @@ export async function getAllLogs(userId: string): Promise<NotificationLogRecord[
   });
 }
 
-/** Mark log records as synced after successful server POST. */
+/********** Operasi Perubahan Status (Status Mutations) **********/
+
+/**
+ * Menandai daftar rekod log sebagai tersinkronisasi (SYNCED) setelah berhasil di-POST ke server.
+ *
+ * @param clientIds - Array clientId log yang sukses dikirim.
+ * @returns Promise void setelah pembaruan status selesai.
+ */
 export async function markLogsSynced(clientIds: string[]): Promise<void> {
   if (clientIds.length === 0) return;
   const db = await getDB();
@@ -227,7 +282,12 @@ export async function markLogsSynced(clientIds: string[]): Promise<void> {
   });
 }
 
-/** Mark a log record as read locally. */
+/**
+ * Menandai satu rekod log sebagai sudah dibaca (read) di lokal dan memperbarui status pada store inbox jika ada.
+ *
+ * @param clientId - ID lokal unik log notifikasi.
+ * @returns Promise void setelah status dibaca diperbarui.
+ */
 export async function markLogRead(clientId: string): Promise<void> {
   const db = await getDB();
   await new Promise<void>((resolve, reject) => {
@@ -275,7 +335,12 @@ export async function markLogRead(clientId: string): Promise<void> {
   });
 }
 
-/** Mark all logs as read for a user. */
+/**
+ * Menandai semua rekod log sebagai sudah dibaca (read) untuk seorang pengguna.
+ *
+ * @param userId - ID pengguna.
+ * @returns Promise void setelah semua log diperbarui.
+ */
 export async function markAllLogsRead(userId: string): Promise<void> {
   const db = await getDB();
   const now = new Date().toISOString();
@@ -326,7 +391,13 @@ export async function markAllLogsRead(userId: string): Promise<void> {
   });
 }
 
-/** Mark a log record as pushed (i.e. system/device notification actually shown). */
+/**
+ * Menandai rekod log sebagai telah di-push (notifikasi sistem/perangkat benar-benar ditampilkan).
+ *
+ * @param clientId - ID lokal unik log notifikasi.
+ * @param pushedAt - Timestamp ISO kapan notifikasi ditampilkan.
+ * @returns Promise void setelah status push diperbarui.
+ */
 export async function markLogPushed(clientId: string, pushedAt: string): Promise<void> {
   const db = await getDB();
   await new Promise<void>((resolve, reject) => {
@@ -348,7 +419,13 @@ export async function markLogPushed(clientId: string, pushedAt: string): Promise
   });
 }
 
-/** Mark logs as included in a digest summary. */
+/**
+ * Menandai daftar rekod log sebagai telah dirangkum dalam notifikasi digest.
+ *
+ * @param clientIds - Array clientId log yang masuk dalam digest.
+ * @param sentAt - Timestamp ISO kapan digest dikirimkan.
+ * @returns Promise void setelah status digest diperbarui.
+ */
 export async function markLogsDigestSent(clientIds: string[], sentAt: string): Promise<void> {
   if (clientIds.length === 0) return;
   const db = await getDB();

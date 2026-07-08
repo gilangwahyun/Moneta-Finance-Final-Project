@@ -1,17 +1,24 @@
-// ─── Sync Queue IndexedDB Repository ────────────────────
-// Logs every local mutation (create/update/delete) as an ordered
-// entry in the sync_queue store. The sync engine reads from this
-// queue to push changes to the server.
-//
-// Using auto-increment IDs guarantees ordering of mutations.
+/*
+ * File: src/lib/local-db/repositories/sync-queue.ts
+ * Description: Repositori lokal IndexedDB untuk pencatatan antrean sinkronisasi (sync queue),
+ * merekam setiap mutasi lokal (create, update, delete) secara terurut menggunakan ID auto-increment.
+ */
 
 import { getDB } from "../index";
 import { STORES } from "../schema";
 import { SyncQueueEntry, SyncQueueAction, SyncQueueEntity } from "@/types/models.types";
 
+/********** Operasi Penambahan Antrean (Enqueue) **********/
+
 /**
- * Enqueue a mutation into the sync queue.
- * Called automatically by the entity repositories on create/update/delete.
+ * Memasukkan mutasi ke dalam antrean sinkronisasi.
+ * Dipanggil secara otomatis oleh repositori entitas saat operasi create, update, atau delete.
+ *
+ * @param entity - Jenis entitas yang dimutasi (misal: category, transaction).
+ * @param action - Jenis aksi (create, update, delete).
+ * @param clientId - ID unik lokal dari rekod yang dimutasi.
+ * @param data - Payload data mutasi.
+ * @returns Promise berisi ID auto-increment dari entri antrean yang baru dibuat.
  */
 export async function enqueueChange(
   entity: SyncQueueEntity,
@@ -40,8 +47,12 @@ export async function enqueueChange(
   });
 }
 
+/********** Operasi Pembacaan & Status Antrean **********/
+
 /**
- * Get all pending entries from the sync queue, ordered by id (insertion order).
+ * Mengambil semua entri antrean yang tertunda dari store, diurutkan berdasarkan ID (urutan masukan).
+ *
+ * @returns Promise berisi array SyncQueueEntry.
  */
 export async function getAllPending(): Promise<SyncQueueEntry[]> {
   const db = await getDB();
@@ -61,7 +72,9 @@ export async function getAllPending(): Promise<SyncQueueEntry[]> {
 }
 
 /**
- * Get the count of active pending entries in the queue (excluding quarantined).
+ * Menghitung jumlah entri aktif yang tertunda di antrean (tidak termasuk yang dikarantina/gagal permanen).
+ *
+ * @returns Promise berisi jumlah entri aktif.
  */
 export async function getPendingCount(): Promise<number> {
   const all = await getAllPending();
@@ -69,7 +82,9 @@ export async function getPendingCount(): Promise<number> {
 }
 
 /**
- * Get the count of permanently failed/quarantined entries.
+ * Menghitung jumlah entri yang mengalami kegagalan permanen atau masuk karantina.
+ *
+ * @returns Promise berisi jumlah entri ter-karantina.
  */
 export async function getQuarantinedCount(): Promise<number> {
   const all = await getAllPending();
@@ -85,7 +100,9 @@ export interface SyncQueueSummary {
 }
 
 /**
- * Get a lightweight summary of all queue items.
+ * Mengambil ringkasan ringan dari seluruh item di dalam antrean.
+ *
+ * @returns Promise berisi array SyncQueueSummary.
  */
 export async function getSyncQueueSummary(): Promise<SyncQueueSummary[]> {
   const all = await getAllPending();
@@ -98,8 +115,13 @@ export async function getSyncQueueSummary(): Promise<SyncQueueSummary[]> {
   }));
 }
 
+/********** Operasi Penghapusan Antrean (Dequeue) **********/
+
 /**
- * Remove specific entries by their IDs after successful sync.
+ * Menghapus entri tertentu berdasarkan ID dari antrean setelah sinkronisasi berhasil.
+ *
+ * @param ids - Array ID angka dari item antrean yang akan dihapus.
+ * @returns Promise void setelah item dihapus.
  */
 export async function dequeueProcessed(ids: number[]): Promise<void> {
   if (ids.length === 0) return;
@@ -118,9 +140,16 @@ export async function dequeueProcessed(ids: number[]): Promise<void> {
   });
 }
 
+/********** Penanganan Kegagalan & Karantina (Fault Handling) **********/
+
 /**
- * Mark a queue entry as attempted. Increments retryCount and stores the error.
- * If retryCount >= maxRetries, sets failedAt to quarantine it.
+ * Menandai entri antrean telah dicoba untuk dikirim.
+ * Meningkatkan retryCount dan mencatat pesan error. Jika retryCount mencapai batas maksimal, entri masuk karantina (failedAt diisi).
+ *
+ * @param id - ID item antrean.
+ * @param errorMsg - Pesan error kegagalan.
+ * @param maxRetries - Batas maksimal percobaan ulang (default: 3).
+ * @returns Promise void setelah status percobaan disimpan.
  */
 export async function markEntryAttempt(id: number, errorMsg: string, maxRetries: number = 3): Promise<void> {
   const db = await getDB();
@@ -148,7 +177,9 @@ export async function markEntryAttempt(id: number, errorMsg: string, maxRetries:
 }
 
 /**
- * Get all permanently failed/quarantined entries for developer inspection.
+ * Mengambil seluruh entri yang gagal permanen/ter-karantina untuk keperluan inspeksi pengembang.
+ *
+ * @returns Promise berisi array SyncQueueEntry yang ter-karantina.
  */
 export async function getFailedSyncQueueEntries(): Promise<SyncQueueEntry[]> {
   const all = await getAllPending();
@@ -156,7 +187,9 @@ export async function getFailedSyncQueueEntries(): Promise<SyncQueueEntry[]> {
 }
 
 /**
- * Recover quarantined notification log entries that failed due to a specific error.
+ * Memulihkan entri log notifikasi ter-karantina yang gagal karena error tertentu (misal: DataError atau Push failed).
+ *
+ * @returns Promise void setelah item log dipulihkan ke antrean aktif.
  */
 export async function recoverQuarantinedNotificationLogs(): Promise<void> {
   const db = await getDB();
@@ -170,7 +203,7 @@ export async function recoverQuarantinedNotificationLogs(): Promise<void> {
     const store = tx.objectStore(STORES.SYNC_QUEUE);
     
     for (const log of quarantinedLogs) {
-      // The bug caused either "DataError" or general "Push failed" errors due to try/catch
+      /********** Bug sebelumnya menyebabkan error "DataError" atau "Push failed"; reset retryCount jika memenuhi syarat. */
       if (log.id && (!log.lastError || log.lastError.includes("DataError") || log.lastError.includes("Push failed"))) {
         log.retryCount = 0;
         log.failedAt = undefined;
@@ -185,9 +218,13 @@ export async function recoverQuarantinedNotificationLogs(): Promise<void> {
   });
 }
 
+/********** Operasi Pembersihan & Pengelompokan **********/
+
 /**
- * Clear the entire sync queue. Used after a full successful sync
- * or when resetting the local database.
+ * Mengosongkan seluruh isi antrean sinkronisasi.
+ * Digunakan setelah sinkronisasi penuh berhasil atau saat mereset database lokal.
+ *
+ * @returns Promise void setelah antrean dikosongkan.
  */
 export async function clearAll(): Promise<void> {
   const db = await getDB();
@@ -202,7 +239,9 @@ export async function clearAll(): Promise<void> {
 }
 
 /**
- * Get pending entries grouped by entity type.
+ * Mengambil daftar entri tertunda yang dikelompokkan berdasarkan jenis entitasnya.
+ *
+ * @returns Promise berisi objek yang mengelompokkan SyncQueueEntry berdasarkan entitas.
  */
 export async function getPendingByEntity(): Promise<{
   categories: SyncQueueEntry[];

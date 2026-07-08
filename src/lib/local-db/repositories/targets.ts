@@ -1,10 +1,8 @@
-// ─── Targets IndexedDB Repository ───────────────────────
-// Full CRUD operations for financial targets in the local IndexedDB store.
-//
-// Architecture: Local-First
-//   - UI reads/writes ONLY to IndexedDB through these functions
-//   - All mutations auto-enqueue to sync_queue
-//   - The sync engine pushes queued changes to the server
+/*
+ * File: src/lib/local-db/repositories/targets.ts
+ * Description: Repositori lokal IndexedDB untuk manajemen data target finansial (targets),
+ * mendukung arsitektur offline-first dan sinkronisasi ke server.
+ */
 
 import { getDB } from "../index";
 import { STORES } from "../schema";
@@ -12,15 +10,15 @@ import { FinancialTarget, TargetType, TargetPeriod } from "@/types/models.types"
 import { enqueueChange } from "./sync-queue";
 import { generateClientId } from "@/lib/utils/helpers";
 
-// ─── Create ─────────────────────────────────────────────
+/********** Tipe dan Operasi Pembuatan (Create) **********/
 
 export interface AddTargetInput {
   name: string;
   type: TargetType;
   targetAmount: number;
   period: TargetPeriod;
-  startDate: string;         // YYYY-MM-DD
-  endDate?: string | null;   // YYYY-MM-DD
+  startDate: string;         /* Format YYYY-MM-DD */
+  endDate?: string | null;   /* Format YYYY-MM-DD */
   categoryId?: string | null;
   walletId?: string | null;
   isActive?: boolean;
@@ -29,10 +27,11 @@ export interface AddTargetInput {
 }
 
 /**
- * Record a new financial target with a client-generated UUID.
- * Automatically sets syncStatus to PENDING and enqueues for sync.
+ * Mencatat target finansial baru dengan UUID lokal yang dibuat oleh klien.
+ * Secara otomatis mengatur syncStatus ke PENDING dan memasukkannya ke antrean sinkronisasi.
  *
- * @returns The created target (with its clientId)
+ * @param input - Data input target finansial (name, type, targetAmount, period, startDate, dll).
+ * @returns Promise berisi objek FinancialTarget yang dibuat.
  */
 export async function addTarget(input: AddTargetInput): Promise<FinancialTarget> {
   if (input.type === "SAVING_TARGET" || input.type === "BALANCE_TARGET") {
@@ -89,7 +88,7 @@ export async function addTarget(input: AddTargetInput): Promise<FinancialTarget>
   return target;
 }
 
-// ─── Update ─────────────────────────────────────────────
+/********** Operasi Pembaruan (Update) **********/
 
 export interface UpdateTargetInput {
   clientId: string;
@@ -106,8 +105,11 @@ export interface UpdateTargetInput {
 }
 
 /**
- * Update specific fields of an existing target.
- * Marks as PENDING and enqueues the mutation for sync.
+ * Memperbarui field tertentu dari target finansial yang sudah ada.
+ * Menandai status sebagai PENDING dan memasukkannya ke antrean sinkronisasi.
+ *
+ * @param input - Data perubahan target finansial berdasarkan clientId.
+ * @returns Promise berisi objek FinancialTarget yang diperbarui.
  */
 export async function updateTarget(input: UpdateTargetInput): Promise<FinancialTarget> {
   const db = await getDB();
@@ -154,7 +156,7 @@ export async function updateTarget(input: UpdateTargetInput): Promise<FinancialT
       const merged: FinancialTarget = {
         ...existing,
         ...input,
-        // Ensure dates are correctly formatted
+        /********** Pastikan format tanggal sesuai standar (YYYY-MM-DD). */
         startDate: input.startDate ? input.startDate.substring(0, 10) : existing.startDate,
         endDate: input.endDate !== undefined 
           ? (input.endDate ? input.endDate.substring(0, 10) : null)
@@ -178,11 +180,14 @@ export async function updateTarget(input: UpdateTargetInput): Promise<FinancialT
   return updatedTarget;
 }
 
-// ─── Soft Delete ────────────────────────────────────────
+/********** Operasi Penghapusan (Delete) **********/
 
 /**
- * Soft delete a target by setting deletedAt.
- * Used to propagate deletions to the server.
+ * Melakukan soft-delete pada target finansial dengan menandai timestamp deletedAt.
+ * Digunakan untuk meneruskan status penghapusan ke server saat sinkronisasi.
+ *
+ * @param clientId - ID lokal unik dari target yang akan dihapus.
+ * @returns Promise void setelah rekod ditandai hapus.
  */
 export async function deleteTarget(clientId: string): Promise<void> {
   const db = await getDB();
@@ -217,8 +222,14 @@ export async function deleteTarget(clientId: string): Promise<void> {
   });
 }
 
-// ─── Hard Delete (Sync use only) ────────────────────────
+/********** Penghapusan Permanen (Khusus Sinkronisasi) **********/
 
+/**
+ * Menghapus rekod target secara permanen dari IndexedDB lokal.
+ *
+ * @param clientId - ID lokal unik dari target yang akan dihapus permanen.
+ * @returns Promise void setelah rekod dihapus.
+ */
 export async function hardDeleteTarget(clientId: string): Promise<void> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
@@ -230,15 +241,22 @@ export async function hardDeleteTarget(clientId: string): Promise<void> {
   });
 }
 
-// ─── Upsert (Sync use only) ─────────────────────────────
+/********** Operasi Upsert (Khusus Sinkronisasi) **********/
 
+/**
+ * Upsert tingkat rendah (low-level) — digunakan oleh mesin sinkronisasi untuk menerapkan data dari server.
+ *
+ * @param target - Objek FinancialTarget dari server.
+ * @param skipSyncQueue - Jika true, perubahan tidak akan dimasukkan kembali ke antrean sinkronisasi.
+ * @returns Promise void setelah penyimpanan selesai.
+ */
 export async function upsertTarget(target: FinancialTarget, skipSyncQueue = false): Promise<void> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORES.FINANCIAL_TARGETS, "readwrite");
     const store = tx.objectStore(STORES.FINANCIAL_TARGETS);
     
-    // Add/Update
+    /********** Tambahkan atau perbarui rekod di store IDB. */
     const request = store.put(target);
     
     request.onsuccess = () => {
@@ -254,10 +272,13 @@ export async function upsertTarget(target: FinancialTarget, skipSyncQueue = fals
   });
 }
 
-// ─── Queries ────────────────────────────────────────────
+/********** Operasi Pembacaan (Queries) **********/
 
 /**
- * Get all active targets (not soft-deleted) for a user, sorted by descending createdAt.
+ * Mengambil seluruh target aktif (tidak terhapus) milik seorang pengguna, diurutkan menurun berdasarkan createdAt.
+ *
+ * @param userId - ID pengguna pemilik target.
+ * @returns Promise berisi array FinancialTarget aktif.
  */
 export async function getActiveTargets(userId: string): Promise<FinancialTarget[]> {
   const db = await getDB();
@@ -270,7 +291,7 @@ export async function getActiveTargets(userId: string): Promise<FinancialTarget[
 
     request.onsuccess = () => {
       const targets = request.result as FinancialTarget[];
-      // Filter out deleted and sort desc by createdAt
+      /********** Filter rekod terhapus dan urutkan menurun berdasarkan createdAt. */
       const activeTargets = targets
         .filter((t) => !t.deletedAt)
         .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
@@ -283,7 +304,10 @@ export async function getActiveTargets(userId: string): Promise<FinancialTarget[
 }
 
 /**
- * Get a single target by clientId.
+ * Mengambil satu target finansial berdasarkan clientId lokal.
+ *
+ * @param clientId - ID lokal unik target finansial.
+ * @returns Promise berisi FinancialTarget jika ditemukan, atau null.
  */
 export async function getTargetById(clientId: string): Promise<FinancialTarget | null> {
   const db = await getDB();
@@ -299,8 +323,10 @@ export async function getTargetById(clientId: string): Promise<FinancialTarget |
 }
 
 /**
- * Upsert multiple targets (used by Pull Sync to apply server data locally).
- * Automatically joins Category and Wallet if they exist locally.
+ * Upsert target secara massal — digunakan oleh mesin sinkronisasi (Pull Sync) untuk menerapkan data server di lokal.
+ *
+ * @param targets - Array objek FinancialTarget dari server.
+ * @returns Promise void setelah semua rekod disimpan.
  */
 export async function bulkUpsertTargets(targets: FinancialTarget[]): Promise<void> {
   if (!targets.length) return;

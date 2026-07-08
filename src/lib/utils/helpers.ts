@@ -1,18 +1,32 @@
-//********** START: General Helpers **********
-//********** END: General Helpers **********
+/*
+ * File: src/lib/utils/helpers.ts
+ * Description: Kumpulan fungsi pembantu (utility helpers) umum untuk pembuatan ID lokal (UUID v4),
+ * pemformatan mata uang, pemformatan tanggal/waktu, serta manipulasi waktu dan penundaan eksekusi.
+ */
 
 import { v4 as uuidv4 } from "uuid";
 import { DEFAULT_CURRENCY, DEFAULT_LOCALE } from "./constants";
 
+/********** Pembuatan ID & Karakter **********/
+
 /**
- * Generate a new UUID v4 (used as clientId for new records).
+ * Menghasilkan UUID v4 baru untuk digunakan sebagai clientId pada rekod lokal baru.
+ *
+ * @returns UUID string unik.
  */
 export function generateClientId(): string {
   return uuidv4();
 }
 
+/********** Pemformatan Mata Uang & Angka **********/
+
 /**
- * Format a number as currency.
+ * Memformat angka nominal uang menjadi teks mata uang standar (misal: Rp 100.000).
+ *
+ * @param amount - Nominal angka yang akan diformat.
+ * @param currency - Kode mata uang (default: IDR).
+ * @param locale - Kode lokal (default: id-ID).
+ * @returns Teks mata uang terformat.
  */
 export function formatCurrency(
   amount: number,
@@ -28,7 +42,12 @@ export function formatCurrency(
 }
 
 /**
- * Format a number as compact currency (e.g. 1,2 jt).
+ * Memformat angka nominal uang menjadi bentuk ringkas (misal: Rp 1,2 jt).
+ *
+ * @param amount - Nominal angka yang akan diformat.
+ * @param currency - Kode mata uang (default: IDR).
+ * @param locale - Kode lokal (default: id-ID).
+ * @returns Teks mata uang ringkas terformat.
  */
 export function formatCurrencyCompact(
   amount: number,
@@ -45,9 +64,16 @@ export function formatCurrencyCompact(
   }).format(amount);
 }
 
+/********** Pemformatan Tanggal & Waktu **********/
+
 /**
- * Format a date string to a human-readable format.
- * Optionally includes 24-hour time if timeString is provided.
+ * Memformat string tanggal menjadi format teks yang mudah dibaca.
+ * Opsional menyertakan waktu format 24 jam jika timeString diberikan.
+ *
+ * @param dateString - Tanggal dalam format string.
+ * @param timeString - Waktu dalam format string (opsional).
+ * @param locale - Kode lokal (default: id-ID).
+ * @returns Teks tanggal (dan waktu) terformat.
  */
 export function formatDate(
   dateString: string,
@@ -73,21 +99,29 @@ export function formatDate(
 }
 
 /**
- * Get the current timestamp in ISO 8601 format.
+ * Mengambil timestamp waktu saat ini dalam format ISO 8601.
+ *
+ * @returns String timestamp ISO.
  */
 export function now(): string {
   return new Date().toISOString();
 }
 
 /**
- * Delay execution for the specified number of milliseconds.
+ * Menunda eksekusi kode asinkron selama durasi milidetik tertentu.
+ *
+ * @param ms - Durasi penundaan dalam milidetik.
+ * @returns Promise void setelah durasi berakhir.
  */
 export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /**
- * Returns today's date formatted as YYYY-MM-DD in the local timezone.
+ * Mengambil tanggal hari ini dalam format YYYY-MM-DD sesuai zona waktu lokal.
+ * Digunakan sebagai nilai input elemen form bertipe tanggal.
+ *
+ * @returns String tanggal YYYY-MM-DD.
  */
 export function getTodayDateInputValue(): string {
   const d = new Date();

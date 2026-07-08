@@ -1,8 +1,6 @@
-/********** [START: Server Reminder] **********/
 /********** Logika sisi server untuk menentukan user mana yang belum mencatat
  *  transaksi hari ini dan perlu diingatkan lewat push notification harian.
  */
-/********** [END: Server Reminder] **********/
 
 /********** Imports **********/
 

@@ -1,6 +1,5 @@
 'use client';
 
-/********** [START: Halaman Pengaturan Notifikasi] **********/
 /**********
  * Bug 8 Fix: Mutual exclusivity via Radio Group — user selects
  *   EITHER "Peringatan Instan" OR "Ringkasan Berkala", never both.
@@ -8,7 +7,6 @@
  *   - Time picker expands only when Ringkasan Berkala is selected
  *   - "Batas Frekuensi Harian" hidden inside collapsible "Pengaturan Lanjutan"
  **********/
-/********** [END: Halaman Pengaturan Notifikasi] **********/
 
 /********** Imports **********/
 

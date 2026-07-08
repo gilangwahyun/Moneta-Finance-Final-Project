@@ -1,21 +1,37 @@
+/*
+ * File: src/lib/local-db/repositories/notification-settings.ts
+ * Description: Repositori lokal IndexedDB untuk manajemen pengaturan notifikasi pengguna,
+ * mendukung preferensi pengiriman pesan dan sinkronisasi ke server.
+ */
+
 import { getDB } from "../index";
 import { STORES } from "../schema";
 import { enqueueChange } from "./sync-queue";
 
+/********** Tipe Data & Antarmuka **********/
+
 export interface NotificationSettingsRecord {
-  clientId: string;    // "notification-settings:" + userId
+  clientId: string;    /* Format "notification-settings:" + userId */
   userId: string;
   isEnabled: boolean;
   deliveryMode: "INSTANT" | "BATCH" | "NONE";
   instantAlerts: boolean;
   dailyDigest: boolean;
   dailyReminder: boolean;
-  digestTime: string;  // "HH:MM"
+  digestTime: string;  /* Format jam "HH:MM" */
   dailyCap?: number;
   syncStatus: "SYNCED" | "PENDING" | "CONFLICT";
-  updatedAt: string;   // ISO string
+  updatedAt: string;   /* Format timestamp ISO */
 }
 
+/********** Operasi Pembacaan (Read) **********/
+
+/**
+ * Mengambil rekod pengaturan notifikasi pengguna dari IndexedDB lokal.
+ *
+ * @param userId - ID pengguna.
+ * @returns Promise berisi NotificationSettingsRecord jika ada, atau null.
+ */
 export async function getNotificationSettings(userId: string): Promise<NotificationSettingsRecord | null> {
   const db = await getDB();
   const clientId = `notification-settings:${userId}`;
@@ -28,6 +44,16 @@ export async function getNotificationSettings(userId: string): Promise<Notificat
   });
 }
 
+/********** Operasi Penyimpanan & Sinkronisasi **********/
+
+/**
+ * Menyimpan atau memperbarui pengaturan notifikasi pengguna di database lokal.
+ * Secara otomatis mengubah status sinkronisasi ke PENDING dan memasukkannya ke antrean sinkronisasi.
+ *
+ * @param settings - Objek pengaturan notifikasi yang akan disimpan.
+ * @param skipSyncQueue - Jika true, perubahan tidak akan dimasukkan kembali ke antrean sinkronisasi.
+ * @returns Promise void setelah penyimpanan selesai.
+ */
 export async function saveNotificationSettings(
   settings: NotificationSettingsRecord,
   skipSyncQueue = false
@@ -58,7 +84,10 @@ export async function saveNotificationSettings(
 }
 
 /**
- * Bulk upsert notification settings — used by the sync engine to apply multiple server records in one IDB transaction.
+ * Upsert pengaturan notifikasi secara massal — digunakan oleh mesin sinkronisasi untuk menerapkan banyak rekod sekaligus dalam satu transaksi IDB.
+ *
+ * @param settingsArray - Array objek NotificationSettingsRecord dari server.
+ * @returns Promise void setelah semua rekod disimpan.
  */
 export async function bulkUpsertNotificationSettings(settingsArray: NotificationSettingsRecord[]): Promise<void> {
   if (settingsArray.length === 0) return;

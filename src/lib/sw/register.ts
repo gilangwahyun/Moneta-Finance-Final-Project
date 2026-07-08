@@ -1,4 +1,3 @@
-/********** [START: Service Worker Registration] **********/
 /********** Utilitas sisi klien untuk mendaftarkan service worker,
  *  menyiapkan Background Sync, dan menangani lifecycle events SW.
  *
@@ -6,7 +5,6 @@
  *    import { registerServiceWorker } from "@/lib/sw/register";
  *    registerServiceWorker({ onSyncTriggered: () => performSync() });
  */
-/********** [END: Service Worker Registration] **********/
 
 /********** Imports **********/
 

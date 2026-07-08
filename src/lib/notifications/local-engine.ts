@@ -1,4 +1,3 @@
-/********** [START: Local Notification Engine] **********/
 /********** Engine notifikasi sisi klien yang mengevaluasi nudge dari transaksi baru,
  *  menulis log ke IndexedDB, menampilkan toast di UI, dan memutuskan apakah
  *  perlu mengirim push notification berdasarkan delivery mode dan daily cap.
@@ -7,7 +6,6 @@
  *  - evaluateAndTriggerNudges(txn)  — evaluasi insight anggaran & finansial
  *  - evaluateTargetNudges(txn)       — evaluasi progres target keuangan
  */
-/********** [END: Local Notification Engine] **********/
 
 import dayjs from 'dayjs';
 

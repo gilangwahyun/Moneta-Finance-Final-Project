@@ -1,9 +1,7 @@
-/********** [START: Sync Queue Controller] **********/
 /********** Mengatur penjadwalan sync dengan debouncing, retry logic,
  *  periodic polling, dan concurrency guard agar tidak ada dua siklus
  *  sync yang berjalan bersamaan.
  */
-/********** [END: Sync Queue Controller] **********/
 
 /********** Imports **********/
 

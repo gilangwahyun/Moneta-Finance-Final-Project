@@ -1,15 +1,19 @@
-/********** Imports **********/
+/*
+ * File: src/lib/utils/show-toast.ts
+ * Description: Kumpulan utilitas untuk menampilkan notifikasi pesan singkat (toast) menggunakan pustaka sonner,
+ * dengan dukungan deteksi status koneksi online/offline secara otomatis.
+ */
+
 import { toast } from "sonner";
 
-/********** Helpers **********/
+/********** Fungsi Notifikasi Toast **********/
+
 /**
- * Show a sync-aware toast.
+ * Menampilkan notifikasi toast yang sadar status sinkronisasi (koneksi internet).
+ * Menampilkan pesan sukses hijau saat online, dan pesan info dengan ikon awan saat offline.
  *
- * Displays a green success toast when online.
- * Displays a gray/blue info toast with an offline hint when offline.
- *
- * @param onlineMessage - Message to show when online.
- * @param offlineMessage - Optional custom message to show when offline.
+ * @param onlineMessage - Pesan yang ditampilkan saat perangkat online.
+ * @param offlineMessage - Pesan kustom opsional saat perangkat offline.
  */
 export function showSyncToast(
   onlineMessage: string,
@@ -25,9 +29,9 @@ export function showSyncToast(
 }
 
 /**
- * Show a destructive action toast.
+ * Menampilkan notifikasi toast untuk tindakan penghapusan data (destructive action).
  *
- * @param message - Message to show indicating a successful deletion.
+ * @param message - Pesan konfirmasi penghapusan berhasil.
  */
 export function showDeleteToast(message: string = "Deleted successfully") {
   if (typeof navigator !== "undefined" && navigator.onLine) {
@@ -38,9 +42,9 @@ export function showDeleteToast(message: string = "Deleted successfully") {
 }
 
 /**
- * Show an error toast.
+ * Menampilkan notifikasi toast untuk kondisi error atau kegagalan sistem.
  *
- * @param message - The error message to display.
+ * @param message - Pesan error yang akan ditampilkan.
  */
 export function showErrorToast(message: string) {
   toast.error(message);

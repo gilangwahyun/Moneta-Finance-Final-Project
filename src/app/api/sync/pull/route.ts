@@ -1,19 +1,19 @@
-// ─── GET /api/sync/pull ─────────────────────────────────
-// Returns all records updated after the given `lastSyncedAt` timestamp.
-// Supports optional `limit` parameter for pagination.
-// The client stores the returned `serverTime` for the next pull.
+/********** API endpoint (GET /api/sync/pull) yang mengembalikan semua rekod yang diperbarui setelah timestamp `lastSyncedAt`.
+ *  Mendukung parameter `limit` opsional untuk paginasi.
+ *  Klien akan menyimpan `serverTime` yang dikembalikan untuk sinkronisasi (pull) berikutnya.
+ */
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
 import { getAuthUser } from "@/lib/auth/middleware";
 import { SyncPullResponse } from "@/types/sync.types";
 
-const DEFAULT_LIMIT = 500; // Max records per entity per pull
-const HYDRATE_LIMIT = 5000; // Higher limit for initial hydration
+const DEFAULT_LIMIT = 500; /* Batas maksimal rekod per entitas pada setiap pull biasa. */
+const HYDRATE_LIMIT = 5000; /* Batas lebih tinggi saat hidrasi data awal. */
 
 export async function GET(request: NextRequest) {
   try {
-    // ── Auth check ────────────────────────────────────
+    /********** 1. Pengecekan Autentikasi. */
     const tokenPayload = await getAuthUser(request);
     if (!tokenPayload || !tokenPayload.sub) {
       return NextResponse.json(
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     const userId = tokenPayload.sub;
 
-    // ── Validate user exists in DB (guard against stale JWTs after DB reset) ──
+    /********** 2. Validasi Eksistensi User di DB (pencegahan JWT stale setelah reset DB). */
     const userExists = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true },
@@ -36,18 +36,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // ── Parse query params ────────────────────────────
+    /********** 3. Parsing Parameter Query. */
     const { searchParams } = new URL(request.url);
     const lastSyncedAt = searchParams.get("lastSyncedAt");
     const limitParam = searchParams.get("limit");
-    const mode = searchParams.get("mode"); // "hydrate" for initial data pull
+    const mode = searchParams.get("mode"); /* "hydrate" untuk tarikan data awal. */
     const maxLimit = mode === "hydrate" ? HYDRATE_LIMIT : DEFAULT_LIMIT;
     const limit = limitParam ? Math.min(parseInt(limitParam, 10), maxLimit) : maxLimit;
 
     const sinceDate = lastSyncedAt ? new Date(lastSyncedAt) : new Date(0);
     const isHydrate = mode === "hydrate";
 
-    // ── Compute 3-month threshold for hydration mode ──
+    /********** 4. Hitung Batas Waktu 3 Bulan untuk Mode Hidrasi. */
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
     threeMonthsAgo.setHours(0, 0, 0, 0);
@@ -55,7 +55,8 @@ export async function GET(request: NextRequest) {
     const pullPerfStart = performance.now();
     // console.log(`[PullPerf] since=${sinceDate.toISOString()} mode=${mode}`);
 
-    // ── Fetch all independent entities in parallel ────────
+    /********** Fetch Entitas Secara Paralel **********/
+    /********** Mengambil semua entitas independen secara bersamaan dari DB. */
     const queriesStart = performance.now();
     const [wallets, categories, transactions, budgets, financialTargets, notificationLogs, notificationSettings] = await Promise.all([
       prisma.wallet.findMany({
@@ -114,23 +115,23 @@ export async function GET(request: NextRequest) {
           ...(isHydrate ? {} : { updatedAt: { gt: sinceDate } }),
         },
         orderBy: { updatedAt: "asc" },
-        take: 2, // User has at most 1 setting
+        take: 2, /* User maksimal memiliki 1 pengaturan. */
       })
     ]);
     const queriesTime = performance.now() - queriesStart;
     // console.log(`[PullPerf] Parallel queries: ${queriesTime.toFixed(0)}ms (wallets: ${wallets.length}, categories: ${categories.length}, transactions: ${transactions.length}, budgets: ${budgets.length}, notification_logs: ${notificationLogs.length})`);
 
-    // Determine if there are more records
+    /********** Tentukan apakah masih ada rekod tersisa di server. */
     const hasMoreWallets = wallets.length > limit;
     const hasMoreCategories = categories.length > limit;
     const hasMoreTransactions = transactions.length > limit;
     const hasMoreBudgets = budgets.length > limit;
     const hasMoreTargets = financialTargets.length > limit;
     const hasMoreLogs = notificationLogs.length > limit;
-    const hasMoreSettings = notificationSettings.length > 1; // It shouldn't, but let's be consistent
+    const hasMoreSettings = notificationSettings.length > 1; /* Seharusnya tidak lebih dari 1, namun untuk konsistensi pengecekan. */
     const hasMore = hasMoreWallets || hasMoreCategories || hasMoreTransactions || hasMoreBudgets || hasMoreTargets || hasMoreLogs || hasMoreSettings;
 
-    // Trim to the actual limit
+    /********** Potong array sesuai batas limit aktual. */
     const trimmedWallets = hasMoreWallets ? wallets.slice(0, limit) : wallets;
     const trimmedCategories = hasMoreCategories ? categories.slice(0, limit) : categories;
     const trimmedTransactions = hasMoreTransactions ? transactions.slice(0, limit) : transactions;
@@ -139,16 +140,15 @@ export async function GET(request: NextRequest) {
     const trimmedLogs = hasMoreLogs ? notificationLogs.slice(0, limit) : notificationLogs;
     const trimmedSettings = hasMoreSettings ? notificationSettings.slice(0, 1) : notificationSettings;
 
-    // ── Build maps of server id → clientId ──
+    /********** Pemetaan Server ID ke Client ID **********/
     const categoryServerIdToClientId = new Map<string, string>();
     const walletServerIdToClientId = new Map<string, string>();
 
-    // Add all trimmed items to the maps
+    /********** Masukkan semua item yang sudah dipotong ke dalam map. */
     for (const c of trimmedCategories) categoryServerIdToClientId.set(c.id, c.clientId);
     for (const w of trimmedWallets) walletServerIdToClientId.set(w.id, w.clientId);
 
-    // Collect category and wallet server IDs referenced by transactions and budgets
-    // that might NOT be in the current delta
+    /********** Kumpulkan ID server kategori dan dompet yang direferensikan oleh transaksi dan budget yang mungkin TIDAK ada dalam delta saat ini. */
     const missingCatIds = [
       ...trimmedTransactions.map((t) => t.categoryId).filter(Boolean),
       ...trimmedBudgets.map((b) => b.categoryId),
@@ -224,7 +224,7 @@ export async function GET(request: NextRequest) {
         description: t.description,
         note: t.note,
         date: t.date.toISOString(),
-        // Resolve server FKs → clientIds so the client can look them up locally
+        /********** Ubah FK server ke clientId agar client dapat mencarinya di IndexedDB lokal. */
         categoryId: (t.categoryId ? categoryServerIdToClientId.get(t.categoryId) : null) || t.categoryId,
         walletId: walletServerIdToClientId.get(t.walletId) || t.walletId,
         targetWalletId: (t.targetWalletId ? walletServerIdToClientId.get(t.targetWalletId) : null) || t.targetWalletId,
@@ -277,9 +277,7 @@ export async function GET(request: NextRequest) {
         status: l.status,
         severity: l.severity,
         source: l.source,
-        // The server stores relatedTransactionId as server id, but client expects clientId.
-        // We'd need to resolve it, but since client notification center doesn't strictly need it to display,
-        // we omit complex resolution and just return what's available for now, mapped to relatedTransactionClientId
+        /********** Server menyimpan relatedTransactionId sebagai ID server, sedangkan client membutuhkan clientId. Karena pusat notifikasi client tidak secara ketat membutuhkannya, kita langsung kembalikan apa yang ada ke relatedTransactionClientId untuk saat ini. */
         relatedTransactionClientId: l.relatedTransactionId,
         relatedCategoryId: l.relatedCategoryId,
         relatedBudgetId: l.relatedBudgetId,

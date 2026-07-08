@@ -1,25 +1,24 @@
-//********** START: Time Filter Utility **********
-//********** getDynamicComparisonPeriods: Given a range key or custom dates,
-//********** returns the current period and a correctly-shifted baseline period
-//********** for dynamic benchmarking across the Analytics page.
-//**********
-//********** Design: Pure function, no React deps, safe for useMemo.
-//********** END: Time Filter Utility **********
+/*
+ * File: src/lib/utils/time-filter.ts
+ * Description: Utilitas filter waktu dan kalkulasi periode pembanding dinamis,
+ * menghasilkan rentang waktu periode saat ini dan periode dasar (baseline) untuk benchmarking analitik.
+ */
 
 import dayjs from "dayjs";
 
-//********** TYPES **********
+/********** Tipe Data & Antarmuka **********/
+
 export type RangeKey = "today" | "7d" | "month" | "3month" | "year" | "all" | "custom";
 
 export interface DateRange {
-  start: string; //********** YYYY-MM-DD
-  end: string;   //********** YYYY-MM-DD
+  start: string; /* Format YYYY-MM-DD */
+  end: string;   /* Format YYYY-MM-DD */
 }
 
 export interface ComparisonPeriods {
   currentPeriod: DateRange;
   baselinePeriod: DateRange;
-  //********** Human-readable label rendered inside trend badges
+  /* Label yang mudah dibaca untuk badge tren */
   comparisonLabel: string;
 }
 
@@ -28,10 +27,15 @@ export interface CustomDates {
   end: string;
 }
 
-//********** UTILS **********
+/********** Utilitas Periode Pembanding (Comparison Periods) **********/
+
 /**
- * Derive the current + baseline date tuples from a range key.
- * Pass customDates when rangeKey is "custom".
+ * Menghitung rentang tanggal untuk periode saat ini dan periode pembanding (baseline) berdasarkan kunci rentang waktu.
+ * Menerima tanggal kustom jika rangeKey bernilai "custom".
+ *
+ * @param rangeKey - Kunci rentang waktu (today, 7d, month, 3month, year, all, custom).
+ * @param customDates - Tanggal mulai dan selesai opsional untuk mode kustom.
+ * @returns Objek ComparisonPeriods berisi currentPeriod, baselinePeriod, dan comparisonLabel.
  */
 export function getDynamicComparisonPeriods(
   rangeKey: RangeKey,
@@ -90,7 +94,7 @@ export function getDynamicComparisonPeriods(
     case "year": {
       const currentStart = today.startOf("year");
       const baselineStart = today.subtract(1, "year").startOf("year");
-      //********** YTD: same calendar date last year
+      /********** Year-to-Date (YTD): tanggal kalender yang sama pada tahun sebelumnya. */
       const baselineEnd = today.subtract(1, "year");
       return {
         currentPeriod: { start: currentStart.format("YYYY-MM-DD"), end: today.format("YYYY-MM-DD") },
@@ -100,7 +104,7 @@ export function getDynamicComparisonPeriods(
     }
     case "custom": {
       if (!customDates) {
-        //********** Fallback to "month" logic if custom called without dates
+        /********** Fallback ke logika bulan lalu jika mode custom dipanggil tanpa parameter tanggal. */
         return getDynamicComparisonPeriods("month");
       }
       const custStart = dayjs(customDates.start);
@@ -117,9 +121,16 @@ export function getDynamicComparisonPeriods(
   }
 }
 
+/********** Filter Transaksi Berdasarkan Rentang Waktu **********/
+
 /**
- * Filter a transaction array down to a specific date range.
- * Uses the YYYY-MM-DD date string from transaction.date.
+ * Menyaring array transaksi berdasarkan rentang tanggal awal dan akhir (inclusive).
+ * Secara default mengabaikan transaksi berjenis TRANSFER dan transaksi yang sudah dihapus (deletedAt ada).
+ *
+ * @param txns - Daftar transaksi atau objek yang memiliki properti tanggal.
+ * @param range - Rentang tanggal awal dan akhir (format YYYY-MM-DD).
+ * @param excludeTransfer - Jika true, transaksi bertipe TRANSFER tidak akan dimasukkan.
+ * @returns Array transaksi yang sudah disaring.
  */
 export function filterByDateRange<T extends { date: string; type?: string; deletedAt?: string | null }>(
   txns: T[],

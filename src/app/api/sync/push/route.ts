@@ -1,7 +1,7 @@
-// ─── POST /api/sync/push ────────────────────────────────
-// Receives bulk upsert payload from the IndexedDB client.
-// Uses timestamp-based "last write wins" conflict resolution.
-// Wraps all operations in a Prisma transaction for atomicity.
+/********** API endpoint (POST /api/sync/push) yang menerima bulk upsert dari IndexedDB klien.
+ *  Menggunakan resolusi konflik "last write wins" berbasis timestamp.
+ *  Membungkus seluruh operasi mutasi dalam satu transaksi Prisma demi atomicity.
+ */
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db/prisma";
@@ -11,7 +11,7 @@ import { SyncPushPayload, SyncPushResponse, SyncConflict } from "@/types/sync.ty
 
 export async function POST(request: NextRequest) {
   try {
-    // ── Auth check ────────────────────────────────────
+    /********** Pengecekan Autentikasi. */
     const tokenPayload = await getAuthUser(request);
     if (!tokenPayload || !tokenPayload.sub) {
       return NextResponse.json(
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── CSRF check ─────────────────────────────────────
+    /********** Pengecekan Token CSRF. */
     const csrfError = validateCsrfToken(request);
     if (csrfError) return csrfError;
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       notification_settings: [] as string[],
     };
 
-    // ── Validate user exists in DB (guard against stale JWTs after DB reset) ──
+    /********** Validasi Eksistensi User di DB (pencegahan JWT stale setelah reset DB). */
     const userExists = await prisma.user.findUnique({
       where: { id: userId },
       select: { id: true },
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // ── Preflight Validation for Notification Logs ──
+    /********** Validasi Preflight untuk Log Notifikasi. */
     if (payload.notification_logs) {
       for (const log of payload.notification_logs) {
         if (!log.clientId) {
@@ -69,7 +69,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ── Bulk Prefetching ──
+    /********** Bulk Prefetching **********/
+    /********** Mengambil semua entitas terkait secara paralel untuk meminimalkan query DB. */
     const prefetchStart = performance.now();
     const payloadWallets = payload.wallets || [];
     const payloadCategories = payload.categories || [];
@@ -106,7 +107,7 @@ export async function POST(request: NextRequest) {
     const logIds = payloadLogs.map(l => l.clientId);
     const logDedupeKeys = payloadLogs.map(l => l.dedupeKey).filter(Boolean);
 
-    // Run all bulk reads concurrently
+    /********** Jalankan semua query pembacaan massal secara bersamaan. */
     const [
       fetchedWallets,
       fetchedCategories,
@@ -129,7 +130,7 @@ export async function POST(request: NextRequest) {
       payloadSettings.length > 0 ? prisma.notificationSettings.findMany({ where: { userId } }) : Promise.resolve([]),
     ]);
 
-    // Build in-memory maps
+    /********** Bangun in-memory map untuk pencarian cepat O(1). */
     const walletByClientId = new Map(fetchedWallets.map(w => [w.clientId, w]));
     const categoryByClientId = new Map(fetchedCategories.map(c => [c.clientId, c]));
     const transactionByClientId = new Map(fetchedTransactions.map(t => [t.clientId, t]));
@@ -146,7 +147,8 @@ export async function POST(request: NextRequest) {
     const prefetchDuration = performance.now() - prefetchStart;
     // console.log(`[Sync Diagnostics] push prefetch duration: ${prefetchDuration.toFixed(2)}ms`);
 
-    // ── Process everything in a single Prisma transaction ──
+    /********** [START: Transaksi Prisma] **********/
+    /********** Proses semua upsert dalam satu transaksi atomik Prisma. */
     // console.log("[Sync Push] Payload summary:", {
     //   wallets: payload.wallets?.length ?? 0,
     //   categories: payload.categories?.length ?? 0,
@@ -161,18 +163,18 @@ export async function POST(request: NextRequest) {
     await prisma.$transaction(async (tx: any) => {
       const mutationStart = performance.now();
 
-      // ── 1. Process categories ──────────────────────────
+      /********** 1. Proses Kategori **********/
       if (payload.categories) {
         for (const cat of payload.categories) {
           const existing = categoryByClientId.get(cat.clientId);
 
           if (existing) {
-            // Conflict resolution: last write wins
+            /********** Resolusi konflik: last write wins. */
             const clientTime = new Date(cat.updatedAt);
             const serverTime = existing.updatedAt;
 
             if (clientTime >= serverTime) {
-              // Client wins — apply update
+              /********** Client menang — terapkan pembaruan ke DB. */
               const updated = await tx.category.update({
                 where: { id: existing.id },
                 data: {
@@ -184,11 +186,11 @@ export async function POST(request: NextRequest) {
                   syncStatus: "SYNCED",
                 },
               });
-              categoryByClientId.set(cat.clientId, updated); // Update map
+              categoryByClientId.set(cat.clientId, updated); /* Perbarui map. */
               processedCount++;
               synced.categories.push(cat.clientId);
             } else {
-              // Server wins — return server version to client
+              /********** Server menang — kembalikan versi server ke client. */
               conflicts.push({
                 clientId: cat.clientId,
                 entity: "category",
@@ -210,7 +212,7 @@ export async function POST(request: NextRequest) {
               });
             }
           } else {
-            // New record — insert
+            /********** Rekod baru — buat di DB. */
             const newCat = await tx.category.create({
               data: {
                 clientId: cat.clientId,
@@ -218,20 +220,20 @@ export async function POST(request: NextRequest) {
                 type: cat.type,
                 icon: cat.icon,
                 color: cat.color,
-                isDefault: false, // Default to false for user-created categories
+                isDefault: false, /* Default ke false untuk kategori buatan user. */
                 userId,
                 syncStatus: "SYNCED",
                 deletedAt: cat.deletedAt ? new Date(cat.deletedAt) : null,
               },
             });
-            categoryByClientId.set(cat.clientId, newCat); // Store for future relations
+            categoryByClientId.set(cat.clientId, newCat); /* Simpan ke map untuk relasi berikutnya. */
             processedCount++;
             synced.categories.push(cat.clientId);
           }
         }
       }
 
-      // ── 2. Process wallets ────────────────────────────
+      /********** 2. Proses Dompet (Wallets) **********/
       if (payload.wallets) {
         for (const wlt of payload.wallets) {
           const existing = walletByClientId.get(wlt.clientId);
@@ -292,14 +294,14 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // ── 3. Process budgets ──────────────────────────────
+      /********** 3. Proses Anggaran (Budgets) **********/
       if (payload.budgets) {
         for (const bdg of payload.budgets) {
-          // Resolve category server ID from clientId
+          /********** Cari server ID kategori dari clientId. */
           const category = categoryByClientId.get(bdg.categoryId);
 
           if (!category) {
-            // Category not yet synced — report as conflict
+            /********** Kategori belum tersinkronisasi — laporkan sebagai konflik. */
             conflicts.push({
               clientId: bdg.clientId,
               entity: "budget",
@@ -309,7 +311,7 @@ export async function POST(request: NextRequest) {
             continue;
           }
 
-          // Check if budget already exists by clientId OR period+categoryId
+          /********** Cek apakah budget sudah ada berdasarkan clientId ATAU kombinasi period+categoryId. */
           let existing = budgetByClientId.get(bdg.clientId);
           if (!existing) {
             existing = budgetByPeriodAndCategory.get(`${bdg.period}_${category.id}`);
@@ -320,7 +322,7 @@ export async function POST(request: NextRequest) {
             const serverTime = existing.updatedAt;
 
             if (existing.clientId !== bdg.clientId) {
-              // The client created a budget that already exists with a different clientId.
+              /********** Client membuat budget yang sudah ada dengan clientId berbeda. */
               const updatedExisting = await tx.budget.update({
                 where: { id: existing.id },
                 data: {
@@ -374,7 +376,7 @@ export async function POST(request: NextRequest) {
                   clientId: existing.clientId,
                   amount: Number(existing.amount),
                   period: existing.period,
-                  categoryId: category.clientId, // Resolve server FK → clientId
+                  categoryId: category.clientId, /* Ubah FK server kembali ke clientId. */
                   userId: existing.userId,
                   syncStatus: existing.syncStatus,
                   createdAt: existing.createdAt.toISOString(),
@@ -404,7 +406,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // ── 3.5. Process financial targets ───────────────────
+      /********** 3.5. Proses Target Keuangan (Financial Targets) **********/
       if (payload.financial_targets) {
         for (const tgt of payload.financial_targets) {
           let category = null;
@@ -527,7 +529,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // ── 4. Process transactions ────────────────────────
+      /********** 4. Proses Transaksi (Transactions) **********/
       if (payload.transactions) {
         for (const txn of payload.transactions) {
           if (!txn.walletId) {
@@ -615,7 +617,7 @@ export async function POST(request: NextRequest) {
               processedCount++;
               synced.transactions.push(txn.clientId);
             } else {
-              // Find related items by iterating over the map (instead of querying)
+              /********** Cari item terkait dengan iterasi map in-memory (tanpa query ulang). */
               let existingCatClientId: string | undefined = undefined;
               if (existing.categoryId) {
                 for (const c of categoryByClientId.values()) {
@@ -680,7 +682,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // ── 5. Process notification settings ─────────────────
+      /********** 5. Proses Pengaturan Notifikasi **********/
       if (payload.notification_settings) {
         for (const set of payload.notification_settings) {
           const existing = settingsByUserId.get(userId);
@@ -749,7 +751,7 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // ── 6. Process notification logs ─────────────────────────
+      /********** 6. Proses Log Notifikasi **********/
       if (payload.notification_logs) {
         for (const log of payload.notification_logs) {
           const existingLog = logByClientId.get(log.clientId);
@@ -835,7 +837,7 @@ export async function POST(request: NextRequest) {
               });
             }
           } else {
-            // Check by dedupeKey to prevent duplicate insert errors if client cleared local DB
+            /********** Cek berdasarkan dedupeKey untuk mencegah error duplikat jika client menghapus DB lokal. */
             const existingDedupe = log.dedupeKey ? logByDedupe.get(log.dedupeKey) : undefined;
 
             if (existingDedupe) {
@@ -873,8 +875,9 @@ export async function POST(request: NextRequest) {
                  });
                  logByClientId.set(updated.clientId, updated);
                  processedCount++;
-                 // We updated existingDedupe but pushed a conflict to adopt existingDedupe.clientId.
-                 // We don't push to synced.notification_logs to let the conflict logic handle it.
+                 /********** Kita memperbarui existingDedupe namun mendorong konflik agar client mengadopsi clientId existingDedupe.
+                  * Kita tidak menambahkannya ke synced.notification_logs agar logika konflik yang menanganinya.
+                  */
                }
                
                conflicts.push({
@@ -919,7 +922,7 @@ export async function POST(request: NextRequest) {
                  resolution: "server_wins"
                });
             } else {
-              // Resolve related transaction id from map ONLY for new logs
+              /********** Cari ID transaksi terkait dari map HANYA untuk log baru. */
               let relatedTxnId = null;
               if (log.relatedTransactionClientId) {
                 const txn = transactionByClientId.get(log.relatedTransactionClientId);
@@ -940,7 +943,7 @@ export async function POST(request: NextRequest) {
                   deliveryModeAtCreation: log.deliveryModeAtCreation,
                   title: log.title,
                   body: log.body,
-                  status: "delivered", // From local
+                  status: "delivered", /* Status dari client lokal. */
                   severity: log.severity,
                   source: log.source,
                   relatedTransactionId: relatedTxnId,
@@ -984,9 +987,9 @@ export async function POST(request: NextRequest) {
 
     },
     {
-      maxWait: 10000, // 10 seconds to acquire lock
-      timeout: 60000, // 60 seconds to process large offline sync batches
-    }); // End Prisma transaction
+      maxWait: 10000, /* Maksimal 10 detik untuk mendapatkan lock. */
+      timeout: 60000, /* Maksimal 60 detik untuk memproses batch sinkronisasi offline yang besar. */
+    }); /* [END: Transaksi Prisma] */
 
     const response: SyncPushResponse = {
       success: true,
@@ -998,7 +1001,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(response);
   } catch (error: any) {
-    // Log full Prisma error for server-side debugging
+    /********** Catat error Prisma lengkap untuk debugging sisi server. */
     console.error("[Sync Push] Fatal error:", {
       message: error?.message,
       code: error?.code,

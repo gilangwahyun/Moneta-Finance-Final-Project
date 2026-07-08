@@ -1,12 +1,8 @@
-// ─── Transaction Analytics Query Stubs ──────────────────
-// IndexedDB query utilities for aggregating transactions.
-//
-// Purpose: These functions lay the groundwork for the
-// "Client-Side Behavioral Analytics" engine. The analytics
-// and rule-based recommendations will be built later using
-// the data returned by these functions.
-//
-// All data is queried from IndexedDB (local-first).
+/*
+ * File: src/lib/local-db/transaction-queries.ts
+ * Description: Kumpulan utilitas kueri dan agregasi transaksi pada IndexedDB (local-first),
+ * sebagai dasar perhitungan analitik perilaku klien, dasbor ringkasan bulanan, dan proyeksi pengeluaran.
+ */
 
 import { Transaction, TransactionType, Category } from "@/types/models.types";
 import {
@@ -15,19 +11,21 @@ import {
 } from "./repositories/transactions";
 import { getAllCategories, getAllCategoriesIncludingDeleted } from "./repositories/categories";
 
-// ─── Date Helpers ───────────────────────────────────────
+/********** Helper Tanggal **********/
 
 /**
- * Get the first and last day of a given month.
- * @param year - e.g. 2026
- * @param month - 0-indexed (0 = January)
+ * Mengambil tanggal awal dan akhir untuk bulan tertentu.
+ *
+ * @param year - Tahun (misal: 2026).
+ * @param month - Indeks bulan (0-indexed, 0 = Januari).
+ * @returns Objek berisi startDate dan endDate dengan format YYYY-MM-DD.
  */
 export function getMonthBounds(
   year: number,
   month: number
 ): { startDate: string; endDate: string } {
   const start = new Date(year, month, 1);
-  const end = new Date(year, month + 1, 0); // Last day of the month
+  const end = new Date(year, month + 1, 0); /* Hari terakhir dalam bulan tersebut */
 
   return {
     startDate: start.toISOString().split("T")[0],
@@ -36,19 +34,25 @@ export function getMonthBounds(
 }
 
 /**
- * Get the first and last day of the current month.
+ * Mengambil tanggal awal dan akhir untuk bulan yang sedang berjalan.
+ *
+ * @returns Objek berisi startDate dan endDate bulan aktif.
  */
 export function getCurrentMonthBounds(): { startDate: string; endDate: string } {
   const now = new Date();
   return getMonthBounds(now.getFullYear(), now.getMonth());
 }
 
-// ─── Monthly Aggregations ───────────────────────────────
+/********** Agregasi Bulanan (Monthly Aggregations) **********/
 
 /**
- * Get all transactions for a specific month.
+ * Mengambil seluruh transaksi pada periode bulan tertentu.
+ * Digunakan untuk mengisi total dasbor dan grafik rincian bulanan.
  *
- * Usage: Feeding into dashboard totals, monthly breakdown charts.
+ * @param userId - ID pengguna.
+ * @param year - Tahun.
+ * @param month - Indeks bulan (0-indexed).
+ * @returns Promise berisi daftar transaksi pada bulan tersebut.
  */
 export async function getTransactionsByMonth(
   userId: string,
@@ -60,9 +64,13 @@ export async function getTransactionsByMonth(
 }
 
 /**
- * Get the total income and expense for a specific month.
+ * Menghitung total pemasukan, pengeluaran, dan saldo bersih untuk bulan tertentu.
+ * Transaksi berjenis TRANSFER tidak dimasukkan ke dalam perhitungan laba-rugi.
  *
- * Usage: Dashboard summary cards ("Total Income: Rp X, Total Expense: Rp Y").
+ * @param userId - ID pengguna.
+ * @param year - Tahun.
+ * @param month - Indeks bulan.
+ * @returns Promise berisi objek totalIncome, totalExpense, dan netBalance.
  */
 export async function getMonthlyTotals(
   userId: string,
@@ -75,7 +83,7 @@ export async function getMonthlyTotals(
   let totalExpense = 0;
 
   for (const t of transactions) {
-    if (t.type === "TRANSFER") continue; // Excluded from P&L
+    if (t.type === "TRANSFER") continue; /* Dikecualikan dari laba rugi (P&L) */
     if (t.type === "INCOME") {
       totalIncome += t.amount;
     } else {
@@ -91,7 +99,10 @@ export async function getMonthlyTotals(
 }
 
 /**
- * Get the current month's totals (convenience wrapper).
+ * Mengambil total keuangan (pemasukan, pengeluaran, dan saldo bersih) untuk bulan yang sedang berjalan.
+ *
+ * @param userId - ID pengguna.
+ * @returns Promise berisi ringkasan keuangan bulan aktif.
  */
 export async function getCurrentMonthTotals(
   userId: string
@@ -100,25 +111,28 @@ export async function getCurrentMonthTotals(
   return getMonthlyTotals(userId, now.getFullYear(), now.getMonth());
 }
 
-// ─── Category Aggregations ──────────────────────────────
+/********** Agregasi Kategori (Category Aggregations) **********/
 
 export interface CategoryTotal {
   categoryId: string;
   categoryName: string;
   categoryIcon: string | null;
   categoryColor: string | null;
-  // TRANSFER is always excluded from category analytics
+  /* TRANSFER selalu dikecualikan dari analitik kategori */
   type: "INCOME" | "EXPENSE";
   total: number;
   count: number;
-  percentage: number; // Percentage of total for its type (Income or Expense)
+  percentage: number; /* Persentase terhadap total jenisnya (pemasukan/pengeluaran) */
 }
 
 /**
- * Get totals grouped by category for a specific month.
+ * Menghitung total transaksi yang dikelompokkan berdasarkan kategori pada bulan tertentu.
+ * Menjadi sumber data utama untuk mesin analitik dan kartu rekomendasi pengeluaran per kategori.
  *
- * Usage: "You spent Rp 500,000 on Food & Dining (35% of expenses)."
- * This is the primary data source for the future analytics engine.
+ * @param userId - ID pengguna.
+ * @param year - Tahun.
+ * @param month - Indeks bulan.
+ * @returns Promise berisi daftar CategoryTotal yang diurutkan dari nominal terbesar.
  */
 export async function getTotalsByCategory(
   userId: string,
@@ -130,13 +144,13 @@ export async function getTotalsByCategory(
     getAllCategoriesIncludingDeleted(userId),
   ]);
 
-  // Build category lookup
+  /********** Buat lookup kategori berdasarkan clientId. */
   const catMap = new Map<string, Category>();
   for (const cat of categories) {
     catMap.set(cat.clientId, cat);
   }
 
-  // Aggregate by category -- TRANSFER and uncategorised rows are skipped above
+  /********** Agregasi per kategori (TRANSFER dan transaksi tanpa kategori dilewati). */
   const aggregated = new Map<
     string,
     { total: number; count: number; type: "INCOME" | "EXPENSE" }
@@ -144,7 +158,7 @@ export async function getTotalsByCategory(
 
   for (const t of transactions) {
     if (t.type === "TRANSFER" || !t.categoryId) continue;
-    // t.type is narrowed to "INCOME" | "EXPENSE" here
+    /* Tipe dipersempit menjadi "INCOME" | "EXPENSE" */
     const txType = t.type as "INCOME" | "EXPENSE";
     const existing = aggregated.get(t.categoryId) || {
       total: 0,
@@ -156,13 +170,13 @@ export async function getTotalsByCategory(
     aggregated.set(t.categoryId, existing);
   }
 
-  // Calculate totals by type for percentage
+  /********** Hitung total per tipe untuk kalkulasi persentase. */
   let typeTotal: { INCOME: number; EXPENSE: number } = { INCOME: 0, EXPENSE: 0 };
   for (const agg of aggregated.values()) {
     typeTotal[agg.type] += agg.total;
   }
 
-  // Build result
+  /********** Susun hasil akhir. */
   const result: CategoryTotal[] = [];
 
   for (const [categoryId, agg] of aggregated) {
@@ -182,25 +196,29 @@ export async function getTotalsByCategory(
     });
   }
 
-  // Sort by total descending
+  /* Urutkan berdasarkan total terbesar */
   result.sort((a, b) => b.total - a.total);
 
   return result;
 }
 
-// ─── Daily Aggregations ─────────────────────────────────
+/********** Agregasi Harian (Daily Aggregations) **********/
 
 export interface DailyTotal {
-  date: string; // YYYY-MM-DD
+  date: string; /* Format tanggal YYYY-MM-DD */
   income: number;
   expense: number;
   net: number;
 }
 
 /**
- * Get daily totals for a specific month.
+ * Menghitung total pemasukan dan pengeluaran per hari dalam suatu bulan tertentu.
+ * Digunakan pada grafik tren transaksi harian di dasbor.
  *
- * Usage: Trend chart showing daily spending over the month.
+ * @param userId - ID pengguna.
+ * @param year - Tahun.
+ * @param month - Indeks bulan.
+ * @returns Promise berisi daftar DailyTotal yang diurutkan berdasarkan tanggal.
  */
 export async function getDailyTotals(
   userId: string,
@@ -212,7 +230,7 @@ export async function getDailyTotals(
   const dailyMap = new Map<string, { income: number; expense: number }>();
 
   for (const t of transactions) {
-    if (t.type === "TRANSFER") continue; // Excluded from daily P&L chart
+    if (t.type === "TRANSFER") continue; /* Dikecualikan dari grafik tren laba rugi harian */
     const existing = dailyMap.get(t.date) || { income: 0, expense: 0 };
     if (t.type === "INCOME") {
       existing.income += t.amount;
@@ -232,19 +250,21 @@ export async function getDailyTotals(
     });
   }
 
-  // Sort by date ascending
+  /* Urutkan berdasarkan tanggal secara urut waktu */
   result.sort((a, b) => a.date.localeCompare(b.date));
 
   return result;
 }
 
-// ─── Spending Velocity ──────────────────────────────────
+/********** Kecepatan Pengeluaran & Proyeksi (Spending Velocity) **********/
 
 /**
- * Calculate the average daily spending for a month.
+ * Menghitung rata-rata pengeluaran harian pada bulan berjalan dan memproyeksikan total pengeluaran akhir bulan.
  *
- * Usage: "You're averaging Rp 85,000/day this month."
- * Future: Used for projections ("At this rate, you'll spend Rp X by month end").
+ * @param userId - ID pengguna.
+ * @param year - Tahun.
+ * @param month - Indeks bulan.
+ * @returns Promise berisi rata-rata harian (averageDaily), hari berjalan (daysElapsed), dan estimasi total (projectedTotal).
  */
 export async function getAverageDailySpending(
   userId: string,
@@ -258,13 +278,13 @@ export async function getAverageDailySpending(
   const monthStart = new Date(year, month, 1);
   const monthEnd = new Date(endDate);
 
-  // Days elapsed so far (at least 1)
+  /* Jumlah hari berjalan (minimal 1) */
   const daysElapsed = Math.max(
     1,
     Math.ceil((Math.min(now.getTime(), monthEnd.getTime()) - monthStart.getTime()) / (1000 * 60 * 60 * 24)) + 1
   );
 
-  // Total days in the month
+  /* Total hari dalam bulan tersebut */
   const totalDays = monthEnd.getDate();
 
   const averageDaily = totalExpense / daysElapsed;

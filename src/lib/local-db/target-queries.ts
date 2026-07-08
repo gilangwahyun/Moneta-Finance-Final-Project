@@ -1,12 +1,15 @@
-// ─── Target Progress Calculations ───────────────────────
-// Calculates the current progress of a financial target by querying
-// local transactions via IndexedDB. This ensures that the "progress"
-// is always fresh and offline-first without needing server sync or schema changes.
+/*
+ * File: src/lib/local-db/target-queries.ts
+ * Description: Modul kalkulasi kemajuan (progress) target finansial secara dinamis,
+ * melakukan kueri transaksi lokal di IndexedDB untuk menjamin data selalu mutakhir dengan pendekatan offline-first.
+ */
 
 import { getDB } from "./index";
 import { STORES } from "./schema";
 import { FinancialTarget, Transaction } from "@/types/models.types";
 import { getTargetEffectiveDateRange } from "@/lib/utils/target-helpers";
+
+/********** Antarmuka Progress Target **********/
 
 export interface TargetProgress {
   currentAmount: number;
@@ -16,18 +19,22 @@ export interface TargetProgress {
   periodStart: Date;
   periodEnd: Date;
   isNotStarted?: boolean;
-  /** True when the period has ended (today > periodEnd), target was not achieved, and period is CUSTOM */
+  /** True jika periode telah berakhir (hari ini > periodEnd), target belum tercapai, dan periodenya adalah CUSTOM */
   isExpired?: boolean;
 }
 
+/********** Kalkulasi Kemajuan Target (calculateTargetProgress) **********/
+
 /**
- * Calculates progress for a given FinancialTarget dynamically based on a reference date.
- * 
- * Rules:
- * - If target is created in the middle of a period, the first period's start date 
- *   is bounded by the target's actual startDate.
- * - Otherwise, it uses the standard boundary of the period (day, week, month).
- * - CUSTOM strictly uses target.startDate and target.endDate.
+ * Menghitung kemajuan untuk suatu target finansial secara dinamis berdasarkan tanggal referensi.
+ * Aturan perhitungan:
+ * - Jika target dibuat di pertengahan periode, tanggal mulai periode pertama dibatasi oleh startDate target itu sendiri.
+ * - Jika tidak, menggunakan batas standar periode (hari, minggu, bulan).
+ * - Tipe CUSTOM secara ketat mengikuti startDate dan endDate yang ditentukan di target.
+ *
+ * @param target - Objek FinancialTarget yang akan dihitung kemajuannya.
+ * @param referenceDate - Tanggal referensi untuk evaluasi periode (default: hari ini).
+ * @returns Promise berisi objek TargetProgress yang mencatat nominal, persentase, dan status pencapaian.
  */
 export async function calculateTargetProgress(
   target: FinancialTarget, 
@@ -56,7 +63,7 @@ export async function calculateTargetProgress(
     const store = tx.objectStore(STORES.TRANSACTIONS);
     const index = store.index("by_date");
     
-    // Bounds
+    /********** Tentukan batas tanggal pencarian IDB. */
     const startIso = periodStart.toISOString();
     const endIso = periodEnd.toISOString();
     const dateRange = IDBKeyRange.bound(startIso, endIso);
@@ -72,7 +79,7 @@ export async function calculateTargetProgress(
         if (txn.deletedAt) continue;
         if (txn.userId !== target.userId) continue;
 
-        // Target Finansial only tracks INCOME transactions. EXPENSE and TRANSFER are excluded.
+        /********** Target Finansial hanya melacak transaksi pemasukan (INCOME); EXPENSE dan TRANSFER dilewati. */
         if (txn.type !== "INCOME") continue;
         
         if (!target.categoryId || txn.categoryId !== target.categoryId) continue;
@@ -89,9 +96,7 @@ export async function calculateTargetProgress(
       const isAchieved = currentAmount >= target.targetAmount;
       const remainingAmount = Math.max(0, target.targetAmount - currentAmount);
 
-      // A CUSTOM-period target is considered expired when:
-      // - today is strictly after periodEnd
-      // - and the target has not been achieved yet
+      /********** Target periode CUSTOM dianggap kedaluwarsa jika hari ini telah melewati periodEnd dan belum tercapai. */
       const isExpired =
         target.period === 'CUSTOM' &&
         !isAchieved &&

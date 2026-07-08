@@ -1,12 +1,10 @@
 'use client';
 
-/********** [START: Halaman Manajemen Dompet] **********/
 /**********
  * Halaman administratif CRUD untuk dompet pengguna.
  * Dapat diakses via: Profil > Manajemen Dompet
  * Saldo ditampilkan secara dinamis dari riwayat transaksi.
  **********/
-/********** [END: Halaman Manajemen Dompet] **********/
 
 /********** Imports **********/
 

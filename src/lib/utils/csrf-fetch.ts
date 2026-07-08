@@ -1,11 +1,17 @@
-/********** Helpers **********/
+/*
+ * File: src/lib/utils/csrf-fetch.ts
+ * Description: Utilitas pembantu untuk mengambil token CSRF dari cookie browser dan menyediakan wrapper fetch
+ * (csrfFetch) yang menyisipkan header token CSRF secara otomatis pada request HTTP yang merubah state (non-GET).
+ */
+
+/********** Konstanta & Pengambilan Token **********/
 const CSRF_COOKIE_NAME = "moneta-csrf-token";
 const CSRF_HEADER_NAME = "X-CSRF-Token";
 
 /**
- * Reads the CSRF token from document.cookie.
+ * Membaca token CSRF dari document.cookie pada lingkungan browser.
  *
- * @returns The decoded CSRF token or null if it doesn't exist or not in a browser environment.
+ * @returns Token CSRF yang telah didekode, atau null jika tidak ditemukan atau berada di luar browser.
  */
 export function getCsrfToken(): string | null {
   if (typeof document === "undefined") return null;
@@ -17,13 +23,15 @@ export function getCsrfToken(): string | null {
   return match ? decodeURIComponent(match.split("=")[1]) : null;
 }
 
+/********** Wrapper Fetch CSRF **********/
+
 /**
- * A fetch wrapper that automatically attaches the CSRF token header
- * on non-GET requests. Acts as a drop-in replacement for `fetch()`.
+ * Pembungkus (wrapper) fetch yang secara otomatis menyisipkan header token CSRF
+ * pada request non-GET (POST, PUT, DELETE, dll). Berfungsi sebagai pengganti drop-in untuk `fetch()`.
  *
- * @param input - The resource URL or Request object.
- * @param init - Optional configuration for the fetch request.
- * @returns A Promise resolving to the Response.
+ * @param input - URL atau objek Request tujuan.
+ * @param init - Konfigurasi opsional untuk request fetch.
+ * @returns Promise yang menghasilkan objek Response.
  */
 export async function csrfFetch(
   input: RequestInfo | URL,
@@ -31,7 +39,7 @@ export async function csrfFetch(
 ): Promise<Response> {
   const method = (init?.method || "GET").toUpperCase();
 
-  /********** Only attach CSRF header on state-changing methods. */
+  /********** Hanya sisipkan header CSRF pada metode HTTP yang mengubah data (selain GET, HEAD, OPTIONS). */
   if (method !== "GET" && method !== "HEAD" && method !== "OPTIONS") {
     const csrfToken = getCsrfToken();
     if (csrfToken) {
