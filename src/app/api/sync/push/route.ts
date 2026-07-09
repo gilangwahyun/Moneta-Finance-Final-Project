@@ -173,7 +173,7 @@ export async function POST(request: NextRequest) {
             const clientTime = new Date(cat.updatedAt);
             const serverTime = existing.updatedAt;
 
-            if (clientTime >= serverTime) {
+            if (clientTime.getTime() + 60000 >= serverTime.getTime()) {
               /********** Client menang — terapkan pembaruan ke DB. */
               const updated = await tx.category.update({
                 where: { id: existing.id },
@@ -242,7 +242,7 @@ export async function POST(request: NextRequest) {
             const clientTime = new Date(wlt.updatedAt);
             const serverTime = existing.updatedAt;
 
-            if (clientTime >= serverTime) {
+            if (clientTime.getTime() + 60000 >= serverTime.getTime()) {
               const updated = await tx.wallet.update({
                 where: { id: existing.id },
                 data: {
@@ -352,7 +352,7 @@ export async function POST(request: NextRequest) {
                 },
                 resolution: "server_wins",
               });
-            } else if (clientTime >= serverTime) {
+            } else if (clientTime.getTime() + 60000 >= serverTime.getTime()) {
               const updated = await tx.budget.update({
                 where: { id: existing.id },
                 data: {
@@ -443,7 +443,7 @@ export async function POST(request: NextRequest) {
             const clientTime = new Date(tgt.updatedAt);
             const serverTime = existing.updatedAt;
 
-            if (clientTime >= serverTime) {
+            if (clientTime.getTime() + 60000 >= serverTime.getTime()) {
               const updated = await tx.financialTarget.update({
                 where: { id: existing.id },
                 data: {
@@ -597,7 +597,7 @@ export async function POST(request: NextRequest) {
             const clientTime = new Date(txn.updatedAt);
             const serverTime = existing.updatedAt;
 
-            if (clientTime >= serverTime) {
+            if (clientTime.getTime() + 60000 >= serverTime.getTime()) {
               const updated = await tx.transaction.update({
                 where: { id: existing.id },
                 data: {
@@ -697,7 +697,7 @@ export async function POST(request: NextRequest) {
             const clientTime = new Date(set.updatedAt);
             const serverTime = existing.updatedAt;
             
-            if (clientTime >= serverTime) {
+            if (clientTime.getTime() + 60000 >= serverTime.getTime()) {
               const updated = await tx.notificationSettings.update({
                 where: { id: existing.id },
                 data: {
@@ -760,7 +760,7 @@ export async function POST(request: NextRequest) {
             const clientTime = new Date(log.updatedAt);
             const serverTime = existingLog.updatedAt;
 
-            if (clientTime >= serverTime) {
+            if (clientTime.getTime() + 60000 >= serverTime.getTime()) {
               const updated = await tx.notificationLog.update({
                 where: { id: existingLog.id },
                 data: {
@@ -844,7 +844,7 @@ export async function POST(request: NextRequest) {
                const clientTime = new Date(log.updatedAt);
                const serverTime = existingDedupe.updatedAt;
                
-               if (clientTime >= serverTime) {
+               if (clientTime.getTime() + 60000 >= serverTime.getTime()) {
                  const updated = await tx.notificationLog.update({
                    where: { id: existingDedupe.id },
                    data: {

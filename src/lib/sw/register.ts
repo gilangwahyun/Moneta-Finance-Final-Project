@@ -40,6 +40,10 @@ export async function registerServiceWorker(options: SWRegistrationOptions = {})
     return null;
   }
 
+  if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
+    return null;
+  }
+
   try {
     const registration = await navigator.serviceWorker.register('/sw.js', {
       scope: '/',

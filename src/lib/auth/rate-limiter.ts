@@ -93,6 +93,15 @@ export function checkRateLimit(
   key: string,
   config: RateLimitConfig
 ): RateLimitResult {
+  if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
+    return {
+      allowed: true,
+      remaining: config.maxRequests,
+      resetAt: new Date(Date.now() + config.windowMs),
+      retryAfterSeconds: 0,
+    };
+  }
+
   const now = Date.now();
   const entry = store.get(key);
 

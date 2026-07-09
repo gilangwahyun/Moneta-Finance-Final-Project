@@ -30,9 +30,7 @@ export interface ConflictResult<T> {
  * @param pair - Object berisi `clientVersion` dan `serverVersion`.
  * @returns Result berisi pemenang, pecundang, dan hasil resolusi.
  */
-export function resolveConflict<T extends { updatedAt: string }>(
-  pair: ConflictPair<T>
-): ConflictResult<T> {
+export function resolveConflict<T extends { updatedAt: string }>(pair: ConflictPair<T>): ConflictResult<T> {
   const clientTime = new Date(pair.clientVersion.updatedAt).getTime();
   const serverTime = new Date(pair.serverVersion.updatedAt).getTime();
 
@@ -63,9 +61,7 @@ export function resolveConflict<T extends { updatedAt: string }>(
  * @param server - Record versi server yang akan di-pull.
  * @returns `true` jika record server boleh menimpa lokal.
  */
-export function shouldOverwriteLocal<
-  T extends { updatedAt: string; syncStatus?: string }
->(local: T | undefined, server: T): boolean {
+export function shouldOverwriteLocal<T extends { updatedAt: string; syncStatus?: string }>(local: T | undefined, server: T): boolean {
   /********** Tidak ada versi lokal — selalu terima dari server. */
   if (!local) return true;
 
