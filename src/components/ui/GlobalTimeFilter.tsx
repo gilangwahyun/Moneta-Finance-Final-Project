@@ -1,4 +1,8 @@
-/********** Imports **********/
+/*
+ * File: src/components/ui/GlobalTimeFilter.tsx
+ * Description: Komponen filter waktu global yang tersinkronisasi dengan TimeFilterContext untuk memvalidasi rentang waktu data aplikasi.
+ */
+
 "use client";
 
 import { useState, useId } from "react";
@@ -7,7 +11,6 @@ import { useTimeFilter } from "@/providers/TimeFilterProvider";
 import { RangeKey } from "@/lib/utils/time-filter";
 import dayjs from "dayjs";
 
-/********** Constants **********/
 const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
   { key: "7d",     label: "7 Hari" },
   { key: "month",  label: "Bulan Ini" },
@@ -16,29 +19,22 @@ const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
   { key: "custom", label: "Pilih Tanggal..." },
 ];
 
-/********** Types **********/
 interface GlobalTimeFilterProps {
-  //********** Hide the date-picker panel and let the parent control it. */
+  /* Menyembunyikan panel date-picker agar dapat dikontrol oleh komponen induk */
   compact?: boolean;
 }
 
-/********** Component **********/
 /**
- * Global time filter component that synchronizes with the shared TimeFilterContext.
+ * Komponen filter waktu global yang menyinkronkan periode aktif aplikasi melalui TimeFilterContext.
  *
- * Renders a segmented pill control. When "Pilih Tanggal..." is selected,
- * an inline date-range picker appears if `compact` is false.
- *
- * @param props - Configuration properties for the filter UI.
- * @returns A segmented control component for time range selection.
+ * @param props - Properti konfigurasi tampilan filter global
+ * @returns Elemen JSX pil navigasi rentang waktu dan date picker kustom
  */
 export function GlobalTimeFilter({ compact = false }: GlobalTimeFilterProps) {
-  
-  /********** State **********/
   const { rangeKey, customDates, setRange } = useTimeFilter();
   const pickerId = useId();
 
-  /********** Local staging for custom date inputs before committing. */
+  /* State sementara untuk masukan tanggal kustom sebelum diaktifkan */
   const [customStart, setCustomStart] = useState(
     customDates?.start ?? dayjs().startOf("month").format("YYYY-MM-DD")
   );
@@ -47,22 +43,23 @@ export function GlobalTimeFilter({ compact = false }: GlobalTimeFilterProps) {
   );
   const [pickerOpen, setPickerOpen] = useState(rangeKey === "custom");
 
-  /********** Event Handlers **********/
+  /********** [START: Penanganan Pemilihan Rentang Waktu Global] **********/
   function handleRangeClick(key: RangeKey) {
     if (key === "custom") {
       setPickerOpen(true);
-      /********** Immediately commit current staged values so data refreshes right away. */
+      /* Segera terapkan tanggal yang sedang aktif pada state sementara */
       setRange("custom", { start: customStart, end: customEnd });
     } else {
       setPickerOpen(false);
       setRange(key);
     }
   }
+  /********** [END: Penanganan Pemilihan Rentang Waktu Global] **********/
 
-  /********** Render **********/
+  /********** [START: Perenderan Komponen Filter Waktu Global] **********/
   return (
     <div className="flex flex-col gap-2">
-      {/* Pill Row */}
+      {/* Baris Pilihan Rentang Waktu */}
       <div
         role="group"
         aria-label="Pilih rentang waktu"
@@ -97,7 +94,7 @@ export function GlobalTimeFilter({ compact = false }: GlobalTimeFilterProps) {
           );
         })}
 
-        {/* Reset Button (only show if not default "month") */}
+        {/* Tombol Atur Ulang (hanya ditampilkan jika rentang aktif bukan bulan berjalan) */}
         {rangeKey !== "month" && (
           <div className="ml-auto pl-2 border-l border-slate-200 dark:border-slate-700">
             <button
@@ -116,7 +113,7 @@ export function GlobalTimeFilter({ compact = false }: GlobalTimeFilterProps) {
         )}
       </div>
 
-      {/* Inline Date Picker */}
+      {/* Panel Pemilihan Tanggal Rentang Kustom */}
       {!compact && pickerOpen && (
         <div
           className="
@@ -177,4 +174,5 @@ export function GlobalTimeFilter({ compact = false }: GlobalTimeFilterProps) {
       )}
     </div>
   );
+  /********** [END: Perenderan Komponen Filter Waktu Global] **********/
 }

@@ -1,3 +1,8 @@
+/*
+ * File: src/components/analytics/ComparativeAnalyticsWidget.tsx
+ * Description: Widget analisis komparatif pengeluaran dan pemasukan (perbandingan hari ini vs kemarin atau mingguan).
+ */
+
 "use client";
 
 import { useMemo, useState } from "react";
@@ -9,14 +14,20 @@ import { formatCurrency } from "@/lib/utils/helpers";
 
 type ViewMode = "DAILY" | "WEEKLY";
 
+/**
+ * Komponen widget perbandingan analitik harian atau 7 hari terakhir.
+ *
+ * @returns Elemen JSX widget komparatif
+ */
 export function ComparativeAnalyticsWidget() {
   const { transactions } = useTransactions();
   const [viewMode, setViewMode] = useState<ViewMode>("DAILY");
 
+  /********** [START: Perhitungan Agregasi Statistik Perbandingan] **********/
   const stats = useMemo(() => {
     const now = new Date();
     
-    // Daily Boundaries
+    /* Batas waktu harian */
     const startOfToday = getStartOfDay(now);
     const endOfToday = getEndOfDay(now);
 
@@ -25,7 +36,7 @@ export function ComparativeAnalyticsWidget() {
     const startOfYesterday = getStartOfDay(yesterday);
     const endOfYesterday = getEndOfDay(yesterday);
 
-    // Weekly Boundaries (Rolling 7 days)
+    /* Batas waktu mingguan (7 hari berjalan) */
     const endOfRolling = getEndOfDay(now);
     const rollingStart = new Date(now);
     rollingStart.setDate(now.getDate() - 6);
@@ -39,7 +50,7 @@ export function ComparativeAnalyticsWidget() {
     prevRollingStart.setDate(now.getDate() - 13);
     const startOfPrevRolling = getStartOfDay(prevRollingStart);
 
-    // Accumulators
+    /* Akumulator total nominal */
     let todayInc = 0, todayExp = 0;
     let yestInc = 0, yestExp = 0;
     let currWeekInc = 0, currWeekExp = 0;
@@ -49,7 +60,7 @@ export function ComparativeAnalyticsWidget() {
       const amt = Number(t.amount);
       const tDate = new Date(t.date).getTime();
       
-      // Daily
+      /* Penghitungan nominal harian */
       if (tDate >= startOfToday.getTime() && tDate <= endOfToday.getTime()) {
         if (t.type === "INCOME") todayInc += amt;
         else todayExp += amt;
@@ -58,7 +69,7 @@ export function ComparativeAnalyticsWidget() {
         else yestExp += amt;
       }
 
-      // Weekly
+      /* Penghitungan nominal mingguan */
       if (tDate >= startOfRolling.getTime() && tDate <= endOfRolling.getTime()) {
         if (t.type === "INCOME") currWeekInc += amt;
         else currWeekExp += amt;
@@ -73,11 +84,13 @@ export function ComparativeAnalyticsWidget() {
       weekly: { currentInc: currWeekInc, currentExp: currWeekExp, prevInc: prevWeekInc, prevExp: prevWeekExp }
     };
   }, [transactions]);
+  /********** [END: Perhitungan Agregasi Statistik Perbandingan] **********/
 
   const currentStats = viewMode === "DAILY" ? stats.daily : stats.weekly;
   
   const compareSuffix = viewMode === "DAILY" ? "dari kemarin" : "dari minggu lalu";
 
+  /********** [START: Kalkulasi Perubahan Nominal dan Persentase] **********/
   const calculateChange = (current: number, prev: number, type: "INCOME" | "EXPENSE") => {
     const diff = current - prev;
     const absDiff = Math.abs(diff);
@@ -93,7 +106,7 @@ export function ComparativeAnalyticsWidget() {
     if (percent === 0) return { text: "Tidak berubah", color: "text-slate-600 dark:text-slate-400", Icon: Minus };
 
     if (percent > 0) {
-      // Increase
+      /* Kasus peningkatan nominal */
       return {
         text: type === "EXPENSE" 
           ? `⬆ ${nominalText} (${absPercent}%) lebih tinggi ${compareSuffix}` 
@@ -102,7 +115,7 @@ export function ComparativeAnalyticsWidget() {
         Icon: TrendingUp
       };
     } else {
-      // Decrease
+      /* Kasus penurunan nominal */
       return {
         text: type === "EXPENSE" 
           ? `⬇ ${nominalText} (${absPercent}%) lebih hemat ${compareSuffix}` 
@@ -112,6 +125,7 @@ export function ComparativeAnalyticsWidget() {
       };
     }
   };
+  /********** [END: Kalkulasi Perubahan Nominal dan Persentase] **********/
 
   const expenseChange = calculateChange(currentStats.currentExp, currentStats.prevExp, "EXPENSE");
   const incomeChange = calculateChange(currentStats.currentInc, currentStats.prevInc, "INCOME");
@@ -121,7 +135,7 @@ export function ComparativeAnalyticsWidget() {
       <div className="mb-4 flex items-center justify-between">
         <h2 className="text-sm font-semibold text-slate-800 dark:text-slate-200">Analisis Perbandingan</h2>
         
-        {/* Toggle */}
+        {/* Tombol Pilihan Mode Tampilan (Harian / 7 Hari) */}
         <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-1 dark:border-slate-700 dark:bg-slate-800/50">
           <button
             onClick={() => setViewMode("DAILY")}
@@ -148,7 +162,7 @@ export function ComparativeAnalyticsWidget() {
 
       <div className="grid grid-cols-2 gap-4 divide-x divide-slate-100 dark:divide-slate-800">
         
-        {/* Expense Section */}
+        {/* Bagian Statistik Pengeluaran */}
         <div className="pr-2">
           <p className="text-xs text-slate-600 dark:text-slate-400">Pengeluaran</p>
           <div className="mt-1 flex items-start gap-2">
@@ -159,7 +173,7 @@ export function ComparativeAnalyticsWidget() {
           </div>
         </div>
 
-        {/* Income Section */}
+        {/* Bagian Statistik Pemasukan */}
         <div className="pl-4">
           <p className="text-xs text-slate-600 dark:text-slate-400">Pemasukan</p>
           <div className="mt-1 flex items-start gap-2">

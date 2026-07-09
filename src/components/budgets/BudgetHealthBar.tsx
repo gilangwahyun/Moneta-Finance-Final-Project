@@ -1,10 +1,7 @@
-// ─── BudgetHealthBar ────────────────────────────────────
-// Visual indicator for overall monthly budget health.
-// Used exclusively on the Dashboard as a replacement for
-// the 3-card summary (Income / Expense / Balance).
-//
-// Colour semantics (UCD Neutrality applied):
-//   Strictly neutral (slate/blue) to avoid judgmental colours.
+/*
+ * File: src/components/budgets/BudgetHealthBar.tsx
+ * Description: Indikator visual kesehatan anggaran bulanan secara keseluruhan yang digunakan pada dasbor utama dengan prinsip netralitas warna (UCD Neutrality).
+ */
 
 "use client";
 
@@ -12,16 +9,26 @@ import { formatCurrency } from "@/lib/utils/helpers";
 import Link from "next/link";
 import { Activity, AlertCircle } from "lucide-react";
 
+/********** Definisi Tipe Properti Bilah Kesehatan Anggaran **********/
+
 interface BudgetHealthBarProps {
   totalSpent: number;
   totalBudget: number;
 }
 
+/********** Komponen Indikator Kesehatan Anggaran (BudgetHealthBar) **********/
+
+/**
+ * Merender indikator bilah kemajuan untuk merangkum total pengeluaran dibandingkan total anggaran bulanan.
+ *
+ * @param props - Properti total pengeluaran dan total batas anggaran
+ * @returns Elemen JSX bilah kesehatan anggaran
+ */
 export function BudgetHealthBar({
   totalSpent,
   totalBudget,
 }: BudgetHealthBarProps) {
-  // ── No budget set ─────────────────────────────────────
+  /* Tampilan alternatif apabila anggaran bulan ini belum diatur sama sekali */
   if (totalBudget === 0) {
     return (
       <div className="flex items-center justify-between rounded-xl border border-dashed border-slate-200 bg-slate-50 px-5 py-4 dark:border-slate-800/50 dark:bg-slate-800/20">
@@ -43,10 +50,11 @@ export function BudgetHealthBar({
     );
   }
 
+  /********** [START: Kalkulasi Status & Netralitas Warna Kesehatan Anggaran] **********/
   const percentage = Math.round((totalSpent / totalBudget) * 100);
   const clamped = Math.min(100, percentage);
   
-  // UCD Neutrality: Always neutral blue/slate
+  /* Penerapan Netralitas UCD: Menggunakan warna netral (biru/slate) agar tidak memberi kesan menghakimi */
   const status = percentage >= 100 
     ? {
         label: "Melebihi Anggaran",
@@ -64,10 +72,11 @@ export function BudgetHealthBar({
         badge: "bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400",
         Icon: Activity,
       };
+  /********** [END: Kalkulasi Status & Netralitas Warna Kesehatan Anggaran] **********/
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800/50 dark:bg-slate-900">
-      {/* Header row */}
+      {/* Baris Header Judul dan Badge Status */}
       <div className="mb-3 flex items-center justify-between">
         <p className="text-sm font-medium text-slate-600 dark:text-slate-400">
           Kesehatan Anggaran Bulanan
@@ -80,7 +89,7 @@ export function BudgetHealthBar({
         </span>
       </div>
 
-      {/* Progress bar */}
+      {/* Bilah Kemajuan (Progress Bar) */}
       <div className={`h-2.5 w-full overflow-hidden rounded-full ${status.trackColor}`}>
         <div
           className={`h-full rounded-full transition-all duration-700 ${status.barColor}`}
@@ -88,7 +97,7 @@ export function BudgetHealthBar({
         />
       </div>
 
-      {/* Numbers row */}
+      {/* Baris Keterangan Nominal Anggaran & Persentase */}
       <div className="mt-3 flex items-baseline justify-between">
         <p className="text-xs text-slate-600 dark:text-slate-400">
           <span className={`text-sm font-semibold ${status.color}`}>

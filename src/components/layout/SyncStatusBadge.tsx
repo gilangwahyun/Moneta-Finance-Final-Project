@@ -1,16 +1,13 @@
-// ─── Sync Status Components ─────────────────────────────
-// Layer 2: Visual indicators that warn users about unsynced
-// data and provide context on sync status.
-//
-// Two variants:
-//   SyncStatusBadge  — compact pill for mobile header
-//   SyncStatusPanel  — full card for desktop sidebar
+/*
+ * File: src/components/layout/SyncStatusBadge.tsx
+ * Description: Indikator visual status sinkronisasi data lokal (IndexedDB) dengan server, terdiri dari varian lencana ringkas (header seluler) dan kartu panel lengkap (sidebar desktop).
+ */
 
 "use client";
 
 import { useSyncContext } from "@/providers/SyncProvider";
 
-// ─── Compact Badge (for mobile header) ─────────────────
+/********** Komponen Lencana Ringkas Sinkronisasi (Header Seluler) **********/
 
 export function SyncStatusBadge() {
   const { syncState, pendingCount, quarantinedCount, isOnline } = useSyncContext();
@@ -22,6 +19,7 @@ export function SyncStatusBadge() {
   let dotColor: string;
   let label: string;
 
+  /********** [START: Evaluasi Status Sinkronisasi pada Bilah Header] **********/
   if (isOffline && hasPending) {
     dotColor = "bg-orange-400";
     label = `${pendingCount} belum tersimpan`;
@@ -41,6 +39,7 @@ export function SyncStatusBadge() {
     dotColor = "bg-emerald-400";
     label = "Tersinkronisasi";
   }
+  /********** [END: Evaluasi Status Sinkronisasi pada Bilah Header] **********/
 
   return (
     <div className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-700 dark:text-slate-300">
@@ -50,7 +49,7 @@ export function SyncStatusBadge() {
   );
 }
 
-// ─── Full Panel (for desktop sidebar) ──────────────────
+/********** Komponen Panel Lengkap Sinkronisasi (Sidebar Desktop) **********/
 
 export function SyncStatusPanel() {
   const { syncState, pendingCount, quarantinedCount, queueSummary, isOnline, triggerSync } = useSyncContext();
@@ -83,7 +82,7 @@ export function SyncStatusPanel() {
     return acc;
   }, {} as Record<string, number>);
 
-  // Decide which variant to render
+  /********** [START: Evaluasi Varian Kartu Sinkronisasi Sidebar] **********/
   if (isOffline && hasPending) {
     mainCard = (
       <SyncCard
@@ -126,7 +125,7 @@ export function SyncStatusPanel() {
       />
     );
   } else {
-    // All synced
+    /* Seluruh perubahan telah disinkronkan */
     mainCard = (
       <SyncCard
         variant="synced"
@@ -136,12 +135,13 @@ export function SyncStatusPanel() {
       />
     );
   }
+  /********** [END: Evaluasi Varian Kartu Sinkronisasi Sidebar] **********/
 
   return (
     <div className="relative space-y-2">
-      {/* Absolute container that grows upwards */}
+      {/* Wadah Absolut untuk Menampilkan Daftar Diagnostik ke Atas */}
       <div className="absolute bottom-full mb-2 left-0 right-0 flex flex-col justify-end pointer-events-none">
-        {/* Active Pending Diagnostics */}
+        {/* Diagnostik Antrean Tertunda Aktif */}
         {hasPending && !isSyncing && (
           <div className="pointer-events-auto mb-2 max-h-48 overflow-y-auto rounded-xl border border-indigo-200 bg-indigo-50 p-3 shadow-lg dark:border-indigo-800/50 dark:bg-indigo-950/90 dark:backdrop-blur-sm">
             <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">
@@ -157,7 +157,7 @@ export function SyncStatusPanel() {
           </div>
         )}
 
-        {/* Quarantined/Failed Diagnostics */}
+        {/* Diagnostik Karantina/Gagal Sinkronisasi */}
         {quarantinedCount > 0 && (
           <div className="pointer-events-auto max-h-48 overflow-y-auto rounded-xl border border-red-200 bg-red-50 p-3 shadow-lg dark:border-red-800/50 dark:bg-red-950/90 dark:backdrop-blur-sm">
             <p className="text-xs font-semibold text-red-600 dark:text-red-400">
@@ -179,7 +179,7 @@ export function SyncStatusPanel() {
   );
 }
 
-// ─── Card Shell ────────────────────────────────────────
+/********** Komponen Pembungkus Kartu Status (SyncCard) **********/
 
 type CardVariant = "critical" | "syncing" | "pending" | "offline" | "synced";
 
@@ -263,7 +263,7 @@ function SyncCard({
   );
 }
 
-// ─── Icons ─────────────────────────────────────────────
+/********** Komponen Ikon Pendukung **********/
 
 function WarningIcon() {
   return (

@@ -1,3 +1,8 @@
+/*
+ * File: src/components/budgets/BudgetModal.tsx
+ * Description: Modal pembuatan atau penyuntingan batas anggaran bulanan per kategori dengan dukungan sinkronisasi luring.
+ */
+
 import { useState, useEffect, FormEvent, useRef } from "react";
 import { X } from "lucide-react";
 import { Budget } from "@/types/models.types";
@@ -9,14 +14,24 @@ import { getCategoryIcon } from "@/lib/utils/icons";
 import { useSyncContext } from "@/providers/SyncProvider";
 import { showSyncToast } from "@/lib/utils/show-toast";
 
+/********** Definisi Tipe Properti Modal Anggaran **********/
+
 interface BudgetModalProps {
   isOpen: boolean;
   onClose: () => void;
   editingBudget: Budget | null;
-  currentPeriod: string; // YYYY-MM
+  currentPeriod: string; /* Format periode YYYY-MM */
   existingBudgetCategoryIds: string[];
 }
 
+/********** Komponen Modal Pembuatan/Penyuntingan Anggaran (BudgetModal) **********/
+
+/**
+ * Merender modal form untuk membuat atau mengubah batas nominal anggaran pada kategori pengeluaran tertentu.
+ *
+ * @param props - Properti status modal, periode saat ini, dan fungsi penanganan penutupan
+ * @returns Elemen JSX modal anggaran
+ */
 export function BudgetModal({
   isOpen,
   onClose,
@@ -42,9 +57,9 @@ export function BudgetModal({
         setCategoryId(editingBudget.categoryId);
       } else {
         setAmount("");
-        setCategoryId(""); // Let user pick explicitly
+        setCategoryId(""); /* Membiarkan pengguna memilih kategori secara eksplisit */
       }
-      // Small delay for focus
+      /* Jeda singkat agar input nominal langsung menerima fokus */
       setTimeout(() => amountRef.current?.focus(), 50);
     }
     prevIsOpen.current = isOpen;
@@ -54,6 +69,7 @@ export function BudgetModal({
     onClose();
   };
 
+  /********** [START: Penanganan Penyimpanan Anggaran Baru / Suntingan] **********/
   const handleSaveBudget = async (e: FormEvent) => {
     e.preventDefault();
     if (!amount || !categoryId) return;
@@ -84,20 +100,21 @@ export function BudgetModal({
       setIsSubmitting(false);
     }
   };
+  /********** [END: Penanganan Penyimpanan Anggaran Baru / Suntingan] **********/
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
-      {/* Backdrop */}
+      {/* Latar Belakang Gelap (Backdrop) */}
       <div
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity dark:bg-black/60"
         onClick={handleClose}
       />
       
-      {/* Modal/Sheet Content */}
+      {/* Wadah Konten Lembar Modal (Sheet Modal) */}
       <div className="relative z-10 w-full max-h-[90vh] overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom-10 duration-200 dark:border-slate-800 dark:bg-slate-900 sm:max-w-md sm:rounded-2xl sm:slide-in-from-bottom-0 sm:fade-in flex flex-col">
-        {/* Header */}
+        {/* Bagian Header Modal */}
         <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-100 bg-white/80 px-5 py-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
             {editingBudget ? "Ubah Batas Anggaran" : "Buat Anggaran Baru"}
@@ -110,9 +127,9 @@ export function BudgetModal({
           </button>
         </div>
 
-        {/* Body */}
+        {/* Form Isi Modal Anggaran */}
         <form onSubmit={handleSaveBudget} className="p-5 flex flex-col gap-5">
-          {/* Category */}
+          {/* Pilihan Kategori Pengeluaran */}
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
               Kategori Pengeluaran
@@ -162,7 +179,7 @@ export function BudgetModal({
             </div>
           </div>
 
-          {/* Amount */}
+          {/* Input Batas Nominal Anggaran */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
               Batas Nominal
@@ -182,7 +199,7 @@ export function BudgetModal({
             </div>
           </div>
 
-          {/* Footer Actions */}
+          {/* Tombol Simpan dan Batal */}
           <div className="mt-4 flex flex-col gap-3 sm:flex-row-reverse">
             <button
               type="submit"

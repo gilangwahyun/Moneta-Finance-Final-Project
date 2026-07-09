@@ -1,3 +1,8 @@
+/*
+ * File: src/components/wallets/WalletModal.tsx
+ * Description: Dialog modal untuk menambah dompet baru atau mengubah dompet yang sudah ada.
+ */
+
 import { useState, useEffect, FormEvent, useRef } from "react";
 import { X, Banknote, CreditCard, Smartphone, TrendingUp, Wallet as WalletIcon } from "lucide-react";
 import { Wallet, WalletType } from "@/types/models.types";
@@ -19,6 +24,12 @@ interface WalletModalProps {
   editingWallet: Wallet | null;
 }
 
+/**
+ * Merender dialog modal untuk membuat atau memperbarui informasi dompet.
+ *
+ * @param props - Properti konfigurasi modal dompet
+ * @returns Elemen JSX modal dompet atau null jika tertutup
+ */
 export function WalletModal({ isOpen, onClose, editingWallet }: WalletModalProps) {
   const { addNewWallet, editWallet } = useWallets();
 
@@ -30,6 +41,7 @@ export function WalletModal({ isOpen, onClose, editingWallet }: WalletModalProps
   const nameRef = useRef<HTMLInputElement>(null);
   const prevIsOpen = useRef(false);
 
+  /********** [START: Sinkronisasi Data Form Saat Modal Dibuka] **********/
   useEffect(() => {
     if (isOpen && !prevIsOpen.current) {
       if (editingWallet) {
@@ -45,7 +57,9 @@ export function WalletModal({ isOpen, onClose, editingWallet }: WalletModalProps
     }
     prevIsOpen.current = isOpen;
   }, [isOpen, editingWallet]);
+  /********** [END: Sinkronisasi Data Form Saat Modal Dibuka] **********/
 
+  /********** [START: Penanganan Penyimpanan Data Dompet] **********/
   const handleSave = async (e: FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
@@ -71,6 +85,7 @@ export function WalletModal({ isOpen, onClose, editingWallet }: WalletModalProps
       setIsSubmitting(false);
     }
   };
+  /********** [END: Penanganan Penyimpanan Data Dompet] **********/
 
   if (!isOpen) return null;
 

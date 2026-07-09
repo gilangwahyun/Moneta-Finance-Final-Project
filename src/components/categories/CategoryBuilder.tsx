@@ -1,15 +1,7 @@
-// ─── CategoryBuilder ─────────────────────────────────────
-// A full in-modal "Buat Kategori Baru" view.
-//
-// Design decisions:
-//   • Completely self-contained — owns its own local state for
-//     name, icon selection, and color selection only.
-//   • Calls parent's createCategory() on save — the parent
-//     (TransactionModal) then sets formCategoryId and switches
-//     the view back. All transaction form state is preserved.
-//   • Icon picker: 5-column scrollable grid of AVAILABLE_ICONS.
-//   • Color picker: 8 predefined swatches — no color input needed.
-//   • Accessible: aria-pressed on each icon/color tile.
+/*
+ * File: src/components/categories/CategoryBuilder.tsx
+ * Description: Formulir interaktif pembuatan kategori baru dalam modal dengan pemilih ikon dan palet warna.
+ */
 
 "use client";
 
@@ -19,9 +11,7 @@ import { Category, CategoryType } from "@/types/models.types";
 import { AddCategoryInput } from "@/hooks/use-categories";
 import { AVAILABLE_ICONS } from "@/lib/available-icons";
 
-// ─── Color swatches ──────────────────────────────────────
-// Stored as hex strings in IndexedDB (category.color).
-
+/* Contoh palet warna prasetel yang disimpan dalam bentuk string hex */
 export const CATEGORY_COLORS = [
   { label: "Merah",    hex: "#ef4444" },
   { label: "Oranye",   hex: "#f97316" },
@@ -33,42 +23,44 @@ export const CATEGORY_COLORS = [
   { label: "Pink",     hex: "#ec4899" },
 ];
 
-// ─── Props ───────────────────────────────────────────────
-
 interface CategoryBuilderProps {
-  /** Inherited from the transaction type — determines category.type */
+  /** Diturunkan dari tipe transaksi agar sesuai dengan category.type */
   type: CategoryType;
-  /** Called with the new category's clientId after successful save */
+  /** Dipanggil dengan clientId kategori baru setelah sukses disimpan */
   onSave: (clientId: string) => void;
-  /** Called when user cancels — switches view back to form */
+  /** Dipanggil saat pengguna membatalkan pembuatan kategori */
   onCancel: () => void;
-  /** Function to create category (passed from parent to maintain shared state) */
+  /** Fungsi pembuat kategori dari komponen induk */
   onCreateCategory: (input: Omit<AddCategoryInput, "userId">) => Promise<Category | null>;
 }
 
-// ─── Component ───────────────────────────────────────────
-
+/**
+ * Merender formulir pembuatan kategori baru beserta pemilih ikon dan warna.
+ *
+ * @param props - Properti pembuatan kategori
+ * @returns Elemen JSX formulir pembuat kategori
+ */
 export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: CategoryBuilderProps) {
-
   const [name, setName]           = useState("");
   const [iconName, setIconName]   = useState(AVAILABLE_ICONS[0].name);
-  const [color, setColor]         = useState(CATEGORY_COLORS[5].hex); // indigo blue default
+  const [color, setColor]         = useState(CATEGORY_COLORS[5].hex); /* Default warna biru indigo */
   const [isSaving, setIsSaving]   = useState(false);
   const [error, setError]         = useState<string | null>(null);
 
   const canSave = name.trim().length > 0 && !isSaving;
 
-  // Find the currently-selected icon component for the live preview
+  /* Temukan komponen ikon yang dipilih untuk pratinjau langsung */
   const selectedIconEntry = AVAILABLE_ICONS.find((i) => i.name === iconName) ?? AVAILABLE_ICONS[0];
   const PreviewIcon = selectedIconEntry.Icon;
 
+  /********** [START: Penanganan Penyimpanan Kategori Baru] **********/
   async function handleSave() {
     if (!canSave) return;
     setError(null);
     setIsSaving(true);
 
     try {
-      // Use the parent's mutate function so state is shared
+      /* Gunakan fungsi mutasi dari induk agar state tersinkronisasi */
       const created = await onCreateCategory({
         name: name.trim(),
         type,
@@ -87,11 +79,13 @@ export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: Ca
       setIsSaving(false);
     }
   }
+  /********** [END: Penanganan Penyimpanan Kategori Baru] **********/
 
+  /********** [START: Perenderan Formulir Pembuat Kategori] **********/
   return (
     <div className="flex flex-col gap-5 px-5 py-4 animate-in fade-in slide-in-from-right-4 duration-200">
 
-      {/* ── Header ───────────────────────────────────── */}
+      {/* Bagian Header Form */}
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -110,7 +104,7 @@ export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: Ca
           </p>
         </div>
 
-        {/* Live preview */}
+        {/* Pratinjau langsung */}
         <div className="ml-auto flex flex-col items-center gap-1">
           <div
             className="flex h-10 w-10 items-center justify-center rounded-full shadow-sm"
@@ -124,7 +118,7 @@ export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: Ca
         </div>
       </div>
 
-      {/* ── Name input ───────────────────────────────── */}
+      {/* Kolom Masukan Nama Kategori */}
       <div>
         <label
           htmlFor="cat-builder-name"
@@ -144,7 +138,7 @@ export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: Ca
         />
       </div>
 
-      {/* ── Color picker ─────────────────────────────── */}
+      {/* Pemilihan Warna Kategori */}
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
           Warna
@@ -177,12 +171,11 @@ export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: Ca
         </div>
       </div>
 
-      {/* ── Icon picker ──────────────────────────────── */}
+      {/* Pemilihan Ikon Kategori */}
       <div>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
           Ikon
         </p>
-        {/* 5-column grid, max-height + scroll so it doesn't push CTA off-screen */}
         <div className="grid grid-cols-5 gap-2 max-h-[180px] overflow-y-auto pr-0.5">
           {AVAILABLE_ICONS.map((entry) => {
             const isSelected = entry.name === iconName;
@@ -211,14 +204,14 @@ export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: Ca
         </div>
       </div>
 
-      {/* ── Error ────────────────────────────────────── */}
+      {/* Pesan Kesalahan */}
       {error && (
         <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-600 dark:bg-rose-900/20 dark:text-rose-400">
           {error}
         </p>
       )}
 
-      {/* ── Actions ──────────────────────────────────── */}
+      {/* Aksi Tombol */}
       <div className="flex gap-3 pt-1">
         <button
           type="button"
@@ -246,4 +239,5 @@ export function CategoryBuilder({ type, onSave, onCancel, onCreateCategory }: Ca
       </div>
     </div>
   );
+  /********** [END: Perenderan Formulir Pembuat Kategori] **********/
 }

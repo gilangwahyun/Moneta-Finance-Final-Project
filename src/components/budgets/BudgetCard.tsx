@@ -1,3 +1,7 @@
+/*
+ * File: src/components/budgets/BudgetCard.tsx
+ * Description: Komponen kartu anggaran bulanan yang menampilkan progres penggunaan, alokasi harian adaptif, status ritme, serta menu aksi.
+ */
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -10,6 +14,8 @@ import { Tooltip } from '@/components/ui/Tooltip';
 import { ArrowRightLeft, Info, AlertCircle, ChevronDown } from 'lucide-react';
 import { Budget } from '@/types/models.types';
 
+/********** Definisi Tipe Properti Komponen Kartu Anggaran **********/
+
 interface BudgetCardProps {
   budget: BudgetWithStats;
   onEdit: (budget: Budget) => void;
@@ -17,13 +23,21 @@ interface BudgetCardProps {
   onReallocate: (clientId: string) => void;
 }
 
+/********** Komponen Utama Kartu Anggaran (BudgetCard) **********/
+
+/**
+ * Merender kartu visual untuk satu kategori anggaran beserta indikator ritme, batas harian adaptif, dan menu aksi.
+ *
+ * @param props - Properti anggaran beserta aksi kelolanya
+ * @returns Elemen JSX kartu anggaran
+ */
 export function BudgetCard({
   budget,
   onEdit,
   onDelete,
   onReallocate,
 }: BudgetCardProps) {
-  // Context-Aware Nudging: Auto-expand when status is OFF_TRACK or OVER_BUDGET
+  /* Pengingat Kontekstual (Nudging): Terbuka otomatis apabila status ritme OFF_TRACK atau OVER_BUDGET */
   const [isExpanded, setIsExpanded] = useState(() => {
     return budget.rhythm?.status === 'OFF_TRACK' || budget.rhythm?.status === 'OVER_BUDGET';
   });
@@ -36,7 +50,7 @@ export function BudgetCard({
 
   const clampedPercentage = Math.min(100, budget.percentage);
 
-  // Semantic Colors
+  /********** [START: Kalkulasi Status Warna & Teks Anggaran] **********/
   let progressColor = 'bg-emerald-500';
   let statusText = 'Aman';
 
@@ -47,10 +61,11 @@ export function BudgetCard({
     progressColor = 'bg-rose-500';
     statusText = 'Melebihi Batas';
   }
+  /********** [END: Kalkulasi Status Warna & Teks Anggaran] **********/
 
   return (
     <div className="group relative overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:border-slate-300 hover:shadow-md dark:border-slate-800 dark:bg-slate-900 dark:hover:border-slate-700">
-      {/* Mobile touch target for opening action menu */}
+      {/* Area sentuh seluler untuk membuka menu aksi secara langsung */}
       <div
         className="absolute inset-0 z-0 sm:hidden"
         onClick={(e) => {
@@ -62,7 +77,7 @@ export function BudgetCard({
       <div className="relative z-10 flex flex-col p-4 sm:p-5 outline-none pointer-events-none sm:pointer-events-auto">
         <div className="flex items-start justify-between gap-4">
           <div className="flex min-w-0 items-center gap-3">
-            {/* Icon */}
+            {/* Ikon Kategori Anggaran */}
             <div
               className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
               style={{
@@ -123,7 +138,7 @@ export function BudgetCard({
           </div>
         </div>
 
-        {/* Metriks */}
+        {/* Metrik Realisasi Pengeluaran */}
         <div className="mt-4 flex items-end justify-between">
           <div className="flex items-baseline gap-1.5 text-sm">
             <span className="font-bold text-slate-800 dark:text-slate-100 text-base">{formatCurrency(budget.spentAmount)}</span>
@@ -132,7 +147,7 @@ export function BudgetCard({
           </div>
         </div>
 
-        {/* Progress Bar */}
+        {/* Bilah Progres Penggunaan */}
         <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
           <div
             className={`h-full rounded-full transition-all duration-500 ease-out ${progressColor}`}
@@ -140,7 +155,7 @@ export function BudgetCard({
           />
         </div>
 
-        {/* Action-Oriented Next-Day Shifting Block */}
+        {/* Blok Peringatan atau Alokasi Harian Adaptif */}
         {budget.spentAmount >= Number(budget.amount) ? (
           <div className="mt-3.5 flex items-center justify-between rounded-xl bg-rose-50/80 px-3.5 py-2.5 border border-rose-100 dark:bg-rose-950/30 dark:border-rose-900/50">
             <div className="flex items-center gap-2 text-xs font-semibold text-rose-700 dark:text-rose-300">
@@ -183,7 +198,7 @@ export function BudgetCard({
           </div>
         )}
 
-        {/* Progressive Disclosure Accordion */}
+        {/* Accordion Detail Ritme & Proyeksi */}
         <div className="mt-2.5 border-t border-slate-100 pt-2 dark:border-slate-800/60">
           <button
             type="button"

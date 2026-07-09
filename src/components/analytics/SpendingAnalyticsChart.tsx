@@ -1,3 +1,8 @@
+/*
+ * File: src/components/analytics/SpendingAnalyticsChart.tsx
+ * Description: Grafik analisis pengeluaran berganti mode antara diagram lingkaran (berdasarkan kategori) dan diagram batang (tren 7 hari).
+ */
+
 "use client";
 
 import { useMemo, useState } from "react";
@@ -11,19 +16,24 @@ type ChartView = "CATEGORY" | "TREND";
 
 const COLORS = ["#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f59e0b", "#10b981", "#14b8a6", "#0ea5e9"];
 
+/**
+ * Komponen grafik analisis pengeluaran dengan mode tampilan kategori dan tren harian.
+ *
+ * @returns Elemen JSX grafik analisis pengeluaran
+ */
 export function SpendingAnalyticsChart() {
   const { transactions } = useTransactions();
   const { allCategories } = useCategories();
   const [view, setView] = useState<ChartView>("CATEGORY");
 
-  // Shared: Current Month boundaries for Category view
+  /********** [START: Agregasi Data Kategori Bulan Berjalan] **********/
   const currentMonthData = useMemo(() => {
     const now = new Date();
     const currentPeriod = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     
     const expenses = transactions.filter(t => t.type === "EXPENSE" && t.date.startsWith(currentPeriod));
     
-    // Group by Category
+    /* Pengelompokan total pengeluaran berdasarkan ID kategori */
     const grouped = expenses.reduce((acc, t) => {
       const catId = t.categoryId || "unknown";
       acc[catId] = (acc[catId] || 0) + Number(t.amount);
@@ -45,8 +55,9 @@ export function SpendingAnalyticsChart() {
 
     return { data, total };
   }, [transactions, allCategories]);
+  /********** [END: Agregasi Data Kategori Bulan Berjalan] **********/
 
-  // Last 7 Days for Trend View
+  /********** [START: Agregasi Data Tren 7 Hari Terakhir] **********/
   const trendData = useMemo(() => {
     const now = new Date();
     const data = [];
@@ -75,8 +86,9 @@ export function SpendingAnalyticsChart() {
     
     return data;
   }, [transactions]);
+  /********** [END: Agregasi Data Tren 7 Hari Terakhir] **********/
 
-  // Custom Tooltip for Recharts
+  /* Tooltip kustom untuk grafik Recharts */
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (

@@ -1,6 +1,11 @@
+/*
+ * File: src/app/(dashboard)/transactions/page.tsx
+ * Description: Komponen halaman daftar transaksi untuk melihat, mencari, memfilter, serta mengelola riwayat transaksi keuangan pengguna.
+ */
+
 'use client';
 
-/********** Imports **********/
+/********** Impor Modul & Dependensi **********/
 
 import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
@@ -21,14 +26,19 @@ import { Inbox, Plus, X, ChevronDown, Check, CalendarDays, Search } from 'lucide
 import dayjs from 'dayjs';
 
 /**
- * Returns today's date in YYYY-MM-DD format.
+ * Mengembalikan string tanggal hari ini dalam format YYYY-MM-DD.
+ *
+ * @returns String tanggal hari ini (contoh: "2026-07-09")
  */
 function todayString(): string {
   return new Date().toISOString().split('T')[0];
 }
 
 /**
- * Groups transactions by their date string.
+ * Mengelompokkan daftar transaksi berdasarkan tanggal (YYYY-MM-DD) secara menurun (dari terbaru).
+ *
+ * @param txns - Array transaksi yang akan dikelompokkan
+ * @returns Array objek yang berisi tanggal dan daftar transaksi pada tanggal tersebut
  */
 function groupByDate(txns: Transaction[]): { date: string; items: Transaction[] }[] {
   const map = new Map<string, Transaction[]>();
@@ -49,7 +59,10 @@ function groupByDate(txns: Transaction[]): { date: string; items: Transaction[] 
 }
 
 /**
- * Returns a human-readable natural language label for a date string.
+ * Mengubah string tanggal menjadi label natural dalam bahasa Indonesia (misalnya "Hari ini", "Kemarin", atau nama hari/tanggal).
+ *
+ * @param dateStr - String tanggal berformat YYYY-MM-DD atau "unknown"
+ * @returns Label tanggal yang mudah dibaca
  */
 function dateLabel(dateStr: string): string {
   if (dateStr === 'unknown') return 'Tanggal Tidak Diketahui';
@@ -62,39 +75,48 @@ function dateLabel(dateStr: string): string {
   return d.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
-/********** Page Component **********/
+/********** Komponen Halaman Daftar Transaksi (TransactionsPage) **********/
+
+/**
+ * Komponen utama halaman transaksi yang menyediakan fitur pencarian, filter jenis (Pemasukan/Pengeluaran),
+ * filter rentang waktu, paginasi per 30 item, serta pengelompokan harian.
+ *
+ * @returns Elemen JSX tata letak halaman transaksi Moneta
+ */
 export default function TransactionsPage() {
-  /********** State **********/
+  /********** [START: Inisialisasi State & Hook Daftar Transaksi] **********/
   const { transactions, isLoading, error, removeTransaction } = useTransactions();
   const { allCategories } = useCategories();
   const { pendingCount } = useSyncContext();
 
   const { openForm, editTransaction: openEditForm } = useTransactionForm();
 
-  /********** Delete confirmation state. */
+  /* State konfirmasi penghapusan transaksi */
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  /********** Filter and search state. */
+  /* State filter jenis transaksi, pencarian, dan pengurutan */
   const { activeRange, setRange, rangeKey } = useTimeFilter();
   const [filterType, setFilterType] = useState<'ALL' | 'EXPENSE' | 'INCOME'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortOrder] = useState<'desc' | 'asc'>('desc');
 
-  /********** Generic UI state. */
+  /* State tampilan UI seperti bottom sheet filter dan rentang tanggal kustom */
   const [showFilterSheet, setShowFilterSheet] = useState(false);
   const [showCustomDate, setShowCustomDate] = useState(false);
   const [customStart, setCustomStart] = useState(dayjs().startOf('month').format('YYYY-MM-DD'));
   const [customEnd, setCustomEnd] = useState(dayjs().format('YYYY-MM-DD'));
 
   const [displayCount, setDisplayCount] = useState(30);
+  /********** [END: Inisialisasi State & Hook Daftar Transaksi] **********/
 
-  /********** Effects **********/
+  /********** [START: Efek Samping (Side Effects) & Reset Halaman] **********/
 
-  /********** Reset pagination when filters change. */
+  /* Reset batas penampakan paginasi kembali ke 30 setiap kali filter atau pencarian berubah */
   useEffect(() => {
     setDisplayCount(30);
   }, [filterType, searchQuery, activeRange, sortOrder]);
+  /********** [END: Efek Samping (Side Effects) & Reset Halaman] **********/
 
   const timeLabels: Record<string, string> = {
     today: 'Hari Ini',
@@ -106,9 +128,9 @@ export default function TransactionsPage() {
   };
   const activeTimeLabel = rangeKey === 'custom' ? 'Pilih tanggal' : timeLabels[rangeKey] || 'Semua Waktu';
 
-  /********** Derived State **********/
+  /********** [START: Kalkulasi Data Terfilter, Pengelompokan, & Total (Derived State)] **********/
 
-  /********** Computes the filtered array of transactions based on type, date range, and search query. */
+  /* Menghitung daftar transaksi yang difilter berdasarkan jenis, rentang tanggal, dan kata kunci pencarian */
   const filtered = useMemo(() => {
     let result = transactions.filter((t) => {
       if (filterType !== 'ALL' && t.type !== filterType) return false;
@@ -133,11 +155,11 @@ export default function TransactionsPage() {
     return result;
   }, [transactions, filterType, activeRange, searchQuery, sortOrder, allCategories]);
 
-  /********** Computes grouped transactions with pagination applied. */
+  /* Menghitung data transaksi terpaginasi dan pengelompokan harian untuk dirender */
   const paginated = useMemo(() => filtered.slice(0, displayCount), [filtered, displayCount]);
   const grouped = useMemo(() => groupByDate(paginated), [paginated]);
 
-  /********** Computes sum of income and expense for the filtered list. */
+  /* Menghitung total pendapatan dan pengeluaran dari daftar transaksi yang terfilter */
   const footerTotals = useMemo(() => {
     let income = 0,
       expense = 0;
@@ -148,17 +170,18 @@ export default function TransactionsPage() {
     return { income, expense };
   }, [filtered]);
 
-  /********** Dynamic readable subtitle describing the active filters. */
+  /* String subjudul dinamis yang mendeskripsikan filter aktif dan jumlah transaksi */
   const subtitle = useMemo(() => {
     let typeLabel = filterType === 'EXPENSE' ? 'pengeluaran' : filterType === 'INCOME' ? 'pemasukan' : 'transaksi';
     let timeLabel = rangeKey === 'custom' ? 'Rentang kustom' : timeLabels[rangeKey] || 'Semua waktu';
     return `${timeLabel} • ${filtered.length} ${typeLabel}`;
   }, [filterType, rangeKey, filtered.length, timeLabels]);
+  /********** [END: Kalkulasi Data Terfilter, Pengelompokan, & Total (Derived State)] **********/
 
-  /********** Event Handlers **********/
+  /********** [START: Fungsi Penanganan Aksi Pengguna (Event Handlers)] **********/
 
   /**
-   * Confirms and performs the deletion of a transaction.
+   * Mengonfirmasi dan mengeksekusi penghapusan transaksi yang dipilih.
    */
   async function confirmDelete() {
     if (!deleteConfirmId) return;
@@ -172,10 +195,11 @@ export default function TransactionsPage() {
       setIsDeleting(false);
     }
   }
+  /********** [END: Fungsi Penanganan Aksi Pengguna (Event Handlers)] **********/
 
   if (isLoading) return <TransactionListSkeleton />;
 
-  /********** Empty state logic evaluation. */
+  /* Evaluasi kondisi status kosong (empty state) secara keseluruhan atau pada periode tertentu */
   const isTotalEmpty = transactions.length === 0;
   const isPeriodEmpty =
     !isTotalEmpty &&
@@ -184,7 +208,7 @@ export default function TransactionsPage() {
       return (!activeRange.start || txnDate >= activeRange.start) && (!activeRange.end || txnDate <= activeRange.end);
     }).length === 0;
 
-  /********** Rendering **********/
+  /********** Pengembalian Tata Letak Halaman Daftar Transaksi (JSX) **********/
   return (
     <div className="space-y-5 md:space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-4">
@@ -203,7 +227,7 @@ export default function TransactionsPage() {
       </div>
 
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:gap-4">
-        {/* Search */}
+        {/* Bilah Pencarian Transaksi */}
         <div className="flex h-[48px] flex-1 items-center rounded-2xl bg-white/60 px-4 shadow-sm backdrop-blur-xl ring-1 ring-inset ring-slate-200/60 focus-within:ring-2 focus-within:ring-indigo-500/50 dark:bg-slate-900/60 dark:ring-slate-800/60">
           <Search className="h-4 w-4 shrink-0 text-slate-600" />
           <input
@@ -215,7 +239,7 @@ export default function TransactionsPage() {
           />
         </div>
 
-        {/* Filters Group */}
+        {/* Kelompok Filter Jenis dan Rentang Waktu */}
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="flex-1 sm:flex-none w-full sm:w-auto min-w-0">
             <SegmentedControl

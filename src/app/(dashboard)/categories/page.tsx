@@ -1,20 +1,11 @@
+/*
+ * File: src/app/(dashboard)/categories/page.tsx
+ * Description: Halaman manajemen operasi CRUD untuk kategori transaksi (pemasukan dan pengeluaran) dengan arsitektur Local-First.
+ */
+
 'use client';
 
-/**********
- * Halaman pengaturan untuk operasi CRUD pada kategori transaksi.
- *
- * Arsitektur: Local-First
- *   - Membaca HANYA dari IndexedDB (via hook useCategories)
- *   - Menulis HANYA ke IndexedDB -> antri untuk sinkronisasi latar belakang
- *   - TIDAK PERNAH mengambil langsung dari API
- *
- * Upgrade (Sync-Fix Release):
- *   - Icon picker sekarang menggunakan AVAILABLE_ICONS (Lucide)
- *   - DynamicIcon digunakan untuk render ikon dari string yang tersimpan di DB
- *   - Form builder seragam dengan CategoryBuilder di TransactionModal
- **********/
-
-/********** Imports **********/
+/********** Impor Modul & Dependensi **********/
 
 import { useState } from 'react';
 import { useCategories } from '@/hooks/use-categories';
@@ -28,36 +19,47 @@ import { SecondaryPageLayout } from '@/components/layout/SecondaryPageLayout';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { Folder, TrendingDown, TrendingUp, Plus, Pencil, Trash2, Check, ArrowLeft } from 'lucide-react';
 
-/********** Page Component **********/
+/********** Komponen Halaman Manajemen Kategori (CategoriesPage) **********/
+
+/**
+ * Komponen utama halaman manajemen kategori, memuat daftar kategori pengeluaran dan pemasukan,
+ * serta menyediakan antarmuka penambahan, perubahan, dan penghapusan kategori secara lokal.
+ *
+ * @returns Elemen JSX tata letak halaman manajemen kategori Moneta
+ */
 export default function CategoriesPage() {
-  /********** State **********/
+  /********** [START: Inisialisasi State & Hook Halaman Kategori] **********/
   const { categories, incomeCategories, expenseCategories, isLoading, error, createCategory, editCategory, removeCategory } =
     useCategories();
 
   const { pendingCount } = useSyncContext();
 
-  /********** Tab state. */
+  /* State tab aktif antara kategori pengeluaran (EXPENSE) dan pemasukan (INCOME) */
   const [activeTab, setActiveTab] = useState<'EXPENSE' | 'INCOME'>('EXPENSE');
 
-  /********** Form and Modal state. */
+  /* State tampilan modal form kategori dan dialog konfirmasi penghapusan */
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  /********** [END: Inisialisasi State & Hook Halaman Kategori] **********/
 
-  /********** Event Handlers **********/
+  /********** [START: Fungsi Penanganan Aksi Pengguna (Event Handlers)] **********/
 
+  /** Membuka modal form pembuatan kategori baru */
   function startCreate() {
     setEditingCategory(null);
     setIsModalOpen(true);
   }
 
+  /** Membuka modal form untuk menyunting kategori yang dipilih */
   function startEdit(category: Category) {
     setEditingCategory(category);
     setIsModalOpen(true);
   }
 
+  /** Mengonfirmasi dan mengeksekusi penghapusan kategori yang dipilih */
   async function confirmDelete() {
     if (!deleteConfirmId) return;
     setIsDeleting(true);
@@ -68,11 +70,13 @@ export default function CategoriesPage() {
       setIsDeleting(false);
     }
   }
+  /********** [END: Fungsi Penanganan Aksi Pengguna (Event Handlers)] **********/
 
-  /********** Derived State **********/
+  /********** [START: Pemilihan Daftar Kategori Berdasarkan Tab Aktif (Derived State)] **********/
   const displayedCategories = activeTab === 'EXPENSE' ? expenseCategories : incomeCategories;
+  /********** [END: Pemilihan Daftar Kategori Berdasarkan Tab Aktif (Derived State)] **********/
 
-  /********** Rendering **********/
+  /********** Pengembalian Tata Letak Halaman Manajemen Kategori (JSX) **********/
 
   if (isLoading) {
     return (
@@ -149,7 +153,7 @@ export default function CategoriesPage() {
                   key={category.clientId}
                   className="group relative flex items-center justify-between px-4 py-3.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
                 >
-                  {/* Mobile touch target for opening action menu */}
+                  {/* Area sentuh mobile untuk membuka menu aksi */}
                   <div
                     className="absolute inset-0 z-0 sm:hidden"
                     onClick={(e) => {

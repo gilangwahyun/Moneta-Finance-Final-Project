@@ -1,10 +1,7 @@
-//********** START: Global Time Filter Context **********
-//********** Lightweight React Context (no Zustand needed) that provides a
-//********** shared time range across Dashboard, Transactions, and Analytics.
-//**********
-//********** State is also synced to the URL via a ?range= search param so
-//********** links and browser navigation preserve the selected filter.
-//********** END: Global Time Filter Context **********
+/*
+ * File: src/providers/TimeFilterProvider.tsx
+ * Description: Penyedia konteks global untuk rentang waktu yang tersinkronisasi ke parameter URL agar konsisten di Dashboard, Transaksi, dan Analitik.
+ */
 
 "use client";
 
@@ -27,19 +24,15 @@ import {
   DateRange,
 } from "@/lib/utils/time-filter";
 
-//********** TYPES **********
-
 export interface TimeFilterState {
   rangeKey: RangeKey;
   customDates: CustomDates | undefined;
-  //********** The active date range for filtering transactions
+  /* Rentang tanggal aktif untuk pemfilteran transaksi */
   activeRange: DateRange;
-  //********** The baseline range for comparison badges
+  /* Rentang acuan untuk pembandingan tren pada lencana atau statistik */
   comparison: ComparisonPeriods;
   setRange: (key: RangeKey, custom?: CustomDates) => void;
 }
-
-//********** DEFAULT VALUES **********
 
 function getDefaultRange(key: RangeKey): DateRange {
   const today = dayjs();
@@ -60,8 +53,6 @@ function getDefaultRange(key: RangeKey): DateRange {
   }
 }
 
-//********** CONTEXT **********
-
 const TimeFilterContext = createContext<TimeFilterState | null>(null);
 
 function TimeFilterProviderInner({ children }: { children: React.ReactNode }) {
@@ -69,7 +60,8 @@ function TimeFilterProviderInner({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  //********** Restore from URL param on first load; fall back to "month"
+  /********** [START: Pengaturan State dan Sinkronisasi URL Filter Waktu] **********/
+  /* Memulihkan filter dari parameter URL pada muatan pertama; nilai bawaan "month" */
   const initialKey = (searchParams.get("range") as RangeKey) || "month";
   const [rangeKey, setRangeKey] = useState<RangeKey>(initialKey);
   const [customDates, setCustomDates] = useState<CustomDates | undefined>(undefined);
@@ -78,7 +70,7 @@ function TimeFilterProviderInner({ children }: { children: React.ReactNode }) {
     (key: RangeKey, custom?: CustomDates) => {
       setRangeKey(key);
       setCustomDates(key === "custom" ? custom : undefined);
-      //********** Sync to URL without a hard navigation (preserves scroll position)
+      /* Sinkronkan ke URL tanpa memicu hard navigation agar posisi gulir tetap utuh */
       const params = new URLSearchParams(searchParams.toString());
       params.set("range", key);
       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
@@ -86,13 +78,15 @@ function TimeFilterProviderInner({ children }: { children: React.ReactNode }) {
     [router, pathname, searchParams]
   );
 
-  //********** Keep in sync if the user navigates back/forward
+  /* Menjaga sinkronisasi saat pengguna melakukan navigasi maju/mundur di peramban */
   useEffect(() => {
     const paramKey = (searchParams.get("range") as RangeKey) || "month";
     if (paramKey !== rangeKey) setRangeKey(paramKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
   }, [searchParams]);
+  /********** [END: Pengaturan State dan Sinkronisasi URL Filter Waktu] **********/
 
+  /********** [START: Perhitungan Rentang Waktu Aktif dan Periode Perbandingan] **********/
   const activeRange = useMemo<DateRange>(() => {
     if (rangeKey === "custom" && customDates) {
       return { start: customDates.start, end: customDates.end };
@@ -104,6 +98,7 @@ function TimeFilterProviderInner({ children }: { children: React.ReactNode }) {
     () => getDynamicComparisonPeriods(rangeKey, customDates),
     [rangeKey, customDates]
   );
+  /********** [END: Perhitungan Rentang Waktu Aktif dan Periode Perbandingan] **********/
 
   const value: TimeFilterState = { rangeKey, customDates, activeRange, comparison, setRange };
 
@@ -122,13 +117,14 @@ export function TimeFilterProvider({ children }: { children: React.ReactNode }) 
   );
 }
 
-//********** HOOK **********
 /**
- * Access the global time filter from any page or component.
- * Must be a descendant of <TimeFilterProvider>.
+ * Hook untuk mengakses filter waktu global dari halaman atau komponen mana pun.
+ * Komponen harus berada di bawah struktur <TimeFilterProvider>.
+ *
+ * @returns State dan metode pengaturan rentang waktu global
  */
 export function useTimeFilter(): TimeFilterState {
   const ctx = useContext(TimeFilterContext);
-  if (!ctx) throw new Error("useTimeFilter must be used within a TimeFilterProvider");
+  if (!ctx) throw new Error("useTimeFilter harus digunakan di dalam TimeFilterProvider");
   return ctx;
 }

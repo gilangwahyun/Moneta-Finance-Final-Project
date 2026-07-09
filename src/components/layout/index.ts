@@ -1,6 +1,6 @@
-// ─── Layout Components ──────────────────────────────────
-// Barrel export for layout components (Shell, Sidebar, Navbar).
-//
-// TODO: Add layout shell components.
+/*
+ * File: src/components/layout/index.ts
+ * Description: Ekspor barrel untuk komponen tata letak aplikasi.
+ */
 
 export {};

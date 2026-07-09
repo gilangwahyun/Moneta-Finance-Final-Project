@@ -1,6 +1,11 @@
+/*
+ * File: src/app/(dashboard)/budgets/page.tsx
+ * Description: Komponen halaman pengelolaan anggaran per bulan beserta fitur rekomendasi subsidi silang antar kategori.
+ */
+
 'use client';
 
-/********** Imports **********/
+/********** Impor Modul & Dependensi **********/
 import { useState, useMemo, useEffect } from 'react';
 import { useCategories } from '@/hooks/use-categories';
 import { useSyncContext } from '@/providers/SyncProvider';
@@ -10,16 +15,7 @@ import { showSyncToast, showDeleteToast } from '@/lib/utils/show-toast';
 import { useBudgets } from '@/hooks/use-budgets';
 import { useBudgetActions } from '@/hooks/use-budget-actions';
 
-import {
-  Wallet,
-  Plus,
-  ChevronLeft,
-  ChevronRight,
-  AlertCircle,
-  ChevronDown,
-  ArrowDownRight,
-  CheckCircle2,
-} from 'lucide-react';
+import { Wallet, Plus, ChevronLeft, ChevronRight, AlertCircle, ChevronDown, ArrowDownRight, CheckCircle2 } from 'lucide-react';
 import { BudgetCard } from '@/components/budgets/BudgetCard';
 import { BudgetModal } from '@/components/budgets/BudgetModal';
 import { ReallocateModal } from '@/components/budgets/ReallocateModal';
@@ -29,9 +25,17 @@ import { FilterBottomSheet } from '@/components/ui/FilterBottomSheet';
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 import { useSearchParams } from 'next/navigation';
 
-/********** Page Component **********/
+/********** Komponen Halaman Anggaran (BudgetsPage) **********/
+
+/**
+ * Komponen utama halaman pengelolaan anggaran bulanan, memuat daftar batas pengeluaran kategori,
+ * pemantauan status penggunaan (Aman/Mendekati Batas/Melebihi Batas), serta subsidi silang.
+ *
+ * @returns Elemen JSX tata letak halaman anggaran Moneta
+ */
 export default function BudgetsPage() {
-  /********** Month Selector State. */
+  /********** [START: Inisialisasi State & Hook Halaman Anggaran] **********/
+  /* State pemilihan bulan aktif */
   const [selectedMonth, setSelectedMonth] = useState(new Date());
 
   const { user, budgets, budgetsWithStats, transactions, isLoading, reload } = useBudgets(selectedMonth);
@@ -40,40 +44,17 @@ export default function BudgetsPage() {
   const { allCategories } = useCategories();
   const { scheduleSync } = useSyncContext();
 
-  /********** Derived State **********/
-  const currentPeriod = useMemo(() => {
-    return `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, '0')}`;
-  }, [selectedMonth]);
-
-  const currentMonthName = useMemo(() => {
-    return selectedMonth.toLocaleDateString('id-ID', {
-      month: 'long',
-      year: 'numeric',
-    });
-  }, [selectedMonth]);
-
-  /********** Types **********/
   type StatusFilter = 'ALL' | 'SAFE' | 'WARNING' | 'DANGER';
 
-  /********** State **********/
+  /* State filter status anggaran dan kontrol tampilan modal/sheet */
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('ALL');
   const [showStatusSheet, setShowStatusSheet] = useState(false);
 
-  const statusOptions = useMemo(
-    () => [
-      { value: 'ALL', label: 'Semua Status' },
-      { value: 'SAFE', label: 'Aman' },
-      { value: 'WARNING', label: 'Mendekati Batas' },
-      { value: 'DANGER', label: 'Melebihi Batas' },
-    ],
-    [],
-  );
-
-  /********** Modal State. */
+  /* State form modal pembuatan atau penyuntingan anggaran */
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBudget, setEditingBudget] = useState<Budget | null>(null);
 
-  /********** Reallocate Modal State. */
+  /* Parameter URL untuk penanganan aksi subsidi silang otomatis dari notifikasi/nudge */
   const searchParams = useSearchParams();
   const actionParam = searchParams.get('action');
   const sourceBudgetIdParam = searchParams.get('sourceBudgetId');
@@ -86,17 +67,42 @@ export default function BudgetsPage() {
   const [reallocateAmount, setReallocateAmount] = useState<number | null>(null);
 
   const [hasProcessedUrlParams, setHasProcessedUrlParams] = useState(false);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  /********** [END: Inisialisasi State & Hook Halaman Anggaran] **********/
 
-  /********** Effects **********/
+  /********** [START: Kalkulasi Periode, Nama Bulan, & Filter Status (Derived State)] **********/
+  const currentPeriod = useMemo(() => {
+    return `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, '0')}`;
+  }, [selectedMonth]);
 
-  /********** [START: Parse Reallocation Query Params] **********/
-  /********** Parses query params to potentially open the reallocation modal with prefilled data. */
+  const currentMonthName = useMemo(() => {
+    return selectedMonth.toLocaleDateString('id-ID', {
+      month: 'long',
+      year: 'numeric',
+    });
+  }, [selectedMonth]);
+
+  const statusOptions = useMemo(
+    () => [
+      { value: 'ALL', label: 'Semua Status' },
+      { value: 'SAFE', label: 'Aman' },
+      { value: 'WARNING', label: 'Mendekati Batas' },
+      { value: 'DANGER', label: 'Melebihi Batas' },
+    ],
+    [],
+  );
+  /********** [END: Kalkulasi Periode, Nama Bulan, & Filter Status (Derived State)] **********/
+
+  /********** [START: Efek Samping (Side Effects) - Pemrosesan Parameter URL Subsidi Silang] **********/
+
+  /* Memeriksa parameter URL untuk secara otomatis membuka modal subsidi silang jika dipicu melalui rekomendasi */
   useEffect(() => {
     if (!hasProcessedUrlParams && budgets.length > 0 && actionParam === 'reallocate' && sourceBudgetIdParam && targetBudgetIdParam) {
       const sourceBudget = budgets.find((b) => b.clientId === sourceBudgetIdParam);
       const targetBudget = budgets.find((b) => b.clientId === targetBudgetIdParam);
 
-      // Validation 1: Both budgets exist and are different
+      /* Validasi 1: Kedua anggaran harus ada dan berbeda */
       if (!sourceBudget || !targetBudget || sourceBudget.clientId === targetBudget.clientId) {
         showSyncToast('Rekomendasi subsidi silang tidak valid atau kedaluwarsa.');
         setHasProcessedUrlParams(true);
@@ -105,14 +111,14 @@ export default function BudgetsPage() {
 
       const amount = amountParam ? Number(amountParam) : 0;
 
-      // Validation 2: Amount is positive
+      /* Validasi 2: Jumlah transfer subsidi silang harus bernilai positif */
       if (amount <= 0) {
         showSyncToast('Jumlah subsidi silang tidak valid.');
         setHasProcessedUrlParams(true);
         return;
       }
 
-      // Validation 3: Source has enough remaining safe balance
+      /* Validasi 3: Kategori sumber harus memiliki sisa saldo aman yang mencukupi */
       const sourceSpent = transactions.reduce((acc, txn) => {
         if (txn.categoryId === sourceBudget.categoryId && txn.date.startsWith(currentPeriod)) {
           return acc + Math.abs(txn.amount);
@@ -121,7 +127,7 @@ export default function BudgetsPage() {
       }, 0);
 
       const sourceRemaining = Number(sourceBudget.amount) - sourceSpent;
-      const minimumSafeRemaining = Number(sourceBudget.amount) * 0.2; // Example threshold
+      const minimumSafeRemaining = Number(sourceBudget.amount) * 0.2; /* Batas aman minimal 20% */
 
       if (sourceRemaining - amount < minimumSafeRemaining) {
         showSyncToast('Saldo kategori sumber sudah tidak cukup untuk disubsidi.');
@@ -136,35 +142,35 @@ export default function BudgetsPage() {
       setHasProcessedUrlParams(true);
     }
   }, [actionParam, sourceBudgetIdParam, targetBudgetIdParam, amountParam, budgets, transactions, currentPeriod, hasProcessedUrlParams]);
-  /********** [END: Parse Reallocation Query Params] **********/
+  /********** [END: Efek Samping (Side Effects) - Pemrosesan Parameter URL Subsidi Silang] **********/
 
-  /********** State **********/
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
+  /********** [START: Fungsi Penanganan Aksi Pengguna & Navigasi (Event Handlers)] **********/
 
-  /********** Event Handlers **********/
+  /* Pemuatan data dan penanganan event listener dikelola oleh hook useBudgets */
 
-  // Load data and handle event listeners are now managed by useBudgets hook.
-
-  /********** Event Handlers **********/
+  /** Navigasi ke bulan sebelumnya */
   const handlePrevMonth = () => {
     setSelectedMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1));
   };
 
+  /** Navigasi ke bulan berikutnya */
   const handleNextMonth = () => {
     setSelectedMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1));
   };
 
+  /** Membuka modal form pembuatan anggaran baru */
   const openCreateModal = () => {
     setEditingBudget(null);
     setIsModalOpen(true);
   };
 
+  /** Membuka modal form penyuntingan anggaran yang dipilih */
   const openEditModal = (budget: Budget) => {
     setEditingBudget(budget);
     setIsModalOpen(true);
   };
 
+  /** Membuka modal subsidi silang dari kategori sumber yang dipilih */
   const openReallocateModal = (sourceClientId: string) => {
     setReallocateSourceId(sourceClientId);
     setReallocateDestinationId(null);
@@ -172,14 +178,11 @@ export default function BudgetsPage() {
     setIsReallocateModalOpen(true);
   };
 
+  /** Menerapkan subsidi silang antar anggaran kategori */
   const handleConfirmReallocate = async (sourceClientId: string, destinationClientId: string, amount: number) => {
     if (!user) return;
     try {
-      await handleReallocate(
-        sourceClientId,
-        destinationClientId,
-        amount,
-      );
+      await handleReallocate(sourceClientId, destinationClientId, amount);
       scheduleSync();
       await reload();
       showSyncToast('Subsidi silang berhasil diterapkan');
@@ -189,6 +192,7 @@ export default function BudgetsPage() {
     }
   };
 
+  /** Menghapus anggaran berdasarkan ID klien */
   async function handleDelete(clientId: string) {
     if (!user) return;
     setIsDeleting(true);
@@ -205,7 +209,9 @@ export default function BudgetsPage() {
       setIsDeleting(false);
     }
   }
+  /********** [END: Fungsi Penanganan Aksi Pengguna & Navigasi (Event Handlers)] **********/
 
+  /********** [START: Kalkulasi Total Anggaran, Terpakai, & Sisa Anggaran] **********/
   const filteredBudgets = useMemo(() => {
     if (statusFilter === 'ALL') return budgetsWithStats;
     return budgetsWithStats.filter((b) => b.status === statusFilter);
@@ -214,8 +220,9 @@ export default function BudgetsPage() {
   const totalBudget = budgetsWithStats.reduce((acc, b) => acc + Number(b.amount), 0);
   const totalSpent = budgetsWithStats.reduce((acc, b) => acc + b.spentAmount, 0);
   const remainingBudget = Math.max(0, totalBudget - totalSpent);
+  /********** [END: Kalkulasi Total Anggaran, Terpakai, & Sisa Anggaran] **********/
 
-  /********** Rendering **********/
+  /********** Pengembalian Tata Letak Halaman Anggaran (JSX) **********/
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-24">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -234,7 +241,7 @@ export default function BudgetsPage() {
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
-        {/* Month Selector */}
+        {/* Navigasi Pemilih Bulan */}
         <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-1 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <button
             onClick={handlePrevMonth}
@@ -253,12 +260,12 @@ export default function BudgetsPage() {
           </button>
         </div>
 
-        {/* Status Filter - Desktop */}
+        {/* Filter Status Anggaran - Layar Desktop */}
         <div className="hidden md:block flex-1 sm:flex-none w-full sm:w-auto min-w-0 overflow-hidden">
           <SegmentedControl options={statusOptions} value={statusFilter} onChange={(v) => setStatusFilter(v as StatusFilter)} fullWidth />
         </div>
 
-        {/* Status Filter - Mobile */}
+        {/* Filter Status Anggaran - Layar Mobile */}
         <div className="block md:hidden w-full">
           <button
             onClick={() => setShowStatusSheet(true)}
@@ -302,7 +309,7 @@ export default function BudgetsPage() {
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
         </div>
       ) : budgets.length === 0 ? (
-        /* Empty State: No budgets at all in selected month */
+        /* Status Kosong (Empty State): Belum ada anggaran sama sekali pada bulan yang dipilih */
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 px-6 py-16 text-center dark:border-slate-800/50">
           <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800/50">
             <Wallet className="h-8 w-8 text-slate-600" />
@@ -320,7 +327,7 @@ export default function BudgetsPage() {
           </button>
         </div>
       ) : filteredBudgets.length === 0 ? (
-        /* Empty State: Budgets exist but filtered out */
+        /* Status Kosong (Empty State): Anggaran ada namun tidak ditemukan pada filter status yang aktif */
         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 px-6 py-16 text-center dark:border-slate-800/50">
           <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-50 dark:bg-slate-800/50">
             <AlertCircle className="h-8 w-8 text-slate-600" />
@@ -348,12 +355,12 @@ export default function BudgetsPage() {
         </div>
       )}
 
-      <BudgetModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        editingBudget={editingBudget} 
-        currentPeriod={currentPeriod} 
-        existingBudgetCategoryIds={budgets.map(b => b.categoryId)}
+      <BudgetModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        editingBudget={editingBudget}
+        currentPeriod={currentPeriod}
+        existingBudgetCategoryIds={budgets.map((b) => b.categoryId)}
       />
 
       {isReallocateModalOpen && (

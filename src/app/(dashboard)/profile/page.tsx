@@ -1,26 +1,35 @@
-/********** Imports **********/
+/*
+ * File: src/app/(dashboard)/profile/page.tsx
+ * Description: Komponen halaman profil pengguna untuk pengelolahan akun, pengaturan notifikasi push, manajemen cache lokal, sinkronisasi paksa, serta ekspor laporan keuangan.
+ */
 
-"use client";
+/********** Impor Modul & Dependensi **********/
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { useAuthUser } from "@/hooks/use-auth-user";
-import { useSyncContext } from "@/providers/SyncProvider";
-import { useOnlineStatus } from "@/hooks/use-online-status";
+'use client';
 
-import { clearLocalCache } from "@/lib/local-db/cache-manager";
-import { 
-  subscribeToPushNotifications, 
-  unsubscribeFromPushNotifications
-} from '@/lib/sw/register';
-import { csrfFetch } from "@/lib/utils/csrf-fetch";
-import { Bell, Tags, ChevronRight, Info, Wallet } from "lucide-react";
-import { Tooltip } from "@/components/ui/Tooltip";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { useAuthUser } from '@/hooks/use-auth-user';
+import { useSyncContext } from '@/providers/SyncProvider';
+import { useOnlineStatus } from '@/hooks/use-online-status';
 
-/********** Page Component **********/
+import { clearLocalCache } from '@/lib/local-db/cache-manager';
+import { subscribeToPushNotifications, unsubscribeFromPushNotifications } from '@/lib/sw/register';
+import { csrfFetch } from '@/lib/utils/csrf-fetch';
+import { Bell, Tags, ChevronRight, Info, Wallet } from 'lucide-react';
+import { Tooltip } from '@/components/ui/Tooltip';
+
+/********** Komponen Halaman Profil (ProfilePage) **********/
+
+/**
+ * Komponen halaman profil yang memungkinkan pengguna mengelola akun, dompet, kategori,
+ * pengaturan notifikasi push Service Worker, serta mengekspor data atau menghapus cache lokal.
+ *
+ * @returns Elemen tata letak halaman profil pengguna Moneta
+ */
 export default function ProfilePage() {
-  /********** State **********/
+  /********** [START: Inisialisasi State & Hook Profil] **********/
   const { user, isLoading, clearLocalUser } = useAuthUser();
   const [syncing, setSyncing] = useState(false);
   const [clearing, setClearing] = useState(false);
@@ -29,31 +38,29 @@ export default function ProfilePage() {
   const [pushEnabled, setPushEnabled] = useState(false);
   const [subscribing, setSubscribing] = useState(false);
   const [testingPush, setTestingPush] = useState(false);
-  
+
   const [message, setMessage] = useState<{
-    type: "success" | "error";
+    type: 'success' | 'error';
     text: string;
   } | null>(null);
 
   const { triggerSync, syncState, pendingCount } = useSyncContext();
   const isOnline = useOnlineStatus();
   const router = useRouter();
+  /********** [END: Inisialisasi State & Hook Profil] **********/
 
-  /********** Effects **********/
+  /********** [START: Efek Samping (Side Effects) & Pengecekan Izin] **********/
 
   useEffect(() => {
-    // Check notification permission status
-    if ("Notification" in window && "serviceWorker" in navigator) {
-      // This initial check is for the browser's permission status, not subscription
-      // The actual subscription status is checked in the new useEffect below
-      // setPushEnabled(Notification.permission === "granted"); // Removed as new useEffect handles this
+    /* Cek status izin notifikasi pada peramban saat komponen dimuat */
+    if ('Notification' in window && 'serviceWorker' in navigator) {
+      /* Pengecekan awal ini untuk status izin peramban; status langganan diperiksa pada efek di bawah */
     }
   }, []);
 
-  /********** Check push subscription status on mount. */
+  /* Cek status langganan notifikasi push aktif di Service Worker saat pertama kali dimount */
   useEffect(() => {
-    // Check if we already have a subscription on mount
-    if ("serviceWorker" in navigator && "PushManager" in window) {
+    if ('serviceWorker' in navigator && 'PushManager' in window) {
       navigator.serviceWorker.ready.then((reg) => {
         reg.pushManager.getSubscription().then((sub) => {
           if (sub) {
@@ -63,14 +70,15 @@ export default function ProfilePage() {
       });
     }
   }, []);
+  /********** [END: Efek Samping (Side Effects) & Pengecekan Izin] **********/
 
-  /********** Event Handlers **********/
+  /********** [START: Fungsi Penanganan Aksi Pengguna (Event Handlers)] **********/
 
   /**
-   * Toggles the push notification subscription status.
+   * Mengubah status langganan notifikasi push pengguna (aktif/nonaktif).
    */
   async function handleTogglePush() {
-    /********** If already enabled, we unsubscribe. */
+    /* Jika sudah aktif, lakukan pembatalan langganan (unsubscribe) */
     if (pushEnabled) {
       await handleDisablePush();
     } else {
@@ -79,7 +87,7 @@ export default function ProfilePage() {
   }
 
   /**
-   * Unsubscribes from push notifications both locally and on the server.
+   * Membatalkan langganan notifikasi push secara lokal pada Service Worker dan di server.
    */
   async function handleDisablePush() {
     setSubscribing(true);
@@ -89,9 +97,7 @@ export default function ProfilePage() {
       const success = await unsubscribeFromPushNotifications(reg);
       setPushEnabled(!success);
       setMessage(
-        success 
-          ? { type: 'success', text: 'Notifikasi push dinonaktifkan.' }
-          : { type: 'error', text: 'Gagal menonaktifkan notifikasi.' }
+        success ? { type: 'success', text: 'Notifikasi push dinonaktifkan.' } : { type: 'error', text: 'Gagal menonaktifkan notifikasi.' },
       );
     } catch (err) {
       console.error('Failed to disable push:', err);
@@ -102,30 +108,26 @@ export default function ProfilePage() {
   }
 
   /**
-   * Triggers a manual sync via the SyncContext.
+   * Memicu sinkronisasi manual ke server melalui SyncContext.
    */
   async function handleForceSync() {
     setSyncing(true);
     setMessage(null);
     try {
       await triggerSync();
-      setMessage({ type: "success", text: "Sinkronisasi berhasil!" });
+      setMessage({ type: 'success', text: 'Sinkronisasi berhasil!' });
     } catch {
-      setMessage({ type: "error", text: "Sinkronisasi gagal. Silakan coba lagi." });
+      setMessage({ type: 'error', text: 'Sinkronisasi gagal. Silakan coba lagi.' });
     } finally {
       setSyncing(false);
     }
   }
 
   /**
-   * Clears the local IndexedDB cache while preserving the user session.
+   * Menghapus cache lokal di IndexedDB sambil tetap mempertahankan sesi autentikasi pengguna.
    */
   async function handleClearCache() {
-    if (
-      !confirm(
-        "Ini akan menghapus semua data cache lokal (transaksi, kategori). Data di server aman. Lanjutkan?"
-      )
-    ) {
+    if (!confirm('Ini akan menghapus semua data cache lokal (transaksi, kategori). Data di server aman. Lanjutkan?')) {
       return;
     }
 
@@ -135,56 +137,56 @@ export default function ProfilePage() {
       await clearLocalCache();
 
       setMessage({
-        type: "success",
-        text: "Cache lokal dihapus. Memuat ulang aplikasi...",
+        type: 'success',
+        text: 'Cache lokal dihapus. Memuat ulang aplikasi...',
       });
 
-      // Reload window to trigger useHydration for a clean state
+      /* Muat ulang jendela peramban agar useHydration menginisialisasi ulang data cache lokal */
       setTimeout(() => window.location.reload(), 1000);
     } catch {
-      setMessage({ type: "error", text: "Gagal menghapus cache." });
+      setMessage({ type: 'error', text: 'Gagal menghapus cache.' });
     } finally {
       setClearing(false);
     }
   }
 
   /**
-   * Initiates a download of the user's transaction report from the server.
+   * Memulai pengunduhan laporan transaksi pengguna dalam format Excel dari server.
    */
   async function handleDownloadReport() {
     setDownloading(true);
     setMessage(null);
     try {
-      const response = await fetch("/api/export", { credentials: "include" });
+      const response = await fetch('/api/export', { credentials: 'include' });
       if (!response.ok) {
-        const contentType = response.headers.get("Content-Type");
-        if (contentType && contentType.includes("application/json")) {
+        const contentType = response.headers.get('Content-Type');
+        if (contentType && contentType.includes('application/json')) {
           const errData = await response.json();
           if (errData?.error?.message) {
             throw new Error(errData.error.message);
           }
         }
-        throw new Error("Gagal mengekspor data. Coba lagi.");
+        throw new Error('Gagal mengekspor data. Coba lagi.');
       }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
+      const a = document.createElement('a');
       a.href = url;
-      // Extract filename from Content-Disposition or use default
-      const disposition = response.headers.get("Content-Disposition");
+      /* Ambil nama file dari header Content-Disposition atau gunakan nama default */
+      const disposition = response.headers.get('Content-Disposition');
       const match = disposition?.match(/filename="(.+)"/);
-      a.download = match?.[1] || "moneta-transaksi.xlsx";
+      a.download = match?.[1] || 'moneta-transaksi.xlsx';
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      setMessage({ type: "success", text: "Laporan berhasil diunduh!" });
+      setMessage({ type: 'success', text: 'Laporan berhasil diunduh!' });
     } catch (err: any) {
-      setMessage({ 
-        type: "error", 
-        text: err?.message || "Gagal mengunduh laporan. Silakan coba lagi." 
+      setMessage({
+        type: 'error',
+        text: err?.message || 'Gagal mengunduh laporan. Silakan coba lagi.',
       });
     } finally {
       setDownloading(false);
@@ -192,7 +194,7 @@ export default function ProfilePage() {
   }
 
   /**
-   * Prompts the user for notification permissions and subscribes to push notifications.
+   * Meminta izin notifikasi kepada pengguna dan mendaftarkan langganan notifikasi push ke Service Worker.
    */
   async function handleEnablePush() {
     if (!('serviceWorker' in navigator)) {
@@ -221,31 +223,31 @@ export default function ProfilePage() {
   }
 
   /**
-   * Requests the server to send a test push notification to this device.
+   * Meminta server untuk mengirimkan notifikasi push uji coba ke perangkat ini.
    */
   async function handleTestPush() {
     setTestingPush(true);
     setMessage(null);
     try {
-      const res = await csrfFetch("/api/notifications/test", { method: "POST" });
-      if (!res.ok) throw new Error("Gagal mengirim notifikasi uji coba");
-      setMessage({ type: "success", text: "Notifikasi uji coba terkirim! Cek perangkatmu." });
+      const res = await csrfFetch('/api/notifications/test', { method: 'POST' });
+      if (!res.ok) throw new Error('Gagal mengirim notifikasi uji coba');
+      setMessage({ type: 'success', text: 'Notifikasi uji coba terkirim! Cek perangkatmu.' });
     } catch (err) {
-      setMessage({ type: "error", text: "Gagal mengirim notifikasi uji coba." });
+      setMessage({ type: 'error', text: 'Gagal mengirim notifikasi uji coba.' });
     } finally {
       setTestingPush(false);
     }
   }
 
   /**
-   * Logs the user out, clearing the local session and redirecting to the login page.
-   * Prompts for confirmation if there are pending sync changes.
+   * Mengakhiri sesi pengguna (logout), membersihkan sesi lokal, dan mengarahkan kembali ke halaman masuk.
+   * Menampilkan konfirmasi jika masih ada perubahan yang belum tersinkronisasi.
    */
   async function handleLogout() {
     if (pendingCount > 0) {
       if (
         !confirm(
-          `Kamu memiliki ${pendingCount} perubahan yang belum disinkronkan. Keluar tidak akan menghapusnya dari IndexedDB, tapi tidak akan tersinkronisasi sampai kamu masuk kembali. Lanjutkan?`
+          `Kamu memiliki ${pendingCount} perubahan yang belum disinkronkan. Keluar tidak akan menghapusnya dari IndexedDB, tapi tidak akan tersinkronisasi sampai kamu masuk kembali. Lanjutkan?`,
         )
       ) {
         return;
@@ -254,32 +256,31 @@ export default function ProfilePage() {
 
     setLoggingOut(true);
     try {
-      // Clear the server-side auth cookie
-      await csrfFetch("/api/auth/logout", {
-        method: "POST",
-        credentials: "include",
+      /* Hapus cookie autentikasi di sisi server */
+      await csrfFetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
       });
 
-      // Clear the local session (user info + lastSyncedAt)
+      /* Hapus sesi lokal (informasi pengguna dan waktu sinkronisasi terakhir) */
       await clearLocalUser();
 
-      // Redirect to login
-      router.replace("/login");
+      /* Arahkan ke halaman masuk */
+      router.replace('/login');
     } catch {
-      setMessage({ type: "error", text: "Keluar gagal. Silakan coba lagi." });
+      setMessage({ type: 'error', text: 'Keluar gagal. Silakan coba lagi.' });
       setLoggingOut(false);
     }
   }
+  /********** [END: Fungsi Penanganan Aksi Pengguna (Event Handlers)] **********/
 
-  /********** Rendering **********/
+  /********** Pengembalian Tata Letak Halaman Profil (JSX) **********/
   if (isLoading) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-indigo-500 border-t-transparent" />
-          <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">
-            Memuat profil...
-          </p>
+          <p className="mt-3 text-sm text-slate-600 dark:text-slate-400">Memuat profil...</p>
         </div>
       </div>
     );
@@ -288,63 +289,56 @@ export default function ProfilePage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50 sm:text-2xl">
-          Profil
-        </h1>
-        <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">
-          Pengaturan akun dan manajemen data
-        </p>
+        <h1 className="text-xl font-bold text-slate-900 dark:text-slate-50 sm:text-2xl">Profil</h1>
+        <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">Pengaturan akun dan manajemen data</p>
       </div>
-
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/50 dark:bg-slate-900">
         <div className="flex items-center gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 text-xl font-bold text-white shadow-md">
-            {user?.username?.charAt(0).toUpperCase() || "U"}
+            {user?.username?.charAt(0).toUpperCase() || 'U'}
           </div>
           <div className="min-w-0">
-            <p className="truncate text-lg font-semibold text-slate-900 dark:text-slate-50">
-              {user?.username || "User"}
-            </p>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
-              Pencatat Keuangan
-            </p>
+            <p className="truncate text-lg font-semibold text-slate-900 dark:text-slate-50">{user?.username || 'User'}</p>
+            <p className="text-sm text-slate-600 dark:text-slate-400">Pencatat Keuangan</p>
           </div>
         </div>
 
         <div className="mt-5 grid grid-cols-1 gap-3 border-t border-slate-100 pt-5 dark:border-slate-800/50 sm:grid-cols-2">
           <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
-            <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
-              Bergabung Sejak
-            </p>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Bergabung Sejak</p>
             <p className="mt-0.5 text-sm font-semibold text-slate-900 dark:text-slate-50">
               {user?.createdAt
-                ? new Date(user.createdAt).toLocaleDateString("id-ID", {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
+                ? new Date(user.createdAt).toLocaleDateString('id-ID', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
                   })
-                : "—"}
+                : '—'}
             </p>
           </div>
           <div className="rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
-            <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
-              Status Sinkronisasi
-            </p>
+            <p className="text-xs font-medium text-slate-600 dark:text-slate-400">Status Sinkronisasi</p>
             <div className="mt-0.5 flex items-center gap-2">
               <span
                 className={`inline-block h-2 w-2 rounded-full ${
-                  syncState === "syncing"
-                    ? "animate-pulse bg-amber-400"
-                    : syncState === "error"
-                    ? "bg-red-400"
-                    : syncState === "offline"
-                    ? "bg-slate-400"
-                    : "bg-emerald-400"
+                  syncState === 'syncing'
+                    ? 'animate-pulse bg-amber-400'
+                    : syncState === 'error'
+                      ? 'bg-red-400'
+                      : syncState === 'offline'
+                        ? 'bg-slate-400'
+                        : 'bg-emerald-400'
                 }`}
               />
               <p className="text-sm font-semibold capitalize text-slate-900 dark:text-slate-50">
-                {syncState === "syncing" ? "Menyinkronkan" : syncState === "error" ? "Kesalahan" : syncState === "offline" ? "Luring" : "Tersinkronisasi"}
+                {syncState === 'syncing'
+                  ? 'Menyinkronkan'
+                  : syncState === 'error'
+                    ? 'Kesalahan'
+                    : syncState === 'offline'
+                      ? 'Luring'
+                      : 'Tersinkronisasi'}
                 {pendingCount > 0 && ` (${pendingCount} tertunda)`}
               </p>
             </div>
@@ -352,14 +346,11 @@ export default function ProfilePage() {
         </div>
       </div>
 
-
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/50 dark:bg-slate-900">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-600">
-          Pengaturan Aplikasi
-        </h2>
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-600">Pengaturan Aplikasi</h2>
 
         <div className="space-y-3">
-          {/* Wallet Management */}
+          {/* Menu Manajemen Dompet */}
           <Link
             href="/wallets"
             className="group flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-left transition-all hover:bg-slate-50 dark:border-slate-800/50 dark:bg-slate-900 dark:hover:bg-slate-800"
@@ -368,19 +359,15 @@ export default function ProfilePage() {
               <Wallet className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
-                Manajemen Dompet
-              </p>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Tambah dan kelola dompet atau rekening kamu
-              </p>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-50">Manajemen Dompet</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Tambah dan kelola dompet atau rekening kamu</p>
             </div>
             <div className="text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600 dark:group-hover:text-slate-300">
               <ChevronRight className="h-5 w-5" />
             </div>
           </Link>
 
-          {/* Category Management */}
+          {/* Menu Manajemen Kategori */}
           <Link
             href="/categories"
             className="group flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-left transition-all hover:bg-slate-50 dark:border-slate-800/50 dark:bg-slate-900 dark:hover:bg-slate-800"
@@ -389,19 +376,15 @@ export default function ProfilePage() {
               <Tags className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
-                Manajemen Kategori
-              </p>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Tambah, ubah, atau hapus kategori kustom
-              </p>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-50">Manajemen Kategori</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Tambah, ubah, atau hapus kategori kustom</p>
             </div>
             <div className="text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600 dark:group-hover:text-slate-300">
               <ChevronRight className="h-5 w-5" />
             </div>
           </Link>
 
-          {/* Notifications */}
+          {/* Menu Pengaturan Notifikasi */}
           <Link
             href="/profile/notifications"
             className="group flex w-full items-center gap-3 rounded-lg border border-slate-200 bg-white px-4 py-3 text-left transition-all hover:bg-slate-50 dark:border-slate-800/50 dark:bg-slate-900 dark:hover:bg-slate-800"
@@ -410,12 +393,8 @@ export default function ProfilePage() {
               <Bell className="h-5 w-5" />
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
-                Pengaturan Notifikasi
-              </p>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Kelola peringatan dan ringkasan harian
-              </p>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-50">Pengaturan Notifikasi</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Kelola peringatan dan ringkasan harian</p>
             </div>
             <div className="text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600 dark:group-hover:text-slate-300">
               <ChevronRight className="h-5 w-5" />
@@ -424,14 +403,11 @@ export default function ProfilePage() {
         </div>
       </div>
 
-
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/50 dark:bg-slate-900">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-          Manajemen Data
-        </h2>
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Manajemen Data</h2>
 
         <div className="space-y-3">
-          {/* Force Sync */}
+          {/* Tombol Aksi Sinkronisasi Paksa */}
           <button
             onClick={handleForceSync}
             disabled={syncing}
@@ -441,13 +417,7 @@ export default function ProfilePage() {
               {syncing ? (
                 <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent" />
               ) : (
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.8}
-                  viewBox="0 0 24 24"
-                >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -457,16 +427,12 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium text-slate-900 dark:text-slate-50">
-                Sinkronisasi Paksa
-              </p>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Kirim perubahan lokal dan tarik pembaruan server
-              </p>
+              <p className="text-sm font-medium text-slate-900 dark:text-slate-50">Sinkronisasi Paksa</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Kirim perubahan lokal dan tarik pembaruan server</p>
             </div>
           </button>
 
-          {/* Clear Cache */}
+          {/* Tombol Aksi Hapus Cache Lokal */}
           <button
             onClick={handleClearCache}
             disabled={clearing}
@@ -476,13 +442,7 @@ export default function ProfilePage() {
               {clearing ? (
                 <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
               ) : (
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.8}
-                  viewBox="0 0 24 24"
-                >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -493,20 +453,16 @@ export default function ProfilePage() {
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-1.5">
-                <p className="text-sm font-medium text-red-600 dark:text-red-400">
-                  Hapus Cache Lokal
-                </p>
+                <p className="text-sm font-medium text-red-600 dark:text-red-400">Hapus Cache Lokal</p>
                 <Tooltip content="Menghapus data sementara di peramban. Transaksi aman." position="top">
                   <Info className="h-3.5 w-3.5 text-slate-600" />
                 </Tooltip>
               </div>
-              <p className="text-xs text-slate-600 dark:text-slate-400">
-                Hapus semua data cache (data server aman)
-              </p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Hapus semua data cache (data server aman)</p>
             </div>
           </button>
 
-          {/* Download Report */}
+          {/* Tombol Aksi Unduh Laporan Excel */}
           <button
             onClick={handleDownloadReport}
             disabled={downloading || !isOnline}
@@ -516,13 +472,7 @@ export default function ProfilePage() {
               {downloading ? (
                 <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-emerald-600 border-t-transparent" />
               ) : (
-                <svg
-                  className="h-5 w-5"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth={1.8}
-                  viewBox="0 0 24 24"
-                >
+                <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -532,25 +482,19 @@ export default function ProfilePage() {
               )}
             </div>
             <div className="min-w-0">
-              <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                Unduh Laporan Excel
-              </p>
+              <p className="text-sm font-medium text-emerald-600 dark:text-emerald-400">Unduh Laporan Excel</p>
               <p className="text-xs text-slate-600 dark:text-slate-400">
                 {isOnline
-                  ? "Unduh seluruh data transaksi dalam format Excel (.xlsx) yang rapi"
-                  : "Butuh koneksi internet untuk mengekspor laporan Excel"}
+                  ? 'Unduh seluruh data transaksi dalam format Excel (.xlsx) yang rapi'
+                  : 'Butuh koneksi internet untuk mengekspor laporan Excel'}
               </p>
             </div>
           </button>
         </div>
       </div>
 
-
-
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800/50 dark:bg-slate-900">
-        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
-          Akun
-        </h2>
+        <h2 className="mb-4 text-sm font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Akun</h2>
 
         <button
           onClick={handleLogout}
@@ -561,13 +505,7 @@ export default function ProfilePage() {
             {loggingOut ? (
               <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-red-600 border-t-transparent" />
             ) : (
-              <svg
-                className="h-5 w-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth={1.8}
-                viewBox="0 0 24 24"
-              >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -577,23 +515,18 @@ export default function ProfilePage() {
             )}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-red-600 dark:text-red-400">
-              Keluar
-            </p>
-            <p className="text-xs text-slate-600 dark:text-slate-400">
-              Keluar dan kembali ke layar login
-            </p>
+            <p className="text-sm font-medium text-red-600 dark:text-red-400">Keluar</p>
+            <p className="text-xs text-slate-600 dark:text-slate-400">Keluar dan kembali ke layar login</p>
           </div>
         </button>
       </div>
 
-
       {message && (
         <div
           className={`rounded-lg border px-4 py-3 text-sm ${
-            message.type === "success"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400"
-              : "border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400"
+            message.type === 'success'
+              ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
+              : 'border-red-200 bg-red-50 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400'
           }`}
         >
           {message.text}

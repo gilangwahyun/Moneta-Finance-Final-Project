@@ -1,6 +1,11 @@
 "use client";
 
-/********** Imports **********/
+/*
+ * File: src/app/(dashboard)/analytics/page.tsx
+ * Description: Halaman analitik keuangan komprehensif yang menampilkan insight cerdas, tren pengeluaran/pemasukan, grafik distribusi kategori, dan rincian transaksi per rentang waktu.
+ */
+
+/********** Impor Modul & Dependensi **********/
 import { useState, useMemo } from "react";
 import {
   TrendingDown, TrendingUp, Minus,
@@ -26,7 +31,7 @@ import { filterByDateRange } from "@/lib/utils/time-filter";
 import { SegmentedControl } from "@/components/ui/SegmentedControl";
 import { CompactSummaryRow } from "@/components/ui/CompactSummaryRow";
 
-/********** Lazy Chart Imports **********/
+/********** Impor Komponen Grafik (Lazy Loading) **********/
 const DonutChart = dynamic(
   () => import("@/components/ui/DonutChart").then((m) => ({ default: m.DonutChart })),
   { ssr: false, loading: () => <ChartSkeleton h={240} /> }
@@ -36,10 +41,13 @@ const BarTrendChart = dynamic(
   { ssr: false, loading: () => <ChartSkeleton h={220} /> }
 );
 
-/********** Render Helpers **********/
+/********** Komponen Pembantu (Render Helpers) **********/
 
 /**
- * Renders a loading skeleton for charts.
+ * Komponen pembantu untuk menampilkan kerangka muat (skeleton) pada area grafik.
+ *
+ * @param h - Tinggi kerangka dalam piksel
+ * @returns Elemen kerangka muat grafik
  */
 function ChartSkeleton({ h = 200 }: { h?: number }) {
   return (
@@ -53,7 +61,11 @@ function ChartSkeleton({ h = 200 }: { h?: number }) {
 }
 
 /**
- * Renders an individual insight or recommendation card.
+ * Komponen pembantu untuk merender kartu insight atau rekomendasi individu.
+ *
+ * @param insight - Objek data insight dari mesin nudging
+ * @param isPrimary - Apakah kartu ini merupakan insight utama (ditampilkan lebih menonjol)
+ * @returns Elemen kartu insight
  */
 function InsightCard({ insight, isPrimary }: { insight: NudgeInsight; isPrimary?: boolean }) {
   const router = useRouter();
@@ -147,13 +159,17 @@ function InsightCard({ insight, isPrimary }: { insight: NudgeInsight; isPrimary?
 }
 
 /**
- * Renders the top panel showing AI-driven financial insights and recommendations.
- * Sorts insights by severity before rendering.
+ * Komponen pembantu untuk merender panel atas yang berisi insight dan rekomendasi keuangan berbasis AI.
+ *
+ * @param insights - Daftar insight yang tersedia
+ * @param isLoading - Status pemuatan data
+ * @param hasData - Apakah ada data transaksi yang tersedia
+ * @returns Elemen panel insight
  */
 function InsightsPanel({ insights, isLoading, hasData }: { insights: NudgeInsight[]; isLoading: boolean; hasData: boolean }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Sort insights by severity
+  /* Urutkan insight berdasarkan tingkat keparahan (severity) */
   const severityScore: Record<NudgeSeverity, number> = { critical: 3, warning: 2, positive: 1, neutral: 0, info: -1 };
   const sortedInsights = [...insights].sort((a, b) => severityScore[b.severity] - severityScore[a.severity]);
 
@@ -230,13 +246,20 @@ function InsightsPanel({ insights, isLoading, hasData }: { insights: NudgeInsigh
   );
 }
 
-/********** Page Component **********/
+/********** Komponen Halaman Analisis (AnalyticsPage) **********/
+
+/**
+ * Komponen utama halaman analitik yang menampilkan ringkasan data, insight nudging digital,
+ * grafik tren per periode, distribusi per kategori, serta laci rincian transaksi kategori.
+ *
+ * @returns Elemen tata letak halaman analitik Moneta
+ */
 export default function AnalyticsPage() {
-  /********** State **********/
+  /********** [START: Inisialisasi State & Filter Waktu] **********/
   const { comparison, rangeKey, customDates } = useTimeFilter();
   const [activeSegment, setActiveSegment] = useState<"EXPENSE" | "INCOME">("EXPENSE");
   
-  /********** Drawer state. */
+  /* State untuk laci rincian kategori (Drilldown Drawer) */
   const [selectedCategory, setSelectedCategory] = useState<{
     categoryId: string;
     name: string;
@@ -256,10 +279,10 @@ export default function AnalyticsPage() {
     nudgeInsights,
     allTxns
   } = useAnalytics(activeSegment);
+  /********** [END: Inisialisasi State & Filter Waktu] **********/
 
-  /********** Derived State **********/
-  
-  /********** Derive transactions for the category drilldown drawer. */
+  /********** [START: Perhitungan State Turunan (Derived State)] **********/
+  /* Saring transaksi berdasarkan rentang waktu untuk laci rincian kategori */
   const drawerTransactions = useMemo(() => {
     if (!selectedCategory) return [];
     return filterByDateRange(allTxns, comparison.currentPeriod).filter(
@@ -267,7 +290,7 @@ export default function AnalyticsPage() {
     );
   }, [allTxns, comparison.currentPeriod, selectedCategory, activeSegment]);
 
-  /********** Generate a readable text summary of the active time filter. */
+  /* Buat teks ringkasan yang mudah dibaca untuk filter waktu yang sedang aktif */
   const activeSummaryText = useMemo(() => {
     const timeLabels: Record<string, string> = { "7d": "7 Hari Terakhir", "month": "Bulan Ini", "3month": "3 Bulan Terakhir", "year": "Tahun Ini" };
     let timeLabel = rangeKey === 'custom' ? 'Rentang khusus' : timeLabels[rangeKey];
@@ -286,11 +309,12 @@ export default function AnalyticsPage() {
     return `${timeLabel} • ${dateStr}`;
   }, [rangeKey, customDates, comparison.currentPeriod]);
 
-  /********** Dynamic titles based on active segment. */
+  /* Judul dinamis berdasarkan segmen yang dipilih (Pengeluaran/Pemasukan) */
   const trendTitle = activeSegment === "EXPENSE" ? "Tren Pengeluaran" : "Tren Pemasukan";
   const donutTitle = activeSegment === "EXPENSE" ? "Distribusi Pengeluaran" : "Distribusi Pemasukan";
+  /********** [END: Perhitungan State Turunan (Derived State)] **********/
 
-  /********** Rendering **********/
+  /********** Pengembalian Tata Letak Halaman Analisis (JSX) **********/
   return (
     <div className="space-y-8 pb-12">
       <div>

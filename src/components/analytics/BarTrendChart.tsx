@@ -1,11 +1,9 @@
-"use client";
+/*
+ * File: src/components/analytics/BarTrendChart.tsx
+ * Description: Grafik tren batang harian dengan pendekatan behavioral nudging (membedakan warna batang yang melebihi batas rata-rata harian aman).
+ */
 
-// ─── BarTrendChart ───────────────────────────────────────
-// Behavioral Nudging — Isolated Mode Chart (UX Fix v3):
-//   - Mode Toggle: Renders only expense OR income to isolate Y-axis scaling
-//   - barSize=32 for Fitts's Law mobile touch compliance
-//   - Gridlines near-invisible (opacity 0.06)
-//   - Per-bar Cell (Expense): rose-500 normal, red-500 when over avg
+"use client";
 
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -20,27 +18,29 @@ export interface BarDay {
 
 interface BarTrendChartProps {
   data: BarDay[];
-  /** Daily safe average — drawn as dashed reference line */
+  /** Rata-rata aman harian — digambarkan sebagai garis referensi putus-putus */
   dailyAvg?: number;
-  /** Active rendering mode */
+  /** Mode tampilan data aktif (pengeluaran atau pemasukan) */
   mode?: "expense" | "income";
 }
 
-// ── Y-axis compact formatter ─────────────────────────────
+/********** [START: Fungsi Pemformatan Angka Sumbu dan Tooltip] **********/
+/* Pemformat ringkas angka sumbu Y */
 function formatY(value: number): string {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}jt`;
   if (value >= 1_000) return `${(value / 1_000).toFixed(0)}rb`;
   return String(value);
 }
 
-// ── Rp compact formatter ─────────────────────────────────
+/* Pemformat ringkas mata uang Rupiah */
 function fmtRp(v: number): string {
   if (v >= 1_000_000) return `Rp ${(v / 1_000_000).toFixed(2)}jt`;
   if (v >= 1_000) return `Rp ${(v / 1_000).toFixed(0)}rb`;
   return `Rp ${v}`;
 }
+/********** [END: Fungsi Pemformatan Angka Sumbu dan Tooltip] **********/
 
-// ── Custom tooltip (high-contrast, mobile-safe) ──────────
+/* Komponen tooltip kustom dengan kontras tinggi */
 function CustomTooltip({
   active,
   payload,
@@ -88,16 +88,25 @@ function CustomTooltip({
   );
 }
 
-// ── Bar color tokens ─────────────────────────────────────
-// EXPENSE_SAFE: Muted slate-400 — safe days recede visually (calm nudge)
-// EXPENSE_OVER: Solid red-500  — over daily avg, demands attention (loss-aversion)
-const EXPENSE_SAFE = "#94a3b8"; // slate-400 — calm, under-limit days
-const EXPENSE_OVER = "#ef4444"; // red-500   — over daily avg (bright warning)
-const INCOME_COLOR = "#10b981"; // emerald-500
+/********** Token Warna Batang Grafik **********/
+/*
+ * EXPENSE_SAFE: Warna slate-400 meredam secara visual hari-hari yang aman (dorongan tenang)
+ * EXPENSE_OVER: Warna red-500 tegas untuk pengeluaran yang melewati rata-rata harian (peringatan)
+ */
+const EXPENSE_SAFE = "#94a3b8";
+const EXPENSE_OVER = "#ef4444";
+const INCOME_COLOR = "#10b981";
 
+/**
+ * Merender grafik batang tren pengeluaran atau pemasukan harian dengan indikator rata-rata harian.
+ *
+ * @param props - Properti konfigurasi grafik tren batang
+ * @returns Elemen JSX grafik Recharts responsif
+ */
 export function BarTrendChart({ data, dailyAvg, mode = "expense" }: BarTrendChartProps) {
   const isExpense = mode === "expense";
 
+  /********** [START: Perenderan Grafik Tren Batang Recharts] **********/
   return (
     <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={0}>
       <BarChart
@@ -130,7 +139,7 @@ export function BarTrendChart({ data, dailyAvg, mode = "expense" }: BarTrendChar
           cursor={{ fill: "rgba(99,102,241,0.06)" }}
         />
 
-        {/* ── Visual Anchor: dashed daily-average reference line ── */}
+        {/* Garis referensi putus-putus batas rata-rata aman harian */}
         {isExpense && dailyAvg !== undefined && dailyAvg > 0 && (
           <ReferenceLine
             y={dailyAvg}
@@ -148,7 +157,7 @@ export function BarTrendChart({ data, dailyAvg, mode = "expense" }: BarTrendChar
           />
         )}
 
-        {/* ── Conditional Bars ─────────────────────────────────── */}
+        {/* Batang bersyarat berdasarkan mode pengeluaran atau pemasukan */}
         {isExpense ? (
           <Bar dataKey="expense" name="expense" radius={[4, 4, 0, 0]}>
             {data.map((entry, i) => {
@@ -158,7 +167,7 @@ export function BarTrendChart({ data, dailyAvg, mode = "expense" }: BarTrendChar
                 <Cell
                   key={i}
                   fill={isOver ? EXPENSE_OVER : EXPENSE_SAFE}
-                  // Over-limit: full opacity for high attention; safe: slightly muted
+                  /* Opasitas penuh jika melebihi batas, sedikit diredam jika aman */
                   opacity={isOver ? 1 : 0.75}
                 />
               );
@@ -174,4 +183,5 @@ export function BarTrendChart({ data, dailyAvg, mode = "expense" }: BarTrendChar
       </BarChart>
     </ResponsiveContainer>
   );
+  /********** [END: Perenderan Grafik Tren Batang Recharts] **********/
 }

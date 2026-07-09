@@ -1,15 +1,7 @@
-// ─── CategoryPickerSheet ──────────────────────────────────
-// A bottom-sheet drawer for selecting a transaction category.
-//
-// Design decisions:
-//   • Zero new dependencies — uses the same native bottom-sheet
-//     pattern (fixed inset-0 → items-end → slide-in-from-bottom)
-//     already established in TransactionModal and the mobile filter.
-//   • Categories are rendered in a 3-column icon grid matching the
-//     QuickChipGrid aesthetic (icon above label, rounded-xl).
-//   • Uses getCategoryIcon() for consistent icon mapping across all views.
-//   • Escape key + backdrop tap both close the sheet.
-//   • Keyboard-friendly: focus trap via autoFocus on the search input.
+/*
+ * File: src/components/categories/CategoryPickerSheet.tsx
+ * Description: Lembar bawah interaktif (bottom sheet) untuk memilih kategori transaksi dengan fitur pencarian cepat.
+ */
 
 "use client";
 
@@ -26,6 +18,12 @@ interface CategoryPickerSheetProps {
   onSelect: (categoryId: string) => void;
 }
 
+/**
+ * Merender lembar pemilihan kategori berbentuk kisi ikon di bagian bawah layar.
+ *
+ * @param props - Properti konfigurasi lembar pemilih kategori
+ * @returns Elemen JSX lembar pemilih kategori atau null jika tertutup
+ */
 export function CategoryPickerSheet({
   isOpen,
   onClose,
@@ -35,12 +33,13 @@ export function CategoryPickerSheet({
 }: CategoryPickerSheetProps) {
   const [query, setQuery] = useState("");
 
-  // Reset search when sheet opens
+  /********** [START: Pengaturan Efek Penutupan dan Pencarian Kategori] **********/
+  /* Mengatur ulang pencarian saat lembar kategori dibuka */
   useEffect(() => {
     if (isOpen) setQuery("");
   }, [isOpen]);
 
-  // Close on Escape key
+  /* Menutup lembar kategori saat tombol Escape ditekan */
   useEffect(() => {
     if (!isOpen) return;
     const handler = (e: KeyboardEvent) => {
@@ -49,6 +48,7 @@ export function CategoryPickerSheet({
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [isOpen, onClose]);
+  /********** [END: Pengaturan Efek Penutupan dan Pencarian Kategori] **********/
 
   const filtered = useMemo(() => {
     if (!query.trim()) return categories;
@@ -58,28 +58,29 @@ export function CategoryPickerSheet({
 
   if (!isOpen) return null;
 
+  /********** [START: Perenderan Lembar Pemilihan Kategori] **********/
   return (
     <div className="fixed inset-0 z-[200] flex items-end">
-      {/* Backdrop */}
+      {/* Latar Belakang Redup */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Sheet panel */}
+      {/* Panel Lembar Bawah */}
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Pilih Kategori"
         className="relative z-10 w-full max-h-[75vh] flex flex-col animate-in slide-in-from-bottom-8 duration-300 rounded-t-2xl border-t border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900"
       >
-        {/* Handle */}
+        {/* Pegangan Lembar */}
         <div className="flex justify-center pt-3 pb-1 shrink-0">
           <div className="h-1 w-10 rounded-full bg-slate-200 dark:bg-slate-700" />
         </div>
 
-        {/* Header */}
+        {/* Header Lembar */}
         <div className="flex items-center justify-between px-5 pb-3 pt-1 shrink-0">
           <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-100">
             Pilih Kategori
@@ -94,7 +95,7 @@ export function CategoryPickerSheet({
           </button>
         </div>
 
-        {/* Search */}
+        {/* Kolom Pencarian */}
         <div className="px-5 pb-3 shrink-0">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-600 pointer-events-none" />
@@ -109,7 +110,7 @@ export function CategoryPickerSheet({
           </div>
         </div>
 
-        {/* Category grid — scrollable */}
+        {/* Kisi Kategori yang Dapat Digulir */}
         <div className="overflow-y-auto px-5 pb-8">
           {filtered.length === 0 ? (
             <p className="py-8 text-center text-sm text-slate-600 dark:text-slate-400">
@@ -164,4 +165,5 @@ export function CategoryPickerSheet({
       </div>
     </div>
   );
+  /********** [END: Perenderan Lembar Pemilihan Kategori] **********/
 }

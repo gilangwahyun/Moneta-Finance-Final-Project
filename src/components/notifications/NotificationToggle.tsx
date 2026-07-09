@@ -1,17 +1,7 @@
-// ─── NotificationToggle ──────────────────────────────────
-// Client component that handles the full Web Push subscription
-// lifecycle, including all browser API edge cases that cause
-// the "silent / unresponsive button" bug.
-//
-// Root causes of the "button does nothing" bug (all handled below):
-//   1. navigator.serviceWorker.register() resolves BEFORE the SW is
-//      actually active. Using `navigator.serviceWorker.ready` (a Promise
-//      that waits for the active SW) is the correct fix.
-//   2. pushManager.subscribe() silently fails if the VAPID key is
-//      passed as a raw base64url string instead of a Uint8Array/ArrayBuffer.
-//   3. No try/catch means errors are swallowed and the UI never updates.
-//   4. Notification.permission is not re-checked on mount, so the button
-//      shows the wrong state if the user previously granted/denied.
+/*
+ * File: src/components/notifications/NotificationToggle.tsx
+ * Description: Komponen klien untuk mengelola seluruh siklus berlangganan Web Push Notification termasuk pendaftaran Service Worker dan manajemen izin browser.
+ */
 
 "use client";
 
@@ -20,84 +10,76 @@ import { toast } from "sonner";
 import { csrfFetch } from "@/lib/utils/csrf-fetch";
 import { urlBase64ToUint8Array } from "@/lib/sw/register";
 
-// ── Types ────────────────────────────────────────────────
+/********** Definisi Tipe Status Izin Notifikasi **********/
 
 type PermissionState = "unsupported" | "default" | "granted" | "denied";
 
-// ── VAPID key encoder ────────────────────────────────────
-//
-// THE #1 ROOT CAUSE OF SILENT FAILURES: passing the raw base64url
-// string directly to pushManager.subscribe(). The Web Push API requires
-// a Uint8Array / ArrayBuffer. This function performs the conversion.
-//
-// Source: https://web.dev/push-notifications-subscribing-a-user/
-
-
-// ── Component ────────────────────────────────────────────
+/********** Komponen Tombol Saklar Notifikasi (NotificationToggle) **********/
 
 interface NotificationToggleProps {
-  /** Additional CSS classes for the wrapper */
   className?: string;
 }
 
+/**
+ * Merender tombol saklar (switch) untuk mengaktifkan atau menonaktifkan langganan Web Push Notification pada perangkat pengguna.
+ *
+ * @param props - Properti kelas CSS tambahan untuk wadah komponen
+ * @returns Elemen JSX saklar notifikasi
+ */
 export function NotificationToggle({ className = "" }: NotificationToggleProps) {
   const [permission, setPermission] = useState<PermissionState>("default");
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [isLoading, setIsLoading] = useState(true); // start true while we probe state
+  const [isLoading, setIsLoading] = useState(true); /* Bernilai true saat memeriksa status awal */
 
-  // ── 1. Probe current state on mount ─────────────────────
-  // Check Notification API support and current permission level so the
-  // button renders the correct initial state without a user interaction.
+  /* Pemeriksaan status dukungan API Notifikasi dan Service Worker saat komponen dimuat */
   useEffect(() => {
-    // Guard: SSR / browser without Notification API
+    /* Penjaga: SSR atau peramban tanpa dukungan Notification API */
     if (typeof window === "undefined" || !("Notification" in window)) {
       setPermission("unsupported");
       setIsLoading(false);
       return;
     }
 
-    // Guard: browser without Service Worker API
+    /* Penjaga: peramban tanpa dukungan Service Worker API */
     if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
       setPermission("unsupported");
       setIsLoading(false);
       return;
     }
 
-    // Read the current permission (no prompt — just a read)
+    /* Membaca izin notifikasi saat ini tanpa memicu dialog prompt */
     setPermission(Notification.permission as PermissionState);
 
-    // Check if there's already an active subscription for this browser
+    /* Memeriksa apakah terdapat langganan aktif untuk peramban ini */
     navigator.serviceWorker.ready
       .then((reg) => reg.pushManager.getSubscription())
       .then((sub) => {
         setIsSubscribed(sub !== null);
       })
       .catch((err) => {
-        console.error("[NotificationToggle] getSubscription error:", err);
+        console.error("[NotificationToggle] Error getSubscription:", err);
       })
       .finally(() => {
         setIsLoading(false);
       });
   }, []);
 
-  // ── 2. Subscribe ─────────────────────────────────────────
+  /********** [START: Pendaftaran Berlangganan Web Push Notification] **********/
   const handleSubscribe = useCallback(async () => {
     setIsLoading(true);
 
     try {
-      // ── Guard: double-check browser support ──────────────
+      /* Penjaga: Memastikan dukungan fitur peramban */
       if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
         toast.error("Notifikasi push tidak didukung oleh browser ini.");
         return;
       }
 
-      // ── Guard: VAPID key must be set ──────────────────────
+      /* Penjaga: Memastikan kunci publik VAPID tersedia di environment */
       const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
       if (!vapidPublicKey) {
-        // This is a developer configuration error, not a user error
         console.error(
-          "[NotificationToggle] NEXT_PUBLIC_VAPID_PUBLIC_KEY is not set in .env. " +
-          "Push subscription cannot proceed without it."
+          "[NotificationToggle] NEXT_PUBLIC_VAPID_PUBLIC_KEY tidak dikonfigurasi pada .env."
         );
         toast.error(
           "Konfigurasi notifikasi bermasalah. Silakan hubungi dukungan."
@@ -105,16 +87,12 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
         return;
       }
 
-      // ── Step 1: Request permission ────────────────────────
-      // requestPermission() must be called from a user gesture (click).
-      // It will no-op if already granted; it shows the prompt if 'default'.
+      /* Langkah 1: Meminta izin notifikasi dari pengguna */
       const result = await Notification.requestPermission();
       setPermission(result as PermissionState);
 
       if (result !== "granted") {
         if (result === "denied") {
-          // Permission is now blocked — the browser will never show the
-          // prompt again. The user must manually unblock it.
           toast.error(
             "Notifikasi diblokir. Izinkan melalui pengaturan situs di browser kamu, lalu muat ulang halaman.",
             { duration: 6000 }
@@ -125,31 +103,25 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
         return;
       }
 
-      // ── Step 2: Wait for the active Service Worker ────────
-      // navigator.serviceWorker.register() resolves when the SW is
-      // *registered*, not when it is *active*. Using `.ready` is the
-      // correct way to get a registration with an active worker that
-      // can own a PushManager subscription.
-      console.log("[NotificationToggle] Waiting for active service worker…");
+      /* Langkah 2: Menunggu Service Worker aktif sepenuhnya (ready) */
+      console.log("[NotificationToggle] Menunggu Service Worker aktif…");
       const registration = await navigator.serviceWorker.ready;
-      console.log("[NotificationToggle] Service worker is active:", registration.active?.scriptURL);
+      console.log("[NotificationToggle] Service Worker aktif:", registration.active?.scriptURL);
 
-      // ── Step 3: Subscribe with PushManager ───────────────
-      // THE CRITICAL FIX: convert the base64url VAPID key to ArrayBuffer.
-      // Passing the raw string here silently fails in most browsers.
+      /* Langkah 3: Mendaftarkan PushManager dengan mengonversi kunci VAPID ke ArrayBuffer */
       const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
 
       const pushSubscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true, // Required by all browsers — must be true
+        userVisibleOnly: true, /* Diwajibkan bernilai true oleh standar peramban */
         applicationServerKey,
       });
 
       console.log(
-        "[NotificationToggle] PushSubscription created:",
+        "[NotificationToggle] PushSubscription berhasil dibuat:",
         pushSubscription.endpoint
       );
 
-      // ── Step 4: Save subscription to the server ───────────
+      /* Langkah 4: Menyimpan informasi langganan ke server database */
       const response = await csrfFetch("/api/notifications/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -162,33 +134,31 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
           ? errorData.error 
           : (errorData.error?.message || `Server error ${response.status}`);
         
-        console.error("[NotificationToggle] Server rejected subscription:", errorData);
+        console.error("[NotificationToggle] Server menolak pendaftaran langganan:", errorData);
         throw new Error(errorMsg);
       }
 
       setIsSubscribed(true);
       toast.success("Notifikasi diaktifkan! Kamu akan menerima pengingat dari Moneta.");
 
-
     } catch (err: unknown) {
-      console.error("[NotificationToggle] Subscribe error:", err);
+      console.error("[NotificationToggle] Error berlangganan:", err);
 
-      // DOMException: NotAllowedError — user dismissed the prompt without
-      // clicking Allow. Not quite "denied" (they can be asked again).
       if (err instanceof DOMException && err.name === "NotAllowedError") {
         toast.warning("Izin ditolak. Klik tombol lagi untuk mencoba ulang.");
         setPermission("default");
       } else {
         const message =
-          err instanceof Error ? err.message : "An unknown error occurred.";
+          err instanceof Error ? err.message : "Terjadi kesalahan yang tidak diketahui.";
         toast.error(`Gagal mengaktifkan notifikasi: ${message}`);
       }
     } finally {
       setIsLoading(false);
     }
   }, []);
+  /********** [END: Pendaftaran Berlangganan Web Push Notification] **********/
 
-  // ── 3. Unsubscribe ───────────────────────────────────────
+  /********** [START: Pembatalan Berlangganan Web Push Notification] **********/
   const handleUnsubscribe = useCallback(async () => {
     setIsLoading(true);
 
@@ -199,10 +169,10 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
       if (subscription) {
         const endpoint = subscription.endpoint;
 
-        // Unsubscribe at the browser level
+        /* Membatalkan langganan pada tingkat peramban */
         await subscription.unsubscribe();
 
-        // Remove from server DB
+        /* Menghapus data langganan dari server database */
         await csrfFetch("/api/notifications/subscribe", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
@@ -220,9 +190,7 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
     }
   }, []);
 
-  // ── 4. Render ────────────────────────────────────────────
-
-  // Case: browser doesn't support the required APIs
+  /* Kasus: Peramban tidak mendukung fitur notifikasi push */
   if (permission === "unsupported") {
     return (
       <div className={`rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-800/50 ${className}`}>
@@ -243,7 +211,7 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
     );
   }
 
-  // Case: user has blocked notifications
+  /* Kasus: Pengguna memblokir izin notifikasi */
   if (permission === "denied") {
     return (
       <div className={`rounded-xl border border-amber-200 bg-amber-50 p-3 dark:border-amber-800/50 dark:bg-amber-950/30 ${className}`}>
@@ -266,7 +234,7 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
     );
   }
 
-  // Case: normal toggle button (default / granted states)
+  /* Kasus normal: Tombol saklar notifikasi dapat dioperasikan */
   const isOn = isSubscribed && permission === "granted";
 
   return (
@@ -276,7 +244,7 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
         : "border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50"
     } ${className}`}>
       <div className="flex items-center gap-2.5">
-        {/* Icon */}
+        {/* Ikon Indikator Status */}
         <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-colors ${
           isOn
             ? "bg-indigo-100 text-indigo-600 dark:bg-indigo-900/40 dark:text-indigo-400"
@@ -285,7 +253,7 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
           {isLoading ? <SpinnerIcon /> : isOn ? <BellIcon /> : <BellSlashIcon />}
         </div>
 
-        {/* Text */}
+        {/* Label Status dan Keterangan */}
         <div className="min-w-0 flex-1">
           <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">
             {isOn ? "Notifikasi aktif" : "Notifikasi nonaktif"}
@@ -297,7 +265,7 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
           </p>
         </div>
 
-        {/* Toggle button */}
+        {/* Tombol Saklar Utama */}
         <button
           id="notification-toggle-btn"
           onClick={isOn ? handleUnsubscribe : handleSubscribe}
@@ -321,7 +289,7 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
   );
 }
 
-// ── Icons ────────────────────────────────────────────────
+/********** Komponen Ikon Pendukung **********/
 
 function BellIcon() {
   return (

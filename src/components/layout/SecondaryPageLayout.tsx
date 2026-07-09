@@ -1,48 +1,41 @@
-//********** START: SecondaryPageLayout **********
-//********** Reusable layout wrapper for all secondary/settings pages.
-//********** Provides a consistent header with back navigation, title,
-//********** description, and a constrained max-w-3xl content column.
-//********** END: SecondaryPageLayout **********
+/*
+ * File: src/components/layout/SecondaryPageLayout.tsx
+ * Description: Tata letak pembungkus untuk halaman sekunder/pengaturan dengan navigasi kembali, judul, dan lebar kolom konten yang seragam.
+ */
 
 'use client';
-
-//********** IMPORTS **********
 
 import { useRouter } from 'next/navigation';
 import { ArrowLeft } from 'lucide-react';
 import { ReactNode } from 'react';
 
-//********** TYPES **********
 interface SecondaryPageLayoutProps {
   title: string;
   description: string;
   backRoute: string;
-  //********** Optional CTA button rendered in the top-right of the header
+  /* Tombol aksi CTA opsional di sudut kanan header */
   headerAction?: ReactNode;
   children: ReactNode;
 }
 
-//********** COMPONENT **********
 /**
- * Reusable layout wrapper for all secondary/settings pages.
- * @param title - The title of the page
- * @param description - A short description displayed under the title
- * @param backRoute - The route to navigate when back is clicked
- * @param headerAction - Optional action element in the header
- * @param children - The content of the page
- * @returns The rendered layout element
+ * Merender tata letak standar halaman sekunder dengan header konsisten dan navigasi kembali.
+ *
+ * @param props - Properti tata letak sekunder
+ * @returns Elemen JSX tata letak sekunder
  */
 export function SecondaryPageLayout({ title, description, backRoute, headerAction, children }: SecondaryPageLayoutProps) {
   const router = useRouter();
 
+  /********** [START: Perenderan Tata Letak Halaman Sekunder] **********/
   return (
     <div className="w-full max-w-[100vw] sm:max-w-3xl mx-auto min-h-screen overflow-x-hidden -mt-6 md:mt-0">
-      {/* //********** Page Header ********** */}
+      {/* Header Halaman Sekunder */}
       <div className="relative z-20 mb-6 md:mb-8 -mx-4 px-4 pb-3 pt-7 bg-slate-50/90 dark:bg-slate-950/90 md:mx-0 md:bg-transparent md:px-0 md:pb-0 md:pt-0 md:dark:bg-transparent">
-        {/* //********** Back + Title row ********** */}
+        {/* Baris Tombol Kembali dan Judul */}
         <div className="mb-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div className="flex items-start gap-4 min-w-0">
-            {/* //********** Back button ********** */}
+            {/* Tombol Kembali ke rute sebelumnya */}
             <button
               onClick={() => router.push(backRoute)}
               aria-label="Kembali"
@@ -51,23 +44,24 @@ export function SecondaryPageLayout({ title, description, backRoute, headerActio
               <ArrowLeft className="h-4 w-4" />
             </button>
 
-            {/* //********** Title + description ********** */}
+            {/* Judul + deskripsi halaman */}
             <div>
               <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">{title}</h1>
               <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-400">{description}</p>
             </div>
           </div>
 
-          {/* //********** Optional right-side CTA ********** */}
+          {/* Tombol aksi CTA opsional */}
           {headerAction && <div className="w-full md:w-auto mt-2 md:mt-0">{headerAction}</div>}
         </div>
 
-        {/* //********** Subtle divider ********** */}
+        {/* Garis pemisah halus */}
         <div className="h-px w-full bg-slate-100 dark:bg-slate-800/60" />
       </div>
 
-      {/* //********** Page Content ********** */}
+      {/* Konten Utama Halaman */}
       {children}
     </div>
   );
+  /********** [END: Perenderan Tata Letak Halaman Sekunder] **********/
 }

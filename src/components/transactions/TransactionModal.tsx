@@ -1,21 +1,11 @@
-//********** START: TransactionModal **********
-//********** Modul 2: Seamless Quick Input
-//**********
-//********** Upgrade dari modal transaksi dasar menjadi form dengan:
-//**********   1. Smart Defaults - wallet & kategori otomatis terisi
-//**********      berdasarkan pilihan paling sering (most-frequent) dari
-//**********      50 transaksi terakhir. Fallback ke item[0] jika kosong.
-//**********   2. Quick Chips - 6 tombol keyword kontekstual (EXPENSE only)
-//**********      yang mengisi description + categoryId dalam satu ketukan.
-//**********
-//********** State management: controlled useState (bukan react-hook-form).
-//********** Chips langsung memanggil setter state - tidak ada complexity library.
-//**********
-//********** Keputusan Arsitektur Modul 2:
-//**********   - Chips eksklusif EXPENSE (tidak ada di INCOME/TRANSFER)
-//**********   - Chips dimmed (tidak hidden) jika kategori belum ada
-//**********   - 6 chips dalam grid 3 kolom (Fitts's Law + Hick's Law)
-//********** END: TransactionModal **********
+/*
+ * File: src/components/transactions/TransactionModal.tsx
+ * Description: Modal form pencatatan dan penyuntingan transaksi (Pengeluaran, Pemasukan, Transfer) dengan fitur Smart Defaults dan Quick Chips.
+ *
+ * Upgrade Seamless Quick Input:
+ *   1. Smart Defaults - dompet & kategori terisi otomatis berdasarkan pilihan paling sering dari 50 transaksi terakhir.
+ *   2. Quick Chips - tombol cepat kontekstual (khusus Pengeluaran) untuk mengisi deskripsi + kategori dalam satu ketukan.
+ */
 
 import { useState, useEffect, FormEvent, useMemo, useRef } from "react";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -31,8 +21,7 @@ import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { QuickChipGrid } from "@/components/ui/QuickChipGrid";
 import { CategoryBuilder } from "@/components/categories/CategoryBuilder";
 
-
-//********** HELPERS **********
+/********** Fungsi Bantu (Helper Functions) **********/
 
 function todayString(): string {
   return new Date().toISOString().split("T")[0];
@@ -41,7 +30,9 @@ function todayString(): string {
 /**
  * Menghitung nilai paling sering muncul dari array string.
  * Digunakan untuk smart default wallet dan kategori.
- * Pure function - tidak ada side effect.
+ *
+ * @param arr - Array string ID yang akan dihitung frekuensinya
+ * @returns ID paling sering muncul atau null jika array kosong
  */
 function getMostFrequent(arr: string[]): string | null {
   if (arr.length === 0) return null;
@@ -60,17 +51,14 @@ function getMostFrequent(arr: string[]): string | null {
   return best;
 }
 
-//********** TYPES **********
+/********** Tipe Data & Properti Komponen **********/
 
 interface TransactionModalProps {
   isOpen: boolean;
   onClose: () => void;
   editingTxn?: Transaction | null;
   initialType?: TransactionType;
-  //********** Transaksi terbaru dari IndexedDB - digunakan untuk menghitung
-  //********** smart default wallet dan kategori berdasarkan frekuensi pakai.
-  //********** Di-pass dari TransactionFormProvider yang sudah subscribe ke
-  //********** moneta-transaction-updated, sehingga selalu up-to-date.
+  /** Transaksi terbaru dari IndexedDB untuk kalkulasi smart default dompet dan kategori */
   recentTransactions?: Transaction[];
   initialWalletId?: string;
 }
@@ -81,9 +69,13 @@ const TYPE_TABS: { value: TransactionType; label: string; icon: React.ReactNode 
   { value: "TRANSFER", label: "Transfer",    icon: <ArrowLeftRight className="h-4 w-4" /> },
 ];
 
-//********** COMPONENT **********
+/********** Komponen Modal Form Transaksi (TransactionModal) **********/
+
 /**
- * Modal form for creating and editing transactions.
+ * Modal form untuk membuat atau menyunting transaksi pengeluaran, pemasukan, dan transfer.
+ *
+ * @param props - Properti konfigurasi modal dan riwayat transaksi
+ * @returns Elemen JSX modal transaksi Moneta
  */
 export function TransactionModal({
   isOpen,
@@ -93,11 +85,12 @@ export function TransactionModal({
   recentTransactions = [],
   initialWalletId,
 }: TransactionModalProps) {
+  /********** [START: Inisialisasi State Form Transaksi & Hook] **********/
   const { recordTransaction, editTransaction, removeTransaction } = useTransactions();
   const { expenseCategories, incomeCategories, createCategory } = useCategories();
   const { wallets } = useWallets();
 
-  //********** Form state **********
+  /* State nilai isian form transaksi */
   const [formType, setFormType] = useState<TransactionType>(initialType);
   const [formAmount, setFormAmount] = useState("");
   const [formDate, setFormDate] = useState(todayString());
@@ -109,18 +102,15 @@ export function TransactionModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showNote, setShowNote] = useState(false);
 
-  //********** Mutation Parser state **********
+  /* State pemindai teks mutasi m-banking */
   const [showMutationParser, setShowMutationParser] = useState(false);
   const [mutationText, setMutationText] = useState("");
-  //********** "idle" | "success" | "error"
   const [mutationStatus, setMutationStatus] = useState<"idle" | "success" | "error">("idle");
 
-  //********** Category inline-expansion state **********
+  /* State tampilan ekspansi daftar kategori */
   const [isCategoryExpanded, setIsCategoryExpanded] = useState(false);
 
-  //********** Modal view switch **********
-  //********** "form" = normal transaction entry, "category-builder" = Buat Kategori Baru
-  //********** All form state is preserved during the switch - only rendering changes.
+  /* Kontrol tampilan modal antara form transaksi atau pembuatan kategori cepat */
   type ModalView = "form" | "category-builder";
   const [modalView, setModalView] = useState<ModalView>("form");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -131,10 +121,10 @@ export function TransactionModal({
     () => (formType === "EXPENSE" ? expenseCategories : incomeCategories),
     [formType, expenseCategories, incomeCategories]
   );
+  /********** [END: Inisialisasi State Form Transaksi & Hook] **********/
 
-  //********** Smart Default: Wallet **********
-  //********** Prioritas: wallet paling sering dipakai untuk tipe transaksi ini
-  //********** -> fallback ke wallets[0] jika belum ada history.
+  /********** [START: Logika Default Cerdas & Pengisian Otomatis (Smart Defaults)] **********/
+  /* Prioritas dompet default: dompet yang paling sering dipakai untuk tipe transaksi ini (fallback ke dompet pertama) */
   useEffect(() => {
     if (!formWalletId && wallets.length > 0) {
       const mostUsedId = getMostFrequent(
@@ -147,8 +137,7 @@ export function TransactionModal({
     }
   }, [wallets, formWalletId, recentTransactions, formType]);
 
-  //********** Smart Default: Kategori saat type berubah **********
-  //********** Reset formCategoryId lalu isi dengan most-frequent untuk tipe baru.
+  /* Smart Default kategori saat tipe transaksi berubah: mengatur ulang kategori lalu mengisi dari most-frequent */
   const prevTypeRef = useRef(formType);
   useEffect(() => {
     if (prevTypeRef.current !== formType) {
@@ -170,8 +159,7 @@ export function TransactionModal({
     }
   }, [formType, availableCategories, editingTxn, isTransfer, recentTransactions]);
 
-  //********** Smart Default: Kategori saat form pertama dibuka **********
-  //********** Menangkap kasus saat availableCategories load async setelah mount.
+  /* Smart Default kategori saat form pertama dibuka: menangkap kasus saat daftar kategori dimuat secara asinkron setelah mount */
   useEffect(() => {
     if (
       !formCategoryId &&
@@ -200,7 +188,7 @@ export function TransactionModal({
     formType,
   ]);
 
-  //********** Populate form saat mode edit **********
+  /* Mengisi nilai field form saat mode edit aktif atau mengatur ulang field pada mode buat transaksi baru */
   useEffect(() => {
     if (isOpen) {
       if (editingTxn) {
@@ -215,8 +203,7 @@ export function TransactionModal({
         setShowNote(!!editingTxn.note);
         setShowDeleteConfirm(false);
       } else {
-        //********** Form baru: reset semua field kecuali wallet
-        //********** (wallet dipertahankan dari pilihan sebelumnya via smart default)
+        /* Form baru: atur ulang semua field kecuali dompet terpilih sebelumnya */
         setFormType(initialType);
         setFormAmount("");
         setFormDate(todayString());
@@ -224,26 +211,27 @@ export function TransactionModal({
         setFormDescription("");
         setFormNote("");
         setShowNote(false);
-        //********** Reset mutation parser
+        /* Atur ulang pemindai teks mutasi */
         setShowMutationParser(false);
         setMutationText("");
         setMutationStatus("idle");
-        //********** Reset UI state
+        /* Atur ulang UI status ekspansi dan tampilan modal */
         setIsCategoryExpanded(false);
         setModalView("form");
         setShowDeleteConfirm(false);
-        //********** formWalletId tetap - akan di-override oleh smart default effect
-        //********** jika kosong, atau dipertahankan untuk convenience
         if (initialWalletId) {
           setFormWalletId(initialWalletId);
         }
       }
     }
   }, [isOpen, editingTxn, initialType, initialWalletId]);
+  /********** [END: Logika Default Cerdas & Pengisian Otomatis (Smart Defaults)] **********/
 
-  //********** Quick Chip Handler **********
-  //********** Satu ketukan chip mengisi description DAN memilih kategori.
-  //********** State update bersifat sinkron - tidak ada race condition.
+  /********** [START: Fungsi Penanganan Aksi Form Transaksi (Event Handlers)] **********/
+
+  /**
+   * Menangani pemilihan Quick Chip, mengisi deskripsi dan kategori sekaligus secara sinkron.
+   */
   function handleChipSelect({
     description,
     categoryId,
@@ -255,9 +243,9 @@ export function TransactionModal({
     setFormCategoryId(categoryId);
   }
 
-  //********** Mutation Parser Handler **********
-  //********** Runs on every keystroke/paste inside the mutation textarea.
-  //********** parseMutationText is pure & synchronous - safe to call on change.
+  /**
+   * Memproses perubahan atau tempelan teks mutasi m-banking untuk mengekstrak nominal secara otomatis.
+   */
   function handleMutationChange(text: string) {
     setMutationText(text);
     if (!text.trim()) {
@@ -266,7 +254,6 @@ export function TransactionModal({
     }
     const parsed = parseMutationText(text);
     if (parsed !== null && parsed > 0) {
-      //********** CurrencyInput expects a raw digit string (no separators)
       setFormAmount(String(parsed));
       setMutationStatus("success");
     } else {
@@ -274,7 +261,7 @@ export function TransactionModal({
     }
   }
 
-  //********** Validation **********
+  /* Validasi kelengkapan form sebelum pengiriman data */
   const isValid = useMemo(() => {
     const amount = parseInt(formAmount, 10);
     if (isNaN(amount) || amount <= 0) return false;
@@ -285,7 +272,9 @@ export function TransactionModal({
     return !!formCategoryId;
   }, [formAmount, formWalletId, formTargetWalletId, formCategoryId, isTransfer]);
 
-  //********** Submit **********
+  /**
+   * Menyimpan transaksi baru atau memperbarui transaksi yang sedang disunting ke IndexedDB.
+   */
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     if (!isValid) return;
@@ -333,6 +322,9 @@ export function TransactionModal({
     }
   }
 
+  /**
+   * Menghapus transaksi yang sedang disunting setelah konfirmasi pengguna.
+   */
   async function handleDeleteTransaction() {
     if (!editingTxn?.clientId) return;
     setIsSubmitting(true);
@@ -346,28 +338,29 @@ export function TransactionModal({
       setIsSubmitting(false);
     }
   }
+  /********** [END: Fungsi Penanganan Aksi Form Transaksi (Event Handlers)] **********/
 
   if (!isOpen) return null;
 
-  //********** Style tokens **********
+  /* Token kelas gaya CSS standar untuk input dan label */
   const inputCls =
     "w-full min-h-[44px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-50";
   const labelCls =
     "mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300";
 
-  //********** Render **********
+  /* Pengembalian Struktur Modal JSX */
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
-      {/* //********** Backdrop ********** */}
+      {/* Latar Belakang Gelap (Backdrop) */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* //********** Modal sheet ********** */}
+      {/* Lembar Modal Utama (Modal Sheet) */}
       <div className="relative z-10 w-full max-h-[90vh] overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom-10 duration-200 dark:border-slate-800 dark:bg-slate-900 sm:max-w-2xl sm:rounded-2xl sm:slide-in-from-bottom-0 sm:fade-in">
 
-        {/* //********** Header ********** */}
+        {/* Bagian Header Modal */}
         <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 dark:border-slate-800">
           <h2 className="text-base font-semibold text-slate-900 dark:text-slate-50">
             {modalView === "category-builder"
@@ -383,17 +376,16 @@ export function TransactionModal({
           </button>
         </div>
 
-        {/* //********** View: Category Builder ********** */}
+        {/* Tampilan Pembuat Kategori Baru (Category Builder) */}
         {modalView === "category-builder" && (
           <CategoryBuilder
             type={formType === "INCOME" ? "INCOME" : "EXPENSE"}
             onCreateCategory={createCategory}
             onSave={(clientId) => {
-              //********** Delay slightly so the DOM has the new category rendered from the
-              //********** parent's updated state before we auto-select it, avoiding race condition
+              /* Jeda singkat agar DOM merender kategori baru sebelum dipilih otomatis */
               setTimeout(() => {
                 setFormCategoryId(clientId);
-                setIsCategoryExpanded(true);  //********** expand so new category is visible
+                setIsCategoryExpanded(true);
                 setModalView("form");
               }, 0);
             }}
@@ -401,11 +393,11 @@ export function TransactionModal({
           />
         )}
 
-        {/* //********** View: Transaction Form ********** */}
+        {/* Tampilan Form Transaksi Utama */}
         {modalView === "form" && (
         <form onSubmit={handleSubmit} className="space-y-5 px-5 py-4 pb-safe">
 
-          {/* //********** Tabs: Pengeluaran | Pemasukan | Transfer ********** */}
+          {/* Pilihan Tab Tipe Transaksi: Pengeluaran, Pemasukan, Transfer */}
           <div className="flex gap-2">
             {TYPE_TABS.map((tab) => (
               <button
@@ -424,15 +416,15 @@ export function TransactionModal({
             ))}
           </div>
 
-          {/* //********** Mutation Parser (collapsible) ********** */}
+          {/* Pemindai Teks Mutasi M-Banking (dapat dibuka/tutup) */}
           <div className="rounded-xl border border-dashed border-indigo-200 bg-indigo-50/50 dark:border-indigo-800/50 dark:bg-indigo-950/20 overflow-hidden transition-all duration-200">
-            {/* //********** Toggle header ********** */}
+            {/* Header Pengendali Pemindai Mutasi */}
             <button
               type="button"
               onClick={() => {
                 setShowMutationParser((v) => !v);
                 if (showMutationParser) {
-                  //********** Collapsing - clear parser state but keep filled amount
+                  /* Mengosongkan status pemindai saat ditutup namun mempertahankan nominal */
                   setMutationText("");
                   setMutationStatus("idle");
                 }
@@ -457,7 +449,7 @@ export function TransactionModal({
               </span>
             </button>
 
-            {/* //********** Expandable body ********** */}
+            {/* Isi Panel Pemindai Teks Mutasi */}
             {showMutationParser && (
               <div className="animate-in slide-in-from-top-1 fade-in duration-200 border-t border-indigo-200/70 px-3 pb-3 pt-2.5 dark:border-indigo-800/40">
                 <p className="mb-2 text-[11px] leading-relaxed text-indigo-600/80 dark:text-indigo-400/80">
@@ -469,8 +461,7 @@ export function TransactionModal({
                     value={mutationText}
                     onChange={(e) => handleMutationChange(e.target.value)}
                     onPaste={(e) => {
-                      //********** Allow default paste, then let onChange fire
-                      //********** Extra: immediately parse clipboard text for instant feedback
+                      /* Mengekstrak nominal langsung dari papan klip saat penempelan teks */
                       const pasted = e.clipboardData.getData("text");
                       if (pasted) {
                         e.preventDefault();
@@ -482,7 +473,7 @@ export function TransactionModal({
                     placeholder={`Contoh:\nBCA - Debit Rp150.000 dari rek 1234567890 ke rek 0987654321 berhasil. Saldo akhir Rp2.350.000`}
                     className="w-full resize-none rounded-lg border border-indigo-200 bg-white px-3 py-2 text-[13px] leading-relaxed text-slate-700 shadow-sm placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-indigo-800/60 dark:bg-slate-800 dark:text-slate-200 dark:placeholder:text-slate-600"
                   />
-                  {/* //********** Status badge ********** */}
+                  {/* Penanda Status Deteksi Nominal */}
                   {mutationStatus !== "idle" && (
                     <div
                       className={`absolute bottom-2 right-2 flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold ${
@@ -508,7 +499,7 @@ export function TransactionModal({
             )}
           </div>
 
-          {/* //********** Nominal ********** */}
+          {/* Field Input Nominal Transaksi */}
           <div>
             <label htmlFor="txn-amount" className={labelCls}>
               Nominal
@@ -529,7 +520,7 @@ export function TransactionModal({
             </div>
           </div>
 
-          {/* //********** Tanggal ********** */}
+          {/* Field Pilihan Tanggal */}
           <div>
             <label htmlFor="txn-date" className={labelCls}>
               Tanggal
@@ -544,7 +535,7 @@ export function TransactionModal({
             />
           </div>
 
-          {/* //********** Dompet - Visual icon-button row ********** */}
+          {/* Pilihan Dompet Transaksi */}
           <div className="space-y-3">
             <div>
               <label className={labelCls}>
@@ -586,7 +577,7 @@ export function TransactionModal({
               )}
             </div>
 
-            {/* //********** Dompet Tujuan - hanya untuk TRANSFER ********** */}
+            {/* Pilihan Dompet Tujuan khusus Transaksi Transfer */}
             {isTransfer && (
               <div className="animate-in fade-in slide-in-from-top-1 duration-200">
                 <label className={labelCls}>Dompet Tujuan</label>
@@ -630,12 +621,12 @@ export function TransactionModal({
             )}
           </div>
 
-          {/* //********** Kategori - Inline Expand / Collapse Grid ********** */}
+          {/* Pilihan Kategori Transaksi */}
           {!isTransfer && (
             <div className="animate-in fade-in duration-150 space-y-2">
               <label className={labelCls}>Kategori</label>
 
-              {/* //********** Category grid - top-4 collapsed, all shown when expanded ********** */}
+              {/* Grid Kategori Utama (8 kategori teratas saat diringkas) */}
               <div className="grid grid-cols-4 gap-2">
                 {(isCategoryExpanded
                   ? availableCategories
@@ -679,7 +670,7 @@ export function TransactionModal({
                   );
                 })}
 
-                {/* //********** "+ Tambah Baru" - always visible, opens full Category Builder view ********** */}
+                {/* Tombol Tambah Kategori Baru */}
                 <button
                   type="button"
                   onClick={() => setModalView("category-builder")}
@@ -697,7 +688,7 @@ export function TransactionModal({
                 </button>
               </div>
 
-              {/* //********** Expand / Collapse toggle ********** */}
+              {/* Tombol Ekspansi dan Ringkasan Daftar Kategori */}
               {availableCategories.length > 8 && (
                 <button
                   type="button"
@@ -715,7 +706,7 @@ export function TransactionModal({
                 </button>
               )}
 
-              {/* //********** Validation hint ********** */}
+              {/* Peringatan Kategori Belum Dipilih */}
               {!formCategoryId && (
                 <p className="text-[11px] text-rose-500 dark:text-rose-400">
                   Pilih kategori untuk melanjutkan.
@@ -724,7 +715,7 @@ export function TransactionModal({
             </div>
           )}
 
-          {/* //********** Info catatan untuk TRANSFER ********** */}
+          {/* Informasi Khusus untuk Transaksi Transfer */}
           {isTransfer && (
             <p className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs text-indigo-700 dark:border-indigo-800/60 dark:bg-indigo-950/40 dark:text-indigo-300">
               Transfer antar dompet tidak memengaruhi total pemasukan atau
@@ -732,7 +723,7 @@ export function TransactionModal({
             </p>
           )}
 
-          {/* //********** Quick Chips - ABOVE description, EXPENSE only, not editing ********** */}
+          {/* Quick Chips Pengeluaran Cepat */}
           {!isTransfer && !editingTxn && formType === "EXPENSE" && (
             <div className="animate-in fade-in duration-200">
               <QuickChipGrid
@@ -743,7 +734,7 @@ export function TransactionModal({
             </div>
           )}
 
-          {/* //********** Deskripsi - tersembunyi untuk TRANSFER ********** */}
+          {/* Field Deskripsi Transaksi (Disembunyikan saat Transfer) */}
           {!isTransfer && (
             <div>
               <label htmlFor="txn-desc" className={labelCls}>
@@ -761,7 +752,7 @@ export function TransactionModal({
             </div>
           )}
 
-          {/* //********** Catatan (progressive disclosure) ********** */}
+          {/* Field Catatan Tambahan */}
           {!isTransfer &&
             (showNote ? (
               <div className="animate-in fade-in slide-in-from-top-1 duration-200">
@@ -790,7 +781,7 @@ export function TransactionModal({
               </button>
             ))}
 
-          {/* //********** Tombol Aksi ********** */}
+          {/* Tombol Simpan dan Batal Form Transaksi */}
           <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center">
             {showDeleteConfirm ? (
               <div className="flex w-full flex-col gap-3 rounded-xl border border-rose-100 bg-rose-50 p-4 dark:border-rose-900/30 dark:bg-rose-900/10">

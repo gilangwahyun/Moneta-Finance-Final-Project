@@ -1,39 +1,38 @@
-/********** Imports **********/
+/*
+ * File: src/components/ui/CompactSummaryRow.tsx
+ * Description: Baris ringkasan metrik keuangan yang adaptif untuk tampilan seluler dan desktop dengan indikator tren perbandingan.
+ */
+
 import React from "react";
 import { formatCurrency, formatCurrencyCompact } from "@/lib/utils/helpers";
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
 
-/********** Types **********/
 export type MetricItem = {
   label: string;
   compactLabel: string;
   value: number;
   isNegative?: boolean;
-  
-  // Desktop trend props
+
+  /* Properti tren untuk tampilan desktop */
   previousValue?: number;
   comparisonLabel?: string;
   isCost?: boolean;
-  
-  // Optional Icon
+
+  /* Ikon opsional */
   icon?: React.ReactNode;
 };
 
-/********** Component **********/
 /**
- * Renders a compact row of up to three metric items.
+ * Merender baris ringkasan berisi hingga tiga item metrik keuangan secara ringkas.
  *
- * This component is primarily used to display high-level summaries such as 
- * total balance, income, and expenses. It adapts to both mobile and desktop 
- * layouts, showing trend indicators on desktop if previous value data is available.
- *
- * @param props - Component props containing exactly three metric items.
- * @returns A structured summary row component.
+ * @param props - Properti komponen berupa tepat tiga item metrik
+ * @returns Elemen JSX baris ringkasan keuangan
  */
 export function CompactSummaryRow({ metrics }: { metrics: [MetricItem, MetricItem, MetricItem] }) {
+  /********** [START: Perenderan Baris Ringkasan Metrik Keuangan] **********/
   return (
     <div className="relative overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm dark:border-slate-800/60 dark:bg-slate-900 sm:bg-transparent sm:border-none sm:shadow-none sm:dark:bg-transparent transition-all duration-300">
-      {/* Mobile Row Layout */}
+      {/* Tata letak baris adaptif seluler dan desktop */}
       <div className="grid grid-cols-3 divide-x divide-slate-100 sm:gap-4 sm:divide-none dark:divide-slate-800/60">
         {metrics.map((metric, i) => {
           const delta = metric.previousValue !== undefined ? metric.value - metric.previousValue : 0;
@@ -41,10 +40,10 @@ export function CompactSummaryRow({ metrics }: { metrics: [MetricItem, MetricIte
           const isGood = metric.isCost ? delta <= 0 : delta >= 0;
           const isZero = delta === 0;
           const hasTrend = metric.previousValue !== undefined;
-          
+
           return (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className="group flex flex-col p-3.5 transition-all hover:bg-slate-50 dark:hover:bg-slate-800/50 sm:rounded-xl sm:border sm:border-slate-100 sm:bg-white sm:p-5 sm:shadow-sm sm:hover:bg-slate-50 sm:dark:border-slate-800/60 sm:dark:bg-slate-900 sm:dark:hover:bg-slate-800/50"
             >
               <div className="flex items-center gap-1.5 sm:gap-2 text-[10px] sm:text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400">
@@ -52,13 +51,13 @@ export function CompactSummaryRow({ metrics }: { metrics: [MetricItem, MetricIte
                 <span className="sm:hidden">{metric.compactLabel}</span>
                 <span className="hidden sm:inline">{metric.label}</span>
               </div>
-              
+
               <p className={`mt-1.5 truncate text-base font-bold tracking-tight sm:mt-2 sm:text-2xl transition-all duration-300 ${metric.isNegative ? "text-rose-600 dark:text-rose-400" : "text-slate-900 dark:text-slate-50"}`}>
                 <span className="sm:hidden">{formatCurrencyCompact(metric.value)}</span>
                 <span className="hidden sm:inline">{formatCurrency(metric.value)}</span>
               </p>
-              
-              {/* Desktop Subtext (Trend) */}
+
+              {/* Teks indikator tren perbandingan pada tampilan desktop */}
               <div className="hidden sm:block">
                 {hasTrend && metric.previousValue! > 0 && pct !== null && (
                   <div
@@ -96,4 +95,5 @@ export function CompactSummaryRow({ metrics }: { metrics: [MetricItem, MetricIte
       </div>
     </div>
   );
+  /********** [END: Perenderan Baris Ringkasan Metrik Keuangan] **********/
 }

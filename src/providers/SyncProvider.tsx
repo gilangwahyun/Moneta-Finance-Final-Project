@@ -1,7 +1,7 @@
-//********** START: Sync Provider **********
-//********** React context that exposes sync state, pending count,
-//********** and control functions to the entire app.
-//********** END: Sync Provider **********
+/*
+ * File: src/providers/SyncProvider.tsx
+ * Description: Penyedia konteks React (React Context) yang menyediakan status konektivitas, jumlah antrean sinkronisasi luring, serta fungsi kontrol sinkronisasi ke seluruh aplikasi.
+ */
 
 "use client";
 
@@ -10,6 +10,13 @@ import { useSync, UseSyncReturn } from "@/hooks/use-sync";
 
 const SyncContext = createContext<UseSyncReturn | null>(null);
 
+/********** [START: Penyedia Konteks Sinkronisasi Luring/Daring] **********/
+/**
+ * Komponen penyedia konteks sinkronisasi data lokal (IndexedDB) dengan server backend.
+ *
+ * @param props - Properti penyedia konteks sinkronisasi
+ * @returns Elemen JSX penyedia konteks
+ */
 export function SyncProvider({ children }: { children: React.ReactNode }) {
   const syncValue = useSync();
 
@@ -17,24 +24,28 @@ export function SyncProvider({ children }: { children: React.ReactNode }) {
     <SyncContext.Provider value={syncValue}>{children}</SyncContext.Provider>
   );
 }
+/********** [END: Penyedia Konteks Sinkronisasi Luring/Daring] **********/
 
-//********** HOOK **********
+/********** [START: Hook Pengakses Konteks Sinkronisasi] **********/
 /**
- * Access sync state and controls from any component.
+ * Hook untuk mengakses status sinkronisasi dan fungsi kontrol dari komponen mana pun.
  *
- * Provides:
+ * Menyediakan:
  * - `syncState` - "idle" | "syncing" | "error" | "offline"
- * - `isOnline` - browser connectivity status
- * - `pendingCount` - number of unsynced mutations
- * - `lastSyncedAt` - ISO timestamp of last successful sync
- * - `lastResult` - detailed result of the last sync cycle
- * - `triggerSync()` - force an immediate sync
- * - `scheduleSync()` - schedule a debounced sync (call after mutations)
+ * - `isOnline` - status konektivitas jaringan peramban
+ * - `pendingCount` - jumlah mutasi lokal yang belum disinkronkan ke server
+ * - `lastSyncedAt` - penanda waktu ISO sinkronisasi sukses terakhir
+ * - `lastResult` - hasil detail siklus sinkronisasi terakhir
+ * - `triggerSync()` - memicu sinkronisasi langsung secara manual
+ * - `scheduleSync()` - menjadwalkan sinkronisasi debounced setelah mutasi data
+ *
+ * @returns Objek nilai dan metode dari UseSyncReturn
  */
 export function useSyncContext(): UseSyncReturn {
   const context = useContext(SyncContext);
   if (!context) {
-    throw new Error("useSyncContext must be used within a SyncProvider");
+    throw new Error("useSyncContext harus digunakan di dalam SyncProvider");
   }
   return context;
 }
+/********** [END: Hook Pengakses Konteks Sinkronisasi] **********/

@@ -1,3 +1,8 @@
+/*
+ * File: src/components/targets/TargetModal.tsx
+ * Description: Komponen modal form pembuatan dan pengeditan target keuangan bulanan atau periode khusus.
+ */
+
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
@@ -16,6 +21,12 @@ interface TargetModalProps {
   onSave: (input: any) => Promise<void>;
 }
 
+/**
+ * Merender modal dialog form untuk membuat atau memperbarui target pemasukan/keuangan.
+ *
+ * @param props - Properti konfigurasi modal target
+ * @returns Elemen JSX modal target atau null jika tertutup
+ */
 export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [name, setName] = useState('');
@@ -31,6 +42,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
   const amountRef = useRef<HTMLInputElement>(null);
   const prevIsOpen = useRef(false);
 
+  /********** [START: Sinkronisasi Data Form Saat Modal Dibuka] **********/
   useEffect(() => {
     if (isOpen && !prevIsOpen.current) {
       if (editingTarget) {
@@ -52,9 +64,11 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
     }
     prevIsOpen.current = isOpen;
   }, [isOpen, editingTarget]);
+  /********** [END: Sinkronisasi Data Form Saat Modal Dibuka] **********/
 
   if (!isOpen) return null;
 
+  /********** [START: Penanganan Penyimpanan Data Target Keuangan] **********/
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !targetAmount) return;
@@ -84,15 +98,16 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
       setIsSubmitting(false);
     }
   };
+  /********** [END: Penanganan Penyimpanan Data Target Keuangan] **********/
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
-      {/* Backdrop */}
+      {/* Latar Belakang Gelap Modal */}
       <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity dark:bg-black/60" onClick={onClose} />
 
-      {/* Modal/Sheet Content */}
+      {/* Kontainer Utama Konten Modal */}
       <div className="relative z-10 w-full max-h-[90vh] overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom-10 duration-200 dark:border-slate-800 dark:bg-slate-900 sm:max-w-md sm:rounded-2xl sm:slide-in-from-bottom-0 sm:fade-in flex flex-col">
-        {/* Header */}
+        {/* Header Dialog Modal */}
         <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-100 bg-white/80 px-5 py-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80">
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">{editingTarget ? 'Ubah Target' : 'Buat Target Baru'}</h2>
           <button
@@ -105,9 +120,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-5">
-          {/* Target Type Removed - Only INCOME_TARGET supported */}
-
-          {/* Name */}
+          {/* Input Nama Target */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Nama Target</label>
             <input
@@ -120,7 +133,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
             />
           </div>
 
-          {/* Amount */}
+          {/* Input Nominal Target Pemasukan */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Target Pemasukan</label>
             <div className="relative">
@@ -136,7 +149,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
             </div>
           </div>
 
-          {/* Period Selection */}
+          {/* Pilihan Siklus Periode Target */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Periode</label>
             <select
@@ -157,7 +170,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
             </p>
           </div>
 
-          {/* Dates */}
+          {/* Pemilihan Rentang Tanggal Mulai dan Selesai */}
           <div className={`grid gap-4 ${period === 'CUSTOM' ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <div>
               <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
@@ -186,7 +199,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
             )}
           </div>
 
-          {/* Category */}
+          {/* Pemilihan Kategori Target Pemasukan */}
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">Kategori Target</label>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[180px] overflow-y-auto pr-1 pb-1">
@@ -222,7 +235,7 @@ export function TargetModal({ isOpen, onClose, editingTarget, onSave }: TargetMo
             </div>
           </div>
 
-          {/* Footer Actions */}
+          {/* Aksi Tombol Simpan dan Batal */}
           <div className="mt-4 flex flex-col gap-3 sm:flex-row-reverse">
             <button
               type="submit"

@@ -1,13 +1,7 @@
-// ─── UrgentBudgetProgressBar ──────────────────────────────
-// Modul 1: Anti-Illusion Nudge
-//
-// Bug 5 Fix: Added category color dot indicator. The dot is rendered
-// inside the category icon container, sourced from categoryColor prop.
-//
-// Urgency Levels (UCD Neutrality — informatif, tidak punitif):
-//   safe     : < 75% terpakai  → indigo  (on-track)
-//   warning  : 75–99% terpakai → amber   (perhatian)
-//   critical : >= 100% terpakai → slate  (anggaran habis)
+/*
+ * File: src/components/budgets/UrgentBudgetProgressBar.tsx
+ * Description: Komponen bilah kemajuan anggaran mendesak dengan pengingat anti-ilusi (Anti-Illusion Nudge) untuk memantau sisa anggaran secara efektif.
+ */
 
 "use client";
 
@@ -15,25 +9,21 @@ import { AlertCircle } from "lucide-react";
 import { formatCurrency } from "@/lib/utils/helpers";
 import { getCategoryIcon } from "@/lib/utils/icons";
 
-// ─── Data Shape ─────────────────────────────────────────
+/********** Struktur Data Progres Anggaran **********/
 
 export interface BudgetProgressItem {
   categoryId: string;
   categoryName: string;
-  /** Hex color string from category.color — e.g. "#EF4444" */
   categoryColor?: string | null;
   spentAmount: number;
   budgetAmount: number;
-  /** Math.max(0, budgetAmount - spentAmount) */
   remainingAmount: number;
-  /** spentAmount / budgetAmount * 100, unclamped */
   percentage: number;
-  /** Math.min(100, percentage) — for bar width */
   clampedPercentage: number;
   urgencyLevel: "safe" | "warning" | "critical";
 }
 
-// ─── Urgency Style Map ───────────────────────────────────
+/********** Pemetaan Gaya Warna Urgensi (UCD Neutrality) **********/
 
 const URGENCY_STYLES: Record<
   BudgetProgressItem["urgencyLevel"],
@@ -57,7 +47,7 @@ const URGENCY_STYLES: Record<
     remainingBorder: "border-amber-100 dark:border-amber-900/60",
   },
   critical: {
-    // Over-budget: Use rose-500 for the bar fill (loss-aversion nudge)
+    /* Melebihi anggaran: Menggunakan warna rose-500 untuk bilah (pengingat penghindaran kerugian) */
     bar: "bg-rose-500",
     remaining: "text-rose-600 dark:text-rose-400",
     remainingBg: "bg-rose-50 dark:bg-rose-950/60",
@@ -65,27 +55,36 @@ const URGENCY_STYLES: Record<
   },
 };
 
-// ─── Component ───────────────────────────────────────────
+/********** Komponen Bilah Progres Anggaran Mendesak (UrgentBudgetProgressBar) **********/
 
 interface UrgentBudgetProgressBarProps {
   item: BudgetProgressItem;
 }
 
+/**
+ * Merender bilah kemajuan untuk kategori anggaran yang memerlukan perhatian mendesak beserta indikator sisa dana/defisit.
+ *
+ * @param props - Properti item progres anggaran
+ * @returns Elemen JSX bilah progres mendesak
+ */
 export function UrgentBudgetProgressBar({ item }: UrgentBudgetProgressBarProps) {
+  /********** [START: Kalkulasi Defisit & Kelas Warna Urgensi] **********/
   const styles = URGENCY_STYLES[item.urgencyLevel];
   const isExceeded = item.percentage >= 100;
-  // Deficit = how much over the budget limit (only meaningful when exceeded)
+  
+  /* Kalkulasi jumlah kelebihan nominal pengeluaran di atas batas anggaran */
   const deficitAmount = isExceeded ? item.spentAmount - item.budgetAmount : 0;
-  // Bar color: rose-500 when over-budget, otherwise follow urgency styles
+  
+  /* Warna bilah: rose-500 saat melebihi anggaran, atau mengikuti gaya urgensi */
   const barClass = isExceeded ? "bg-rose-500" : styles.bar;
+  /********** [END: Kalkulasi Defisit & Kelas Warna Urgensi] **********/
 
   return (
     <div className="space-y-2.5">
-      {/* ── Top row: Category identifier + Remaining (DOMINANT) ── */}
+      {/* Baris Atas: Identitas Kategori + Sisa Anggaran (Dominan) */}
       <div className="flex items-center justify-between gap-3">
-        {/* Left: Icon + Color dot + Category name */}
+        {/* Kiri: Ikon + Titik Warna + Nama Kategori */}
         <div className="flex min-w-0 items-center gap-2.5">
-          {/* Dynamic icon-only coloring — no separate dot */}
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800/70">
             {getCategoryIcon(item.categoryName, "h-4 w-4", item.categoryColor)}
           </div>
@@ -94,7 +93,7 @@ export function UrgentBudgetProgressBar({ item }: UrgentBudgetProgressBarProps) 
           </span>
         </div>
 
-        {/* Right: Remaining nominal — focal point of this nudge component */}
+        {/* Kanan: Nominal Sisa Anggaran sebagai fokus utama pengingat */}
         <div
           className={`shrink-0 rounded-lg border px-2.5 py-1 ${
             isExceeded
@@ -115,7 +114,7 @@ export function UrgentBudgetProgressBar({ item }: UrgentBudgetProgressBarProps) 
         </div>
       </div>
 
-      {/* ── Progress bar — capped at 100% wide, rose-500 when exceeded ── */}
+      {/* Bilah Kemajuan (Dibatasi maksimal 100% untuk lebar elemen visual) */}
       <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
         <div
           className={`h-full rounded-full transition-all duration-700 ease-out ${barClass}`}
@@ -123,7 +122,7 @@ export function UrgentBudgetProgressBar({ item }: UrgentBudgetProgressBarProps) 
         />
       </div>
 
-      {/* ── Bottom row: Spent/Total + Percentage OR Deficit label ── */}
+      {/* Baris Bawah: Terpakai/Total + Persentase atau Label Defisit */}
       <div className="flex items-baseline justify-between">
         <p className="text-xs text-slate-600 dark:text-slate-400">
           <span className="font-medium text-slate-600 dark:text-slate-300">
@@ -132,7 +131,7 @@ export function UrgentBudgetProgressBar({ item }: UrgentBudgetProgressBarProps) 
           {" "}dari {formatCurrency(item.budgetAmount)}
         </p>
         {isExceeded ? (
-          /* Over-budget: show human-readable deficit instead of "1015%" */
+          /* Menampilkan nominal defisit berlebih yang mudah dibaca alih-alih persentase esktrem */
           <p className="text-xs font-semibold text-rose-500 dark:text-rose-400">
             +{formatCurrency(deficitAmount)} lebih
           </p>

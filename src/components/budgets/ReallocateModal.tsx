@@ -1,3 +1,7 @@
+/*
+ * File: src/components/budgets/ReallocateModal.tsx
+ * Description: Modal penyesuaian atau subsidi silang antar anggaran dengan kalkulasi sisa anggaran dan validasi batas aman.
+ */
 "use client";
 
 import { useState, useEffect, useMemo, useRef, FormEvent } from "react";
@@ -5,6 +9,8 @@ import { Budget, Category } from "@/types/models.types";
 import { formatCurrency } from "@/lib/utils/helpers";
 import { X, ChevronDown, Check, ArrowRightLeft } from "lucide-react";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
+
+/********** Definisi Tipe & Antarmuka Komponen Realokasi **********/
 
 export interface BudgetWithSpent extends Budget {
   spent: number;
@@ -20,6 +26,11 @@ interface ReallocateModalProps {
   onClose: () => void;
 }
 
+/********** Komponen Bantu Pemilihan Kustom (CustomSelect) **********/
+
+/**
+ * Komponen dropdown kustom untuk memilih anggaran sumber atau tujuan beserta keterangan sisa anggaran.
+ */
 function CustomSelect({
   value,
   onChange,
@@ -112,6 +123,14 @@ function CustomSelect({
   );
 }
 
+/********** Komponen Utama Modal Realokasi Anggaran (ReallocateModal) **********/
+
+/**
+ * Modal untuk melakukan subsidi silang antar kategori anggaran dengan kalkulasi otomatis batas aman.
+ *
+ * @param props - Properti daftar anggaran dan fungsi konfirmasi realokasi
+ * @returns Elemen JSX modal realokasi anggaran
+ */
 export function ReallocateModal({
   budgets,
   preselectedSourceId,
@@ -126,7 +145,7 @@ export function ReallocateModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
 
-  // ── Derived data ──────────────────────────────────────
+  /********** [START: Kalkulasi Data Anggaran & Kandidat Subsidi (Derived State)] **********/
   const sourceBudget = useMemo(
     () => budgets.find((b) => b.clientId === sourceId),
     [budgets, sourceId]
@@ -152,15 +171,16 @@ export function ReallocateModal({
     [budgets, sourceId]
   );
 
-  // Reset destination if it becomes the same as source
+  /* Mengatur ulang pilihan tujuan jika sama dengan anggaran sumber yang dipilih */
   useEffect(() => {
     setDestinationId((prev) => {
       if (prev === sourceId) return "";
       return prev;
     });
   }, [sourceId]);
+  /********** [END: Kalkulasi Data Anggaran & Kandidat Subsidi (Derived State)] **********/
 
-  // Validation
+  /********** [START: Validasi Nominal & Keamanan Batas Anggaran] **********/
   const parsedAmount = useMemo(() => {
     const n = parseInt(amountStr.replace(/\D/g, ""), 10);
     return isNaN(n) ? 0 : n;
@@ -172,7 +192,7 @@ export function ReallocateModal({
     if (parsedAmount > sourceRemaining) return `Nominal tidak boleh melebihi sisa anggaran sumber (${formatCurrency(sourceRemaining)}).`;
     if (sourceId === destinationId) return "Anggaran tujuan harus berbeda dari anggaran sumber.";
     
-    // Safety check: Ensure source remains safe (>= 20% limit)
+    /* Pemeriksaan keamanan: Memastikan anggaran sumber tetap menyisakan batas aman (minimal 20% dari total) */
     if (sourceBudget) {
       const remainingAfter = sourceRemaining - parsedAmount;
       const minSafe = Number(sourceBudget.amount) * 0.2;
@@ -185,8 +205,9 @@ export function ReallocateModal({
   }, [amountStr, parsedAmount, sourceRemaining, sourceId, destinationId, sourceBudget]);
 
   const canSubmit = Boolean(sourceId && destinationId && sourceBudget && destinationBudget && parsedAmount > 0 && !amountError && !isSubmitting);
+  /********** [END: Validasi Nominal & Keamanan Batas Anggaran] **********/
 
-  // Submit
+  /********** [START: Penanganan Eksekusi Realokasi Anggaran (Event Handlers)] **********/
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     if (!canSubmit) return;
@@ -206,18 +227,19 @@ export function ReallocateModal({
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose();
   };
+  /********** [END: Penanganan Eksekusi Realokasi Anggaran (Event Handlers)] **********/
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
-      {/* Backdrop */}
+      {/* Latar Belakang Gelap (Backdrop) */}
       <div
         className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity dark:bg-black/60"
         onClick={handleBackdropClick}
       />
       
-      {/* Modal/Sheet Content */}
+      {/* Wadah Konten Lembar Modal (Sheet Modal) */}
       <div className="relative z-10 w-full max-h-[90vh] overflow-y-auto rounded-t-2xl border border-slate-200 bg-white shadow-2xl animate-in slide-in-from-bottom-10 duration-200 dark:border-slate-800 dark:bg-slate-900 sm:max-w-lg sm:rounded-2xl sm:slide-in-from-bottom-0 sm:fade-in flex flex-col">
-        {/* Header */}
+        {/* Bagian Header Modal */}
         <div className="sticky top-0 z-20 flex items-center justify-between border-b border-slate-100 bg-white/80 px-5 py-4 backdrop-blur-md dark:border-slate-800 dark:bg-slate-900/80">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 dark:bg-indigo-500/20 dark:text-indigo-400">
@@ -240,10 +262,10 @@ export function ReallocateModal({
           </button>
         </div>
 
-        {/* Body */}
+        {/* Form Isi Modal Realokasi */}
         <form onSubmit={handleSubmit} className="p-5 flex flex-col gap-6">
           
-          {/* Source Select */}
+          {/* Pilihan Anggaran Sumber (Dari) */}
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
               Dari (Sumber)
@@ -273,7 +295,7 @@ export function ReallocateModal({
             )}
           </div>
 
-          {/* Destination Select */}
+          {/* Pilihan Anggaran Tujuan (Ke) */}
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
               Ke (Tujuan)
@@ -290,7 +312,7 @@ export function ReallocateModal({
             />
           </div>
 
-          {/* Amount Input */}
+          {/* Input Nominal yang Dipindahkan */}
           <div>
             <label className="mb-2 block text-sm font-medium text-slate-700 dark:text-slate-300">
               Nominal
@@ -315,7 +337,7 @@ export function ReallocateModal({
             </p>
           </div>
 
-          {/* Impact Summary */}
+          {/* Ringkasan Dampak Perubahan Realokasi */}
           {canSubmit && sourceBudget && destinationBudget && parsedAmount > 0 && (
             <div className="rounded-xl border border-indigo-100 bg-indigo-50/50 p-4 dark:border-indigo-500/20 dark:bg-indigo-500/5">
               <h4 className="mb-2.5 text-xs font-bold uppercase tracking-wider text-indigo-800 dark:text-indigo-400">
@@ -342,14 +364,14 @@ export function ReallocateModal({
             </div>
           )}
 
-          {/* API Error */}
+          {/* Pesan Kesalahan API */}
           {apiError && (
             <div className="rounded-xl bg-rose-50 p-3 text-sm font-medium text-rose-600 dark:bg-rose-500/10 dark:text-rose-400">
               {apiError}
             </div>
           )}
 
-          {/* Footer Actions */}
+          {/* Tombol Aksi Konfirmasi dan Batal */}
           <div className="mt-2 flex flex-col gap-3 sm:flex-row-reverse">
             <button
               type="submit"

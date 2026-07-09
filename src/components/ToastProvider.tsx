@@ -1,13 +1,19 @@
-// ─── Toast Provider ─────────────────────────────────────
-// Wraps sonner's <Toaster> with responsive positioning:
-//   Mobile:  bottom-center (above tab bar)
-//   Desktop: bottom-right
+/*
+ * File: src/components/ToastProvider.tsx
+ * Description: Penyedia notifikasi toast bergaya dari Sonner dengan penataan posisi responsif (tengah bawah untuk seluler, kanan bawah untuk desktop).
+ */
 
 "use client";
 
 import { Toaster } from "sonner";
 
+/**
+ * Merender komponen Toaster dari Sonner untuk menampilkan notifikasi mengapung di aplikasi.
+ *
+ * @returns Elemen JSX Toaster
+ */
 export function ToastProvider() {
+  /********** [START: Perenderan Penyedia Toast Notifikasi] **********/
   return (
     <Toaster
       position="bottom-center"
@@ -23,4 +29,5 @@ export function ToastProvider() {
       closeButton
     />
   );
+  /********** [END: Perenderan Penyedia Toast Notifikasi] **********/
 }

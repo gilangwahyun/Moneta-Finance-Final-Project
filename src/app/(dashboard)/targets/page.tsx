@@ -1,5 +1,11 @@
+/*
+ * File: src/app/(dashboard)/targets/page.tsx
+ * Description: Komponen halaman target keuangan pengguna untuk mencatat dan memantau progres pencapaian pemasukan harian, mingguan, bulanan, atau khusus.
+ */
+
 'use client';
 
+/********** Impor Modul & Dependensi **********/
 import { useState, useMemo } from 'react';
 import { useTargets } from '@/hooks/use-targets';
 import { TargetModal } from '@/components/targets/TargetModal';
@@ -14,7 +20,16 @@ import { ChevronDown } from 'lucide-react';
 import { DynamicIcon } from '@/components/ui/DynamicIcon';
 import { getCategoryIcon } from '@/lib/utils/icons';
 
+/********** Komponen Halaman Target Keuangan (TargetsPage) **********/
+
+/**
+ * Komponen utama halaman pengelolaan target keuangan (pemasukan), memonitor persentase tercapai,
+ * sisa waktu periode, serta menyediakan form penambahan atau perubahan target.
+ *
+ * @returns Elemen JSX tata letak halaman target keuangan Moneta
+ */
 export default function TargetsPage() {
+  /********** [START: Inisialisasi State & Hook Halaman Target] **********/
   const { targets, isLoading, recordTarget, editTarget, removeTarget } = useTargets();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTarget, setEditingTarget] = useState<FinancialTarget | null>(null);
@@ -22,7 +37,7 @@ export default function TargetsPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // ── Info Banner (dismiss per session) ────────────────────────────────────
+  /* State tampilan spanduk informasi reset periodik (disimpan per sesi browser) */
   const BANNER_KEY = 'moneta-targets-banner-dismissed';
   const [isBannerDismissed, setIsBannerDismissed] = useState<boolean>(() => {
     try { return sessionStorage.getItem(BANNER_KEY) === '1'; } catch { return false; }
@@ -32,8 +47,6 @@ export default function TargetsPage() {
     try { sessionStorage.setItem(BANNER_KEY, '1'); } catch { /* ignore */ }
     setIsBannerDismissed(true);
   };
-
-  // ─────────────────────────────────────────────────────────────────────────
 
   type StatusFilter = 'ALL' | 'NOT_STARTED' | 'SAFE' | 'WARNING' | 'DANGER' | 'EXPIRED';
 
@@ -51,7 +64,9 @@ export default function TargetsPage() {
     ],
     []
   );
+  /********** [END: Inisialisasi State & Hook Halaman Target] **********/
 
+  /********** [START: Kalkulasi Status Pencapaian & Filter Target Keuangan (Derived State)] **********/
   const targetsWithStats = useMemo(() => {
     return targets.map((target) => {
       let status: 'NOT_STARTED' | 'SAFE' | 'WARNING' | 'DANGER' | 'EXPIRED' = 'SAFE';
@@ -77,17 +92,23 @@ export default function TargetsPage() {
     if (statusFilter === 'ALL') return targetsWithStats;
     return targetsWithStats.filter((t) => t.status === statusFilter);
   }, [targetsWithStats, statusFilter]);
+  /********** [END: Kalkulasi Status Pencapaian & Filter Target Keuangan (Derived State)] **********/
 
+  /********** [START: Fungsi Penanganan Aksi Pengguna (Event Handlers)] **********/
+
+  /** Membuka modal form pembuatan target baru */
   const handleOpenCreate = () => {
     setEditingTarget(null);
     setIsModalOpen(true);
   };
 
+  /** Membuka modal form penyuntingan target yang dipilih */
   const handleOpenEdit = (target: FinancialTarget) => {
     setEditingTarget(target);
     setIsModalOpen(true);
   };
 
+  /** Menyimpan penambahan atau perubahan target keuangan ke repositori */
   const handleSave = async (input: any) => {
     if (editingTarget) {
       await editTarget(input);
@@ -96,13 +117,16 @@ export default function TargetsPage() {
     }
   };
 
+  /** Menghapus target keuangan berdasarkan ID klien */
   const handleDelete = async (clientId: string) => {
     setIsDeleting(true);
     await removeTarget(clientId);
     setIsDeleting(false);
     setDeleteConfirmId(null);
   };
+  /********** [END: Fungsi Penanganan Aksi Pengguna (Event Handlers)] **********/
 
+  /********** Pengembalian Tata Letak Halaman Target Keuangan (JSX) **********/
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-24">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -119,7 +143,7 @@ export default function TargetsPage() {
         </button>
       </div>
 
-      {/* ── Info Banner: Periodic Reset ──────────────────────────────── */}
+      {/* Spanduk Informasi Reset Periodik Target */}
       {!isBannerDismissed && (
         <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50/80 px-4 py-3.5 dark:border-blue-800/50 dark:bg-blue-950/20">
           <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500 dark:text-blue-400" />
@@ -139,7 +163,7 @@ export default function TargetsPage() {
       )}
 
       <div className="flex flex-col sm:flex-row gap-3">
-        {/* Status Filter - Desktop */}
+        {/* Filter Status Target - Layar Desktop */}
         <div className="hidden md:block flex-1 sm:flex-none w-full sm:w-auto min-w-0 overflow-hidden">
           <SegmentedControl
             options={statusOptions}
@@ -149,7 +173,7 @@ export default function TargetsPage() {
           />
         </div>
 
-        {/* Status Filter - Mobile */}
+        {/* Filter Status Target - Layar Mobile */}
         <div className="block md:hidden w-full">
           <button
             onClick={() => setShowStatusSheet(true)}
@@ -237,7 +261,7 @@ export default function TargetsPage() {
                 <div className="p-4 sm:p-5">
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex min-w-0 flex-1 items-center gap-3">
-                      {/* Icon */}
+                      {/* Ikon Kategori Target */}
                       <div
                         className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
                         style={{

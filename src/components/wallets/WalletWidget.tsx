@@ -1,11 +1,9 @@
-"use client";
+/*
+ * File: src/components/wallets/WalletWidget.tsx
+ * Description: Widget ringkas dasbor yang menampilkan daftar dompet aktif beserta kalkulasi saldo dinamis dari riwayat transaksi.
+ */
 
-// ─── WalletWidget ────────────────────────────────────────
-// Compact dashboard widget showing all active wallets and
-// their dynamically calculated balances.
-//
-// Bug 4 Fix: Replaced raw Unicode '−' (U+2212) with ASCII '-'
-// to prevent text corruption (Â− / âˆ') on certain screens.
+"use client";
 
 import { Wallet } from "@/types/models.types";
 import { formatCurrency } from "@/lib/utils/helpers";
@@ -14,7 +12,7 @@ import { Transaction } from "@/types/models.types";
 import { Banknote, CreditCard, Smartphone, TrendingUp, Wallet as WalletIcon, ChevronRight } from "lucide-react";
 import Link from "next/link";
 
-// ── Wallet type icon map ────────────────────────────────
+/********** Peta Ikon Tipe Dompet **********/
 const WALLET_ICONS: Record<string, React.ReactNode> = {
   TUNAI:      <Banknote className="h-4 w-4" />,
   BANK:       <CreditCard className="h-4 w-4" />,
@@ -37,11 +35,19 @@ interface WalletWidgetProps {
   isLoading?: boolean;
 }
 
+/**
+ * Merender widget daftar dompet beserta total saldo yang dihitung dari transaksi.
+ *
+ * @param props - Properti konfigurasi widget dompet
+ * @returns Elemen JSX widget dompet dasbor
+ */
 export function WalletWidget({ wallets, transactions, isLoading }: WalletWidgetProps) {
+  /********** [START: Perhitungan Total Saldo Seluruh Dompet] **********/
   const totalBalance = wallets.reduce(
     (sum, w) => sum + calculateWalletBalance(w, transactions),
     0
   );
+  /********** [END: Perhitungan Total Saldo Seluruh Dompet] **********/
 
   if (isLoading) {
     return (
@@ -73,9 +79,10 @@ export function WalletWidget({ wallets, transactions, isLoading }: WalletWidgetP
     );
   }
 
+  /********** [START: Perenderan Daftar Dompet dan Saldo Dinamis] **********/
   return (
     <div className="rounded-xl border border-slate-100 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900 overflow-hidden">
-      {/* Header */}
+      {/* Bagian Header Widget */}
       <div className="flex items-center justify-between px-5 pt-4 pb-2">
         <p className="text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">
           Dompet
@@ -89,7 +96,7 @@ export function WalletWidget({ wallets, transactions, isLoading }: WalletWidgetP
         </Link>
       </div>
 
-      {/* Wallet list */}
+      {/* Daftar Dompet Aktif */}
       <div className="divide-y divide-slate-50 dark:divide-slate-800/50 px-3">
         {wallets.map((wallet) => {
           const balance = calculateWalletBalance(wallet, transactions);
@@ -107,7 +114,7 @@ export function WalletWidget({ wallets, transactions, isLoading }: WalletWidgetP
                   {WALLET_TYPE_LABELS[wallet.type] ?? wallet.type}
                 </p>
               </div>
-              {/* Bug 4: Use ASCII '-' instead of Unicode '−' */}
+              {/* Tampilan nominal saldo dompet (menggunakan karakter ASCII '-' untuk mencegah korupsi teks) */}
               <span className={`shrink-0 text-sm font-semibold ${
                 isNegative
                   ? "text-rose-600 dark:text-rose-400"
@@ -120,10 +127,9 @@ export function WalletWidget({ wallets, transactions, isLoading }: WalletWidgetP
         })}
       </div>
 
-      {/* Total row */}
+      {/* Baris Total Saldo Gabungan */}
       <div className="flex items-center justify-between border-t border-slate-100 bg-slate-50 px-5 py-3 dark:border-slate-800/50 dark:bg-slate-800/30">
         <p className="text-xs font-semibold text-slate-600 dark:text-slate-400">Total Saldo</p>
-        {/* Bug 4: Use ASCII '-' instead of Unicode '−' */}
         <p className={`text-sm font-bold ${
           totalBalance < 0
             ? "text-rose-600 dark:text-rose-400"
@@ -134,4 +140,5 @@ export function WalletWidget({ wallets, transactions, isLoading }: WalletWidgetP
       </div>
     </div>
   );
+  /********** [END: Perenderan Daftar Dompet dan Saldo Dinamis] **********/
 }

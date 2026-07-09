@@ -1,35 +1,33 @@
-/********** Imports **********/
+/*
+ * File: src/components/ui/Tooltip.tsx
+ * Description: Komponen keterangan tambahan (tooltip) dengan dukungan hover pada desktop dan tap pada perangkat seluler.
+ */
+
 "use client";
 
 import { ReactNode, useState } from "react";
 
-/********** Types **********/
 interface TooltipProps {
   content: string;
   children: ReactNode;
-  /** Positioning relative to trigger. Default: "top" */
+  /** Posisi tooltip terhadap elemen pemicu. Default: "top" */
   position?: "top" | "bottom";
 }
 
-/********** Component **********/
 /**
- * A pure CSS/Tailwind tooltip component with mobile tap support.
+ * Merender keterangan tambahan bergaya gelembung yang muncul saat elemen pemicu dihover atau disentuh.
  *
- * Renders `children` as the trigger and shows `content` on hover, focus, or mobile tap.
- * Works on both mouse and touch (tap to toggle).
- * Keyboard accessible via tab focus.
- *
- * @param props - Tooltip configuration.
- * @returns A tooltip wrapper element.
+ * @param props - Properti konfigurasi tooltip
+ * @returns Elemen JSX pembungkus tooltip
  */
 export function Tooltip({ content, children, position = "top" }: TooltipProps) {
   const [isOpen, setIsOpen] = useState(false);
   const isTop = position === "top";
 
-  /********** Render **********/
+  /********** [START: Perenderan Komponen Tooltip Interaktif] **********/
   return (
     <span className="relative inline-flex items-center">
-      {/* Trigger */}
+      {/* Pemicu Tooltip */}
       <span
         tabIndex={0}
         onClick={(e) => {
@@ -43,22 +41,22 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       >
         {children}
 
-        {/* Tooltip bubble */}
+        {/* Gelembung Tooltip */}
         <span
           className={[
-            // Layout
+            /* Penataan tata letak */
             "pointer-events-none absolute z-50 w-56 rounded-lg px-3 py-2 text-xs leading-snug shadow-lg",
-            // Positioning
+            /* Penempatan posisi relatif */
             "left-1/2 -translate-x-1/2",
             isTop ? "bottom-full mb-2" : "top-full mt-2",
-            // Visual
+            /* Tampilan visual */
             "border border-slate-200 bg-white text-slate-600",
             "dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300",
-            // Arrow
+            /* Panah penunjuk */
             isTop
               ? "after:absolute after:left-1/2 after:top-full after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-white dark:after:border-t-slate-800 after:content-['']"
               : "after:absolute after:bottom-full after:left-1/2 after:-translate-x-1/2 after:border-4 after:border-transparent after:border-b-white dark:after:border-b-slate-800 after:content-['']",
-            // Visibility — hidden until parent group/tooltip is hovered/focused or tapped on mobile
+            /* Visibilitas - tersembunyi hingga dihover, fokus, atau disentuh pada seluler */
             isOpen
               ? "opacity-100 transition-opacity duration-150"
               : "opacity-0 transition-opacity duration-150 group-hover/tooltip:opacity-100 group-focus/tooltip:opacity-100",
@@ -69,4 +67,5 @@ export function Tooltip({ content, children, position = "top" }: TooltipProps) {
       </span>
     </span>
   );
+  /********** [END: Perenderan Komponen Tooltip Interaktif] **********/
 }

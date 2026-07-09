@@ -1,6 +1,9 @@
 'use client';
 
-/**********
+/*
+ * File: src/app/(dashboard)/page.tsx
+ * Description: Komponen halaman utama (Beranda/Dashboard) Moneta yang menampilkan ringkasan keuangan, peringatan nudging digital, kondisi anggaran, saldo dompet, dan transaksi terbaru.
+ *
  * Tujuan Penelitian:
  *   Menerapkan serangkaian Digital Nudge berbasis UCD untuk melawan
  *   "false sense of financial security" yang ditimbulkan oleh paparan
@@ -16,15 +19,13 @@
  *   7. WalletWidget (rincian per dompet)
  *   8. 5 Transaksi Terbaru
  *
- * ARSITEKTUR:
- *   - Offline-first: semua data dari IndexedDB.
- *   - Budget reload reaktif: subscribe ke 'moneta-transaction-updated'
- *     agar Subsidi Silang dan transaksi baru langsung terrefleksikan.
- *   - Toggle saldo: useState lokal, TIDAK di-persist ke localStorage.
- *     Direset ke hidden setiap sesi - menjaga konsistensi nudge.
- **********/
+ * Arsitektur:
+ *   - Offline-first: semua data dipuat dari IndexedDB.
+ *   - Budget reload reaktif: subscribe ke 'moneta-transaction-updated' agar subsidi silang dan transaksi baru langsung terrefleksikan.
+ *   - Toggle saldo: useState lokal, TIDAK di-persist ke localStorage. Direset ke hidden setiap sesi untuk menjaga konsistensi nudge.
+ */
 
-/********** Imports **********/
+/********** Impor Modul & Dependensi **********/
 
 import { useTransactions } from '@/hooks/use-transactions';
 import { useCategories } from '@/hooks/use-categories';
@@ -40,9 +41,16 @@ import { WalletWidget } from '@/components/wallets/WalletWidget';
 import { HiddenBalanceWidget } from '@/components/wallets/HiddenBalanceWidget';
 import { UrgentBudgetProgressBar } from '@/components/budgets/UrgentBudgetProgressBar';
 
-/********** Page Component **********/
+/********** Komponen Halaman Utama (DashboardPage) **********/
+
+/**
+ * Komponen utama halaman beranda yang merender ringkasan analitik keuangan pengguna,
+ * peringatan anggaran kritis, serta status saldo dan daftar transaksi terbaru.
+ *
+ * @returns Elemen tata letak dashboard utama Moneta
+ */
 export default function DashboardPage() {
-  /********** State **********/
+  /********** [START: Inisialisasi State & Pengambilan Data] **********/
   const { transactions, monthlyTotals, isLoading: txnLoading } = useTransactions();
 
   const { wallets, transactions: walletTxns, isLoading: walletsLoading, totalBalance } = useWallets();
@@ -58,29 +66,29 @@ export default function DashboardPage() {
     isLoading: dashLoading,
   } = useDashboard({ transactions, allCategories });
 
-  //********** Modul 1: Toggle saldo - false = hidden by default
-  //********** TIDAK di-persist ke localStorage. Direset setiap sesi
-  //********** agar efek nudge tetap konsisten sepanjang eksperimen.
+  /* Modul 1: Status sembunyikan saldo (false = tersembunyi secara default).
+   * Tidak disimpan di localStorage agar direset setiap sesi demi menjaga konsistensi efek nudging. */
   const [isBalanceVisible, setIsBalanceVisible] = useState(false);
 
   const isLoading = txnLoading || catLoading || dashLoading;
 
-  /********** Format current month label for display. */
+  /* Format label bulan dan tahun saat ini untuk ditampilkan di header */
   const monthLabel = useMemo(() => {
     return new Date().toLocaleDateString('id-ID', {
       month: 'long',
       year: 'numeric',
     });
   }, []);
+  /********** [END: Inisialisasi State & Pengambilan Data] **********/
 
-  /********** Render Helpers **********/
+  /********** Komponen Pembantu (Render Helpers) **********/
 
-  /** Inline skeleton component for the dashboard. */
+  /** Komponen kerangka muat (skeleton) sebaris untuk tampilan dashboard. */
   const Skeleton = ({ className }: { className: string }) => (
     <div className={`animate-pulse rounded bg-slate-200 dark:bg-slate-700 ${className}`} />
   );
 
-  /********** Rendering **********/
+  /********** Pengembalian Tata Letak Halaman (JSX) **********/
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">

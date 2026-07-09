@@ -1,12 +1,11 @@
+/*
+ * File: src/app/(dashboard)/wallets/page.tsx
+ * Description: Halaman administratif pengelolaan dompet (rekening, kartu, e-wallet, uang tunai) dengan kalkulasi saldo otomatis dari transaksi.
+ */
+
 'use client';
 
-/**********
- * Halaman administratif CRUD untuk dompet pengguna.
- * Dapat diakses via: Profil > Manajemen Dompet
- * Saldo ditampilkan secara dinamis dari riwayat transaksi.
- **********/
-
-/********** Imports **********/
+/********** Impor Modul & Dependensi **********/
 
 import { useState } from 'react';
 import { useWallets } from '@/hooks/use-wallets';
@@ -19,7 +18,7 @@ import { TransactionModal } from '@/components/transactions/TransactionModal';
 import { EntityActionMenu } from '@/components/ui/EntityActionMenu';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 
-/********** Constants **********/
+/********** Daftar Konstanta & Opsi Dompet **********/
 
 const WALLET_TYPES: { value: WalletType; label: string; icon: React.ReactNode }[] = [
   { value: 'TUNAI', label: 'Tunai', icon: <Banknote className="h-4 w-4" /> },
@@ -45,12 +44,19 @@ const TYPE_LABEL: Record<WalletType, string> = {
   LAINNYA: 'Lainnya',
 };
 
-/********** Page Component **********/
+/********** Komponen Halaman Manajemen Dompet (WalletsPage) **********/
+
+/**
+ * Komponen utama halaman manajemen dompet, menampilkan daftar dompet aktif beserta total saldo,
+ * serta fitur penambahan, perubahan, penghapusan, maupun transfer antar dompet.
+ *
+ * @returns Elemen JSX tata letak halaman manajemen dompet Moneta
+ */
 export default function WalletsPage() {
-  /********** State **********/
+  /********** [START: Inisialisasi State & Hook Halaman Dompet] **********/
   const { wallets, isLoading, removeWallet, totalBalance, getWalletBalance } = useWallets();
 
-  /********** UI and Modal state. */
+  /* State kontrol tampilan modal form dompet dan form transaksi transfer */
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingWallet, setEditingWallet] = useState<Wallet | null>(null);
 
@@ -63,19 +69,23 @@ export default function WalletsPage() {
   const inputCls =
     'w-full min-h-[44px] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-700 dark:bg-slate-800 dark:text-white';
   const labelCls = 'mb-1.5 block text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400';
+  /********** [END: Inisialisasi State & Hook Halaman Dompet] **********/
 
-  /********** Event Handlers **********/
+  /********** [START: Fungsi Penanganan Aksi Pengguna (Event Handlers)] **********/
 
+  /** Membuka modal form untuk membuat dompet baru */
   function openCreateModal() {
     setEditingWallet(null);
     setIsModalOpen(true);
   }
 
+  /** Membuka modal form untuk menyunting informasi dompet yang dipilih */
   function openEditModal(w: Wallet) {
     setEditingWallet(w);
     setIsModalOpen(true);
   }
 
+  /** Mengonfirmasi dan mengeksekusi penghapusan dompet yang dipilih */
   async function confirmDelete() {
     if (!deleteConfirmId) return;
     setIsDeleting(true);
@@ -86,12 +96,13 @@ export default function WalletsPage() {
       setIsDeleting(false);
     }
   }
+  /********** [END: Fungsi Penanganan Aksi Pengguna (Event Handlers)] **********/
 
-  /********** Derived State **********/
-
+  /********** [START: Daftar Dompet Aktif (Derived State)] **********/
   const activeWallets = wallets;
+  /********** [END: Daftar Dompet Aktif (Derived State)] **********/
 
-  /********** Rendering **********/
+  /********** Pengembalian Tata Letak Halaman Dompet (JSX) **********/
 
   if (isLoading) {
     return (
@@ -184,7 +195,7 @@ export default function WalletsPage() {
 
                 return (
                   <div key={wallet.clientId} className="group relative">
-                    {/* Mobile touch target for opening action menu */}
+                    {/* Area sentuh mobile untuk membuka menu aksi */}
                     <div
                       className="absolute inset-0 z-0 sm:hidden"
                       onClick={(e) => {

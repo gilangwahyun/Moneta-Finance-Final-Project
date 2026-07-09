@@ -1,17 +1,7 @@
-// ─── HiddenBalanceWidget ──────────────────────────────────
-// Modul 1: Anti-Illusion Nudge
-//
-// Saldo global disembunyikan secara default setiap kali aplikasi
-// dibuka. Pengguna harus secara aktif memilih untuk melihatnya.
-//
-// Tujuan Akademis (Digital Nudge):
-//   Mereduksi "false sense of financial security" yang muncul ketika
-//   pengguna langsung disuguhi angka saldo besar tanpa konteks.
-//   State toggle TIDAK di-persist ke localStorage — direset setiap
-//   sesi agar efek nudge tetap konsisten sepanjang eksperimen.
-//
-// Bug 7 Fix: Hidden state sekarang menggunakan dot mask minimalis
-// (••••••) alih-alih grid skeleton abu-abu yang terlihat berat.
+/*
+ * File: src/components/wallets/HiddenBalanceWidget.tsx
+ * Description: Widget tampilan saldo global dengan mekanisme Anti-Illusion Nudge (disembunyikan secara default untuk mengurangi false sense of financial security).
+ */
 
 "use client";
 
@@ -25,6 +15,12 @@ interface HiddenBalanceWidgetProps {
   isLoading?: boolean;
 }
 
+/**
+ * Merender widget saldo total gabungan yang disembunyikan secara default.
+ *
+ * @param props - Properti konfigurasi widget saldo tersembunyi
+ * @returns Elemen JSX widget saldo
+ */
 export function HiddenBalanceWidget({
   totalBalance,
   isVisible,
@@ -33,9 +29,10 @@ export function HiddenBalanceWidget({
 }: HiddenBalanceWidgetProps) {
   const isPositive = totalBalance >= 0;
 
+  /********** [START: Perenderan Widget Saldo Tersembunyi (Anti-Illusion Nudge)] **********/
   return (
     <div className={`relative overflow-hidden rounded-xl border border-slate-100 bg-white shadow-sm dark:border-slate-800/60 dark:bg-slate-900 transition-all duration-300 ${isVisible ? "p-5" : "py-3 px-5"}`}>
-      {/* ── Decorative background glyph ──────────────────── */}
+      {/* Ornamen latar belakang ikon dompet */}
       <div
         aria-hidden="true"
         className="pointer-events-none absolute -right-3 -top-3 text-indigo-400 opacity-[0.05] dark:opacity-[0.07]"
@@ -44,7 +41,7 @@ export function HiddenBalanceWidget({
       </div>
 
       <div className="relative z-10">
-        {/* ── Label + Toggle button ─────────────────────── */}
+        {/* Label judul dan tombol pengalih visibilitas saldo */}
         <div className="flex items-center justify-between">
           <p className="text-xs font-medium uppercase tracking-wider text-slate-600 dark:text-slate-400">
             Total Saldo Bersih
@@ -63,13 +60,13 @@ export function HiddenBalanceWidget({
           </button>
         </div>
 
-        {/* ── Balance display area ──────────────────────── */}
+        {/* Area tampilan nominal saldo atau indikator tersembunyi */}
         <div className="mt-2 min-h-[36px]">
           {isLoading ? (
-            /* Loading skeleton */
+            /* Kerangka pemuatan data (Skeleton) */
             <div className="mt-1 h-8 w-40 animate-pulse rounded-lg bg-slate-200 dark:bg-slate-700" />
           ) : isVisible ? (
-            /* Revealed state */
+            /* Kondisi saldo ditampilkan */
             <p
               className={`text-2xl font-bold tracking-tight transition-all duration-300 ${
                 isPositive
@@ -81,7 +78,7 @@ export function HiddenBalanceWidget({
               {formatCurrency(Math.abs(totalBalance))}
             </p>
           ) : (
-            /* Bug 7 Fix: Minimalist dot mask — clean native financial app feel */
+            /* Tampilan topeng titik minimalis untuk menjaga privasi */
             <div className="mt-1 flex items-center gap-3">
               <p
                 aria-hidden="true"
@@ -93,7 +90,7 @@ export function HiddenBalanceWidget({
           )}
         </div>
 
-        {/* ── Subtitle shown only when balance is visible ── */}
+        {/* Subjudul penjelasan tambahan yang hanya tampil saat saldo dibuka */}
         {isVisible && !isLoading && (
           <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
             Gabungan saldo semua dompetmu
@@ -102,4 +99,5 @@ export function HiddenBalanceWidget({
       </div>
     </div>
   );
+  /********** [END: Perenderan Widget Saldo Tersembunyi (Anti-Illusion Nudge)] **********/
 }

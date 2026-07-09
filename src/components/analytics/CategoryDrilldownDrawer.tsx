@@ -1,3 +1,8 @@
+/*
+ * File: src/components/analytics/CategoryDrilldownDrawer.tsx
+ * Description: Komponen laci samping (desktop) dan bottom sheet (seluler) untuk melihat detail rincian transaksi per kategori pada analisis keuangan.
+ */
+
 import { useEffect, useState } from "react";
 import { X } from "lucide-react";
 import { Transaction } from "@/types/models.types";
@@ -19,6 +24,12 @@ interface CategoryDrilldownDrawerProps {
   activeSegment?: string;
 }
 
+/**
+ * Merender panel laci rincian transaksi untuk kategori yang dipilih.
+ *
+ * @param props - Properti konfigurasi laci rincian kategori
+ * @returns Elemen JSX laci atau null jika belum dimuat
+ */
 export function CategoryDrilldownDrawer({
   isOpen,
   onClose,
@@ -34,6 +45,7 @@ export function CategoryDrilldownDrawer({
   const [mounted, setMounted] = useState(false);
   const avgPerTxn = transactions.length > 0 && totalAmount ? totalAmount / transactions.length : 0;
 
+  /********** [START: Efek Penguncian Pengguliran Layar Latar Belakang] **********/
   useEffect(() => {
     setMounted(true);
     if (isOpen) {
@@ -45,12 +57,13 @@ export function CategoryDrilldownDrawer({
       document.body.style.overflow = "";
     };
   }, [isOpen]);
+  /********** [END: Efek Penguncian Pengguliran Layar Latar Belakang] **********/
 
   if (!mounted) return null;
 
   return (
     <>
-      {/* Overlay */}
+      {/* Lapis Gelap Latar Belakang (Overlay) */}
       <div
         className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
@@ -59,7 +72,7 @@ export function CategoryDrilldownDrawer({
         aria-hidden="true"
       />
 
-      {/* Drawer */}
+      {/* Kontainer Panel Laci (Drawer / Bottom Sheet) */}
       <div
         className={`fixed inset-x-0 bottom-0 z-50 w-full h-[85vh] bg-white dark:bg-slate-900 rounded-t-3xl shadow-2xl flex flex-col transform transition-transform duration-300 ease-in-out
           md:inset-y-0 md:right-0 md:left-auto md:bottom-auto md:h-full md:w-[400px] md:rounded-none md:rounded-l-2xl
@@ -70,10 +83,10 @@ export function CategoryDrilldownDrawer({
           }
         `}
       >
-        {/* Mobile Drag Handle */}
+        {/* Indikator Pegangan Geser pada Perangkat Seluler */}
         <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-700 rounded-full mx-auto mt-3 mb-2 md:hidden"></div>
 
-        {/* Header */}
+        {/* Header Laci Kategori */}
         <div className="flex shrink-0 items-center justify-between border-b border-slate-100 px-5 pb-4 md:py-4 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <div
@@ -105,9 +118,9 @@ export function CategoryDrilldownDrawer({
           </button>
         </div>
 
-        {/* Content */}
+        {/* Area Konten Utama Daftar Transaksi */}
         <div className="flex-1 overflow-y-auto overscroll-contain px-4 pb-6 pt-4 md:p-5">
-          {/* Summary Section */}
+          {/* Ringkasan Statistik Kategori */}
           {totalAmount !== undefined && (
             <div className="mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
               <div className="rounded-xl border border-slate-100 bg-slate-50 p-3 dark:border-slate-800 dark:bg-slate-800/50">

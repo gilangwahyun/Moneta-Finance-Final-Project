@@ -1,9 +1,14 @@
-/********** Imports **********/
+/*
+ * File: src/components/ui/EntityActionMenu.tsx
+ * Description: Komponen menu aksi entitas yang adaptif (menu dropdown pada desktop dan bottom sheet pada perangkat seluler) dengan posisi portal yang disesuaikan agar tidak terpotong layar.
+ */
+
+/********** Impor Modul **********/
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import { MoreHorizontal, Pencil, Trash2, X } from "lucide-react";
 
-/********** Types **********/
+/********** Definisi Tipe Properti **********/
 export interface ExtraAction {
   label: string;
   icon?: React.ReactNode;
@@ -19,35 +24,34 @@ interface EntityActionMenuProps {
   extraActions?: ExtraAction[];
 }
 
-/********** Component **********/
+/********** Komponen Menu Aksi Entitas (EntityActionMenu) **********/
 /**
- * Renders a responsive action menu (dropdown on desktop, bottom sheet on mobile).
+ * Merender menu aksi responsif (dropdown pada desktop, bottom sheet pada seluler).
+ * Menyediakan aksi standar seperti Ubah dan Hapus, serta mendukung aksi tambahan kustom.
  *
- * Provides standard actions like Edit and Delete, with support for extra custom actions.
- * Handles its own positioning relative to the trigger button to prevent overflow.
- *
- * @param props - Configuration properties for the action menu.
- * @returns A portal-based responsive menu component.
+ * @param props - Properti konfigurasi menu aksi
+ * @returns Elemen JSX menu aksi berbasis portal
  */
 export function EntityActionMenu({ onEdit, onDelete, title, subtitle, extraActions }: EntityActionMenuProps) {
-  /********** State **********/
+  /********** State Lokal **********/
   const [isOpen, setIsOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ top: 0, left: 0, transformOrigin: 'top right' });
   const containerRef = useRef<HTMLDivElement>(null);
   const portalRef = useRef<HTMLDivElement>(null);
 
-  /********** Effects **********/
+  /********** Efek Pemantauan Kesiapan Portal **********/
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  /********** Event Handlers & Render Helpers **********/
+  /********** [START: Perhitungan Posisi Popover Menu Aksi] **********/
   const calculatePosition = () => {
     if (!containerRef.current) return;
     const rect = containerRef.current.getBoundingClientRect();
     const isMobile = window.matchMedia("(max-width: 767px)").matches;
-    /********** Position not needed for mobile bottom sheet. */
+    
+    /* Perhitungan posisi koordinat tidak diperlukan untuk tampilan bottom sheet seluler */
     if (isMobile) return;
 
     const menuWidth = 160;
@@ -69,7 +73,9 @@ export function EntityActionMenu({ onEdit, onDelete, title, subtitle, extraActio
 
     setMenuPosition({ top, left, transformOrigin });
   };
+  /********** [END: Perhitungan Posisi Popover Menu Aksi] **********/
 
+  /********** [START: Pengaturan Event Listener & Overflow Responsif] **********/
   useEffect(() => {
     if (!isOpen) return;
 
@@ -89,7 +95,7 @@ export function EntityActionMenu({ onEdit, onDelete, title, subtitle, extraActio
     }
 
     const handleScrollOrResize = () => {
-      /********** Reposition or close. Closing is safer to avoid detached popovers during scroll. */
+      /* Menutup menu saat terjadi pengguliran atau perubahan ukuran layar agar popover tidak terlepas */
       setIsOpen(false);
     };
 
@@ -114,6 +120,7 @@ export function EntityActionMenu({ onEdit, onDelete, title, subtitle, extraActio
       return () => { document.body.style.overflow = ""; };
     }
   }, [isOpen]);
+  /********** [END: Pengaturan Event Listener & Overflow Responsif] **********/
 
   const toggleMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -123,10 +130,10 @@ export function EntityActionMenu({ onEdit, onDelete, title, subtitle, extraActio
     setIsOpen(!isOpen);
   };
 
-  /********** Render **********/
+  /********** Perenderan Komponen **********/
   return (
     <div className="relative inline-flex items-center" ref={containerRef}>
-      {/* Trigger Button */}
+      {/* Tombol Pemicu Menu Aksi */}
       <button
         onClick={toggleMenu}
         aria-label="Buka menu aksi"
@@ -142,7 +149,7 @@ export function EntityActionMenu({ onEdit, onDelete, title, subtitle, extraActio
 
       {mounted && isOpen && createPortal(
         <div className="moneta-action-portal" ref={portalRef}>
-          {/* MOBILE BOTTOM SHEET */}
+          {/* Tampilan Bottom Sheet pada Perangkat Seluler */}
           <div className="md:hidden fixed inset-0 z-[9999] flex items-end justify-center">
             <div 
               className="absolute inset-0 bg-slate-950/70 transition-opacity dark:bg-black/80" 
@@ -221,7 +228,7 @@ export function EntityActionMenu({ onEdit, onDelete, title, subtitle, extraActio
             </div>
           </div>
 
-          {/* DESKTOP POPOVER MENU */}
+          {/* Tampilan Menu Popover pada Desktop */}
           <div 
             className="hidden md:block fixed w-40 z-[9999] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-xl animate-in fade-in duration-150 dark:border-slate-800 dark:bg-slate-900"
             style={{

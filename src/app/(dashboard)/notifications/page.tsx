@@ -1,24 +1,29 @@
+/*
+ * File: src/app/(dashboard)/notifications/page.tsx
+ * Description: Komponen halaman pusat notifikasi finansial pengguna (peringatan anggaran, progres target, insight harian).
+ */
+
 'use client';
 
-/********** Imports **********/
+/********** Impor Modul & Dependensi **********/
 import { useEffect, useState, useCallback, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { useNotifications } from '@/hooks/use-notifications';
-/********** Types **********/
+/********** Tipe Data Notifikasi Tampilan **********/
 import { SegmentedControl } from '@/components/ui/SegmentedControl';
 
 interface DisplayNotification {
-  /** Unique key for deduplication */
+  /** Kunci unik untuk proses deduplikasi elemen */
   key: string;
-  /** IDB auto-increment id (local items only) */
+  /** ID auto-increment IndexedDB (untuk item lokal) */
   localId?: number;
-  /** Server-side NotificationLog UUID (same as clientId for this entity) */
+  /** UUID NotificationLog sisi server */
   serverId?: string;
   title: string;
   body: string;
   type: string;
   eventType?: string;
-  /** true = unread */
+  /** true = belum dibaca */
   isUnread: boolean;
   createdAt: string;
   ctaRoute?: string;
@@ -27,11 +32,11 @@ interface DisplayNotification {
   sourceBudgetId?: string;
   targetBudgetId?: string;
   recommendedAmount?: number;
-  /** "local" | "server" — determines which mark-read path to use */
+  /** "local" | "server" — menentukan jalur API penanda baca yang dipakai */
   source: 'local' | 'server';
 }
 
-/********** Helpers **********/
+/********** Fungsi Bantu (Helper Functions) **********/
 
 function formatAbsoluteTime(dateStr: string): string {
   return new Date(dateStr).toLocaleTimeString('id-ID', {
@@ -41,10 +46,10 @@ function formatAbsoluteTime(dateStr: string): string {
 }
 
 /**
- * Formats a date string into a relative time description (e.g., "Baru saja", "Kemarin").
+ * Memformat string waktu ISO menjadi deskripsi relatif (misal: "Baru saja", "Kemarin").
  *
- * @param dateStr - The ISO date string to format.
- * @returns A relative time string or null if older than 7 days.
+ * @param dateStr - String ISO tanggal yang akan diformat.
+ * @returns String waktu relatif atau null bila lebih dari 7 hari.
  */
 function formatRelativeTime(dateStr: string): string | null {
   const date = new Date(dateStr);
@@ -70,10 +75,10 @@ interface NotificationGroup {
 }
 
 /**
- * Groups an array of notifications by their creation date (Hari Ini, Kemarin, or full date).
+ * Mengelompokkan array notifikasi berdasarkan tanggal pembuatannya (Hari Ini, Kemarin, atau tanggal lengkap).
  *
- * @param notifications - The list of display notifications to group.
- * @returns An array of notification groups ready for rendering.
+ * @param notifications - Daftar notifikasi yang akan dikelompokkan.
+ * @returns Array kelompok notifikasi siap render.
  */
 function groupNotifications(notifications: DisplayNotification[]): NotificationGroup[] {
   const groups: NotificationGroup[] = [];
@@ -112,11 +117,11 @@ function groupNotifications(notifications: DisplayNotification[]): NotificationG
   return groups;
 }
 
-/********** Render Helpers **********/
+/********** Fungsi Bantu Visual (Render Helpers) **********/
 
 /**
- * Renders a semantic pill badge based on the notification type or eventType.
- * Maps system types to user-friendly Indonesian labels and colors.
+ * Merender badge lencana semantik berdasarkan tipe notifikasi atau eventType.
+ * Memetakan tipe sistem menjadi label bahasa Indonesia dan warna yang sesuai.
  */
 function TypeBadge({ type, eventType }: { type: string; eventType?: string }) {
   const colors: Record<string, string> = {
@@ -146,13 +151,13 @@ function TypeBadge({ type, eventType }: { type: string; eventType?: string }) {
     SYSTEM: 'Sistem',
   };
 
-  // Safe fallback mapping for legacy numeric types
+  /* Pemetaan mundur aman untuk tipe angka lama (legacy) */
   let resolvedType = eventType || type;
   if (!eventType) {
     if (type === '0.1') resolvedType = 'BUDGET_CRITICAL';
     else if (type === '0.2') resolvedType = 'BUDGET_WARNING';
     else if (type === '0.3') resolvedType = 'BUDGET_INFO';
-    else if (!isNaN(Number(type))) resolvedType = 'SPENDING_INSIGHT'; // All other numeric types
+    else if (!isNaN(Number(type))) resolvedType = 'SPENDING_INSIGHT'; /* Tipe angka lainnya */
   }
 
   const colorClass = colors[resolvedType] ?? colors['SPENDING_INSIGHT'];
@@ -294,17 +299,25 @@ function NotificationListItem({ item, onMarkRead, onNavigate }: { item: DisplayN
   );
 }
 
-/********** Page Component **********/
+/********** Komponen Halaman Pusat Notifikasi (NotificationsPage) **********/
+
+/**
+ * Komponen utama halaman notifikasi, memuat riwayat pemberitahuan keuangan (anggaran, target, insight),
+ * mengelompokkannya per hari, serta mendukung fitur tandai sudah dibaca dan navigasi ke halaman terkait.
+ *
+ * @returns Elemen JSX tata letak halaman notifikasi Moneta
+ */
 export default function NotificationsPage() {
-  /********** State **********/
+  /********** [START: Inisialisasi State & Hook Halaman Notifikasi] **********/
   const router = useRouter();
   const { logs, unreadCount, isLoading, error, fetchLogs, markLogRead, markAllLogsRead } = useNotifications();
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [isMarkingAll, setIsMarkingAll] = useState(false);
   const loadedRef = useRef(false);
+  /********** [END: Inisialisasi State & Hook Halaman Notifikasi] **********/
 
-  /********** Derived State **********/
-  // Map logs to DisplayNotification format
+  /********** [START: Pemetaan & Penyaringan Daftar Notifikasi (Derived State)] **********/
+  /* Memetakan log notifikasi ke format DisplayNotification dan mengurutkannya dari yang terbaru */
   const notifications: DisplayNotification[] = useMemo(() => {
     return logs.map((item) => ({
       key: `log-${item.clientId}`,
@@ -326,14 +339,14 @@ export default function NotificationsPage() {
   }, [logs]);
 
   const filteredNotifications = notifications.filter(n => filter === 'all' || n.isUnread);
+  /********** [END: Pemetaan & Penyaringan Daftar Notifikasi (Derived State)] **********/
 
-  /********** Effects **********/
-  
+  /********** [START: Efek Samping (Side Effects) & Event Listener Notifikasi] **********/
   useEffect(() => {
     fetchLogs();
   }, [fetchLogs]);
 
-  /********** Subscribe to background worker events for live refresh. */
+  /* Berlangganan event sinkronisasi latar belakang agar daftar notifikasi diperbarui secara langsung (live refresh) */
   useEffect(() => {
     const handleEvent = () => fetchLogs();
 
@@ -345,11 +358,12 @@ export default function NotificationsPage() {
       window.removeEventListener('moneta-sync-completed', handleEvent);
     };
   }, [fetchLogs]);
+  /********** [END: Efek Samping (Side Effects) & Event Listener Notifikasi] **********/
 
-  /********** Event Handlers **********/
+  /********** [START: Fungsi Penanganan Aksi Pengguna & Navigasi (Event Handlers)] **********/
 
   /**
-   * Marks a notification as read and performs an optimistic local update.
+   * Menandai notifikasi tunggal sebagai sudah dibaca dan memperbarui UI secara optimistik.
    */
   const handleMarkRead = useCallback(async (item: DisplayNotification) => {
     if (item.serverId) {
@@ -358,7 +372,7 @@ export default function NotificationsPage() {
   }, [markLogRead]);
 
   /**
-   * Marks all current unread notifications as read.
+   * Menandai seluruh notifikasi yang belum dibaca menjadi sudah dibaca.
    */
   const handleMarkAllRead = useCallback(async () => {
     if (unreadCount === 0 || isMarkingAll) return;
@@ -368,11 +382,10 @@ export default function NotificationsPage() {
   }, [unreadCount, isMarkingAll, markAllLogsRead]);
 
   /**
-   * Handles navigation when a notification item or CTA is clicked.
-   * Defaults to specific feature pages depending on the notification type
-   * if an explicit ctaRoute is not provided.
+   * Menangani navigasi saat item notifikasi atau tombol aksi (CTA) diklik.
+   * Mengarahkan ke halaman fitur terkait berdasarkan tipe notifikasi apabila ctaRoute tidak tersedia.
    *
-   * @param item - The selected notification.
+   * @param item - Item notifikasi yang dipilih oleh pengguna.
    */
   const handleNavigate = useCallback((item: DisplayNotification) => {
     let targetPath = item.ctaRoute;
@@ -407,8 +420,9 @@ export default function NotificationsPage() {
       router.push(targetPath);
     }
   }, [router]);
+  /********** [END: Fungsi Penanganan Aksi Pengguna & Navigasi (Event Handlers)] **********/
 
-  /********** Rendering **********/
+  /********** Pengembalian Tata Letak Halaman Notifikasi (JSX) **********/
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -485,7 +499,7 @@ export default function NotificationsPage() {
             </div>
           ))}
 
-          {/* Footer */}
+          {/* Footer Jumlah Notifikasi */}
           <p className="pt-2 text-center text-[11px] text-slate-600 dark:text-slate-600">Menampilkan {filteredNotifications.length} notifikasi</p>
         </div>
       )}

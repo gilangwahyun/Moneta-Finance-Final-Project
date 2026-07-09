@@ -1,11 +1,9 @@
-"use client";
+/*
+ * File: src/components/analytics/AnalyticsTimeFilter.tsx
+ * Description: Filter rentang waktu khusus untuk halaman Analitik, mendukung mode baris tombol (desktop) dan bottom sheet adaptif (seluler).
+ */
 
-//********** START: AnalyticsTimeFilter Component **********
-//********** Dedicated period filter for the Analysis Page.
-//********** Desktop: Horizontal pill row, custom date picker inline/popover.
-//********** Mobile: Single button triggering a Bottom Sheet.
-//********** Options: [7 Hari Terakhir] [Bulan Ini] [3 Bulan Terakhir] [Tahun Ini] [Rentang Khusus]
-//********** END: AnalyticsTimeFilter Component **********
+"use client";
 
 import { useState, useId, useEffect } from "react";
 import { CalendarDays, ChevronDown, Check, RefreshCcw } from "lucide-react";
@@ -22,6 +20,11 @@ const RANGE_OPTIONS: { key: RangeKey; label: string }[] = [
   { key: "custom", label: "Rentang Khusus" },
 ];
 
+/**
+ * Komponen filter periode waktu untuk halaman analitik keuangan.
+ *
+ * @returns Elemen JSX filter waktu responsif
+ */
 export function AnalyticsTimeFilter() {
   const { rangeKey, customDates, setRange } = useTimeFilter();
   const pickerId = useId();
@@ -33,13 +36,14 @@ export function AnalyticsTimeFilter() {
     customDates?.end ?? dayjs().format("YYYY-MM-DD")
   );
   
-  // Desktop inline picker state
+  /* State untuk penahan dialog tanggal khusus pada tampilan desktop */
   const [pickerOpen, setPickerOpen] = useState(rangeKey === "custom");
   
-  // Mobile bottom sheet state
+  /* State untuk tampilan bottom sheet pada perangkat seluler */
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetCustomOpen, setSheetCustomOpen] = useState(rangeKey === "custom");
 
+  /********** [START: Pengaturan Pemilihan Rentang Waktu (Desktop & Seluler)] **********/
   function handleDesktopClick(key: RangeKey) {
     if (key === "custom") {
       setPickerOpen(true);
@@ -57,15 +61,17 @@ export function AnalyticsTimeFilter() {
     } else {
       setSheetCustomOpen(false);
       setRange(key);
-      setSheetOpen(false); // Auto close sheet on predefined select
+      /* Menutup otomatis bottom sheet saat memilih opsi standar */
+      setSheetOpen(false);
     }
   }
+  /********** [END: Pengaturan Pemilihan Rentang Waktu (Desktop & Seluler)] **********/
 
   const activeLabel = RANGE_OPTIONS.find((o) => o.key === rangeKey)?.label || "Pilih Waktu";
 
   return (
     <>
-      {/* ─── Desktop View (Hidden on mobile) ─── */}
+      {/* Tampilan Baris Tombol pada Layar Desktop */}
       <div className="hidden md:flex flex-col gap-2">
         <div className="flex flex-wrap items-center gap-1.5 rounded-2xl bg-white/60 p-1.5 shadow-sm backdrop-blur-xl ring-1 ring-slate-200/60 dark:bg-slate-900/60 dark:ring-slate-800/60">
           {RANGE_OPTIONS.map(({ key, label }) => {
@@ -141,7 +147,7 @@ export function AnalyticsTimeFilter() {
         )}
       </div>
 
-      {/* ─── Mobile View (Hidden on desktop) ─── */}
+      {/* Tampilan Bottom Sheet pada Perangkat Seluler */}
       <div className="md:hidden">
         <button
           onClick={() => setSheetOpen(true)}

@@ -1,10 +1,7 @@
-//********** START: Dashboard Layout **********
-//********** Responsive layout shell for the main app:
-//**********   - Mobile:  Bottom tab bar navigation
-//**********   - Desktop: Fixed left sidebar navigation
-//**********
-//********** Includes client-side auth guard.
-//********** END: Dashboard Layout **********
+/*
+ * File: src/app/(dashboard)/layout.tsx
+ * Description: Shell layout responsif untuk aplikasi utama Moneta, menyediakan navigasi bilah bawah (mobile), sidebar tetap (desktop), penjaga rute autentikasi, serta sinkronisasi status latar belakang.
+ */
 
 "use client";
 
@@ -25,7 +22,7 @@ import { NetworkStatusBadge } from "@/components/layout/NetworkStatusBadge";
 import { SpeedDialFAB } from "@/components/ui/SpeedDialFAB";
 import { useNotifications } from "@/hooks/use-notifications";
 
-//********** Navigation Items (Bottom nav - 5 items, Notifications moved to header) **********
+/********** Konfigurasi Navigasi (Bar Bawah & Sidebar) **********/
 const BASE_NAV_ITEMS = [
   {
     label: "Beranda",
@@ -105,12 +102,13 @@ const SIDEBAR_ITEMS = [
   PROFILE_ITEM,
 ];
 
-//********** COMPONENT **********
+/********** Komponen Layout Utama (DashboardLayout) **********/
 /**
- * Main dashboard layout wrapper providing responsive navigation,
- * auth guarding, and global state synchronization.
- * @param children - The page content to render inside the layout
- * @returns The dashboard layout component
+ * Pembungkus layout utama dashboard yang menyediakan navigasi responsif,
+ * perlindungan rute autentikasi, serta sinkronisasi status global antarkomponen.
+ *
+ * @param children - Konten halaman yang akan dirender di dalam layout
+ * @returns Komponen layout dashboard Moneta
  */
 export default function DashboardLayout({
   children,
@@ -137,10 +135,10 @@ export default function DashboardLayout({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  //********** Initial hydration (detects empty IndexedDB) **********
+  /* Deteksi status hidrasi awal (mendeteksi IndexedDB yang kosong) */
   const { hydrationState, hydratedCount } = useHydration();
 
-  //********** Auth guard **********
+  /********** [START: Pengecekan Autentikasi & Guard Rute] **********/
   useEffect(() => {
     async function checkAuth() {
       try {
@@ -148,7 +146,6 @@ export default function DashboardLayout({
         if (!sessionUser) {
           router.replace("/login");
         } else {
-          // BUG FIX: Start the digest timer here
           const { startDigestTimer } = await import("@/lib/sw/register");
           startDigestTimer(sessionUser.id);
         }
@@ -158,26 +155,20 @@ export default function DashboardLayout({
     }
     checkAuth();
   }, [router, loadUser]);
+  /********** [END: Pengecekan Autentikasi & Guard Rute] **********/
 
-  //********** Request persistent storage (Layer 1) **********
+  /* Minta izin penyimpanan persisten (Layer 1) dari browser */
   useEffect(() => {
     requestPersistentStorage();
   }, []);
 
-  //********** Fetch unread notification count (for badge) **********
-  //********** IDB-only: reads from local notification_inbox for offline support.
-  //********** Pull sync populates the inbox so no server fallback is needed.
-  // Now handled by useNotifications hook via fetchUnreadCount
-
+  /* Ambil jumlah notifikasi belum dibaca untuk lencana (badge) setelah verifikasi autentikasi selesai */
   useEffect(() => {
-    //********** Fetch after auth check completes (user is set)
     if (!isLoading) fetchUnreadCount();
   }, [isLoading, fetchUnreadCount]);
 
-  //********** Bug 3 Fix: Handle SW_NAVIGATE deep-link from notification click **********
-  //********** The service worker sends this message after focusing an existing tab.
-  //********** We listen here (root layout, always mounted) and use Next.js router.
-  //********** Also handles NOTIFICATION_CLICKED: marks log as read locally and enqueues sync.
+  /********** [START: Penanganan Pesan & Deep-link dari Service Worker] **********/
+  /* Dengarkan pesan navigasi dari service worker saat notifikasi diklik dan tab diaktifkan */
   useEffect(() => {
     if (!navigator.serviceWorker) return;
 
@@ -188,25 +179,22 @@ export default function DashboardLayout({
         router.push(event.data.path);
       }
 
-      //********** Handle notification click: mark as read + enqueue sync
+      /* Tanggani klik notifikasi: tandai sudah dibaca secara lokal dan jadwalkan sinkronisasi */
       if (msgType === "NOTIFICATION_CLICKED" && event.data?.notificationClientId) {
         const clientId = event.data.notificationClientId as string;
         console.log("[Layout] NOTIFICATION_CLICKED received — clientId:", clientId);
         try {
           await markLogRead(clientId);
           console.log("[Layout] markLogRead completed for clientId:", clientId);
-          // Trigger sync so readAt reaches the server
           scheduleSync();
         } catch (e) {
           console.warn("[Layout] NOTIFICATION_CLICKED handler error:", e);
         }
-        // Always refresh unread count
         fetchUnreadCount();
       }
 
-      //********** Legacy: handle ADD_TO_INBOX renamed to INBOX_UPDATED
+      /* Perbarui jumlah belum dibaca setelah service worker memperbarui kotak masuk */
       if (msgType === "INBOX_UPDATED") {
-        //********** Refresh unread badge count after SW writes to inbox
         fetchUnreadCount();
       }
     };
@@ -216,8 +204,10 @@ export default function DashboardLayout({
       navigator.serviceWorker.removeEventListener("message", handleSWMessage);
     };
   }, [router, fetchUnreadCount, scheduleSync]);
+  /********** [END: Penanganan Pesan & Deep-link dari Service Worker] **********/
 
-  //********** Handle notifRead param from URL on initial mount, navigation, or mobile background resume (focus/visibilitychange)
+  /********** [START: Penanganan Parameter URL notifRead & Status Latar] **********/
+  /* Tangani parameter notifRead dari URL saat komponen dimount, navigasi, atau aplikasi aktif kembali dari latar belakang mobile */
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -240,15 +230,13 @@ export default function DashboardLayout({
           fetchUnreadCount();
         })();
       } else {
-        // Even if no notifRead param, refresh unread count on resume/focus
+        /* Perbarui jumlah notifikasi belum dibaca saat aplikasi kembali aktif atau fokus */
         fetchUnreadCount();
       }
     };
 
-    // 1. Run check immediately on mount or when pathname changes
     checkAndMarkNotifRead();
 
-    // 2. Run check whenever app resumes from mobile background
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         checkAndMarkNotifRead();
@@ -263,19 +251,18 @@ export default function DashboardLayout({
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [pathname, markLogRead, scheduleSync, fetchUnreadCount]);
+  /********** [END: Penanganan Parameter URL notifRead & Status Latar] **********/
 
-  //********** When hydration pulls new data, reload so hooks re-fetch
+  /* Muat ulang halaman saat proses hidrasi menarik data baru agar hook memuat ulang data */
   useEffect(() => {
     if (hydrationState === "done" && hydratedCount > 0) {
       window.location.reload();
     }
   }, [hydrationState, hydratedCount]);
 
-  //********** Notification logs are now synced via the global SyncManager (sync-queue).
+  /* Log notifikasi disinkronisasikan secara otomatis melalui SyncManager global */
 
-  //********** Back button guard (PWA only) **********
-  //********** Must be called here (before any conditional returns)
-  //********** to comply with React's Rules of Hooks.
+  /* Pelindung tombol kembali (khusus PWA standalone, dipanggil sebelum return bersyarat) */
   const { showExitConfirm, confirmExit, cancelExit } = useBackButtonGuard();
   const { openForm } = useTransactionForm();
 
@@ -305,15 +292,15 @@ export default function DashboardLayout({
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950">
 
-      {/* //********** Exit Confirmation Dialog (PWA Back Button) ********** */}
+      {/* Dialog Konfirmasi Keluar (Tombol Kembali PWA) */}
       {showExitConfirm && (
         <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center">
-          {/* //********** Backdrop ********** */}
+          {/* Latar Belakang (Backdrop) */}
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={cancelExit}
           />
-          {/* //********** Sheet ********** */}
+          {/* Panel Lembaran Dialog (Sheet) */}
           <div className="relative z-10 w-full max-w-sm rounded-t-2xl bg-white p-6 shadow-2xl dark:bg-slate-800 sm:rounded-2xl">
             <div className="mb-1 flex h-12 w-12 items-center justify-center rounded-2xl bg-red-50 dark:bg-red-900/20">
               <svg className="h-6 w-6 text-red-500" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
@@ -343,15 +330,15 @@ export default function DashboardLayout({
           </div>
         </div>
       )}
-      {/* //********** Desktop Sidebar (md+) ********** */}
+      {/* Navigasi Samping Desktop (Sidebar) */}
       <aside
         className={`fixed inset-y-0 left-0 z-30 hidden flex-col border-r border-slate-200 bg-white transition-all duration-300 dark:border-slate-800 dark:bg-slate-900 md:flex ${
           isCollapsed ? "w-16" : "w-64"
         }`}
       >
-        {/* //********** Brand & Toggle Header ********** */}
+        {/* Header Merek & Tombol Buka Tutup */}
         <div className={`flex h-16 shrink-0 items-center border-b border-slate-100 dark:border-slate-700 transition-all duration-300 ${isCollapsed ? "justify-center px-2" : "justify-between px-4"}`}>
-          {/* //********** Logo & Text (Left) ********** */}
+          {/* Logo & Nama Aplikasi */}
           <div className={`flex items-center overflow-hidden transition-all duration-300 ${isCollapsed ? "max-w-0 opacity-0 gap-0" : "max-w-[150px] opacity-100 gap-3"}`}>
             <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 text-sm font-bold text-white shadow-md">
               M
@@ -362,7 +349,7 @@ export default function DashboardLayout({
             </div>
           </div>
 
-          {/* //********** Toggle Button - with tooltip when collapsed ********** */}
+          {/* Tombol Lipat Sidebar dengan Tooltip */}
           <div className="group relative">
             <button
               onClick={() => setIsCollapsed(!isCollapsed)}
@@ -379,7 +366,7 @@ export default function DashboardLayout({
           </div>
         </div>
 
-        {/* //********** Desktop Add Transaction Button ********** */}
+        {/* Tombol Tambah Transaksi Desktop */}
         <div className="border-b border-slate-100 py-4 dark:border-slate-800/50">
           <div className="group relative flex justify-center px-3">
             <button
@@ -406,7 +393,7 @@ export default function DashboardLayout({
           </div>
         </div>
 
-        {/* //********** Nav links ********** */}
+        {/* Tautan Navigasi Samping */}
         <nav className={`flex-1 px-2 py-3 scrollbar-hide ${isCollapsed ? "overflow-visible" : "overflow-y-auto overflow-x-hidden"}`}>
           <div className="flex flex-col gap-1">
           {SIDEBAR_ITEMS.map((item) => {
@@ -455,7 +442,7 @@ export default function DashboardLayout({
                   )}
                 </Link>
 
-                {/* //********** Tooltip - only rendered when sidebar is collapsed ********** */}
+                {/* Tooltip navigasi (saat melipat) */}
                 {isCollapsed && (
                   <span className="pointer-events-none absolute left-full z-50 ml-4 whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-md transition-all duration-150 group-hover:opacity-100 dark:bg-white dark:text-slate-900">
                     {item.label}
@@ -472,14 +459,14 @@ export default function DashboardLayout({
           </div>
         </nav>
 
-        {/* //********** Sync status panel (hide when collapsed) ********** */}
+        {/* Panel Status Sinkronisasi */}
         <div className={`px-3 transition-all duration-300 ${isCollapsed ? "max-h-0 opacity-0 pb-0 overflow-hidden" : "opacity-100 pb-2 overflow-visible"}`}>
           <SyncStatusPanel />
         </div>
 
 
 
-        {/* //********** User info at bottom ********** */}
+        {/* Informasi Profil Pengguna di Bagian Bawah */}
         <div className={`border-t border-slate-100 py-3 dark:border-slate-800/50 flex items-center transition-all duration-300 ${isCollapsed ? "flex-col gap-3 justify-center px-2" : "justify-between px-4"}`}>
           <div className="group relative flex items-center">
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-slate-200 to-slate-300 text-xs font-bold text-slate-600 dark:from-slate-600 dark:to-slate-700 dark:text-slate-300">
@@ -492,7 +479,7 @@ export default function DashboardLayout({
             >
               {user?.username || "Pengguna"}
             </p>
-            {/* //********** User tooltip (collapsed only) ********** */}
+            {/* Tooltip pengguna */}
             {isCollapsed && (
               <span className="pointer-events-none absolute left-full z-50 ml-4 whitespace-nowrap rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium text-white opacity-0 shadow-md transition-all duration-150 group-hover:opacity-100 dark:bg-white dark:text-slate-900">
                 {user?.username || "Pengguna"}
@@ -503,26 +490,26 @@ export default function DashboardLayout({
         </div>
       </aside>
 
-      {/* //********** Main Content ********** */}
+      {/* Konten Utama Halaman */}
       <main
         className={`flex-1 min-w-0 pb-20 md:pb-6 transition-all duration-300 ${
           isCollapsed ? "md:pl-16" : "md:pl-64"
         }`}
       >
-        {/* //********** Mobile header ********** */}
+        {/* Header Navigasi Mobile */}
         <header className="fixed inset-x-0 top-0 z-30 flex h-14 items-center justify-between border-b border-slate-200 bg-white/90 px-4 backdrop-blur-lg dark:border-slate-800 dark:bg-slate-900/90 md:hidden">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-[10px] font-bold text-white">
               M
             </div>
             <span className="text-sm font-bold text-slate-800 dark:text-slate-100">Moneta</span>
-            {/* //********** Offline badge - shown inline with logo ********** */}
+            {/* Indikator Status Offline */}
             <NetworkStatusBadge />
           </div>
           <div className="flex items-center gap-2">
             <ThemeToggle />
             <SyncStatusBadge />
-            {/* //********** Notification Bell (mobile only) ********** */}
+            {/* Ikon Lonceng Notifikasi (Mobile) */}
             <Link
               href="/notifications"
               className="relative flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 dark:text-slate-400 dark:hover:bg-slate-700"
@@ -543,16 +530,16 @@ export default function DashboardLayout({
           </div>
         </header>
 
-        {/* //********** Page content - single canonical layout wrapper ********** */}
+        {/* Wadah Konten Halaman Utama */}
         <div className="w-full max-w-5xl mx-auto p-4 pt-20 md:p-8 md:pt-8 pb-36 md:pb-8 min-h-screen">
           {children}
         </div>
       </main>
 
-      {/* //********** Global Mobile FAB ********** */}
+      {/* Tombol Aksi Melayang (Speed Dial FAB) Mobile */}
       {(pathname === "/" || pathname === "/transactions") && <SpeedDialFAB />}
 
-      {/* //********** Mobile Bottom Tab Bar ********** */}
+      {/* Bilah Navigasi Bawah Mobile (Bottom Tab Bar) */}
       <nav className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-200 bg-white/95 backdrop-blur-lg dark:border-slate-800 dark:bg-slate-900/95 md:hidden">
         <div className="mx-auto flex max-w-lg items-center justify-around">
           {MOBILE_NAV_ITEMS.map((item) => {
