@@ -894,12 +894,12 @@ async function buildPushPayload(entries: SyncQueueEntry[]): Promise<SyncPushPayl
       if (log) {
         notification_logs.push({
           clientId: log.clientId,
-          dedupeKey: log.dedupeKey,
-          type: log.type,
+          dedupeKey: log.dedupeKey || log.clientId,
+          type: log.type || 'system',
           eventType: log.eventType,
           deliveryModeAtCreation: log.deliveryModeAtCreation,
-          title: log.title,
-          body: log.body,
+          title: log.title || 'Notifikasi',
+          body: log.body || '',
           severity: log.severity,
           source: log.source,
           relatedTransactionClientId: log.relatedTransactionClientId,
@@ -915,8 +915,8 @@ async function buildPushPayload(entries: SyncQueueEntry[]): Promise<SyncPushPayl
           dismissedAt: log.dismissedAt,
           pushedAt: log.pushedAt,
           digestSentAt: log.digestSentAt,
-          createdAt: log.createdAt,
-          updatedAt: log.updatedAt,
+          createdAt: log.createdAt || new Date().toISOString(),
+          updatedAt: log.updatedAt || new Date().toISOString(),
         });
       }
     } else if (entry.entity === 'notification_settings') {

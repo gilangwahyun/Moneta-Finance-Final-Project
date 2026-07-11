@@ -51,20 +51,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    /********** Validasi Preflight untuk Log Notifikasi. */
+    /********** Normalisasi & Sanitasi Preflight untuk Log Notifikasi. */
     if (payload.notification_logs) {
       for (const log of payload.notification_logs) {
         if (!log.clientId) {
           return NextResponse.json({ success: false, error: { code: "VALIDATION_ERROR", message: "Missing clientId in notification_log.", meta: { entity: "notification_log", field: "clientId" } } }, { status: 400 });
         }
         if (!log.dedupeKey) {
-          return NextResponse.json({ success: false, error: { code: "VALIDATION_ERROR", message: "Missing dedupeKey in notification_log.", meta: { entity: "notification_log", clientId: log.clientId, field: "dedupeKey" } } }, { status: 400 });
+          log.dedupeKey = log.clientId;
         }
-        if (log.createdAt && isNaN(new Date(log.createdAt).getTime())) {
-          return NextResponse.json({ success: false, error: { code: "VALIDATION_ERROR", message: "Invalid createdAt in notification_log.", meta: { entity: "notification_log", clientId: log.clientId, field: "createdAt" } } }, { status: 400 });
+        if (!log.createdAt || isNaN(new Date(log.createdAt).getTime())) {
+          log.createdAt = new Date().toISOString();
         }
-        if (log.updatedAt && isNaN(new Date(log.updatedAt).getTime())) {
-          return NextResponse.json({ success: false, error: { code: "VALIDATION_ERROR", message: "Invalid updatedAt in notification_log.", meta: { entity: "notification_log", clientId: log.clientId, field: "updatedAt" } } }, { status: 400 });
+        if (!log.updatedAt || isNaN(new Date(log.updatedAt).getTime())) {
+          log.updatedAt = new Date().toISOString();
         }
       }
     }
