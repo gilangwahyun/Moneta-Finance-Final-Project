@@ -13,6 +13,7 @@ import { DEFAULT_CATEGORIES } from '@/lib/db/default-categories';
 import { randomUUID } from 'crypto';
 import { checkRateLimit, getClientIP, rateLimitResponse, REGISTER_IP_LIMIT } from '@/lib/auth/rate-limiter';
 import { MIN_USERNAME_LENGTH, MAX_USERNAME_LENGTH, USERNAME_PATTERN } from '@/lib/utils/constants';
+import { seedDemoDataForUser } from '@/lib/db/seed-demo-data';
 
 /********** POST /api/auth/register **********/
 
@@ -36,7 +37,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { email, username, password } = await request.json();
+    const { email, username, password, seedDemoData } = await request.json();
 
     /********** 2. Validasi Kelengkapan Data. */
     if (!email || !username || !password) {
@@ -135,6 +136,11 @@ export async function POST(request: NextRequest) {
           syncStatus: 'SYNCED',
         })),
       });
+
+      /********** Jika opsi seedDemoData aktif (mode uji/evaluasi), suntikkan data skenario UCD. */
+      if (seedDemoData) {
+        await seedDemoDataForUser(newUser.id, tx);
+      }
 
       return newUser;
     });

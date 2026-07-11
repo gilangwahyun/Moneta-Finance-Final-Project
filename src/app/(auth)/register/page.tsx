@@ -9,7 +9,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAuthUser } from "@/hooks/use-auth-user";
 import { User } from "@/types/models.types";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, FlaskConical } from "lucide-react";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -19,6 +19,7 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [seedDemoData, setSeedDemoData] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { upsertLocalUser } = useAuthUser();
@@ -39,7 +40,7 @@ export default function RegisterPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ email, username, password }),
+        body: JSON.stringify({ email, username, password, seedDemoData }),
       });
 
       const result = await res.json();
@@ -198,6 +199,27 @@ export default function RegisterPage() {
                   )}
                 </button>
               </div>
+            </div>
+
+            {/* ── Opsi Seeding Data (Mode Evaluasi / Usability Testing) ── */}
+            <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 transition-all dark:border-indigo-900/50 dark:bg-indigo-950/40">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={seedDemoData}
+                  onChange={(e) => setSeedDemoData(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500 dark:border-slate-700 dark:bg-slate-800"
+                />
+                <div>
+                  <span className="flex items-center gap-1.5 text-sm font-bold text-indigo-900 dark:text-indigo-200">
+                    <FlaskConical className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    Aktifkan Mode Skenario Uji (Data Simulasi Otomatis)
+                  </span>
+                  <p className="mt-1 text-xs leading-relaxed text-indigo-700 dark:text-indigo-300">
+                    Khusus evaluasi kebergunaan: Akun barumu langsung diisi dengan ±60 transaksi simulasi (Anggaran, Dompet, Pengeluaran & Target) agar fitur analitik dan notifikasi perilaku langsung aktif tanpa perlu mengisi manual.
+                  </p>
+                </div>
+              </label>
             </div>
 
             <button
