@@ -54,7 +54,7 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
       clientId: randomUUID(),
       name: "Dompet Utama (BCA)",
       type: "BANK",
-      initialBalance: 500000, // Disetel agar realistis & mendekati ambang
+      initialBalance: 2500000, // Disetel Rp 2.500.000 agar akumulasi saldo bersih selalu positif & realistis
       userId,
       syncStatus: "SYNCED",
     },
@@ -79,7 +79,7 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     });
   }
 
-  // Anggaran Belanja Harian Rp3.000.000 (sebagai perbandingan kartu hijau)
+  // Anggaran Belanja Harian Rp3.000.000
   const belanjaCatId = getCatId("Belanja Harian");
   if (belanjaCatId) {
     await db.budget.create({
@@ -126,12 +126,28 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     },
   });
 
-  // 5. Bersihkan transaksi lama untuk user (jika ada) sebelum menyuntikkan data
+  // 5. Bersihkan transaksi & notifikasi lama untuk user (jika ada) sebelum menyuntikkan data
   await db.transaction.deleteMany({ where: { userId } });
+  await db.notificationLog.deleteMany({ where: { userId } });
 
   const txns: any[] = [];
 
-  // 🎯 Pola 1: The Payday Leak (Gaji 5jt 2 hari lalu, pengeluaran besar)
+  // 🎯 Gaji Bulan Lalu (25 bulan lalu) agar cashflow historis & akumulasi saldo positif
+  const lastMonthPayday = dayjs().subtract(1, "month").date(25);
+  txns.push({
+    clientId: randomUUID(),
+    amount: 5000000,
+    type: "INCOME",
+    description: "Gaji Bulanan (Bulan Lalu)",
+    date: lastMonthPayday.toDate(),
+    createdAt: lastMonthPayday.toDate(),
+    walletId,
+    categoryId: getCatId("Gaji"),
+    userId,
+    syncStatus: "SYNCED",
+  });
+
+  // 🎯 Pola 1: The Payday Leak (Gaji 5jt bulan ini, 2 hari lalu)
   const twoDaysAgo = dayjs().subtract(2, "day");
   txns.push({
     clientId: randomUUID(),
@@ -146,14 +162,15 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     syncStatus: "SYNCED",
   });
 
-  const yesterday = dayjs().subtract(1, "day");
+  // Belanja Bulanan diletakkan di awal bulan (tgl 2) agar tidak mengacaukan analisis hari tertinggi akhir pekan
+  const earlyMonthDate = dayjs().startOf("month").add(1, "day");
   txns.push({
     clientId: randomUUID(),
     amount: 1500000,
     type: "EXPENSE",
     description: "Belanja Kebutuhan Bulanan",
-    date: yesterday.toDate(),
-    createdAt: yesterday.toDate(),
+    date: earlyMonthDate.toDate(),
+    createdAt: earlyMonthDate.toDate(),
     walletId,
     categoryId: getCatId("Belanja Harian"),
     userId,
@@ -179,8 +196,8 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     amount: 150000,
     type: "EXPENSE",
     description: "Belanja Bahan Makanan",
-    date: yesterday.toDate(),
-    createdAt: yesterday.toDate(),
+    date: dayjs().subtract(3, "day").toDate(),
+    createdAt: dayjs().subtract(3, "day").toDate(),
     walletId,
     categoryId: getCatId("Makanan"),
     userId,
@@ -228,16 +245,16 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     });
   });
 
-  // 🎯 Pola 4: Weekend Trap (SP-02: Dominasi akhir pekan >75%)
-  const thisSaturday = dayjs().startOf("week").add(6, "day");
-  const thisSunday = dayjs().startOf("week");
+  // 🎯 Pola 4: Weekend Trap (SP-02: Dominasi akhir pekan hari Sabtu & Minggu minggu ini)
+  const saturdayDate = dayjs().day(6);
+  const sundayDate = dayjs().day(0);
   txns.push({
     clientId: randomUUID(),
     amount: 950000,
     type: "EXPENSE",
     description: "Weekend Getaway",
-    date: thisSaturday.toDate(),
-    createdAt: thisSaturday.toDate(),
+    date: saturdayDate.toDate(),
+    createdAt: saturdayDate.toDate(),
     walletId,
     categoryId: getCatId("Hiburan"),
     userId,
@@ -248,8 +265,8 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     amount: 450000,
     type: "EXPENSE",
     description: "Makan Keluarga Akhir Pekan",
-    date: thisSunday.toDate(),
-    createdAt: thisSunday.toDate(),
+    date: sundayDate.toDate(),
+    createdAt: sundayDate.toDate(),
     walletId,
     categoryId: getCatId("Hiburan"),
     userId,
@@ -299,4 +316,101 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
   }
 
   await db.transaction.createMany({ data: txns });
+
+  // 6. 🎯 Suntikkan 6 Log Notifikasi Evaluasi (BG-00b, SP-02, AN-02, WL-02, FT-01, PR-01)
+  const now = new Date();
+  const notifLogs = [
+    {
+      clientId: randomUUID(),
+      dedupeKey: `eval-bg00b-${userId}`,
+      userId,
+      title: "Anggaran 'Makanan' Sudah Terpakai 84%",
+      body: "Pengeluaran kategori Makanan bulan ini mencapai Rp 420.000 dari batas anggaran Rp 500.000. Tersisa Rp 80.000.",
+      type: "BUDGET_WARNING",
+      status: "delivered",
+      severity: "WARNING",
+      source: "engine",
+      ctaRoute: "/budgets",
+      ctaLabel: "Lihat Anggaran",
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      clientId: randomUUID(),
+      dedupeKey: `eval-sp02-${userId}`,
+      userId,
+      title: "Pola Pengeluaran Akhir Pekan Terdeteksi",
+      body: "Lebih dari 75% pengeluaran minggu ini terkonsentrasi pada hari Sabtu dan Minggu (total Rp 1.400.000). Waspadai pengeluaran akhir pekan.",
+      type: "BEHAVIORAL_INSIGHT",
+      status: "delivered",
+      severity: "INFO",
+      source: "engine",
+      ctaRoute: "/analytics",
+      ctaLabel: "Lihat Analitik",
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      clientId: randomUUID(),
+      dedupeKey: `eval-an02-${userId}`,
+      userId,
+      title: "Tren Kenaikan Kategori Hiburan & Langganan",
+      body: "Akumulasi pengeluaran hiburan dan layanan berlangganan (Spotify, Netflix, Internet) meningkat signifikan dibandingkan bulan lalu.",
+      type: "BEHAVIORAL_INSIGHT",
+      status: "delivered",
+      severity: "WARNING",
+      source: "engine",
+      ctaRoute: "/analytics",
+      ctaLabel: "Analisis Kategori",
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      clientId: randomUUID(),
+      dedupeKey: `eval-wl02-${userId}`,
+      userId,
+      title: "Perhatian: Pengingat Saldo Dompet",
+      body: "Pantau terus pengeluaran harianmu agar saldo operasional Dompet Utama (BCA) tetap sehat hingga akhir bulan.",
+      type: "CASHFLOW_ALERT",
+      status: "delivered",
+      severity: "WARNING",
+      source: "engine",
+      ctaRoute: "/wallets",
+      ctaLabel: "Cek Dompet",
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      clientId: randomUUID(),
+      dedupeKey: `eval-ft01-${userId}`,
+      userId,
+      title: "Target 'Dana Darurat & Liburan' Belum Ada Progres",
+      body: "Target Rp 10.000.000 sudah berjalan di bulan ini namun belum ada kontribusi tabungan yang tercatat (Rp 0).",
+      type: "TARGET_ALERT",
+      status: "delivered",
+      severity: "WARNING",
+      source: "engine",
+      ctaRoute: "/targets",
+      ctaLabel: "Isi Target",
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      clientId: randomUUID(),
+      dedupeKey: `eval-pr01-${userId}`,
+      userId,
+      title: "Keren! Kamu Berhasil Berhemat",
+      body: "Arus kas bersih 7 hari terakhir positif berkat manajemen pengeluaran yang terkontrol. Pertahankan kebiasaan baik ini!",
+      type: "POSITIVE_REINFORCEMENT",
+      status: "delivered",
+      severity: "SUCCESS",
+      source: "engine",
+      ctaRoute: "/",
+      ctaLabel: "Lihat Dashboard",
+      createdAt: now,
+      updatedAt: now,
+    },
+  ];
+
+  await db.notificationLog.createMany({ data: notifLogs });
 }
