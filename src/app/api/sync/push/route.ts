@@ -53,10 +53,8 @@ export async function POST(request: NextRequest) {
 
     /********** Normalisasi & Sanitasi Preflight untuk Log Notifikasi. */
     if (payload.notification_logs) {
+      payload.notification_logs = payload.notification_logs.filter(log => Boolean(log && log.clientId));
       for (const log of payload.notification_logs) {
-        if (!log.clientId) {
-          return NextResponse.json({ success: false, error: { code: "VALIDATION_ERROR", message: "Missing clientId in notification_log.", meta: { entity: "notification_log", field: "clientId" } } }, { status: 400 });
-        }
         if (!log.dedupeKey) {
           log.dedupeKey = log.clientId;
         }
