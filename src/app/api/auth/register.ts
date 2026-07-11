@@ -137,13 +137,13 @@ export async function POST(request: NextRequest) {
         })),
       });
 
-      /********** Jika opsi seedDemoData aktif (mode uji/evaluasi), suntikkan data skenario UCD. */
-      if (seedDemoData) {
-        await seedDemoDataForUser(newUser.id, tx);
-      }
-
       return newUser;
-    });
+    }, { timeout: 15000 });
+
+    /********** Jika opsi seedDemoData aktif (mode uji/evaluasi), suntikkan data skenario UCD di luar interactive transaction agar tidak timeout di serverless Vercel. */
+    if (seedDemoData) {
+      await seedDemoDataForUser(user.id, prisma);
+    }
 
     /********** Buat dan tangani penandatanganan token JWT. */
     const token = await signToken({ userId: user.id, username: user.username });
