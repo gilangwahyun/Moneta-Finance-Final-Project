@@ -180,11 +180,13 @@ export async function POST(request: NextRequest) {
     setCsrfCookie(response, generateCsrfToken(), isSecure);
 
     return response;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Register error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Terjadi kesalahan tak terduga. Silakan coba lagi.';
     return NextResponse.json(
-      { success: false, error: { code: 'INTERNAL_ERROR', message: 'Terjadi kesalahan tak terduga. Silakan coba lagi.' } },
+      { success: false, error: { code: 'INTERNAL_ERROR', message: errorMessage } },
       { status: 500 },
     );
   }
+
 }

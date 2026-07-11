@@ -46,7 +46,7 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
   }
 
   const getCatId = (name: string) =>
-    categoriesDb.find((c: any) => c.name === name)?.id || "";
+    categoriesDb.find((c: any) => c.name === name)?.id || null;
 
   // 2. Buat Dompet Utama (Bank)
   const wallet = await db.wallet.create({
