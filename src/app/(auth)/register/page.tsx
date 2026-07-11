@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useAuthUser } from "@/hooks/use-auth-user";
 import { User } from "@/types/models.types";
 import { Eye, EyeOff, FlaskConical } from "lucide-react";
+import { clearLocalCache } from "@/lib/local-db/cache-manager";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -52,6 +53,9 @@ export default function RegisterPage() {
       if (!res.ok) {
         throw new Error(result.error?.message || "Pendaftaran gagal.");
       }
+
+      // Bersihkan sisa data atau antrian IndexedDB dari sesi/akun pengujian sebelumnya
+      await clearLocalCache();
 
       // Simpan sesi pengguna ke IndexedDB
       const userData: User = result.data.user;

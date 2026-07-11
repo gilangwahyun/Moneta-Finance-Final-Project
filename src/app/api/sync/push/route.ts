@@ -9,6 +9,14 @@ import { getAuthUser } from "@/lib/auth/middleware";
 import { validateCsrfToken } from "@/lib/auth/csrf";
 import { SyncPushPayload, SyncPushResponse, SyncConflict } from "@/types/sync.types";
 
+const VALID_WALLET_TYPES = new Set(["TUNAI", "BANK", "E_WALLET", "INVESTASI", "LAINNYA"]);
+function normalizeWalletType(type?: string): any {
+  if (!type) return "TUNAI";
+  const upper = type.toUpperCase();
+  if (upper === "CASH") return "TUNAI";
+  return VALID_WALLET_TYPES.has(upper) ? upper : "TUNAI";
+}
+
 export async function POST(request: NextRequest) {
   try {
     /********** Pengecekan Autentikasi. */
@@ -245,8 +253,8 @@ export async function POST(request: NextRequest) {
                 where: { id: existing.id },
                 data: {
                   name: wlt.name,
-                  type: wlt.type,
-                  initialBalance: wlt.initialBalance,
+                  type: normalizeWalletType(wlt.type),
+                  initialBalance: Number(wlt.initialBalance) || 0,
                   deletedAt: wlt.deletedAt ? new Date(wlt.deletedAt) : null,
                   syncStatus: "SYNCED",
                 },
@@ -278,8 +286,8 @@ export async function POST(request: NextRequest) {
               data: {
                 clientId: wlt.clientId,
                 name: wlt.name,
-                type: wlt.type,
-                initialBalance: wlt.initialBalance,
+                type: normalizeWalletType(wlt.type),
+                initialBalance: Number(wlt.initialBalance) || 0,
                 userId,
                 syncStatus: "SYNCED",
                 deletedAt: wlt.deletedAt ? new Date(wlt.deletedAt) : null,
@@ -931,44 +939,50 @@ export async function POST(request: NextRequest) {
                 }
               }
 
-              const newLog = await tx.notificationLog.create({
-                data: {
-                  clientId: log.clientId,
+              const logDataPayload = {
+                clientId: log.clientId,
+                userId,
+                type: log.type || "system",
+                eventType: log.eventType,
+                deliveryModeAtCreation: log.deliveryModeAtCreation,
+                title: log.title || "Notifikasi",
+                body: log.body || "",
+                status: "delivered", /* Status dari client lokal. */
+                severity: log.severity,
+                source: log.source,
+                relatedTransactionId: relatedTxnId,
+                relatedCategoryId: log.relatedCategoryId,
+                relatedBudgetId: log.relatedBudgetId,
+                ctaRoute: log.ctaRoute,
+                actionType: log.actionType,
+                ctaLabel: log.ctaLabel,
+                sourceBudgetId: log.sourceBudgetId,
+                targetBudgetId: log.targetBudgetId,
+                recommendedAmount: log.recommendedAmount,
+                categoryName: log.categoryName,
+                usageRatio: log.usageRatio,
+                budgetLimit: log.budgetLimit,
+                budgetSpent: log.budgetSpent,
+                deficitAmount: log.deficitAmount,
+                todayAmount: log.todayAmount,
+                comparisonAmount: log.comparisonAmount,
+                comparisonLabel: log.comparisonLabel,
+                sourceCategoryName: log.sourceCategoryName,
+                targetCategoryName: log.targetCategoryName,
+                readAt: log.readAt ? new Date(log.readAt) : null,
+                dismissedAt: log.dismissedAt ? new Date(log.dismissedAt) : null,
+                pushedAt: log.pushedAt ? new Date(log.pushedAt) : null,
+                digestSentAt: log.digestSentAt ? new Date(log.digestSentAt) : null,
+                createdAt: log.createdAt ? new Date(log.createdAt) : new Date(),
+                updatedAt: log.updatedAt ? new Date(log.updatedAt) : (log.createdAt ? new Date(log.createdAt) : new Date()),
+              };
+
+              const newLog = await tx.notificationLog.upsert({
+                where: { dedupeKey: log.dedupeKey },
+                update: logDataPayload,
+                create: {
+                  ...logDataPayload,
                   dedupeKey: log.dedupeKey,
-                  userId,
-                  type: log.type,
-                  eventType: log.eventType,
-                  deliveryModeAtCreation: log.deliveryModeAtCreation,
-                  title: log.title,
-                  body: log.body,
-                  status: "delivered", /* Status dari client lokal. */
-                  severity: log.severity,
-                  source: log.source,
-                  relatedTransactionId: relatedTxnId,
-                  relatedCategoryId: log.relatedCategoryId,
-                  relatedBudgetId: log.relatedBudgetId,
-                  ctaRoute: log.ctaRoute,
-                  actionType: log.actionType,
-                  ctaLabel: log.ctaLabel,
-                  sourceBudgetId: log.sourceBudgetId,
-                  targetBudgetId: log.targetBudgetId,
-                  recommendedAmount: log.recommendedAmount,
-                  categoryName: log.categoryName,
-                  usageRatio: log.usageRatio,
-                  budgetLimit: log.budgetLimit,
-                  budgetSpent: log.budgetSpent,
-                  deficitAmount: log.deficitAmount,
-                  todayAmount: log.todayAmount,
-                  comparisonAmount: log.comparisonAmount,
-                  comparisonLabel: log.comparisonLabel,
-                  sourceCategoryName: log.sourceCategoryName,
-                  targetCategoryName: log.targetCategoryName,
-                  readAt: log.readAt ? new Date(log.readAt) : null,
-                  dismissedAt: log.dismissedAt ? new Date(log.dismissedAt) : null,
-                  pushedAt: log.pushedAt ? new Date(log.pushedAt) : null,
-                  digestSentAt: log.digestSentAt ? new Date(log.digestSentAt) : null,
-                  createdAt: log.createdAt ? new Date(log.createdAt) : new Date(),
-                  updatedAt: log.updatedAt ? new Date(log.updatedAt) : (log.createdAt ? new Date(log.createdAt) : new Date()),
                 },
               });
               logByClientId.set(log.clientId, newLog);

@@ -11,6 +11,7 @@ import Link from "next/link";
 import { useAuthUser } from "@/hooks/use-auth-user";
 import { User } from "@/types/models.types";
 import { Eye, EyeOff } from "lucide-react";
+import { clearLocalCache } from "@/lib/local-db/cache-manager";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -43,6 +44,9 @@ export default function LoginPage() {
       if (!res.ok) {
         throw new Error(result.error?.message || "Login gagal.");
       }
+
+      // Bersihkan cache & antrian lama sebelum masuk sesi baru
+      await clearLocalCache();
 
       // Simpan sesi pengguna ke IndexedDB
       const userData: User = result.data.user;
