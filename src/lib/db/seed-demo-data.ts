@@ -300,7 +300,7 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
 
   // Transaksi Historis Bulan Lalu (Sebagai data historis perbandingan grafik)
   for (let i = 1; i <= 20; i++) {
-    const d = dayjs().subtract(1, "month").add(i, "day");
+    const d = dayjs().subtract(1, "month").startOf("month").add(i, "day");
     txns.push({
       clientId: randomUUID(),
       amount: 25000 + Math.floor(Math.random() * 50000),
