@@ -303,8 +303,9 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
   });
 
   // 🎯 Pola 6: Pengurasan Saldo (WL-02: Saldo Dompet Menipis)
-  // Suntikkan transaksi raksasa ini agar sisa saldo dompet menyusut menjadi sekitar Rp 200rb
-  const drainingDate = dayjs().startOf("day").add(20, "hour");
+  // Suntikkan transaksi raksasa ini di akhir BULAN LALU agar sisa saldo dompet menyusut menjadi sekitar Rp 200rb
+  // tanpa merusak "Kesehatan Anggaran" bulan ini.
+  const drainingDate = dayjs().subtract(1, "month").endOf("month").subtract(1, "day");
   txns.push({
     clientId: randomUUID(),
     amount: 3800000, 
