@@ -116,9 +116,9 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
       name: "Dana Darurat & Liburan",
       type: "SAVING_TARGET",
       targetAmount: 10000000,
-      period: "MONTHLY",
-      startDate: dayjs().startOf("month").toDate(),
-      endDate: dayjs().endOf("month").toDate(),
+      period: "CUSTOM", // Ubah ke CUSTOM agar target berjalan tidak bergantung pada awal bulan
+      startDate: dayjs().startOf("day").subtract(12, "day").toDate(), // 12 hari yang lalu (>30% berjalan)
+      endDate: dayjs().startOf("day").add(18, "day").toDate(), // Total 30 hari
       isActive: true,
       note: "Target menabung bulanan (Simulasi Pengujian)",
       userId,
@@ -271,7 +271,7 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     syncStatus: "SYNCED",
   });
 
-  // 🎯 Pola 5: Subscription Cannibalization (AN-02 Category Creep)
+  // 🎯 Pola 5: Subscription Cannibalization (AN-02 Category Creep - Simulasi kenaikan tiap bulan)
   const subs = [
     { name: "Spotify Premium", amount: 49000, cat: "Langganan", day: 5 },
     { name: "Netflix Standard", amount: 153000, cat: "Langganan", day: 15 },
@@ -279,12 +279,17 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
   ];
   subs.forEach((sub, idx) => {
     // Paksa ke hari ini agar tidak terlempar ke tanggal 5/15/20 di masa depan jika di-seed awal bulan
-    const dCurr = dayjs().startOf("day").add(idx + 5, "hour");
-    const dPrev = dayjs().subtract(1, "month").startOf("day").add(idx + 5, "hour");
-    [dCurr, dPrev].forEach((d) => {
+    const dCurr = dayjs().startOf("day").add(idx + 5, "hour"); // Bulan ini
+    const dPrev1 = dayjs().subtract(1, "month").startOf("day").add(idx + 5, "hour"); // 1 Bulan lalu
+    const dPrev2 = dayjs().subtract(2, "month").startOf("day").add(idx + 5, "hour"); // 2 Bulan lalu
+    
+    // Skenario Creep: Harga asli hari ini, bulan lalu 15% lebih murah, 2 bulan lalu 30% lebih murah
+    const amounts = [sub.amount, sub.amount * 0.85, sub.amount * 0.70];
+
+    [dCurr, dPrev1, dPrev2].forEach((d, i) => {
       txns.push({
         clientId: randomUUID(),
-        amount: sub.amount,
+        amount: Math.floor(amounts[i]), // Bulatkan ke bawah
         type: "EXPENSE",
         description: sub.name,
         date: d.toDate(),
@@ -295,6 +300,22 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
         syncStatus: "SYNCED",
       });
     });
+  });
+
+  // 🎯 Pola 6: Pengurasan Saldo (WL-02: Saldo Dompet Menipis)
+  // Suntikkan transaksi raksasa ini agar sisa saldo dompet menyusut menjadi sekitar Rp 200rb
+  const drainingDate = dayjs().startOf("day").add(20, "hour");
+  txns.push({
+    clientId: randomUUID(),
+    amount: 3800000, 
+    type: "EXPENSE",
+    description: "Pembayaran Darurat Medis / Cicilan",
+    date: drainingDate.toDate(),
+    createdAt: drainingDate.toDate(),
+    walletId,
+    categoryId: getCatId("Tagihan") || getCatId("Lainnya"), // Bebas yang mana saja
+    userId,
+    syncStatus: "SYNCED",
   });
 
   // Transaksi Historis Bulan Lalu (Sebagai data historis perbandingan grafik)
