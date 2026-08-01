@@ -109,20 +109,7 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     });
   }
 
-  // Anggaran Langganan/Tagihan Rp1.000.000 (Agar semua pengeluaran bulan ini ter-cover anggaran dan Total Terpakai selaras)
-  const langgananCatId = getCatId("Langganan") || getCatId("Tagihan");
-  if (langgananCatId) {
-    await db.budget.create({
-      data: {
-        clientId: randomUUID(),
-        amount: 1000000,
-        period: currentPeriod,
-        categoryId: langgananCatId,
-        userId,
-        syncStatus: "SYNCED",
-      },
-    });
-  }
+
 
   // 4. Buat Target Finansial (FT-01: Target Belum Ada Progres)
   await db.financialTarget.create({
