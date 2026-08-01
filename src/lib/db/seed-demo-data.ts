@@ -116,9 +116,9 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
       name: "Dana Darurat & Liburan",
       type: "SAVING_TARGET",
       targetAmount: 10000000,
-      period: "MONTHLY",
-      startDate: dayjs().startOf("month").toDate(),
-      endDate: dayjs().endOf("month").toDate(),
+      period: "CUSTOM",
+      startDate: dayjs().startOf("day").subtract(12, "day").toDate(), // Memaksa >30% waktu berjalan
+      endDate: dayjs().startOf("day").add(18, "day").toDate(),
       isActive: true,
       note: "Target menabung bulanan (Simulasi Pengujian)",
       userId,
@@ -147,15 +147,16 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     syncStatus: "SYNCED",
   });
 
-  // 🎯 Pola 1: The Payday Leak (Gaji 5jt bulan ini, 2 hari lalu)
-  const twoDaysAgo = dayjs().subtract(2, "day");
+  // 🎯 Pola 1: Payday Leak (Gaji Masuk & Langsung Habis)
+  // Gaji disetel hari ini agar bulan ini tercatat memiliki pemasukan (mencegah error 'Data Pemasukan Kosong')
+  const paydayDate = dayjs().toDate();
   txns.push({
     clientId: randomUUID(),
     amount: 5000000,
     type: "INCOME",
     description: "Gaji Bulanan",
-    date: twoDaysAgo.toDate(),
-    createdAt: twoDaysAgo.toDate(),
+    date: paydayDate,
+    createdAt: paydayDate,
     walletId,
     categoryId: getCatId("Gaji"),
     userId,
@@ -191,13 +192,16 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     syncStatus: "SYNCED",
   });
 
+  // Digeser ke hari ini (tapi mundur beberapa jam) agar tetap masuk anggaran bulan ini (Agustus)
+  // Target: 270k + 150k = 420k (84% dari 500k)
+  const makanKeluargaDate = dayjs().startOf("day").add(15, "hour").toDate();
   txns.push({
     clientId: randomUUID(),
     amount: 150000,
     type: "EXPENSE",
-    description: "Belanja Bahan Makanan",
-    date: dayjs().subtract(3, "day").toDate(),
-    createdAt: dayjs().subtract(3, "day").toDate(),
+    description: "Makan Keluarga (Weekend)",
+    date: makanKeluargaDate,
+    createdAt: makanKeluargaDate,
     walletId,
     categoryId: getCatId("Makanan"),
     userId,
@@ -297,6 +301,45 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
       });
     });
   }
+
+  // 🎯 Pola 5b: Category Creep untuk Kategori Hiburan (AN-02)
+  // Menyuntikkan data 3 bulan ke belakang yang merayap naik (>10%/bulan)
+  const hiburanSejarah = [
+    { bulanMundur: 3, amount: 600000 },
+    { bulanMundur: 2, amount: 700000 },
+    { bulanMundur: 1, amount: 800000 },
+  ];
+  for (const h of hiburanSejarah) {
+    const dHist = dayjs().subtract(h.bulanMundur, "month").startOf("month").add(10, "day").toDate();
+    txns.push({
+      clientId: randomUUID(),
+      amount: h.amount,
+      type: "EXPENSE",
+      description: "Aktivitas Hiburan Bulanan",
+      date: dHist,
+      createdAt: dHist,
+      walletId,
+      categoryId: getCatId("Hiburan"),
+      userId,
+      syncStatus: "SYNCED",
+    });
+  }
+
+  // 🎯 Pola 6: Pengurasan Saldo (WL-02)
+  // Transaksi raksasa di akhir bulan lalu agar global wallet terkuras tanpa merusak kesehatan anggaran bulan ini
+  const drainingDate = dayjs().subtract(1, "month").endOf("month").subtract(1, "day").toDate();
+  txns.push({
+    clientId: randomUUID(),
+    amount: 3500000,
+    type: "EXPENSE",
+    description: "Pembayaran Darurat Medis / Cicilan Ekstra",
+    date: drainingDate,
+    createdAt: drainingDate,
+    walletId,
+    categoryId: getCatId("Tagihan") || getCatId("Lainnya"),
+    userId,
+    syncStatus: "SYNCED",
+  });
 
   // Transaksi Historis Bulan Lalu (Sebagai data historis perbandingan grafik)
   for (let i = 1; i <= 20; i++) {
