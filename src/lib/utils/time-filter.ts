@@ -73,10 +73,11 @@ export function getDynamicComparisonPeriods(
     }
     case "month": {
       const currentStart = today.startOf("month");
+      const currentEnd = today.endOf("month");
       const baselineEnd = currentStart.subtract(1, "day").endOf("day");
       const baselineStart = baselineEnd.startOf("month");
       return {
-        currentPeriod: { start: currentStart.format("YYYY-MM-DD"), end: today.format("YYYY-MM-DD") },
+        currentPeriod: { start: currentStart.format("YYYY-MM-DD"), end: currentEnd.format("YYYY-MM-DD") },
         baselinePeriod: { start: baselineStart.format("YYYY-MM-DD"), end: baselineEnd.format("YYYY-MM-DD") },
         comparisonLabel: "vs bulan lalu",
       };
