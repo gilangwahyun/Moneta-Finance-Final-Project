@@ -109,6 +109,21 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     });
   }
 
+  // Anggaran Langganan/Tagihan Rp1.000.000 (Agar semua pengeluaran bulan ini ter-cover anggaran dan Total Terpakai selaras)
+  const langgananCatId = getCatId("Langganan") || getCatId("Tagihan");
+  if (langgananCatId) {
+    await db.budget.create({
+      data: {
+        clientId: randomUUID(),
+        amount: 1000000,
+        period: currentPeriod,
+        categoryId: langgananCatId,
+        userId,
+        syncStatus: "SYNCED",
+      },
+    });
+  }
+
   // 4. Buat Target Finansial (FT-01: Target Belum Ada Progres)
   await db.financialTarget.create({
     data: {
@@ -163,15 +178,15 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     syncStatus: "SYNCED",
   });
 
-  // Belanja Bulanan diletakkan di awal bulan (tgl 2) agar tidak mengacaukan analisis hari tertinggi akhir pekan
-  const earlyMonthDate = dayjs().startOf("month").add(1, "day");
+  // Belanja Bulanan diletakkan di hari ini agar masuk ke dalam filter 'Bulan Ini' di analitik
+  const earlyMonthDate = dayjs().toDate();
   txns.push({
     clientId: randomUUID(),
     amount: 1500000,
     type: "EXPENSE",
     description: "Belanja Kebutuhan Bulanan",
-    date: earlyMonthDate.toDate(),
-    createdAt: earlyMonthDate.toDate(),
+    date: earlyMonthDate,
+    createdAt: earlyMonthDate,
     walletId,
     categoryId: getCatId("Belanja Harian"),
     userId,
