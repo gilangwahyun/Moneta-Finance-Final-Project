@@ -116,9 +116,9 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
       name: "Dana Darurat & Liburan",
       type: "SAVING_TARGET",
       targetAmount: 10000000,
-      period: "CUSTOM", // Ubah ke CUSTOM agar target berjalan tidak bergantung pada awal bulan
-      startDate: dayjs().startOf("day").subtract(12, "day").toDate(), // 12 hari yang lalu (>30% berjalan)
-      endDate: dayjs().startOf("day").add(18, "day").toDate(), // Total 30 hari
+      period: "MONTHLY",
+      startDate: dayjs().startOf("month").toDate(),
+      endDate: dayjs().endOf("month").toDate(),
       isActive: true,
       note: "Target menabung bulanan (Simulasi Pengujian)",
       userId,
@@ -147,8 +147,8 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     syncStatus: "SYNCED",
   });
 
-  // 🎯 Pola 1: The Payday Leak (Gaji 5jt bulan ini, 2 hari lalu -> disesuaikan ke hari ini agar masuk Agustus)
-  const twoDaysAgo = dayjs().startOf("day").add(8, "hour");
+  // 🎯 Pola 1: The Payday Leak (Gaji 5jt bulan ini, 2 hari lalu)
+  const twoDaysAgo = dayjs().subtract(2, "day");
   txns.push({
     clientId: randomUUID(),
     amount: 5000000,
@@ -162,8 +162,8 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     syncStatus: "SYNCED",
   });
 
-  // Belanja Bulanan diletakkan di awal bulan (tgl 2 -> disesuaikan ke hari ini)
-  const earlyMonthDate = dayjs().startOf("day").add(10, "hour");
+  // Belanja Bulanan diletakkan di awal bulan (tgl 2) agar tidak mengacaukan analisis hari tertinggi akhir pekan
+  const earlyMonthDate = dayjs().startOf("month").add(1, "day");
   txns.push({
     clientId: randomUUID(),
     amount: 1500000,
@@ -196,24 +196,24 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     amount: 150000,
     type: "EXPENSE",
     description: "Belanja Bahan Makanan",
-    date: dayjs().subtract(2, "hour").toDate(),
-    createdAt: dayjs().subtract(2, "hour").toDate(),
+    date: dayjs().subtract(3, "day").toDate(),
+    createdAt: dayjs().subtract(3, "day").toDate(),
     walletId,
     categoryId: getCatId("Makanan"),
     userId,
     syncStatus: "SYNCED",
   });
 
-  // 🎯 Pola 2: The Latte Factor (14x Es Kopi ~Rp 15.000, disebar dalam 7 hari terakhir agar muncul di grafik)
+  // 🎯 Pola 2: The Latte Factor (14x Es Kopi ~Rp 15.000)
   for (let i = 1; i <= 14; i++) {
-    const d = dayjs().subtract(i * 12, "hour"); // 12 jam sekali, mundur sampai 7 hari
+    const d = dayjs().subtract(i * 2, "day");
     txns.push({
       clientId: randomUUID(),
       amount: 15000 + Math.floor(Math.random() * 3000),
       type: "EXPENSE",
       description: "Es Kopi Susu",
       date: d.toDate(),
-      createdAt: d.toDate(),
+      createdAt: d.set("hour", 14).toDate(),
       walletId,
       categoryId: getCatId("Jajan"),
       userId,
@@ -223,9 +223,9 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
 
   // 🎯 Pola 3: Night-Owl Spending (Pengeluaran larut malam)
   const nightDates = [
-    dayjs().startOf("day").add(23, "hour"), // Hari ini jam 23 (Hiburan)
-    dayjs().startOf("day").subtract(1, "day").add(1, "hour"), // Kemarin jam 1 pagi (Jajan)
-    dayjs().startOf("day").subtract(3, "day").add(2, "hour"), // 3 hari lalu jam 2 pagi (Jajan)
+    dayjs().subtract(5, "day"),
+    dayjs().subtract(12, "day"),
+    dayjs().subtract(15, "day"),
   ];
   nightDates.forEach((d, idx) => {
     txns.push({
@@ -234,7 +234,10 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
       type: "EXPENSE",
       description: idx === 0 ? "Steam Game" : "Midnight Snack",
       date: d.toDate(),
-      createdAt: d.toDate(),
+      createdAt: d
+        .set("hour", idx === 0 ? 23 : 1)
+        .set("minute", 30)
+        .toDate(),
       walletId,
       categoryId: idx === 0 ? getCatId("Hiburan") : getCatId("Jajan"),
       userId,
@@ -242,10 +245,9 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     });
   });
 
-  // 🎯 Pola 4: Weekend Trap (SP-02: Dominasi akhir pekan hari Sabtu & Minggu)
-  // Dipaksa hari ini agar terhitung sebagai Anggaran Hiburan Agustus
-  const saturdayDate = dayjs().startOf("day").add(14, "hour"); 
-  const sundayDate = dayjs().startOf("day").add(19, "hour");
+  // 🎯 Pola 4: Weekend Trap (SP-02: Dominasi akhir pekan hari Sabtu & Minggu minggu ini)
+  const saturdayDate = dayjs().day(6);
+  const sundayDate = dayjs().day(0);
   txns.push({
     clientId: randomUUID(),
     amount: 950000,
@@ -271,25 +273,19 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     syncStatus: "SYNCED",
   });
 
-  // 🎯 Pola 5: Subscription Cannibalization (AN-02 Category Creep - Simulasi kenaikan tiap bulan)
+  // 🎯 Pola 5: Subscription Cannibalization (AN-02 Category Creep)
   const subs = [
     { name: "Spotify Premium", amount: 49000, cat: "Langganan", day: 5 },
     { name: "Netflix Standard", amount: 153000, cat: "Langganan", day: 15 },
     { name: "Internet Rumah Fiber", amount: 350000, cat: "Tagihan", day: 20 },
   ];
-  subs.forEach((sub, idx) => {
-    // Paksa ke hari ini agar tidak terlempar ke tanggal 5/15/20 di masa depan jika di-seed awal bulan
-    const dCurr = dayjs().startOf("day").add(idx + 5, "hour"); // Bulan ini
-    const dPrev1 = dayjs().subtract(1, "month").startOf("day").add(idx + 5, "hour"); // 1 Bulan lalu
-    const dPrev2 = dayjs().subtract(2, "month").startOf("day").add(idx + 5, "hour"); // 2 Bulan lalu
-    
-    // Skenario Creep: Harga asli hari ini, bulan lalu 15% lebih murah, 2 bulan lalu 30% lebih murah
-    const amounts = [sub.amount, sub.amount * 0.85, sub.amount * 0.70];
-
-    [dCurr, dPrev1, dPrev2].forEach((d, i) => {
+  for (const sub of subs) {
+    const dCurr = dayjs().date(sub.day);
+    const dPrev = dayjs().subtract(1, "month").date(sub.day);
+    [dCurr, dPrev].forEach((d) => {
       txns.push({
         clientId: randomUUID(),
-        amount: Math.floor(amounts[i]), // Bulatkan ke bawah
+        amount: sub.amount,
         type: "EXPENSE",
         description: sub.name,
         date: d.toDate(),
@@ -300,24 +296,7 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
         syncStatus: "SYNCED",
       });
     });
-  });
-
-  // 🎯 Pola 6: Pengurasan Saldo (WL-02: Saldo Dompet Menipis)
-  // Suntikkan transaksi raksasa ini di akhir BULAN LALU agar sisa saldo dompet menyusut menjadi sekitar Rp 200rb
-  // tanpa merusak "Kesehatan Anggaran" bulan ini.
-  const drainingDate = dayjs().subtract(1, "month").endOf("month").subtract(1, "day");
-  txns.push({
-    clientId: randomUUID(),
-    amount: 3800000, 
-    type: "EXPENSE",
-    description: "Pembayaran Darurat Medis / Cicilan",
-    date: drainingDate.toDate(),
-    createdAt: drainingDate.toDate(),
-    walletId,
-    categoryId: getCatId("Tagihan") || getCatId("Lainnya"), // Bebas yang mana saja
-    userId,
-    syncStatus: "SYNCED",
-  });
+  }
 
   // Transaksi Historis Bulan Lalu (Sebagai data historis perbandingan grafik)
   for (let i = 1; i <= 20; i++) {
