@@ -147,8 +147,8 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     syncStatus: "SYNCED",
   });
 
-  // 🎯 Pola 1: The Payday Leak (Gaji 5jt bulan ini, 2 hari lalu)
-  const twoDaysAgo = dayjs().subtract(2, "day");
+  // 🎯 Pola 1: The Payday Leak (Gaji 5jt bulan ini, 2 hari lalu -> disesuaikan ke hari ini agar masuk Agustus)
+  const twoDaysAgo = dayjs().startOf("day").add(8, "hour");
   txns.push({
     clientId: randomUUID(),
     amount: 5000000,
@@ -162,8 +162,8 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     syncStatus: "SYNCED",
   });
 
-  // Belanja Bulanan diletakkan di awal bulan (tgl 2) agar tidak mengacaukan analisis hari tertinggi akhir pekan
-  const earlyMonthDate = dayjs().startOf("month").add(1, "day");
+  // Belanja Bulanan diletakkan di awal bulan (tgl 2 -> disesuaikan ke hari ini)
+  const earlyMonthDate = dayjs().startOf("day").add(10, "hour");
   txns.push({
     clientId: randomUUID(),
     amount: 1500000,
@@ -196,24 +196,24 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     amount: 150000,
     type: "EXPENSE",
     description: "Belanja Bahan Makanan",
-    date: dayjs().subtract(3, "day").toDate(),
-    createdAt: dayjs().subtract(3, "day").toDate(),
+    date: dayjs().subtract(2, "hour").toDate(),
+    createdAt: dayjs().subtract(2, "hour").toDate(),
     walletId,
     categoryId: getCatId("Makanan"),
     userId,
     syncStatus: "SYNCED",
   });
 
-  // 🎯 Pola 2: The Latte Factor (14x Es Kopi ~Rp 15.000)
+  // 🎯 Pola 2: The Latte Factor (14x Es Kopi ~Rp 15.000, disebar dalam 7 hari terakhir agar muncul di grafik)
   for (let i = 1; i <= 14; i++) {
-    const d = dayjs().subtract(i * 2, "day");
+    const d = dayjs().subtract(i * 12, "hour"); // 12 jam sekali, mundur sampai 7 hari
     txns.push({
       clientId: randomUUID(),
       amount: 15000 + Math.floor(Math.random() * 3000),
       type: "EXPENSE",
       description: "Es Kopi Susu",
       date: d.toDate(),
-      createdAt: d.set("hour", 14).toDate(),
+      createdAt: d.toDate(),
       walletId,
       categoryId: getCatId("Jajan"),
       userId,
@@ -223,9 +223,9 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
 
   // 🎯 Pola 3: Night-Owl Spending (Pengeluaran larut malam)
   const nightDates = [
-    dayjs().subtract(5, "day"),
-    dayjs().subtract(12, "day"),
-    dayjs().subtract(15, "day"),
+    dayjs().startOf("day").add(23, "hour"), // Hari ini jam 23 (Hiburan)
+    dayjs().startOf("day").subtract(1, "day").add(1, "hour"), // Kemarin jam 1 pagi (Jajan)
+    dayjs().startOf("day").subtract(3, "day").add(2, "hour"), // 3 hari lalu jam 2 pagi (Jajan)
   ];
   nightDates.forEach((d, idx) => {
     txns.push({
@@ -234,10 +234,7 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
       type: "EXPENSE",
       description: idx === 0 ? "Steam Game" : "Midnight Snack",
       date: d.toDate(),
-      createdAt: d
-        .set("hour", idx === 0 ? 23 : 1)
-        .set("minute", 30)
-        .toDate(),
+      createdAt: d.toDate(),
       walletId,
       categoryId: idx === 0 ? getCatId("Hiburan") : getCatId("Jajan"),
       userId,
@@ -245,9 +242,10 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     });
   });
 
-  // 🎯 Pola 4: Weekend Trap (SP-02: Dominasi akhir pekan hari Sabtu & Minggu minggu ini)
-  const saturdayDate = dayjs().day(6);
-  const sundayDate = dayjs().day(0);
+  // 🎯 Pola 4: Weekend Trap (SP-02: Dominasi akhir pekan hari Sabtu & Minggu)
+  // Dipaksa hari ini agar terhitung sebagai Anggaran Hiburan Agustus
+  const saturdayDate = dayjs().startOf("day").add(14, "hour"); 
+  const sundayDate = dayjs().startOf("day").add(19, "hour");
   txns.push({
     clientId: randomUUID(),
     amount: 950000,
@@ -279,9 +277,10 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     { name: "Netflix Standard", amount: 153000, cat: "Langganan", day: 15 },
     { name: "Internet Rumah Fiber", amount: 350000, cat: "Tagihan", day: 20 },
   ];
-  for (const sub of subs) {
-    const dCurr = dayjs().date(sub.day);
-    const dPrev = dayjs().subtract(1, "month").date(sub.day);
+  subs.forEach((sub, idx) => {
+    // Paksa ke hari ini agar tidak terlempar ke tanggal 5/15/20 di masa depan jika di-seed awal bulan
+    const dCurr = dayjs().startOf("day").add(idx + 5, "hour");
+    const dPrev = dayjs().subtract(1, "month").startOf("day").add(idx + 5, "hour");
     [dCurr, dPrev].forEach((d) => {
       txns.push({
         clientId: randomUUID(),
@@ -296,7 +295,7 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
         syncStatus: "SYNCED",
       });
     });
-  }
+  });
 
   // Transaksi Historis Bulan Lalu (Sebagai data historis perbandingan grafik)
   for (let i = 1; i <= 20; i++) {
