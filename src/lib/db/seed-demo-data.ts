@@ -147,15 +147,15 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     syncStatus: "SYNCED",
   });
 
-  // 🎯 Pola 1: The Payday Leak (Gaji 5jt bulan ini, 2 hari lalu)
-  const twoDaysAgo = dayjs().subtract(2, "day");
+  // 🎯 Pola 1: The Payday Leak (Gaji 5jt bulan ini, awal bulan)
+  const paydayThisMonth = dayjs().startOf("month").add(1, "day"); // Tanggal 2
   txns.push({
     clientId: randomUUID(),
     amount: 5000000,
     type: "INCOME",
     description: "Gaji Bulanan",
-    date: twoDaysAgo.toDate(),
-    createdAt: twoDaysAgo.toDate(),
+    date: paydayThisMonth.toDate(),
+    createdAt: paydayThisMonth.toDate(),
     walletId,
     categoryId: getCatId("Gaji"),
     userId,
@@ -183,8 +183,8 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     amount: 270000,
     type: "EXPENSE",
     description: "Makan Malam Bersama Teman",
-    date: dayjs().toDate(),
-    createdAt: dayjs().toDate(),
+    date: dayjs().startOf("month").add(10, "day").toDate(),
+    createdAt: dayjs().startOf("month").add(10, "day").toDate(),
     walletId,
     categoryId: getCatId("Makanan"),
     userId,
@@ -196,8 +196,8 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     amount: 150000,
     type: "EXPENSE",
     description: "Belanja Bahan Makanan",
-    date: dayjs().subtract(3, "day").toDate(),
-    createdAt: dayjs().subtract(3, "day").toDate(),
+    date: dayjs().startOf("month").add(12, "day").toDate(),
+    createdAt: dayjs().startOf("month").add(12, "day").toDate(),
     walletId,
     categoryId: getCatId("Makanan"),
     userId,
@@ -206,7 +206,7 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
 
   // 🎯 Pola 2: The Latte Factor (14x Es Kopi ~Rp 15.000)
   for (let i = 1; i <= 14; i++) {
-    const d = dayjs().subtract(i * 2, "day");
+    const d = dayjs().startOf("month").add(i, "day");
     txns.push({
       clientId: randomUUID(),
       amount: 15000 + Math.floor(Math.random() * 3000),
@@ -223,9 +223,9 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
 
   // 🎯 Pola 3: Night-Owl Spending (Pengeluaran larut malam)
   const nightDates = [
-    dayjs().subtract(5, "day"),
-    dayjs().subtract(12, "day"),
-    dayjs().subtract(15, "day"),
+    dayjs().startOf("month").add(5, "day"),
+    dayjs().startOf("month").add(12, "day"),
+    dayjs().startOf("month").add(15, "day"),
   ];
   nightDates.forEach((d, idx) => {
     txns.push({
@@ -245,9 +245,10 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
     });
   });
 
-  // 🎯 Pola 4: Weekend Trap (SP-02: Dominasi akhir pekan hari Sabtu & Minggu minggu ini)
-  const saturdayDate = dayjs().day(6);
-  const sundayDate = dayjs().day(0);
+  // 🎯 Pola 4: Weekend Trap (SP-02: Dominasi akhir pekan hari Sabtu & Minggu)
+  const midMonth = dayjs().startOf("month").date(15);
+  const saturdayDate = midMonth.day(6);
+  const sundayDate = midMonth.day(0);
   txns.push({
     clientId: randomUUID(),
     amount: 950000,
