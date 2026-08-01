@@ -326,11 +326,11 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
   }
 
   // 🎯 Pola 6: Pengurasan Saldo (WL-02)
-  // Transaksi raksasa di akhir bulan lalu agar global wallet terkuras tanpa merusak kesehatan anggaran bulan ini
-  const drainingDate = dayjs().subtract(1, "month").endOf("month").subtract(1, "day").toDate();
+  // Transaksi raksasa di luar jendela 7 hari agar global wallet terkuras tanpa merusak cashflow 7 hari
+  const drainingDate = dayjs().startOf("day").subtract(8, "day").toDate();
   txns.push({
     clientId: randomUUID(),
-    amount: 3500000,
+    amount: 3700000,
     type: "EXPENSE",
     description: "Pembayaran Darurat Medis / Cicilan Ekstra",
     date: drainingDate,
