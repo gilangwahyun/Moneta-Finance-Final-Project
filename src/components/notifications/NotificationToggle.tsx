@@ -69,30 +69,14 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
     setIsLoading(true);
 
     try {
-      /* Penjaga: Memastikan dukungan fitur peramban */
-      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-        toast.error("Notifikasi push tidak didukung oleh browser ini.");
-        return;
-      }
-
-      /* Penjaga: Memastikan kunci publik VAPID tersedia di environment */
-      const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-      if (!vapidPublicKey) {
-        console.error(
-          "[NotificationToggle] NEXT_PUBLIC_VAPID_PUBLIC_KEY tidak dikonfigurasi pada .env."
-        );
-        toast.error(
-          "Konfigurasi notifikasi bermasalah. Silakan hubungi dukungan."
-        );
-        return;
-      }
-
       /* Langkah 1: Meminta izin notifikasi dari pengguna */
-      const result = await Notification.requestPermission();
-      setPermission(result as PermissionState);
+      // We request permission early here just to update the UI state immediately if denied,
+      // though subscribeToPushNotifications also requests it.
+      const initialPermission = await Notification.requestPermission();
+      setPermission(initialPermission as PermissionState);
 
-      if (result !== "granted") {
-        if (result === "denied") {
+      if (initialPermission !== "granted") {
+        if (initialPermission === "denied") {
           toast.error(
             "Notifikasi diblokir. Izinkan melalui pengaturan situs di browser kamu, lalu muat ulang halaman.",
             { duration: 6000 }
@@ -100,58 +84,34 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
         } else {
           toast.warning("Izin notifikasi tidak diberikan.");
         }
+        setIsLoading(false);
         return;
       }
 
-      /* Langkah 2: Menunggu Service Worker aktif sepenuhnya (ready) */
       console.log("[NotificationToggle] Menunggu Service Worker aktif…");
       const registration = await navigator.serviceWorker.ready;
-      console.log("[NotificationToggle] Service Worker aktif:", registration.active?.scriptURL);
+      
+      const { subscribeToPushNotifications } = await import("@/lib/sw/register");
+      const result = await subscribeToPushNotifications(registration);
 
-      /* Langkah 3: Mendaftarkan PushManager dengan mengonversi kunci VAPID ke ArrayBuffer */
-      const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
-
-      const pushSubscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true, /* Diwajibkan bernilai true oleh standar peramban */
-        applicationServerKey,
-      });
-
-      console.log(
-        "[NotificationToggle] PushSubscription berhasil dibuat:",
-        pushSubscription.endpoint
-      );
-
-      /* Langkah 4: Menyimpan informasi langganan ke server database */
-      const response = await csrfFetch("/api/notifications/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(pushSubscription.toJSON()),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const errorMsg = typeof errorData.error === 'string' 
-          ? errorData.error 
-          : (errorData.error?.message || `Server error ${response.status}`);
+      if (result.success) {
+        setIsSubscribed(true);
+        toast.success("Notifikasi diaktifkan! Kamu akan menerima pengingat dari Moneta.");
+      } else {
+        console.error("[NotificationToggle] Error berlangganan:", result);
+        toast.error(`Gagal mengaktifkan notifikasi: ${result.reason}`);
         
-        console.error("[NotificationToggle] Server menolak pendaftaran langganan:", errorData);
-        throw new Error(errorMsg);
+        // Reset permission if it was actually denied
+        if (Notification.permission === 'denied') {
+          setPermission("denied");
+        } else {
+          setPermission("default");
+        }
       }
-
-      setIsSubscribed(true);
-      toast.success("Notifikasi diaktifkan! Kamu akan menerima pengingat dari Moneta.");
-
     } catch (err: unknown) {
       console.error("[NotificationToggle] Error berlangganan:", err);
-
-      if (err instanceof DOMException && err.name === "NotAllowedError") {
-        toast.warning("Izin ditolak. Klik tombol lagi untuk mencoba ulang.");
-        setPermission("default");
-      } else {
-        const message =
-          err instanceof Error ? err.message : "Terjadi kesalahan yang tidak diketahui.";
-        toast.error(`Gagal mengaktifkan notifikasi: ${message}`);
-      }
+      const message = err instanceof Error ? err.message : "Terjadi kesalahan yang tidak diketahui.";
+      toast.error(`Gagal mengaktifkan notifikasi: ${message}`);
     } finally {
       setIsLoading(false);
     }
@@ -164,24 +124,16 @@ export function NotificationToggle({ className = "" }: NotificationToggleProps) 
 
     try {
       const registration = await navigator.serviceWorker.ready;
-      const subscription = await registration.pushManager.getSubscription();
+      const { unsubscribeFromPushNotifications } = await import("@/lib/sw/register");
+      
+      const success = await unsubscribeFromPushNotifications(registration);
 
-      if (subscription) {
-        const endpoint = subscription.endpoint;
-
-        /* Membatalkan langganan pada tingkat peramban */
-        await subscription.unsubscribe();
-
-        /* Menghapus data langganan dari server database */
-        await csrfFetch("/api/notifications/subscribe", {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ endpoint }),
-        });
+      if (success) {
+        setIsSubscribed(false);
+        toast.success("Notifikasi dinonaktifkan.");
+      } else {
+        toast.error("Gagal menonaktifkan notifikasi. Silakan coba lagi.");
       }
-
-      setIsSubscribed(false);
-      toast.success("Notifikasi dinonaktifkan.");
     } catch (err) {
       console.error("[NotificationToggle] Unsubscribe error:", err);
       toast.error("Gagal menonaktifkan notifikasi. Silakan coba lagi.");
