@@ -3,10 +3,10 @@
  * Description: Hook kustom React untuk mengelola target atau tujuan keuangan (saving targets / financial goals) lokal melalui IndexedDB serta menghitung progres pencapaiannya.
  */
 
-"use client";
+'use client';
 
-import { useState, useEffect, useCallback } from "react";
-import { FinancialTarget } from "@/types/models.types";
+import { useState, useEffect, useCallback } from 'react';
+import { FinancialTarget } from '@/types/models.types';
 import {
   getActiveTargets,
   addTarget,
@@ -14,12 +14,13 @@ import {
   deleteTarget,
   AddTargetInput,
   UpdateTargetInput,
-} from "@/lib/local-db/repositories/targets";
-import { getAllCategoriesIncludingDeleted } from "@/lib/local-db/repositories/categories";
-import { calculateTargetProgress, TargetProgress } from "@/lib/local-db/target-queries";
-import { getCurrentUser } from "@/lib/local-db/repositories/users";
-import { useSyncContext } from "@/providers/SyncProvider";
-import { SyncEvents } from "@/lib/sync/events";
+} from '@/lib/local-db/repositories/targets';
+import { getAllCategoriesIncludingDeleted } from '@/lib/local-db/repositories/categories';
+import { calculateTargetProgress, TargetProgress } from '@/lib/local-db/target-queries';
+import { getCurrentUser } from '@/lib/local-db/repositories/users';
+import { useSyncContext } from '@/providers/SyncProvider';
+import { SyncEvents } from '@/lib/sync/events';
+import { useLocalMutation } from '@/hooks/use-local-mutation';
 
 /********** Tipe Data & Antarmuka **********/
 
@@ -35,11 +36,11 @@ export interface UseTargetsReturn {
   /* Pesan error jika terjadi kegagalan operasi */
   error: string | null;
   /* Merekam atau menambah target keuangan baru */
-  recordTarget: (input: Omit<AddTargetInput, "userId">) => Promise<FinancialTarget | null>;
+  recordTarget: (input: Omit<AddTargetInput, 'userId'>) => Promise<FinancialTarget | null>;
   /* Memperbarui data target keuangan yang sudah ada */
   editTarget: (input: UpdateTargetInput) => Promise<FinancialTarget | null>;
   /* Menghapus target keuangan dari sistem */
-  removeTarget: (clientId: string) => Promise<boolean>;
+  removeTarget: (clientId: string) => Promise<boolean | null | any>;
   /* Memuat ulang data dari IndexedDB */
   refresh: () => Promise<void>;
 }
@@ -54,41 +55,38 @@ export interface UseTargetsReturn {
 export function useTargets(): UseTargetsReturn {
   const [targets, setTargets] = useState<TargetWithProgress[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const { scheduleSync } = useSyncContext();
 
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
-      setError(null);
+      setLoadError(null);
       const user = await getCurrentUser();
       if (!user) {
         setTargets([]);
         return;
       }
-      
-      const [activeTargets, allCategories] = await Promise.all([
-        getActiveTargets(user.id),
-        getAllCategoriesIncludingDeleted(user.id)
-      ]);
-      
-      const categoriesMap = new Map(allCategories.map(c => [c.clientId, c]));
+
+      const [activeTargets, allCategories] = await Promise.all([getActiveTargets(user.id), getAllCategoriesIncludingDeleted(user.id)]);
+
+      const categoriesMap = new Map(allCategories.map((c) => [c.clientId, c]));
 
       const targetsWithProgress = await Promise.all(
         activeTargets.map(async (target) => {
           const progress = await calculateTargetProgress(target);
-          return { 
-            ...target, 
+          return {
+            ...target,
             category: target.categoryId ? categoriesMap.get(target.categoryId) : undefined,
-            progress 
+            progress,
           };
-        })
+        }),
       );
-      
+
       setTargets(targetsWithProgress);
     } catch (err) {
-      console.error("[useTargets] Load failed:", err);
-      setError("Failed to load targets");
+      console.error('[useTargets] Load failed:', err);
+      setLoadError('Failed to load targets');
     } finally {
       setIsLoading(false);
     }
@@ -111,60 +109,34 @@ export function useTargets(): UseTargetsReturn {
     };
   }, [loadData]);
 
-  /********** [START: Buat Target Baru & Jadwalkan Sinkronisasi] **********/
-  const recordTarget = useCallback(
-    async (input: Omit<AddTargetInput, "userId">) => {
-      try {
-        const user = await getCurrentUser();
-        if (!user) return null;
-        const created = await addTarget({ ...input, userId: user.id });
-        scheduleSync();
-        loadData();
-        return created;
-      } catch (err) {
-        setError("Failed to create target");
-        return null;
-      }
+  /********** [START: Operasi Mutasi Target] **********/
+  const { mutate: recordTarget, error: recordErr } = useLocalMutation(
+    async (input: Omit<AddTargetInput, 'userId'>) => {
+      const user = await getCurrentUser();
+      if (!user) throw new Error('User not found');
+      return addTarget({ ...input, userId: user.id });
     },
-    [scheduleSync, loadData]
+    { eventName: SyncEvents.TARGET_UPDATED, onSuccess: loadData, errorMessage: 'Failed to create target' },
   );
-  /********** [END: Buat Target Baru & Jadwalkan Sinkronisasi] **********/
 
-  /********** [START: Edit Target & Jadwalkan Sinkronisasi] **********/
-  const editTarget = useCallback(
-    async (input: UpdateTargetInput) => {
-      try {
-        const updated = await updateTarget(input);
-        scheduleSync();
-        loadData();
-        return updated;
-      } catch (err) {
-        setError("Failed to update target");
-        return null;
-      }
-    },
-    [scheduleSync, loadData]
-  );
-  /********** [END: Edit Target & Jadwalkan Sinkronisasi] **********/
+  const { mutate: editTarget, error: editErr } = useLocalMutation(updateTarget, {
+    eventName: SyncEvents.TARGET_UPDATED,
+    onSuccess: loadData,
+    errorMessage: 'Failed to update target',
+  });
 
-  /********** [START: Hapus Target & Jadwalkan Sinkronisasi] **********/
-  const removeTarget = useCallback(
+  const { mutate: removeTarget, error: removeErr } = useLocalMutation(
     async (clientId: string) => {
-      try {
-        await deleteTarget(clientId);
-        scheduleSync();
-        loadData();
-        return true;
-      } catch (err) {
-        setError("Failed to delete target");
-        return false;
-      }
+      await deleteTarget(clientId);
+      return true;
     },
-    [scheduleSync, loadData]
+    { eventName: SyncEvents.TARGET_UPDATED, onSuccess: loadData, errorMessage: 'Failed to delete target' },
   );
-  /********** [END: Hapus Target & Jadwalkan Sinkronisasi] **********/
+  /********** [END: Operasi Mutasi Target] **********/
+
+  const combinedError = loadError || recordErr || editErr || removeErr;
 
   /********** Pengembalian Data Hook **********/
 
-  return { targets, isLoading, error, recordTarget, editTarget, removeTarget, refresh: loadData };
+  return { targets, isLoading, error: combinedError, recordTarget, editTarget, removeTarget, refresh: loadData };
 }
