@@ -23,6 +23,7 @@ import { getAllCategoriesIncludingDeleted } from "@/lib/local-db/repositories/ca
 import { getCurrentUser } from "@/lib/local-db/repositories/users";
 import { SyncEvents } from "@/lib/sync/events";
 import { useSyncContext } from "@/providers/SyncProvider";
+import { useLocalMutation } from "@/hooks/use-local-mutation";
 
 /********** Tipe Data & Antarmuka **********/
 
@@ -50,7 +51,7 @@ export interface UseTransactionsReturn {
     input: UpdateTransactionInput
   ) => Promise<Transaction | null>;
   /* Menghapus (soft-delete) transaksi dari sistem */
-  removeTransaction: (clientId: string) => Promise<boolean>;
+  removeTransaction: (clientId: string) => Promise<boolean | null | any>;
   /* Memuat ulang data dari IndexedDB */
   refresh: () => Promise<void>;
 }
@@ -70,14 +71,13 @@ export function useTransactions(): UseTransactionsReturn {
     netBalance: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { scheduleSync } = useSyncContext();
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   /* Memuat data transaksi dan kategori dari IndexedDB */
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
-      setError(null);
+      setLoadError(null);
 
       const user = await getCurrentUser();
       
@@ -103,7 +103,7 @@ export function useTransactions(): UseTransactionsReturn {
       setMonthlyTotals(totals);
     } catch (err) {
       console.error("[useTransactions] Load failed:", err);
-      setError("Failed to load transactions");
+      setLoadError("Failed to load transactions");
     } finally {
       setIsLoading(false);
     }
@@ -130,20 +130,19 @@ export function useTransactions(): UseTransactionsReturn {
   }, [loadData]);
 
   /********** [START: Rekam Transaksi Baru & Pembaruan Optimistik] **********/
-  const recordTransaction = useCallback(
+  const { mutate: recordTransaction, error: recordErr } = useLocalMutation(
     async (
       input: Omit<AddTransactionInput, "userId">
-    ): Promise<Transaction | null> => {
-      try {
-        setError(null);
-        const user = await getCurrentUser();
-        if (!user) {
-          setError("No user session found");
-          return null;
-        }
-
-        const created = await addTransaction({ ...input, userId: user.id });
-
+    ) => {
+      const user = await getCurrentUser();
+      if (!user) throw new Error("No user session found");
+      return addTransaction({ ...input, userId: user.id });
+    },
+    {
+      eventName: SyncEvents.TRANSACTION_UPDATED,
+      errorMessage: "Failed to record transaction",
+      onSuccess: (created) => {
+        if (!created) return;
         /* Pembaruan optimistik — tambahkan transaksi baru ke posisi teratas daftar */
         setTransactions((prev) => [created, ...prev]);
 
@@ -166,31 +165,23 @@ export function useTransactions(): UseTransactionsReturn {
             };
           }
         });
-
-        scheduleSync();
-        window.dispatchEvent(new Event("moneta-transaction-updated"));
-        return created;
-      } catch (err) {
-        console.error("[useTransactions] Create failed:", err);
-        setError("Failed to record transaction");
-        return null;
       }
-    },
-    [scheduleSync]
+    }
   );
   /********** [END: Rekam Transaksi Baru & Pembaruan Optimistik] **********/
 
   /********** [START: Edit Transaksi & Pembaruan Ulang Total] **********/
-  const editTransaction = useCallback(
-    async (input: UpdateTransactionInput): Promise<Transaction | null> => {
-      try {
-        setError(null);
-        const updated = await updateTransaction(input);
-        if (!updated) {
-          setError("Transaction not found");
-          return null;
-        }
-
+  const { mutate: editTransaction, error: editErr } = useLocalMutation(
+    async (input: UpdateTransactionInput) => {
+      const updated = await updateTransaction(input);
+      if (!updated) throw new Error("Transaction not found");
+      return updated;
+    },
+    {
+      eventName: SyncEvents.TRANSACTION_UPDATED,
+      errorMessage: "Failed to update transaction",
+      onSuccess: async (updated) => {
+        if (!updated) return;
         setTransactions((prev) =>
           prev.map((t) => (t.clientId === updated.clientId ? updated : t))
         );
@@ -201,40 +192,30 @@ export function useTransactions(): UseTransactionsReturn {
           const totals = await getCurrentMonthTotals(user.id);
           setMonthlyTotals(totals);
         }
-
-        scheduleSync();
-        window.dispatchEvent(new Event("moneta-transaction-updated"));
-        return updated;
-      } catch (err) {
-        console.error("[useTransactions] Update failed:", err);
-        setError("Failed to update transaction");
-        return null;
       }
-    },
-    [scheduleSync]
+    }
   );
   /********** [END: Edit Transaksi & Pembaruan Ulang Total] **********/
 
   /********** [START: Hapus Transaksi & Pembaruan Optimistik] **********/
-  const removeTransaction = useCallback(
-    async (clientId: string): Promise<boolean> => {
-      try {
-        setError(null);
-
-        /* Ambil data transaksi sebelum dihapus untuk perhitungan pembaruan optimistik total bulanan */
-        const toDelete = transactions.find((t) => t.clientId === clientId);
-
-        const success = await deleteTransaction(clientId);
-        if (!success) {
-          setError("Transaction not found");
-          return false;
-        }
-
+  const { mutate: removeTransaction, error: removeErr } = useLocalMutation(
+    async (clientId: string) => {
+      /* Ambil data transaksi sebelum dihapus untuk perhitungan pembaruan optimistik total bulanan */
+      const toDelete = transactions.find((t) => t.clientId === clientId);
+      const success = await deleteTransaction(clientId);
+      if (!success) throw new Error("Transaction not found");
+      return toDelete; // Return the deleted transaction object for the onSuccess callback
+    },
+    {
+      eventName: SyncEvents.TRANSACTION_UPDATED,
+      errorMessage: "Failed to delete transaction",
+      onSuccess: (toDelete) => {
+        if (!toDelete) return;
         /* Pembaruan optimistik daftar transaksi */
-        setTransactions((prev) => prev.filter((t) => t.clientId !== clientId));
+        setTransactions((prev) => prev.filter((t) => t.clientId !== toDelete.clientId));
 
         /* Perbarui total bulanan secara optimistik — TRANSFER diabaikan dari laba rugi */
-        if (toDelete && isInCurrentMonth(toDelete.date) && toDelete.type !== "TRANSFER") {
+        if (isInCurrentMonth(toDelete.date) && toDelete.type !== "TRANSFER") {
           setMonthlyTotals((prev) => {
             if (toDelete.type === "INCOME") {
               return {
@@ -251,19 +232,12 @@ export function useTransactions(): UseTransactionsReturn {
             }
           });
         }
-
-        scheduleSync();
-        window.dispatchEvent(new Event("moneta-transaction-updated"));
-        return true;
-      } catch (err) {
-        console.error("[useTransactions] Delete failed:", err);
-        setError("Failed to delete transaction");
-        return false;
       }
-    },
-    [scheduleSync, transactions]
+    }
   );
   /********** [END: Hapus Transaksi & Pembaruan Optimistik] **********/
+
+  const combinedError = loadError || recordErr || editErr || removeErr;
 
   /********** Pengembalian Data Hook **********/
 
@@ -271,7 +245,7 @@ export function useTransactions(): UseTransactionsReturn {
     transactions,
     monthlyTotals,
     isLoading,
-    error,
+    error: combinedError,
     recordTransaction,
     editTransaction,
     removeTransaction,

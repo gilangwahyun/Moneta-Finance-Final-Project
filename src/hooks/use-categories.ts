@@ -18,6 +18,8 @@ import {
 } from "@/lib/local-db/repositories/categories";
 import { getCurrentUser } from "@/lib/local-db/repositories/users";
 import { useSyncContext } from "@/providers/SyncProvider";
+import { useLocalMutation } from "@/hooks/use-local-mutation";
+import { SyncEvents } from "@/lib/sync/events";
 
 export type { AddCategoryInput, UpdateCategoryInput };
 
@@ -41,7 +43,7 @@ export interface UseCategoriesReturn {
   /* Memperbarui data kategori yang sudah ada */
   editCategory: (input: UpdateCategoryInput) => Promise<Category | null>;
   /* Menghapus (soft-delete) kategori dari sistem */
-  removeCategory: (clientId: string) => Promise<boolean>;
+  removeCategory: (clientId: string) => Promise<boolean | null | any>;
   /* Memuat ulang data dari IndexedDB */
   refresh: () => Promise<void>;
 }
@@ -57,14 +59,13 @@ export function useCategories(): UseCategoriesReturn {
   const [categories, setCategories] = useState<Category[]>([]);
   const [allCategories, setAllCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const { scheduleSync } = useSyncContext();
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   /* Memuat daftar kategori dari IndexedDB */
   const loadCategories = useCallback(async () => {
     try {
       setIsLoading(true);
-      setError(null);
+      setLoadError(null);
 
       const user = await getCurrentUser();
       if (!user) {
@@ -89,7 +90,7 @@ export function useCategories(): UseCategoriesReturn {
       setAllCategories(all);
     } catch (err) {
       console.error("[useCategories] Load failed:", err);
-      setError("Failed to load categories");
+      setLoadError("Failed to load categories");
     } finally {
       setIsLoading(false);
     }
@@ -103,25 +104,26 @@ export function useCategories(): UseCategoriesReturn {
       loadCategories();
     };
 
-    window.addEventListener("moneta-category-updated", handleUpdate);
+    window.addEventListener(SyncEvents.CATEGORY_UPDATED, handleUpdate);
+    window.addEventListener(SyncEvents.SYNC_COMPLETED, handleUpdate);
     return () => {
-      window.removeEventListener("moneta-category-updated", handleUpdate);
+      window.removeEventListener(SyncEvents.CATEGORY_UPDATED, handleUpdate);
+      window.removeEventListener(SyncEvents.SYNC_COMPLETED, handleUpdate);
     };
   }, [loadCategories]);
 
   /********** [START: Buat Kategori Baru & Pembaruan Optimistik] **********/
-  const createCategory = useCallback(
-    async (input: Omit<AddCategoryInput, "userId">): Promise<Category | null> => {
-      try {
-        setError(null);
-        const user = await getCurrentUser();
-        if (!user) {
-          setError("No user session found");
-          return null;
-        }
-
-        const created = await addCategory({ ...input, userId: user.id });
-
+  const { mutate: createCategory, error: createErr } = useLocalMutation(
+    async (input: Omit<AddCategoryInput, "userId">) => {
+      const user = await getCurrentUser();
+      if (!user) throw new Error("No user session found");
+      return addCategory({ ...input, userId: user.id });
+    },
+    {
+      eventName: SyncEvents.CATEGORY_UPDATED,
+      errorMessage: "Failed to create category",
+      onSuccess: (created) => {
+        if (!created) return;
         /* Pembaruan optimistik antarmuka pengguna */
         setCategories((prev) =>
           [...prev, created].sort((a, b) => {
@@ -129,35 +131,23 @@ export function useCategories(): UseCategoriesReturn {
             return a.name.localeCompare(b.name);
           })
         );
-
-        /* Jadwalkan sinkronisasi latar belakang */
-        scheduleSync();
-        
-        /* Beri tahu hook atau komponen lain yang sedang aktif */
-        window.dispatchEvent(new Event("moneta-category-updated"));
-
-        return created;
-      } catch (err) {
-        console.error("[useCategories] Create failed:", err);
-        setError("Failed to create category");
-        return null;
       }
-    },
-    [scheduleSync]
+    }
   );
   /********** [END: Buat Kategori Baru & Pembaruan Optimistik] **********/
 
   /********** [START: Edit Kategori & Pembaruan Optimistik] **********/
-  const editCategory = useCallback(
-    async (input: UpdateCategoryInput): Promise<Category | null> => {
-      try {
-        setError(null);
-        const updated = await updateCategory(input);
-        if (!updated) {
-          setError("Category not found");
-          return null;
-        }
-
+  const { mutate: editCategory, error: editErr } = useLocalMutation(
+    async (input: UpdateCategoryInput) => {
+      const updated = await updateCategory(input);
+      if (!updated) throw new Error("Category not found");
+      return updated;
+    },
+    {
+      eventName: SyncEvents.CATEGORY_UPDATED,
+      errorMessage: "Failed to update category",
+      onSuccess: (updated) => {
+        if (!updated) return;
         /* Pembaruan optimistik antarmuka pengguna */
         setCategories((prev) =>
           prev
@@ -167,50 +157,35 @@ export function useCategories(): UseCategoriesReturn {
               return a.name.localeCompare(b.name);
             })
         );
-
-        scheduleSync();
-        window.dispatchEvent(new Event("moneta-category-updated"));
-        return updated;
-      } catch (err) {
-        console.error("[useCategories] Update failed:", err);
-        setError("Failed to update category");
-        return null;
       }
-    },
-    [scheduleSync]
+    }
   );
   /********** [END: Edit Kategori & Pembaruan Optimistik] **********/
 
   /********** [START: Hapus Kategori & Pembaruan Optimistik] **********/
-  const removeCategory = useCallback(
-    async (clientId: string): Promise<boolean> => {
-      try {
-        setError(null);
-        const success = await deleteCategory(clientId);
-        if (!success) {
-          setError("Category not found");
-          return false;
-        }
-
-        /* Pembaruan optimistik antarmuka pengguna — hapus dari daftar aktif */
-        setCategories((prev) => prev.filter((c) => c.clientId !== clientId));
-
-        scheduleSync();
-        window.dispatchEvent(new Event("moneta-category-updated"));
-        return true;
-      } catch (err) {
-        console.error("[useCategories] Delete failed:", err);
-        setError("Failed to delete category");
-        return false;
-      }
+  const { mutate: removeCategory, error: removeErr } = useLocalMutation(
+    async (clientId: string) => {
+      const success = await deleteCategory(clientId);
+      if (!success) throw new Error("Category not found");
+      return clientId; // Pass the clientId to onSuccess
     },
-    [scheduleSync]
+    {
+      eventName: SyncEvents.CATEGORY_UPDATED,
+      errorMessage: "Failed to delete category",
+      onSuccess: (deletedClientId) => {
+        if (!deletedClientId) return;
+        /* Pembaruan optimistik antarmuka pengguna — hapus dari daftar aktif */
+        setCategories((prev) => prev.filter((c) => c.clientId !== deletedClientId));
+      }
+    }
   );
   /********** [END: Hapus Kategori & Pembaruan Optimistik] **********/
 
   /********** Kalkulasi Data Turunan **********/
   const incomeCategories = categories.filter((c) => c.type === "INCOME");
   const expenseCategories = categories.filter((c) => c.type === "EXPENSE");
+  
+  const combinedError = loadError || createErr || editErr || removeErr;
 
   /********** Pengembalian Data Hook **********/
 
@@ -220,7 +195,7 @@ export function useCategories(): UseCategoriesReturn {
     incomeCategories,
     expenseCategories,
     isLoading,
-    error,
+    error: combinedError,
     createCategory,
     editCategory,
     removeCategory,
