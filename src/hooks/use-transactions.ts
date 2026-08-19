@@ -20,6 +20,7 @@ import {
   getTransactionsByMonth,
 } from "@/lib/local-db/transaction-queries";
 import { getAllCategoriesIncludingDeleted } from "@/lib/local-db/repositories/categories";
+import { getAllWallets } from "@/lib/local-db/repositories/wallets";
 import { getCurrentUser } from "@/lib/local-db/repositories/users";
 import { SyncEvents } from "@/lib/sync/events";
 import { useSyncContext } from "@/providers/SyncProvider";
@@ -87,16 +88,21 @@ export function useTransactions(): UseTransactionsReturn {
         return;
       }
 
-      const [recent, totals, allCategories] = await Promise.all([
+      const [recent, totals, allCategories, allWallets] = await Promise.all([
         getRecentTransactions(user.id, 500), /* Muat hingga 500 transaksi agar filter bulan lalu tetap memiliki data */
         getCurrentMonthTotals(user.id),
         getAllCategoriesIncludingDeleted(user.id),
+        getAllWallets(user.id),
       ]);
 
       const categoriesMap = new Map(allCategories.map(c => [c.clientId, c]));
+      const walletsMap = new Map(allWallets.map(w => [w.clientId, w]));
+      
       const recentWithCategories = recent.map(txn => ({
         ...txn,
-        category: txn.categoryId ? categoriesMap.get(txn.categoryId) : undefined
+        category: txn.categoryId ? categoriesMap.get(txn.categoryId) : undefined,
+        wallet: txn.walletId ? walletsMap.get(txn.walletId) : undefined,
+        targetWallet: txn.targetWalletId ? walletsMap.get(txn.targetWalletId) : undefined,
       }));
 
       setTransactions(recentWithCategories);

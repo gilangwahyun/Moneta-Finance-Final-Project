@@ -86,6 +86,8 @@ export interface Transaction extends SyncMetadata {
   categoryId?: string | null; //********** Optional - TRANSFER has no category
   userId: string;
   category?: Category;        //********** Joined locally
+  wallet?: Wallet;            //********** Joined locally
+  targetWallet?: Wallet;      //********** Joined locally
 }
 
 //********** Budget **********
