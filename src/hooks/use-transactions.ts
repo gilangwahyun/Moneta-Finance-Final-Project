@@ -20,7 +20,7 @@ import {
   getTransactionsByMonth,
 } from "@/lib/local-db/transaction-queries";
 import { getAllCategoriesIncludingDeleted } from "@/lib/local-db/repositories/categories";
-import { getAllWallets } from "@/lib/local-db/repositories/wallets";
+import { getAllWalletsIncludingDeleted } from "@/lib/local-db/repositories/wallets";
 import { getCurrentUser } from "@/lib/local-db/repositories/users";
 import { SyncEvents } from "@/lib/sync/events";
 import { useSyncContext } from "@/providers/SyncProvider";
@@ -92,7 +92,7 @@ export function useTransactions(): UseTransactionsReturn {
         getRecentTransactions(user.id, 500), /* Muat hingga 500 transaksi agar filter bulan lalu tetap memiliki data */
         getCurrentMonthTotals(user.id),
         getAllCategoriesIncludingDeleted(user.id),
-        getAllWallets(user.id),
+        getAllWalletsIncludingDeleted(user.id),
       ]);
 
       const categoriesMap = new Map(allCategories.map(c => [c.clientId, c]));

@@ -178,6 +178,27 @@ export async function getAllWallets(userId: string): Promise<Wallet[]> {
 }
 
 /**
+ * Mengambil seluruh dompet (termasuk yang telah dihapus).
+ * Berguna untuk mempertahankan informasi nama dompet pada riwayat transaksi.
+ *
+ * @param userId - ID pengguna pemilik dompet.
+ * @returns Promise berisi array seluruh Wallet.
+ */
+export async function getAllWalletsIncludingDeleted(userId: string): Promise<Wallet[]> {
+  const db = await getDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORES.WALLETS, "readonly");
+    const index = tx.objectStore(STORES.WALLETS).index("by_userId");
+    const request = index.getAll(userId);
+
+    request.onsuccess = () => {
+      resolve(request.result as Wallet[]);
+    };
+    request.onerror = () => reject(request.error);
+  });
+}
+
+/**
  * Mengambil satu dompet berdasarkan clientId lokal.
  *
  * @param clientId - ID lokal unik dompet.
