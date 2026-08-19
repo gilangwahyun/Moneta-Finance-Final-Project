@@ -12,7 +12,7 @@ import { generateClientId } from "@/lib/utils/helpers";
 
 /********** Tipe dan Label Dompet **********/
 
-export const WALLET_TYPE_LABELS: Record<WalletType, string> = {
+const WALLET_TYPE_LABELS: Record<WalletType, string> = {
   TUNAI: "Tunai",
   BANK: "Bank",
   E_WALLET: "Dompet Digital",

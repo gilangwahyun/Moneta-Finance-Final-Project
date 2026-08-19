@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getCurrentUser } from '@/lib/local-db/repositories/users';
 import { getAllLogs, markLogRead as repoMarkLogRead, markAllLogsRead as repoMarkAllLogsRead, NotificationLogRecord } from '@/lib/local-db/repositories/notification-logs';
 import { getUnreadCount as repoGetUnreadCount } from '@/lib/local-db/repositories/notification-inbox';
+import { useLocalMutation } from '@/hooks/use-local-mutation';
 
 /********** Hook Utama (useNotifications) **********/
 
@@ -51,44 +52,56 @@ export function useNotifications() {
   }, [fetchUnreadCount]);
 
   /********** [START: Tandai Satu Notifikasi Dibaca & Pembaruan Optimistik] **********/
+  const { mutate: mutateMarkLogRead } = useLocalMutation(repoMarkLogRead, {
+    eventName: 'moneta-notification-updated',
+    onSuccess: () => {
+      fetchUnreadCount();
+    },
+    errorMessage: 'Gagal menandai notifikasi dibaca',
+  });
+
   const markLogRead = useCallback(async (clientId: string) => {
     /* Pembaruan optimistik jumlah belum dibaca dan status log antarmuka pengguna */
     setUnreadCount(prev => Math.max(0, prev - 1));
     setLogs(prev => prev.map(log => log.clientId === clientId ? { ...log, readAt: new Date().toISOString() } : log));
-    try {
-      await repoMarkLogRead(clientId);
-      fetchUnreadCount();
-      if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('moneta-notification-updated'));
-      }
-    } catch (err) {
-      console.error(err);
+    
+    const result = await mutateMarkLogRead(clientId);
+    if (result === null) {
+      /* Revert update optimistik jika terjadi kegagalan */
       fetchUnreadCount();
       fetchLogs();
     }
-  }, [fetchUnreadCount, fetchLogs]);
+  }, [mutateMarkLogRead, fetchUnreadCount, fetchLogs]);
   /********** [END: Tandai Satu Notifikasi Dibaca & Pembaruan Optimistik] **********/
 
   /********** [START: Tandai Semua Notifikasi Dibaca & Pembaruan Optimistik] **********/
-  const markAllLogsRead = useCallback(async () => {
-    const prevCount = unreadCount;
-    setUnreadCount(0);
-    setLogs(prev => prev.map(log => ({ ...log, readAt: new Date().toISOString() })));
-    try {
+  const { mutate: mutateMarkAllLogsRead } = useLocalMutation(
+    async () => {
       const user = await getCurrentUser();
       if (user) {
-        await repoMarkAllLogsRead(user.id);
-        fetchUnreadCount();
-        if (typeof window !== 'undefined') {
-          window.dispatchEvent(new CustomEvent('moneta-notification-updated'));
-        }
+        return repoMarkAllLogsRead(user.id);
       }
-    } catch (err) {
-      console.error(err);
+    },
+    {
+      eventName: 'moneta-notification-updated',
+      onSuccess: () => {
+        fetchUnreadCount();
+      },
+      errorMessage: 'Gagal menandai semua notifikasi dibaca',
+    }
+  );
+
+  const markAllLogsRead = useCallback(async () => {
+    setUnreadCount(0);
+    setLogs(prev => prev.map(log => ({ ...log, readAt: new Date().toISOString() })));
+    
+    const result = await mutateMarkAllLogsRead();
+    if (result === null) {
+      /* Revert update optimistik jika terjadi kegagalan */
       fetchUnreadCount();
       fetchLogs();
     }
-  }, [unreadCount, fetchUnreadCount, fetchLogs]);
+  }, [mutateMarkAllLogsRead, fetchUnreadCount, fetchLogs]);
   /********** [END: Tandai Semua Notifikasi Dibaca & Pembaruan Optimistik] **********/
 
   /********** Pengembalian Data Hook **********/

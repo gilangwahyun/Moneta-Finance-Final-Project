@@ -13,7 +13,7 @@ export interface ConflictPair<T extends { updatedAt: string }> {
   serverVersion: T;
 }
 
-export type Resolution = 'client_wins' | 'server_wins';
+type Resolution = 'client_wins' | 'server_wins';
 
 export interface ConflictResult<T> {
   winner: T;
@@ -61,7 +61,7 @@ export function resolveConflict<T extends { updatedAt: string }>(pair: ConflictP
  * @param server - Record versi server yang akan di-pull.
  * @returns `true` jika record server boleh menimpa lokal.
  */
-export function shouldOverwriteLocal<T extends { updatedAt: string; syncStatus?: string }>(local: T | undefined, server: T): boolean {
+function shouldOverwriteLocal<T extends { updatedAt: string; syncStatus?: string }>(local: T | undefined, server: T): boolean {
   /********** Tidak ada versi lokal — selalu terima dari server. */
   if (!local) return true;
 

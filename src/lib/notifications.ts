@@ -35,7 +35,7 @@ if (vapidPublicKey && vapidPrivateKey) {
  * The shape of the JSON payload pushed to the browser.
  * The Service Worker parses this in the 'push' event handler.
  */
-export interface PushPayload {
+interface PushPayload {
   title: string;
   body: string;
   type: string;

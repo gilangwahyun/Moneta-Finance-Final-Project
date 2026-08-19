@@ -28,7 +28,7 @@ interface QuickChipGridProps {
 }
 
 /********** Constants **********/
-export const EXPENSE_CHIPS: ChipDefinition[] = [
+const EXPENSE_CHIPS: ChipDefinition[] = [
   {
     id: "makan",
     label: "Makan",
@@ -85,7 +85,7 @@ export const EXPENSE_CHIPS: ChipDefinition[] = [
  * @param categories - The list of available categories to search within.
  * @returns The matched category clientId or null if not found.
  */
-export function resolveChipCategory(
+function resolveChipCategory(
   hint: string,
   categories: Category[]
 ): string | null {

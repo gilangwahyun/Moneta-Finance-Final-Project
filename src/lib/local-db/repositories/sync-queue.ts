@@ -181,7 +181,7 @@ export async function markEntryAttempt(id: number, errorMsg: string, maxRetries:
  *
  * @returns Promise berisi array SyncQueueEntry yang ter-karantina.
  */
-export async function getFailedSyncQueueEntries(): Promise<SyncQueueEntry[]> {
+async function getFailedSyncQueueEntries(): Promise<SyncQueueEntry[]> {
   const all = await getAllPending();
   return all.filter((e) => !!e.failedAt);
 }
@@ -226,7 +226,7 @@ export async function recoverQuarantinedNotificationLogs(): Promise<void> {
  *
  * @returns Promise void setelah antrean dikosongkan.
  */
-export async function clearAll(): Promise<void> {
+async function clearAll(): Promise<void> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORES.SYNC_QUEUE, "readwrite");
@@ -243,7 +243,7 @@ export async function clearAll(): Promise<void> {
  *
  * @returns Promise berisi objek yang mengelompokkan SyncQueueEntry berdasarkan entitas.
  */
-export async function getPendingByEntity(): Promise<{
+async function getPendingByEntity(): Promise<{
   categories: SyncQueueEntry[];
   transactions: SyncQueueEntry[];
   budgets: SyncQueueEntry[];

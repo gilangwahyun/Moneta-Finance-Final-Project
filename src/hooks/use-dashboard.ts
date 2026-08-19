@@ -18,7 +18,7 @@ export interface UseDashboardProps {
   allCategories: Category[];
 }
 
-export interface DashboardInsight {
+interface DashboardInsight {
   type: 'critical' | 'warning' | 'positive' | 'info';
   title: string;
   message: string;

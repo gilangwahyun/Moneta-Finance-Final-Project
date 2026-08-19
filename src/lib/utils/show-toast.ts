@@ -46,6 +46,6 @@ export function showDeleteToast(message: string = "Deleted successfully") {
  *
  * @param message - Pesan error yang akan ditampilkan.
  */
-export function showErrorToast(message: string) {
+function showErrorToast(message: string) {
   toast.error(message);
 }

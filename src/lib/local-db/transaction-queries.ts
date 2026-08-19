@@ -20,7 +20,7 @@ import { getAllCategories, getAllCategoriesIncludingDeleted } from "./repositori
  * @param month - Indeks bulan (0-indexed, 0 = Januari).
  * @returns Objek berisi startDate dan endDate dengan format YYYY-MM-DD.
  */
-export function getMonthBounds(
+function getMonthBounds(
   year: number,
   month: number
 ): { startDate: string; endDate: string } {
@@ -38,7 +38,7 @@ export function getMonthBounds(
  *
  * @returns Objek berisi startDate dan endDate bulan aktif.
  */
-export function getCurrentMonthBounds(): { startDate: string; endDate: string } {
+function getCurrentMonthBounds(): { startDate: string; endDate: string } {
   const now = new Date();
   return getMonthBounds(now.getFullYear(), now.getMonth());
 }
@@ -72,7 +72,7 @@ export async function getTransactionsByMonth(
  * @param month - Indeks bulan.
  * @returns Promise berisi objek totalIncome, totalExpense, dan netBalance.
  */
-export async function getMonthlyTotals(
+async function getMonthlyTotals(
   userId: string,
   year: number,
   month: number
@@ -113,7 +113,7 @@ export async function getCurrentMonthTotals(
 
 /********** Agregasi Kategori (Category Aggregations) **********/
 
-export interface CategoryTotal {
+interface CategoryTotal {
   categoryId: string;
   categoryName: string;
   categoryIcon: string | null;
@@ -134,7 +134,7 @@ export interface CategoryTotal {
  * @param month - Indeks bulan.
  * @returns Promise berisi daftar CategoryTotal yang diurutkan dari nominal terbesar.
  */
-export async function getTotalsByCategory(
+async function getTotalsByCategory(
   userId: string,
   year: number,
   month: number
@@ -204,7 +204,7 @@ export async function getTotalsByCategory(
 
 /********** Agregasi Harian (Daily Aggregations) **********/
 
-export interface DailyTotal {
+interface DailyTotal {
   date: string; /* Format tanggal YYYY-MM-DD */
   income: number;
   expense: number;
@@ -220,7 +220,7 @@ export interface DailyTotal {
  * @param month - Indeks bulan.
  * @returns Promise berisi daftar DailyTotal yang diurutkan berdasarkan tanggal.
  */
-export async function getDailyTotals(
+async function getDailyTotals(
   userId: string,
   year: number,
   month: number
@@ -266,7 +266,7 @@ export async function getDailyTotals(
  * @param month - Indeks bulan.
  * @returns Promise berisi rata-rata harian (averageDaily), hari berjalan (daysElapsed), dan estimasi total (projectedTotal).
  */
-export async function getAverageDailySpending(
+async function getAverageDailySpending(
   userId: string,
   year: number,
   month: number

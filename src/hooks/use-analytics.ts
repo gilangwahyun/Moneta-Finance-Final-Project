@@ -21,7 +21,7 @@ import { formatCurrency } from '@/lib/utils/helpers';
 
 /********** Konstanta & Palet Warna **********/
 
-export const CHART_PALETTE = [
+const CHART_PALETTE = [
   '#6366f1', /* indigo-500 */
   '#14b8a6', /* teal-500 */
   '#f59e0b', /* amber-500 */
@@ -42,7 +42,7 @@ export const CHART_PALETTE = [
  * @param txns - Array transaksi yang akan dihitung totalnya.
  * @returns Objek yang berisi total income, total expense, dan net balance.
  */
-export function sumByType(txns: Transaction[]) {
+function sumByType(txns: Transaction[]) {
   let income = 0,
     expense = 0;
   for (const t of txns) {

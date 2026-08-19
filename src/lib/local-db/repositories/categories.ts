@@ -224,7 +224,7 @@ export async function getAllCategoriesIncludingDeleted(userId: string): Promise<
  * @param type - Tipe kategori yang dicari.
  * @returns Promise berisi array Category sesuai tipe.
  */
-export async function getCategoriesByType(
+async function getCategoriesByType(
   userId: string,
   type: CategoryType
 ): Promise<Category[]> {
@@ -311,7 +311,7 @@ export async function bulkUpsertCategories(categories: Category[]): Promise<void
  *
  * @returns Promise berisi array Category yang berstatus PENDING.
  */
-export async function getPendingCategories(): Promise<Category[]> {
+async function getPendingCategories(): Promise<Category[]> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORES.CATEGORIES, "readonly");

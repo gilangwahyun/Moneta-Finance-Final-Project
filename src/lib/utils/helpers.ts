@@ -103,7 +103,7 @@ export function formatDate(
  *
  * @returns String timestamp ISO.
  */
-export function now(): string {
+function now(): string {
   return new Date().toISOString();
 }
 
@@ -113,7 +113,7 @@ export function now(): string {
  * @param ms - Durasi penundaan dalam milidetik.
  * @returns Promise void setelah durasi berakhir.
  */
-export function sleep(ms: number): Promise<void> {
+function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 

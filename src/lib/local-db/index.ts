@@ -108,7 +108,7 @@ export function getDB(): Promise<IDBDatabase> {
  * Menutup dan mereset koneksi database secara manual.
  * Digunakan saat reset data lokal atau logout.
  */
-export function closeDB(): void {
+function closeDB(): void {
   if (dbPromise) {
     dbPromise.then((db) => {
       console.log("[DB] Closing connection manually");

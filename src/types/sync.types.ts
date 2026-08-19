@@ -7,7 +7,7 @@ import { Category, Transaction, Budget } from "./models.types";
 
 //********** Push (Client -> Server) **********
 
-export interface NotificationLogSyncItem {
+interface NotificationLogSyncItem {
   clientId: string;
   dedupeKey: string;
   type: string;
@@ -44,7 +44,7 @@ export interface NotificationLogSyncItem {
   updatedAt: string;
 }
 
-export interface NotificationSettingsSyncItem {
+interface NotificationSettingsSyncItem {
   clientId: string;
   isEnabled: boolean;
   deliveryMode: "INSTANT" | "BATCH" | "DIGEST" | "NONE";
@@ -65,7 +65,7 @@ export interface SyncPushPayload {
   financial_targets?: FinancialTargetSyncItem[];
 }
 
-export interface WalletSyncItem {
+interface WalletSyncItem {
   clientId: string;
   name: string;
   type: string;
@@ -74,7 +74,7 @@ export interface WalletSyncItem {
   deletedAt?: string | null;
 }
 
-export interface CategorySyncItem {
+interface CategorySyncItem {
   clientId: string;
   name: string;
   type: "INCOME" | "EXPENSE";
@@ -84,7 +84,7 @@ export interface CategorySyncItem {
   deletedAt?: string | null;
 }
 
-export interface TransactionSyncItem {
+interface TransactionSyncItem {
   clientId: string;
   amount: number;
   type: "INCOME" | "EXPENSE" | "TRANSFER";
@@ -98,7 +98,7 @@ export interface TransactionSyncItem {
   deletedAt?: string | null;
 }
 
-export interface BudgetSyncItem {
+interface BudgetSyncItem {
   clientId: string;
   amount: number;
   period: string; //********** YYYY-MM
@@ -107,7 +107,7 @@ export interface BudgetSyncItem {
   deletedAt?: string | null;
 }
 
-export interface FinancialTargetSyncItem {
+interface FinancialTargetSyncItem {
   clientId: string;
   name: string;
   type: import("./models.types").TargetType;
@@ -125,7 +125,7 @@ export interface FinancialTargetSyncItem {
 
 //********** Pull (Server -> Client) **********
 
-export interface SyncPullParams {
+interface SyncPullParams {
   lastSyncedAt: string; //********** ISO timestamp - fetch changes after this
   limit?: number; //********** Optional: max records per entity type
 }

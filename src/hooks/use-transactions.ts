@@ -27,7 +27,7 @@ import { useLocalMutation } from "@/hooks/use-local-mutation";
 
 /********** Tipe Data & Antarmuka **********/
 
-export interface MonthlyTotals {
+interface MonthlyTotals {
   totalIncome: number;
   totalExpense: number;
   netBalance: number;

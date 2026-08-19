@@ -128,7 +128,7 @@ export async function getBudgetsByPeriod(userId: string, period: string): Promis
  * @param period - Periode anggaran dalam format YYYY-MM.
  * @returns Promise berisi Budget jika ditemukan, atau undefined jika tidak.
  */
-export async function getBudgetByCategoryAndPeriod(
+async function getBudgetByCategoryAndPeriod(
   userId: string,
   categoryId: string,
   period: string
@@ -145,7 +145,7 @@ export async function getBudgetByCategoryAndPeriod(
  * @param budget - Objek Budget dari server.
  * @returns Promise void setelah penyimpanan selesai.
  */
-export async function applyServerBudget(budget: Budget): Promise<void> {
+async function applyServerBudget(budget: Budget): Promise<void> {
   const db = await getDB();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORES.BUDGETS, "readwrite");

@@ -327,7 +327,7 @@ export async function bulkUpsertTransactions(transactions: Transaction[]): Promi
  *
  * @returns Promise berisi array Transaction yang berstatus PENDING.
  */
-export async function getPendingTransactions(): Promise<Transaction[]> {
+async function getPendingTransactions(): Promise<Transaction[]> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORES.TRANSACTIONS, 'readonly');

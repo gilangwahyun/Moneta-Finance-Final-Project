@@ -3,7 +3,7 @@
 //********** client (IndexedDB) and server (API payloads).
 //********** END: Shared Entity Interfaces **********
 
-export type SyncStatus = "SYNCED" | "PENDING" | "CONFLICT";
+type SyncStatus = "SYNCED" | "PENDING" | "CONFLICT";
 
 //********** TRANSFER: money moved between wallets - excluded from P&L calculations
 export type TransactionType = "INCOME" | "EXPENSE" | "TRANSFER";
@@ -18,7 +18,7 @@ export type TargetPeriod = "DAILY" | "WEEKLY" | "MONTHLY" | "CUSTOM";
 
 //********** Base sync metadata (every data entity includes this) **********
 
-export interface SyncMetadata {
+interface SyncMetadata {
   clientId: string; //********** UUID generated on the client
   syncStatus: SyncStatus;
   createdAt: string; //********** ISO 8601
@@ -63,7 +63,7 @@ export interface Category extends SyncMetadata {
   userId: string;
 }
 
-export interface NotificationSettings {
+interface NotificationSettings {
   id?: string;
   deliveryMode: string;
   instantAlerts: boolean;

@@ -13,7 +13,7 @@ const CSRF_HEADER_NAME = "X-CSRF-Token";
  *
  * @returns Token CSRF yang telah didekode, atau null jika tidak ditemukan atau berada di luar browser.
  */
-export function getCsrfToken(): string | null {
+function getCsrfToken(): string | null {
   if (typeof document === "undefined") return null;
 
   const match = document.cookie

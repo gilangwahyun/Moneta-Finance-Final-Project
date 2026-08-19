@@ -34,7 +34,7 @@ type IconProps = {
  * Icon map mapping category names to Lucide React components.
  * Indonesian categories from seed.ts are the primary keys.
  */
-export const categoryIconMap: Record<string, React.FC<IconProps>> = {
+const categoryIconMap: Record<string, React.FC<IconProps>> = {
   /********** Indonesian (primary - matches seed.ts) */
   "makanan": Utensils,
   "jajan": Coffee,

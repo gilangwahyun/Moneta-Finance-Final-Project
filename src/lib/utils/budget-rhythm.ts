@@ -8,7 +8,7 @@ import dayjs from "dayjs";
 
 /********** Tipe Data & Antarmuka **********/
 
-export type RhythmStatus = "ON_TRACK" | "OFF_TRACK" | "OVER_BUDGET";
+type RhythmStatus = "ON_TRACK" | "OFF_TRACK" | "OVER_BUDGET";
 
 export interface BudgetRhythm {
   daysInMonth: number;

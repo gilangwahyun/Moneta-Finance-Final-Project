@@ -8,7 +8,7 @@ import { saveNotificationSettings, getNotificationSettings, NotificationSettings
 
 /********** Tipe Data & Antarmuka **********/
 
-export type DeliveryMode = 'INSTANT' | 'BATCH' | 'NONE';
+type DeliveryMode = 'INSTANT' | 'BATCH' | 'NONE';
 
 export interface LocalNotificationPrefs {
   instantAlerts: boolean;
@@ -218,7 +218,7 @@ export async function saveNotifPrefs(prefs: LocalNotificationPrefs, skipSyncQueu
  * @param serverPrefs - Data preferensi notifikasi yang diterima dari server.
  * @returns Promise berisi objek LocalNotificationPrefs yang diperbarui.
  */
-export async function syncServerPrefsToLocal(serverPrefs: {
+async function syncServerPrefsToLocal(serverPrefs: {
   instantAlerts: boolean;
   dailyDigest: boolean;
   dailyReminder: boolean;

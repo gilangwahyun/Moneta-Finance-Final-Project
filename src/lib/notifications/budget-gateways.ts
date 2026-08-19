@@ -26,7 +26,7 @@ import { DEFAULT_DAILY_CAP } from '@/lib/local-db/notification-prefs';
 
 /********** Types **********/
 
-export type GatewayTier = "T1" | "T2" | "DEFICIT" | null;
+type GatewayTier = "T1" | "T2" | "DEFICIT" | null;
 
 export interface GatewayEvalResult {
   shouldNotify: boolean;
@@ -295,7 +295,7 @@ export function evaluateBudgetGateways(
  * Reset gateway state untuk sebuah kategori.
  * Berguna saat unit test atau saat anggaran di-reset oleh pengguna.
  */
-export function resetCategoryGatewayState(categoryId: string): void {
+function resetCategoryGatewayState(categoryId: string): void {
   const state = loadGatewayState();
   delete state[categoryId];
   saveGatewayState(state);
@@ -304,7 +304,7 @@ export function resetCategoryGatewayState(categoryId: string): void {
 /**
  * Baca suppression audit log (untuk halaman admin/peneliti).
  */
-export function readSuppressionLog(): Array<{
+function readSuppressionLog(): Array<{
   ts: string;
   categoryId: string;
   categoryName: string;

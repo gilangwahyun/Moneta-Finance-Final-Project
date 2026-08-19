@@ -88,4 +88,4 @@ export const CurrencyInput = forwardRef<HTMLInputElement, CurrencyInputProps>(
 );
 
 /********** Exports **********/
-export default CurrencyInput;
+

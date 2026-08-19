@@ -12,7 +12,7 @@ import { AddCategoryInput } from "@/hooks/use-categories";
 import { AVAILABLE_ICONS } from "@/lib/available-icons";
 
 /* Contoh palet warna prasetel yang disimpan dalam bentuk string hex */
-export const CATEGORY_COLORS = [
+const CATEGORY_COLORS = [
   { label: "Merah",    hex: "#ef4444" },
   { label: "Oranye",   hex: "#f97316" },
   { label: "Kuning",   hex: "#eab308" },

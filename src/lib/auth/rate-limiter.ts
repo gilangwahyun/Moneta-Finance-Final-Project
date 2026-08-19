@@ -145,7 +145,7 @@ export function checkRateLimit(
 /**
  * Build rate-limit headers for the HTTP response.
  */
-export function getRateLimitHeaders(
+function getRateLimitHeaders(
   result: RateLimitResult,
   config: RateLimitConfig
 ): Record<string, string> {

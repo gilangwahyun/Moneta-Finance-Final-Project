@@ -24,7 +24,7 @@ import { useLocalMutation } from '@/hooks/use-local-mutation';
 
 /********** Tipe Data & Antarmuka **********/
 
-export interface TargetWithProgress extends FinancialTarget {
+interface TargetWithProgress extends FinancialTarget {
   progress: TargetProgress;
 }
 

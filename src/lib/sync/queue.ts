@@ -186,7 +186,7 @@ export function stopPeriodicSync(): void {
  *
  * @returns `true` jika sync sedang dalam progress.
  */
-export function isSyncInProgress(): boolean {
+function isSyncInProgress(): boolean {
   return isSyncing;
 }
 

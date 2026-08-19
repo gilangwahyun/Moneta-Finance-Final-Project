@@ -8,7 +8,7 @@
 import { getDB } from "../index";
 import { STORES } from "../schema";
 
-export type NotificationInboxType = "INSTANT" | "DIGEST";
+type NotificationInboxType = "INSTANT" | "DIGEST";
 
 export interface NotificationInboxItem {
   id?: number;           // Auto-increment key
@@ -38,7 +38,7 @@ export async function addToInbox(
 /**
  * Get all notifications, newest first.
  */
-export async function getAllInboxItems(): Promise<NotificationInboxItem[]> {
+async function getAllInboxItems(): Promise<NotificationInboxItem[]> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORES.NOTIFICATION_INBOX, "readonly");
@@ -71,7 +71,7 @@ export async function getUnreadCount(): Promise<number> {
 /**
  * Mark a single notification as read by its auto-increment id.
  */
-export async function markInboxItemRead(id: number): Promise<void> {
+async function markInboxItemRead(id: number): Promise<void> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORES.NOTIFICATION_INBOX, "readwrite");
@@ -92,7 +92,7 @@ export async function markInboxItemRead(id: number): Promise<void> {
 /**
  * Mark all notifications as read.
  */
-export async function markAllInboxRead(): Promise<void> {
+async function markAllInboxRead(): Promise<void> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORES.NOTIFICATION_INBOX, "readwrite");
@@ -116,7 +116,7 @@ export async function markAllInboxRead(): Promise<void> {
 /**
  * Delete notifications older than 30 days (cleanup).
  */
-export async function pruneOldInboxItems(): Promise<void> {
+async function pruneOldInboxItems(): Promise<void> {
   const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
   const db = await getDB();
   return new Promise((resolve, reject) => {

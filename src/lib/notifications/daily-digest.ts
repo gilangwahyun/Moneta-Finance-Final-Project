@@ -210,7 +210,7 @@ function fmtRupiah(amount: number): string {
  * @param userId - ID user saat ini.
  * @returns Ringkasan pengeluaran harian.
  */
-export async function buildDailyExpenseSummary(
+async function buildDailyExpenseSummary(
   userId: string
 ): Promise<DailyExpenseSummaryResult> {
   const db = await getDB();
@@ -288,7 +288,7 @@ export async function buildDailyExpenseSummary(
  *  Migrasi ke buildDailyExpenseSummary() pada cleanup berikutnya.
  */
 /** @deprecated Gunakan buildDailyExpenseSummary() atau buildLogDigest() sebagai gantinya. */
-export const buildDailyDigest = buildDailyExpenseSummary;
+const buildDailyDigest = buildDailyExpenseSummary;
 
 /********** Pemeriksaan Waktu Digest **********/
 

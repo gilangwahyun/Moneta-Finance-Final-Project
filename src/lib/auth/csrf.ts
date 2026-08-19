@@ -14,8 +14,8 @@ import { randomUUID } from "crypto";
 
 //********** Constants **********
 
-export const CSRF_COOKIE_NAME = "moneta-csrf-token";
-export const CSRF_HEADER_NAME = "x-csrf-token";
+const CSRF_COOKIE_NAME = "moneta-csrf-token";
+const CSRF_HEADER_NAME = "x-csrf-token";
 
 //********** Token Generation **********
 

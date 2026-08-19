@@ -73,7 +73,7 @@ export interface SyncResult {
  *
  * @returns SyncResult berisi jumlah item yang di-push dan konflik yang terjadi.
  */
-export async function pushChanges(): Promise<SyncResult> {
+async function pushChanges(): Promise<SyncResult> {
   const result: SyncResult = { state: 'idle', pushed: 0, pulled: 0, conflicts: 0 };
 
   try {
@@ -347,7 +347,7 @@ export async function pushChanges(): Promise<SyncResult> {
  *
  * @returns SyncResult berisi jumlah item yang di-pull dan konflik yang terjadi.
  */
-export async function pullUpdates(): Promise<SyncResult> {
+async function pullUpdates(): Promise<SyncResult> {
   const result: SyncResult = { state: 'idle', pushed: 0, pulled: 0, conflicts: 0 };
 
   try {

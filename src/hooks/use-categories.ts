@@ -21,7 +21,7 @@ import { useSyncContext } from "@/providers/SyncProvider";
 import { useLocalMutation } from "@/hooks/use-local-mutation";
 import { SyncEvents } from "@/lib/sync/events";
 
-export type { AddCategoryInput, UpdateCategoryInput };
+export type { AddCategoryInput };
 
 /********** Tipe Data & Antarmuka **********/
 

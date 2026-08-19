@@ -157,7 +157,7 @@ export async function requestBackgroundSync(): Promise<boolean> {
  * @param intervalMs - Interval minimum dalam milidetik (default: 1 jam).
  * @returns `true` jika berhasil mendaftar periodic sync.
  */
-export async function requestPeriodicSync(
+async function requestPeriodicSync(
   intervalMs: number = 60 * 60 * 1000, /********** Default: 1 jam. */
 ): Promise<boolean> {
   if (!swRegistration) return false;
@@ -189,7 +189,7 @@ export async function requestPeriodicSync(
  *
  * @param message - Object pesan yang akan dikirim.
  */
-export function sendMessageToSW(message: Record<string, unknown>): void {
+function sendMessageToSW(message: Record<string, unknown>): void {
   if (navigator.serviceWorker.controller) {
     navigator.serviceWorker.controller.postMessage(message);
   }
@@ -198,14 +198,14 @@ export function sendMessageToSW(message: Record<string, unknown>): void {
 /**
  * Memberitahu SW yang sedang menunggu untuk skip waiting dan mengambil kendali.
  */
-export function skipWaiting(): void {
+function skipWaiting(): void {
   sendMessageToSW({ type: 'SKIP_WAITING' });
 }
 
 /**
  * Memicu sync secara manual melalui service worker.
  */
-export function triggerSWSync(): void {
+function triggerSWSync(): void {
   sendMessageToSW({ type: 'TRIGGER_SYNC' });
 }
 
@@ -273,7 +273,7 @@ function incrementDailyNotifCount(): void {
  *
  * @deprecated Use evaluateAndTriggerNudges() via local-engine.ts instead.
  */
-export async function evaluateAndFireBudgetGateway(
+async function evaluateAndFireBudgetGateway(
   categoryId: string,
   categoryName: string,
   spentAmount: number,
@@ -506,7 +506,7 @@ export async function startDigestTimer(userId: string): Promise<void> {
  *
  * @returns ServiceWorkerRegistration aktif, atau null jika belum terdaftar.
  */
-export function getRegistration(): ServiceWorkerRegistration | null {
+function getRegistration(): ServiceWorkerRegistration | null {
   return swRegistration;
 }
 
@@ -521,7 +521,7 @@ export function getRegistration(): ServiceWorkerRegistration | null {
  * @param base64String - VAPID public key dalam format base64url.
  * @returns ArrayBuffer yang siap digunakan sebagai applicationServerKey.
  */
-export function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
+function urlBase64ToUint8Array(base64String: string): ArrayBuffer {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = window.atob(base64);

@@ -39,7 +39,7 @@ export async function requestPersistentStorage(): Promise<boolean> {
  *
  * @returns Promise berisi objek usage (terpakai dalam byte), quota (total kuota), dan percentage, atau null jika API tidak didukung.
  */
-export async function getStorageEstimate(): Promise<{
+async function getStorageEstimate(): Promise<{
   usage: number;
   quota: number;
   percentage: number;

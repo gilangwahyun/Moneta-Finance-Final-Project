@@ -21,7 +21,7 @@ import { SyncEvents } from "@/lib/sync/events";
 
 /********** Tipe Data & Antarmuka **********/
 
-export type HydrationState = "idle" | "checking" | "hydrating" | "done" | "error";
+type HydrationState = "idle" | "checking" | "hydrating" | "done" | "error";
 
 export interface UseHydrationReturn {
   /* Status proses hidrasi saat ini */

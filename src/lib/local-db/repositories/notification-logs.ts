@@ -204,7 +204,7 @@ export async function checkDedupeKeyExists(dedupeKey: string): Promise<boolean> 
  * @param userId - ID pengguna.
  * @returns Promise berisi jumlah notifikasi terkirim hari ini.
  */
-export async function countTodayDelivered(userId: string): Promise<number> {
+async function countTodayDelivered(userId: string): Promise<number> {
   const db = await getDB();
   const today = new Date().toISOString().split('T')[0];
   return new Promise((resolve, reject) => {
@@ -225,7 +225,7 @@ export async function countTodayDelivered(userId: string): Promise<number> {
  *
  * @returns Promise berisi array NotificationLogRecord yang belum tersinkron.
  */
-export async function getUnsyncedLogs(): Promise<NotificationLogRecord[]> {
+async function getUnsyncedLogs(): Promise<NotificationLogRecord[]> {
   const db = await getDB();
   return new Promise((resolve, reject) => {
     const tx = db.transaction(STORES.NOTIFICATION_LOGS, 'readonly');
@@ -261,7 +261,7 @@ export async function getAllLogs(userId: string): Promise<NotificationLogRecord[
  * @param clientIds - Array clientId log yang sukses dikirim.
  * @returns Promise void setelah pembaruan status selesai.
  */
-export async function markLogsSynced(clientIds: string[]): Promise<void> {
+async function markLogsSynced(clientIds: string[]): Promise<void> {
   if (clientIds.length === 0) return;
   const db = await getDB();
   await new Promise<void>((resolve, reject) => {

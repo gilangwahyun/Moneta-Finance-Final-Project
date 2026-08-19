@@ -10,7 +10,7 @@
  *
  * @returns Elemen JSX kerangka kartu
  */
-export function SummaryCardSkeleton() {
+function SummaryCardSkeleton() {
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
       <div className="flex items-center gap-2">
@@ -22,6 +22,7 @@ export function SummaryCardSkeleton() {
     </div>
   );
 }
+
 
 /**
  * Merender kerangka pemuatan untuk satu item transaksi dalam daftar.

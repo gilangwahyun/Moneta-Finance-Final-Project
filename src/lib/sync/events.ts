@@ -19,4 +19,4 @@ export const SyncEvents = {
 
 /********** Exports **********/
 
-export type SyncEventType = typeof SyncEvents[keyof typeof SyncEvents];
+type SyncEventType = typeof SyncEvents[keyof typeof SyncEvents];
