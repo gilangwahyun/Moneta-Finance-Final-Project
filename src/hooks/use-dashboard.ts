@@ -36,7 +36,7 @@ export interface UseDashboardReturn {
   dailySafeToSpend: number;
   dashboardInsight: DashboardInsight | null;
   isLoading: boolean;
-  reload: () => Promise<void>;
+  loadDashboard: () => Promise<void>;
 }
 
 /********** Utilitas Cache Sesi **********/
@@ -366,6 +366,6 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
     dailySafeToSpend,
     dashboardInsight,
     isLoading,
-    reload: load,
+    loadDashboard: load,
   };
 }

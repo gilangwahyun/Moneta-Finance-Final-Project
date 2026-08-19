@@ -38,8 +38,8 @@ export default function BudgetsPage() {
   /* State pemilihan bulan aktif */
   const [selectedMonth, setSelectedMonth] = useState(new Date());
 
-  const { user, budgets, budgetsWithStats, transactions, isLoading, reload } = useBudgets(selectedMonth);
-  const { handleReallocate, removeBudget } = useBudgetActions();
+  const { user, budgets, budgetsWithStats, transactions, isLoading, loadBudgets } = useBudgets(selectedMonth);
+  const { reallocateBudget, deleteBudget } = useBudgetActions();
 
   const { allCategories } = useCategories();
   const { scheduleSync } = useSyncContext();
@@ -182,9 +182,9 @@ export default function BudgetsPage() {
   const handleConfirmReallocate = async (sourceClientId: string, destinationClientId: string, amount: number) => {
     if (!user) return;
     try {
-      await handleReallocate(sourceClientId, destinationClientId, amount);
+      await reallocateBudget(sourceClientId, destinationClientId, amount);
       scheduleSync();
-      await reload();
+      await loadBudgets();
       showSyncToast('Subsidi silang berhasil diterapkan');
     } catch (err) {
       console.error('Gagal melakukan subsidi silang', err);
@@ -197,9 +197,9 @@ export default function BudgetsPage() {
     if (!user) return;
     setIsDeleting(true);
     try {
-      await removeBudget(clientId);
+      await deleteBudget(clientId);
       scheduleSync();
-      await reload();
+      await loadBudgets();
       setDeleteConfirmId(null);
       showDeleteToast('Anggaran dihapus');
     } catch (err) {

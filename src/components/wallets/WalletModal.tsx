@@ -31,7 +31,7 @@ interface WalletModalProps {
  * @returns Elemen JSX modal dompet atau null jika tertutup
  */
 export function WalletModal({ isOpen, onClose, editingWallet }: WalletModalProps) {
-  const { addNewWallet, editWallet } = useWallets();
+  const { addWallet, editWallet } = useWallets();
 
   const [name, setName] = useState("");
   const [type, setType] = useState<WalletType>("TUNAI");
@@ -70,7 +70,7 @@ export function WalletModal({ isOpen, onClose, editingWallet }: WalletModalProps
         await editWallet({ clientId: editingWallet.clientId, name: name.trim(), type });
         showSyncToast("Dompet diperbarui", "Disimpan luring. Akan disinkronkan saat terhubung.");
       } else {
-        await addNewWallet({ 
+        await addWallet({ 
           name: name.trim(), 
           type, 
           initialBalance: initialBalance ? parseInt(initialBalance.replace(/\D/g, ""), 10) : 0 

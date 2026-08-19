@@ -28,7 +28,7 @@ export interface UseBudgetsReturn {
   budgetsWithStats: BudgetWithStats[];
   transactions: Transaction[];
   isLoading: boolean;
-  reload: () => Promise<void>;
+  loadBudgets: () => Promise<void>;
 }
 
 /********** Hook Utama (useBudgets) **********/
@@ -50,7 +50,7 @@ export function useBudgets(selectedMonth: Date): UseBudgetsReturn {
     return `${selectedMonth.getFullYear()}-${String(selectedMonth.getMonth() + 1).padStart(2, "0")}`;
   }, [selectedMonth]);
 
-  const loadBudgets = useCallback(async (userId: string, period: string) => {
+  const loadData = useCallback(async (userId: string, period: string) => {
     setIsLoading(true);
     const data = await getBudgetsByPeriod(userId, period);
     const allCats = await getAllCategoriesIncludingDeleted(userId);
@@ -65,18 +65,18 @@ export function useBudgets(selectedMonth: Date): UseBudgetsReturn {
     setIsLoading(false);
   }, []);
 
-  const reload = useCallback(async () => {
+  const loadBudgets = useCallback(async () => {
     if (user) {
-      await loadBudgets(user.id, currentPeriod);
+      await loadData(user.id, currentPeriod);
     }
-  }, [user, loadBudgets, currentPeriod]);
+  }, [user, loadData, currentPeriod]);
 
   useEffect(() => {
     async function init() {
       const u = await getCurrentUser();
       if (u) {
         setUser(u);
-        await loadBudgets(u.id, currentPeriod);
+        await loadData(u.id, currentPeriod);
       } else {
         setIsLoading(false);
       }
@@ -86,7 +86,7 @@ export function useBudgets(selectedMonth: Date): UseBudgetsReturn {
     const handleUpdate = async () => {
       const u = await getCurrentUser();
       if (u) {
-        await loadBudgets(u.id, currentPeriod);
+        await loadData(u.id, currentPeriod);
       }
     };
     
@@ -100,7 +100,7 @@ export function useBudgets(selectedMonth: Date): UseBudgetsReturn {
       window.removeEventListener(SyncEvents.TRANSACTION_UPDATED, handleUpdate);
       window.removeEventListener(SyncEvents.SYNC_COMPLETED, handleUpdate);
     };
-  }, [currentPeriod, loadBudgets]);
+  }, [currentPeriod, loadData]);
 
   /********** Kalkulasi Statistik Anggaran & Ritme **********/
 
@@ -146,6 +146,6 @@ export function useBudgets(selectedMonth: Date): UseBudgetsReturn {
     budgetsWithStats,
     transactions,
     isLoading,
-    reload
+    loadBudgets
   };
 }

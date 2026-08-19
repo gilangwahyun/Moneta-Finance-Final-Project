@@ -8,9 +8,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { Transaction, TransactionType } from "@/types/models.types";
 import {
-  addTransaction,
-  updateTransaction,
-  deleteTransaction,
+  addTransaction as addTransactionDb,
+  updateTransaction as updateTransactionDb,
+  deleteTransaction as deleteTransactionDb,
   getRecentTransactions,
   AddTransactionInput,
   UpdateTransactionInput,
@@ -42,8 +42,10 @@ export interface UseTransactionsReturn {
   isLoading: boolean;
   /* Pesan error jika terjadi kegagalan operasi */
   error: string | null;
+  /* Memuat ulang data dari IndexedDB */
+  loadTransactions: () => Promise<void>;
   /* Merekam transaksi baru ke dalam database lokal */
-  recordTransaction: (
+  addTransaction: (
     input: Omit<AddTransactionInput, "userId">
   ) => Promise<Transaction | null>;
   /* Memperbarui data transaksi yang sudah ada */
@@ -51,9 +53,7 @@ export interface UseTransactionsReturn {
     input: UpdateTransactionInput
   ) => Promise<Transaction | null>;
   /* Menghapus (soft-delete) transaksi dari sistem */
-  removeTransaction: (clientId: string) => Promise<boolean | null | any>;
-  /* Memuat ulang data dari IndexedDB */
-  refresh: () => Promise<void>;
+  deleteTransaction: (clientId: string) => Promise<boolean | null | any>;
 }
 
 /********** Hook Utama (useTransactions) **********/
@@ -74,7 +74,7 @@ export function useTransactions(): UseTransactionsReturn {
   const [loadError, setLoadError] = useState<string | null>(null);
 
   /* Memuat data transaksi dan kategori dari IndexedDB */
-  const loadData = useCallback(async () => {
+  const loadTransactions = useCallback(async () => {
     try {
       setIsLoading(true);
       setLoadError(null);
@@ -110,11 +110,11 @@ export function useTransactions(): UseTransactionsReturn {
   }, []);
 
   useEffect(() => {
-    loadData();
+    loadTransactions();
 
     /* Dengarkan event pembaruan dari instance atau komponen lain */
     const handleUpdate = () => {
-      loadData();
+      loadTransactions();
     };
 
     window.addEventListener(SyncEvents.TRANSACTION_UPDATED, handleUpdate);
@@ -127,16 +127,16 @@ export function useTransactions(): UseTransactionsReturn {
       window.removeEventListener(SyncEvents.WALLET_UPDATED, handleUpdate);
       window.removeEventListener(SyncEvents.SYNC_COMPLETED, handleUpdate);
     };
-  }, [loadData]);
+  }, [loadTransactions]);
 
   /********** [START: Rekam Transaksi Baru & Pembaruan Optimistik] **********/
-  const { mutate: recordTransaction, error: recordErr } = useLocalMutation(
+  const { mutate: addTransaction, error: addErr } = useLocalMutation(
     async (
       input: Omit<AddTransactionInput, "userId">
     ) => {
       const user = await getCurrentUser();
       if (!user) throw new Error("No user session found");
-      return addTransaction({ ...input, userId: user.id });
+      return addTransactionDb({ ...input, userId: user.id });
     },
     {
       eventName: SyncEvents.TRANSACTION_UPDATED,
@@ -173,7 +173,7 @@ export function useTransactions(): UseTransactionsReturn {
   /********** [START: Edit Transaksi & Pembaruan Ulang Total] **********/
   const { mutate: editTransaction, error: editErr } = useLocalMutation(
     async (input: UpdateTransactionInput) => {
-      const updated = await updateTransaction(input);
+      const updated = await updateTransactionDb(input);
       if (!updated) throw new Error("Transaction not found");
       return updated;
     },
@@ -198,11 +198,11 @@ export function useTransactions(): UseTransactionsReturn {
   /********** [END: Edit Transaksi & Pembaruan Ulang Total] **********/
 
   /********** [START: Hapus Transaksi & Pembaruan Optimistik] **********/
-  const { mutate: removeTransaction, error: removeErr } = useLocalMutation(
+  const { mutate: deleteTransaction, error: deleteErr } = useLocalMutation(
     async (clientId: string) => {
       /* Ambil data transaksi sebelum dihapus untuk perhitungan pembaruan optimistik total bulanan */
       const toDelete = transactions.find((t) => t.clientId === clientId);
-      const success = await deleteTransaction(clientId);
+      const success = await deleteTransactionDb(clientId);
       if (!success) throw new Error("Transaction not found");
       return toDelete; // Return the deleted transaction object for the onSuccess callback
     },
@@ -237,7 +237,7 @@ export function useTransactions(): UseTransactionsReturn {
   );
   /********** [END: Hapus Transaksi & Pembaruan Optimistik] **********/
 
-  const combinedError = loadError || recordErr || editErr || removeErr;
+  const combinedError = loadError || addErr || editErr || deleteErr;
 
   /********** Pengembalian Data Hook **********/
 
@@ -246,10 +246,10 @@ export function useTransactions(): UseTransactionsReturn {
     monthlyTotals,
     isLoading,
     error: combinedError,
-    recordTransaction,
+    loadTransactions,
+    addTransaction,
     editTransaction,
-    removeTransaction,
-    refresh: loadData,
+    deleteTransaction,
   };
 }
 

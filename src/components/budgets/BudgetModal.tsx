@@ -40,7 +40,7 @@ export function BudgetModal({
   existingBudgetCategoryIds,
 }: BudgetModalProps) {
   const { expenseCategories } = useCategories();
-  const { addOrEditBudget } = useBudgetActions();
+  const { editBudget } = useBudgetActions();
   const { scheduleSync } = useSyncContext();
 
   const [amount, setAmount] = useState("");
@@ -79,7 +79,7 @@ export function BudgetModal({
 
     setIsSubmitting(true);
     try {
-      await addOrEditBudget(
+      await editBudget(
         editingBudget?.clientId,
         parsedAmount,
         currentPeriod,

@@ -86,8 +86,8 @@ export function TransactionModal({
   initialWalletId,
 }: TransactionModalProps) {
   /********** [START: Inisialisasi State Form Transaksi & Hook] **********/
-  const { recordTransaction, editTransaction, removeTransaction } = useTransactions();
-  const { expenseCategories, incomeCategories, createCategory } = useCategories();
+  const { addTransaction, editTransaction, deleteTransaction } = useTransactions();
+  const { expenseCategories, incomeCategories, addCategory } = useCategories();
   const { wallets } = useWallets();
 
   /* State nilai isian form transaksi */
@@ -299,7 +299,7 @@ export function TransactionModal({
           "Disimpan luring. Akan disinkronkan saat terhubung."
         );
       } else {
-        const created = await recordTransaction({
+        const created = await addTransaction({
           amount,
           type: formType,
           date: formDate,
@@ -329,7 +329,7 @@ export function TransactionModal({
     if (!editingTxn?.clientId) return;
     setIsSubmitting(true);
     try {
-      await removeTransaction(editingTxn.clientId);
+      await deleteTransaction(editingTxn.clientId);
       showSyncToast("Transaksi dihapus", "Akan disinkronkan saat terhubung.");
       onClose();
     } catch {
@@ -380,7 +380,7 @@ export function TransactionModal({
         {modalView === "category-builder" && (
           <CategoryBuilder
             type={formType === "INCOME" ? "INCOME" : "EXPENSE"}
-            onCreateCategory={createCategory}
+            onCreateCategory={addCategory}
             onSave={(clientId) => {
               /* Jeda singkat agar DOM merender kategori baru sebelum dipilih otomatis */
               setTimeout(() => {

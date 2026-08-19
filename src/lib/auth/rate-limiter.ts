@@ -93,7 +93,7 @@ export function checkRateLimit(
   key: string,
   config: RateLimitConfig
 ): RateLimitResult {
-  if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
+  if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test" || process.env.E2E_TEST_MODE === "true") {
     return {
       allowed: true,
       remaining: config.maxRequests,

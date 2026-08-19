@@ -25,7 +25,7 @@ interface BudgetFormProps {
  */
 export function BudgetForm({ onSuccess, defaultPeriod = new Date().toISOString().substring(0, 7) }: BudgetFormProps) {
   const { expenseCategories } = useCategories();
-  const { addOrEditBudget } = useBudgetActions();
+  const { editBudget } = useBudgetActions();
   
   const [period, setPeriod] = useState(defaultPeriod);
   const [categoryId, setCategoryId] = useState("");
@@ -41,7 +41,7 @@ export function BudgetForm({ onSuccess, defaultPeriod = new Date().toISOString()
     try {
       const numAmount = parseFloat(amount.replace(/[^0-9.-]+/g, ""));
       
-      await addOrEditBudget(
+      await editBudget(
         undefined,
         numAmount,
         period,

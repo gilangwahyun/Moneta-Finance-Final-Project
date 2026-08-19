@@ -24,7 +24,7 @@ interface CategoryModalProps {
 }
 
 export function CategoryModal({ isOpen, onClose, editingCategory, initialType = "EXPENSE" }: CategoryModalProps) {
-  const { createCategory, editCategory } = useCategories();
+  const { addCategory, editCategory } = useCategories();
 
   const [formName, setFormName] = useState("");
   const [formType, setFormType] = useState<CategoryType>(initialType);
@@ -69,7 +69,7 @@ export function CategoryModal({ isOpen, onClose, editingCategory, initialType = 
         });
         showSyncToast("Kategori diperbarui", "Disimpan luring. Akan disinkronkan saat terhubung.");
       } else {
-        await createCategory({
+        await addCategory({
           name: formName.trim(),
           type: formType,
           icon: formIcon,

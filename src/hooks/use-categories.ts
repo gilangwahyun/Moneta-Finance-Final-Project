@@ -10,9 +10,9 @@ import { Category, CategoryType } from "@/types/models.types";
 import {
   getAllCategories,
   getAllCategoriesIncludingDeleted,
-  addCategory,
-  updateCategory,
-  deleteCategory,
+  addCategory as addCategoryDb,
+  updateCategory as updateCategoryDb,
+  deleteCategory as deleteCategoryDb,
   AddCategoryInput,
   UpdateCategoryInput,
 } from "@/lib/local-db/repositories/categories";
@@ -38,14 +38,14 @@ export interface UseCategoriesReturn {
   isLoading: boolean;
   /* Pesan error jika terjadi kegagalan operasi */
   error: string | null;
+  /* Memuat ulang data dari IndexedDB */
+  loadCategories: () => Promise<void>;
   /* Membuat kategori baru ke dalam database lokal */
-  createCategory: (input: Omit<AddCategoryInput, "userId">) => Promise<Category | null>;
+  addCategory: (input: Omit<AddCategoryInput, "userId">) => Promise<Category | null>;
   /* Memperbarui data kategori yang sudah ada */
   editCategory: (input: UpdateCategoryInput) => Promise<Category | null>;
   /* Menghapus (soft-delete) kategori dari sistem */
-  removeCategory: (clientId: string) => Promise<boolean | null | any>;
-  /* Memuat ulang data dari IndexedDB */
-  refresh: () => Promise<void>;
+  deleteCategory: (clientId: string) => Promise<boolean | null | any>;
 }
 
 /********** Hook Utama (useCategories) **********/
@@ -113,11 +113,11 @@ export function useCategories(): UseCategoriesReturn {
   }, [loadCategories]);
 
   /********** [START: Buat Kategori Baru & Pembaruan Optimistik] **********/
-  const { mutate: createCategory, error: createErr } = useLocalMutation(
+  const { mutate: addCategory, error: addErr } = useLocalMutation(
     async (input: Omit<AddCategoryInput, "userId">) => {
       const user = await getCurrentUser();
       if (!user) throw new Error("No user session found");
-      return addCategory({ ...input, userId: user.id });
+      return addCategoryDb({ ...input, userId: user.id });
     },
     {
       eventName: SyncEvents.CATEGORY_UPDATED,
@@ -139,7 +139,7 @@ export function useCategories(): UseCategoriesReturn {
   /********** [START: Edit Kategori & Pembaruan Optimistik] **********/
   const { mutate: editCategory, error: editErr } = useLocalMutation(
     async (input: UpdateCategoryInput) => {
-      const updated = await updateCategory(input);
+      const updated = await updateCategoryDb(input);
       if (!updated) throw new Error("Category not found");
       return updated;
     },
@@ -163,9 +163,9 @@ export function useCategories(): UseCategoriesReturn {
   /********** [END: Edit Kategori & Pembaruan Optimistik] **********/
 
   /********** [START: Hapus Kategori & Pembaruan Optimistik] **********/
-  const { mutate: removeCategory, error: removeErr } = useLocalMutation(
+  const { mutate: deleteCategory, error: deleteErr } = useLocalMutation(
     async (clientId: string) => {
-      const success = await deleteCategory(clientId);
+      const success = await deleteCategoryDb(clientId);
       if (!success) throw new Error("Category not found");
       return clientId; // Pass the clientId to onSuccess
     },
@@ -185,7 +185,7 @@ export function useCategories(): UseCategoriesReturn {
   const incomeCategories = categories.filter((c) => c.type === "INCOME");
   const expenseCategories = categories.filter((c) => c.type === "EXPENSE");
   
-  const combinedError = loadError || createErr || editErr || removeErr;
+  const combinedError = loadError || addErr || editErr || deleteErr;
 
   /********** Pengembalian Data Hook **********/
 
@@ -196,9 +196,9 @@ export function useCategories(): UseCategoriesReturn {
     expenseCategories,
     isLoading,
     error: combinedError,
-    createCategory,
+    loadCategories,
+    addCategory,
     editCategory,
-    removeCategory,
-    refresh: loadCategories,
+    deleteCategory,
   };
 }

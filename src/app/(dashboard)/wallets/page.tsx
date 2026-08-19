@@ -53,8 +53,7 @@ const TYPE_LABEL: Record<WalletType, string> = {
  * @returns Elemen JSX tata letak halaman manajemen dompet Moneta
  */
 export default function WalletsPage() {
-  /********** [START: Inisialisasi State & Hook Halaman Dompet] **********/
-  const { wallets, isLoading, removeWallet, totalBalance, getWalletBalance } = useWallets();
+  const { wallets, isLoading, deleteWallet, totalBalance, getWalletBalance } = useWallets();
 
   /* State kontrol tampilan modal form dompet dan form transaksi transfer */
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -90,7 +89,7 @@ export default function WalletsPage() {
     if (!deleteConfirmId) return;
     setIsDeleting(true);
     try {
-      await removeWallet(deleteConfirmId);
+      await deleteWallet(deleteConfirmId);
       setDeleteConfirmId(null);
     } finally {
       setIsDeleting(false);

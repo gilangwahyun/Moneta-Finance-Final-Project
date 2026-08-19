@@ -9,9 +9,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { Wallet, Transaction } from '@/types/models.types';
 import {
   getAllWallets,
-  addWallet,
-  updateWallet,
-  deleteWallet,
+  addWallet as addWalletDb,
+  updateWallet as updateWalletDb,
+  deleteWallet as deleteWalletDb,
   AddWalletInput,
   UpdateWalletInput,
 } from '@/lib/local-db/repositories/wallets';
@@ -23,7 +23,7 @@ import { SyncEvents } from '@/lib/sync/events';
 
 /********** Tipe Data & Antarmuka **********/
 
-interface UseWalletsReturn {
+export interface UseWalletsReturn {
   /* Daftar dompet atau akun keuangan milik pengguna */
   wallets: Wallet[];
   /* Daftar transaksi yang dibutuhkan untuk mengalkulasi saldo terkini */
@@ -36,12 +36,14 @@ interface UseWalletsReturn {
   totalBalance: number;
   /* Menghitung saldo terkini dari suatu dompet spesifik */
   getWalletBalance: (wallet: Wallet) => number;
+  /* Memuat ulang data dompet dari IndexedDB */
+  loadWallets: () => Promise<void>;
   /* Menambahkan dompet baru ke dalam sistem */
-  addNewWallet: (input: Omit<AddWalletInput, 'userId'>) => Promise<Wallet | null>;
+  addWallet: (input: Omit<AddWalletInput, 'userId'>) => Promise<Wallet | null>;
   /* Memperbarui rincian dompet yang sudah ada */
   editWallet: (input: UpdateWalletInput) => Promise<Wallet | null>;
   /* Menghapus dompet dari sistem lokal */
-  removeWallet: (clientId: string) => Promise<void | boolean | null | any>;
+  deleteWallet: (clientId: string) => Promise<void | boolean | null | any>;
 }
 
 /********** Hook Utama (useWallets) **********/
@@ -57,7 +59,7 @@ export function useWallets(): UseWalletsReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
+  const loadWallets = useCallback(async () => {
     try {
       const user = await getCurrentUser();
       if (!user) return;
@@ -74,10 +76,10 @@ export function useWallets(): UseWalletsReturn {
   }, []);
 
   useEffect(() => {
-    load();
+    loadWallets();
 
     /* Muat ulang data saat transaksi atau dompet berubah dari halaman atau komponen lain */
-    const handler = () => load();
+    const handler = () => loadWallets();
     window.addEventListener(SyncEvents.TRANSACTION_UPDATED, handler);
     window.addEventListener(SyncEvents.WALLET_UPDATED, handler);
     window.addEventListener(SyncEvents.SYNC_COMPLETED, handler);
@@ -86,28 +88,28 @@ export function useWallets(): UseWalletsReturn {
       window.removeEventListener(SyncEvents.WALLET_UPDATED, handler);
       window.removeEventListener(SyncEvents.SYNC_COMPLETED, handler);
     };
-  }, [load]);
+  }, [loadWallets]);
 
   /********** Operasi Mutasi Dompet (CRUD) **********/
 
-  const { mutate: addNewWallet, error: addErr } = useLocalMutation(
+  const { mutate: addWallet, error: addErr } = useLocalMutation(
     async (input: Omit<AddWalletInput, 'userId'>) => {
       const user = await getCurrentUser();
       if (!user) throw new Error('Pengguna tidak ditemukan.');
-      return addWallet({ ...input, userId: user.id });
+      return addWalletDb({ ...input, userId: user.id });
     },
-    { eventName: SyncEvents.WALLET_UPDATED, onSuccess: load, errorMessage: 'Gagal menambahkan dompet' },
+    { eventName: SyncEvents.WALLET_UPDATED, onSuccess: loadWallets, errorMessage: 'Gagal menambahkan dompet' },
   );
 
-  const { mutate: editWallet, error: editErr } = useLocalMutation(updateWallet, {
+  const { mutate: editWallet, error: editErr } = useLocalMutation(updateWalletDb, {
     eventName: SyncEvents.WALLET_UPDATED,
-    onSuccess: load,
+    onSuccess: loadWallets,
     errorMessage: 'Gagal memperbarui dompet',
   });
 
-  const { mutate: removeWallet, error: removeErr } = useLocalMutation(deleteWallet, {
+  const { mutate: deleteWallet, error: deleteErr } = useLocalMutation(deleteWalletDb, {
     eventName: SyncEvents.WALLET_UPDATED,
-    onSuccess: load,
+    onSuccess: loadWallets,
     errorMessage: 'Gagal menghapus dompet',
   });
 
@@ -117,7 +119,7 @@ export function useWallets(): UseWalletsReturn {
 
   const totalBalance = calculateTotalBalance(wallets, transactions);
 
-  const combinedError = loadError || addErr || editErr || removeErr;
+  const combinedError = loadError || addErr || editErr || deleteErr;
 
   /********** Pengembalian Data Hook **********/
 
@@ -128,8 +130,9 @@ export function useWallets(): UseWalletsReturn {
     error: combinedError,
     totalBalance,
     getWalletBalance,
-    addNewWallet,
+    loadWallets,
+    addWallet,
     editWallet,
-    removeWallet,
+    deleteWallet,
   };
 }

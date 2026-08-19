@@ -85,7 +85,7 @@ function dateLabel(dateStr: string): string {
  */
 export default function TransactionsPage() {
   /********** [START: Inisialisasi State & Hook Daftar Transaksi] **********/
-  const { transactions, isLoading, error, removeTransaction } = useTransactions();
+  const { transactions, isLoading, error, deleteTransaction } = useTransactions();
   const { allCategories } = useCategories();
   const { pendingCount } = useSyncContext();
 
@@ -187,7 +187,7 @@ export default function TransactionsPage() {
     if (!deleteConfirmId) return;
     setIsDeleting(true);
     try {
-      await removeTransaction(deleteConfirmId);
+      await deleteTransaction(deleteConfirmId);
       setDeleteConfirmId(null);
     } catch (err) {
       console.error(err);

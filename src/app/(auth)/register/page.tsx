@@ -209,6 +209,7 @@ export default function RegisterPage() {
             <div className="rounded-xl border border-indigo-200 bg-indigo-50/70 p-4 transition-all dark:border-indigo-900/50 dark:bg-indigo-950/40">
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
+                  id="seed-demo-data"
                   type="checkbox"
                   checked={seedDemoData}
                   onChange={(e) => setSeedDemoData(e.target.checked)}

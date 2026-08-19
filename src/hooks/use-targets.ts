@@ -9,9 +9,9 @@ import { useState, useEffect, useCallback } from 'react';
 import { FinancialTarget } from '@/types/models.types';
 import {
   getActiveTargets,
-  addTarget,
-  updateTarget,
-  deleteTarget,
+  addTarget as addTargetDb,
+  updateTarget as updateTargetDb,
+  deleteTarget as deleteTargetDb,
   AddTargetInput,
   UpdateTargetInput,
 } from '@/lib/local-db/repositories/targets';
@@ -35,14 +35,14 @@ export interface UseTargetsReturn {
   isLoading: boolean;
   /* Pesan error jika terjadi kegagalan operasi */
   error: string | null;
+  /* Memuat ulang data dari IndexedDB */
+  loadTargets: () => Promise<void>;
   /* Merekam atau menambah target keuangan baru */
-  recordTarget: (input: Omit<AddTargetInput, 'userId'>) => Promise<FinancialTarget | null>;
+  addTarget: (input: Omit<AddTargetInput, 'userId'>) => Promise<FinancialTarget | null>;
   /* Memperbarui data target keuangan yang sudah ada */
   editTarget: (input: UpdateTargetInput) => Promise<FinancialTarget | null>;
   /* Menghapus target keuangan dari sistem */
-  removeTarget: (clientId: string) => Promise<boolean | null | any>;
-  /* Memuat ulang data dari IndexedDB */
-  refresh: () => Promise<void>;
+  deleteTarget: (clientId: string) => Promise<boolean | null | any>;
 }
 
 /********** Hook Utama (useTargets) **********/
@@ -58,7 +58,7 @@ export function useTargets(): UseTargetsReturn {
   const [loadError, setLoadError] = useState<string | null>(null);
   const { scheduleSync } = useSyncContext();
 
-  const loadData = useCallback(async () => {
+  const loadTargets = useCallback(async () => {
     try {
       setIsLoading(true);
       setLoadError(null);
@@ -93,8 +93,8 @@ export function useTargets(): UseTargetsReturn {
   }, []);
 
   useEffect(() => {
-    loadData();
-    const handleUpdate = () => loadData();
+    loadTargets();
+    const handleUpdate = () => loadTargets();
     /* Perbarui UI secara proaktif tanpa menunggu proses sinkronisasi penuh selesai */
     window.addEventListener(SyncEvents.TARGET_UPDATED, handleUpdate);
     window.addEventListener(SyncEvents.CATEGORY_UPDATED, handleUpdate);
@@ -107,36 +107,36 @@ export function useTargets(): UseTargetsReturn {
       window.removeEventListener(SyncEvents.TRANSACTION_UPDATED, handleUpdate);
       window.removeEventListener(SyncEvents.SYNC_COMPLETED, handleUpdate);
     };
-  }, [loadData]);
+  }, [loadTargets]);
 
   /********** [START: Operasi Mutasi Target] **********/
-  const { mutate: recordTarget, error: recordErr } = useLocalMutation(
+  const { mutate: addTarget, error: addErr } = useLocalMutation(
     async (input: Omit<AddTargetInput, 'userId'>) => {
       const user = await getCurrentUser();
       if (!user) throw new Error('User not found');
-      return addTarget({ ...input, userId: user.id });
+      return addTargetDb({ ...input, userId: user.id });
     },
-    { eventName: SyncEvents.TARGET_UPDATED, onSuccess: loadData, errorMessage: 'Failed to create target' },
+    { eventName: SyncEvents.TARGET_UPDATED, onSuccess: loadTargets, errorMessage: 'Failed to create target' },
   );
 
-  const { mutate: editTarget, error: editErr } = useLocalMutation(updateTarget, {
+  const { mutate: editTarget, error: editErr } = useLocalMutation(updateTargetDb, {
     eventName: SyncEvents.TARGET_UPDATED,
-    onSuccess: loadData,
+    onSuccess: loadTargets,
     errorMessage: 'Failed to update target',
   });
 
-  const { mutate: removeTarget, error: removeErr } = useLocalMutation(
+  const { mutate: deleteTarget, error: deleteErr } = useLocalMutation(
     async (clientId: string) => {
-      await deleteTarget(clientId);
+      await deleteTargetDb(clientId);
       return true;
     },
-    { eventName: SyncEvents.TARGET_UPDATED, onSuccess: loadData, errorMessage: 'Failed to delete target' },
+    { eventName: SyncEvents.TARGET_UPDATED, onSuccess: loadTargets, errorMessage: 'Failed to delete target' },
   );
   /********** [END: Operasi Mutasi Target] **********/
 
-  const combinedError = loadError || recordErr || editErr || removeErr;
+  const combinedError = loadError || addErr || editErr || deleteErr;
 
   /********** Pengembalian Data Hook **********/
 
-  return { targets, isLoading, error: combinedError, recordTarget, editTarget, removeTarget, refresh: loadData };
+  return { targets, isLoading, error: combinedError, loadTargets, addTarget, editTarget, deleteTarget };
 }

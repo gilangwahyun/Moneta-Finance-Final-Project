@@ -29,7 +29,7 @@ import { Folder, TrendingDown, TrendingUp, Plus, Pencil, Trash2, Check, ArrowLef
  */
 export default function CategoriesPage() {
   /********** [START: Inisialisasi State & Hook Halaman Kategori] **********/
-  const { categories, incomeCategories, expenseCategories, isLoading, error, createCategory, editCategory, removeCategory } =
+  const { categories, incomeCategories, expenseCategories, isLoading, error, addCategory, editCategory, deleteCategory } =
     useCategories();
 
   const { pendingCount } = useSyncContext();
@@ -64,7 +64,7 @@ export default function CategoriesPage() {
     if (!deleteConfirmId) return;
     setIsDeleting(true);
     try {
-      await removeCategory(deleteConfirmId);
+      await deleteCategory(deleteConfirmId);
       setDeleteConfirmId(null);
     } finally {
       setIsDeleting(false);

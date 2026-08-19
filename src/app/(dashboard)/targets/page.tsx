@@ -30,7 +30,7 @@ import { getCategoryIcon } from '@/lib/utils/icons';
  */
 export default function TargetsPage() {
   /********** [START: Inisialisasi State & Hook Halaman Target] **********/
-  const { targets, isLoading, recordTarget, editTarget, removeTarget } = useTargets();
+  const { targets, isLoading, addTarget, editTarget, deleteTarget } = useTargets();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTarget, setEditingTarget] = useState<FinancialTarget | null>(null);
 
@@ -113,14 +113,14 @@ export default function TargetsPage() {
     if (editingTarget) {
       await editTarget(input);
     } else {
-      await recordTarget(input);
+      await addTarget(input);
     }
   };
 
   /** Menghapus target keuangan berdasarkan ID klien */
   const handleDelete = async (clientId: string) => {
     setIsDeleting(true);
-    await removeTarget(clientId);
+    await deleteTarget(clientId);
     setIsDeleting(false);
     setDeleteConfirmId(null);
   };

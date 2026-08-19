@@ -4,9 +4,25 @@
  */
 
 import { getCurrentUser } from '@/lib/local-db/repositories/users';
-import { setBudget, deleteBudget, reallocateBudget } from '@/lib/local-db/repositories/budgets';
+import { setBudget as setBudgetDb, deleteBudget as deleteBudgetDb, reallocateBudget as reallocateBudgetDb } from '@/lib/local-db/repositories/budgets';
 import { useLocalMutation } from '@/hooks/use-local-mutation';
 import { SyncEvents } from '@/lib/sync/events';
+
+export interface UseBudgetActionsReturn {
+  error: string | null;
+  editBudget: (
+    clientId: string | undefined,
+    amount: number,
+    period: string,
+    categoryId: string
+  ) => Promise<void | null>;
+  deleteBudget: (clientId: string) => Promise<void | null>;
+  reallocateBudget: (
+    sourceClientId: string,
+    destinationClientId: string,
+    amount: number
+  ) => Promise<void | null>;
+}
 
 /********** Hook Utama (useBudgetActions) **********/
 
@@ -15,10 +31,10 @@ import { SyncEvents } from '@/lib/sync/events';
  *
  * @returns Objek berisi fungsi-fungsi aksi untuk mengelola anggaran.
  */
-export function useBudgetActions() {
+export function useBudgetActions(): UseBudgetActionsReturn {
   /********** [START: Mutasi Anggaran & Realokasi] **********/
   /* Menambah anggaran baru atau memperbarui jumlah anggaran yang sudah ada untuk kategori tertentu */
-  const { mutate: addOrEditBudget, error: addErr } = useLocalMutation(
+  const { mutate: editBudget, error: addErr } = useLocalMutation(
     async (
       clientId: string | undefined,
       amount: number,
@@ -28,7 +44,7 @@ export function useBudgetActions() {
       const user = await getCurrentUser();
       if (!user) throw new Error('User not found');
 
-      await setBudget({
+      await setBudgetDb({
         clientId,
         amount,
         period,
@@ -43,9 +59,9 @@ export function useBudgetActions() {
   );
 
   /* Menghapus anggaran berdasarkan ID uniknya */
-  const { mutate: removeBudget, error: removeErr } = useLocalMutation(
+  const { mutate: deleteBudget, error: removeErr } = useLocalMutation(
     async (clientId: string) => {
-      await deleteBudget(clientId);
+      await deleteBudgetDb(clientId);
     },
     {
       eventName: SyncEvents.BUDGET_UPDATED,
@@ -54,13 +70,13 @@ export function useBudgetActions() {
   );
 
   /* Memindahkan atau merealokasi sejumlah dana dari anggaran sumber ke anggaran tujuan */
-  const { mutate: handleReallocate, error: reallocateErr } = useLocalMutation(
+  const { mutate: reallocateBudget, error: reallocateErr } = useLocalMutation(
     async (
       sourceClientId: string,
       destinationClientId: string,
       amount: number
     ) => {
-      await reallocateBudget({
+      await reallocateBudgetDb({
         sourceClientId,
         destinationClientId,
         amount,
@@ -79,8 +95,8 @@ export function useBudgetActions() {
 
   return {
     error: combinedError,
-    addOrEditBudget,
-    removeBudget,
-    handleReallocate
+    editBudget,
+    deleteBudget,
+    reallocateBudget
   };
 }

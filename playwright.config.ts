@@ -13,7 +13,8 @@ import path from 'path';
  */
 export default defineConfig({
   testDir: './tests',
-  timeout: 90000,
+  timeout: 120000,
+  globalSetup: './tests/global-setup.ts',
   /* Run tests in files in parallel */
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -27,7 +28,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:3001',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -49,10 +50,17 @@ export default defineConfig({
     // },
   ],
 
-  /* Run your local dev server before starting the tests */
+  /* Run your local dev server before starting the tests.
+   * Uses a dedicated port 3001 to avoid conflict with any existing dev server on 3000.
+   * Global setup pre-warms all pages so Next.js lazy compilation doesn't cause ERR_ABORTED. */
   webServer: {
-    command: 'npx.cmd next dev --turbo',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
+    command: 'npx.cmd next start -p 3001',
+    url: 'http://localhost:3001',
+    reuseExistingServer: false,
+    timeout: 120 * 1000, // 2 minutes for dev server to start
+    env: {
+      E2E_TEST_MODE: 'true',
+    },
   },
 });
+
