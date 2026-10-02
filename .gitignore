@@ -43,7 +43,11 @@ next-env.d.ts
 .env*
 
 # personal documents (thesis reference, not part of the codebase)
-/docs
+/docs/*
+!/docs/data-design.md
+!/docs/data-flow.md
+!/docs/glossary.md
+!/docs/project-structure.md
 
 # prisma generated client (di-generate ulang saat npm install via postinstall)
 /src/generated/
