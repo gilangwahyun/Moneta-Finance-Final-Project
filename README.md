@@ -131,6 +131,23 @@ Aplikasi dapat diakses melalui `http://localhost:3000`.
 
 ---
 
+## PENGUJIAN (TESTING)
+
+Proyek ini dilengkapi dengan *test suite* komprehensif menggunakan Playwright, mencakup *unit tests*, *integration tests*, hingga *End-to-End (E2E) tests*.
+
+```bash
+# 1. Menjalankan seluruh pengujian secara berurutan (sequential)
+npx playwright test --workers=1
+
+# 2. Menjalankan satu file pengujian spesifik (contoh: engine validitas aturan)
+npx playwright test tests/08-insight-engine.spec.ts
+
+# 3. Menjalankan pengujian dengan antarmuka grafis (UI Mode)
+npx playwright test --ui
+```
+
+---
+
 ## INSTRUKSI DEPLOYMENT
 
 Proyek ini telah dikalibrasi untuk proses *deployment* di infrastruktur Vercel:
