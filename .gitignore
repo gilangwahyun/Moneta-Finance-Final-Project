@@ -61,4 +61,4 @@ next-env.d.ts
 /playwright/.cache/
 
 # tests
-/tests
+# /tests (uncomment if you want to ignore tests)
