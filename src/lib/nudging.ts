@@ -499,7 +499,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 2.8,
       severity: 'neutral',
       title: 'Perubahan Pola Pengeluaran',
-      body: `Porsi pengeluaran gaya hidupmu naik menjadi ${discretionaryDrift.ratioNow}% dari total pengeluaran (naik ${discretionaryDrift.diffPct} poin dari 3 bulan lalu).`,
+      body: `Porsi pengeluaran gaya hidupmu naik menjadi ${Math.round(discretionaryDrift.ratioNow * 100)}% dari total pengeluaran (naik ${discretionaryDrift.diffPct} poin dari 3 bulan lalu).`,
       ctaLabel: 'Analisis Kategori',
       ctaRoute: '/analytics',
     });
