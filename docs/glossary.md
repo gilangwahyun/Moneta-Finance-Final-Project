@@ -37,3 +37,45 @@ This document defines the core terminology used across the Moneta architecture t
 - **Popover**: A floating menu box in the desktop version that appears near a trigger button.
 - **Portal Overlay**: A rendering technique for overlay components (like popovers or modals) outside the parent element structure so they are not clipped by containers with overflow boundaries.
 - **Responsive Layout**: Interface design that adapts smoothly from a wide view on desktop (e.g., with a sidebar) to a compact view on mobile devices (e.g., with bottom navigation).
+
+---
+
+# Glosarium Moneta (Versi Bahasa Indonesia)
+
+Dokumen ini mendefinisikan terminologi inti yang digunakan di seluruh arsitektur Moneta untuk menyamakan pemahaman antara pengembang dan asisten AI.
+
+- **Hidrasi (Hydration)**: Proses pemuatan data awal. Saat pengguna masuk (login) atau mereset data lokal, aplikasi menarik riwayat data dari server dan memasukkannya ke *database* lokal (IndexedDB). Proses ini biasanya dibatasi oleh jendela waktu tertentu (misalnya, 3 bulan terakhir).
+- **Sinkronisasi Pull (Pull Sync)**: Proses mengambil pembaruan data yang berubah (delta) dari server yang dilakukan di perangkat lain sejak sinkronisasi terakhir (`lastSyncedAt`), lalu menggabungkannya ke dalam *database* lokal.
+- **Sinkronisasi Push (Push Sync)**: Proses mengelompokkan (batch) semua mutasi data lokal yang sedang menunggu di `sync_queue`, untuk kemudian dikirim ke API server agar disimpan secara permanen.
+- **sync_queue**: Penyimpanan IndexedDB lokal yang bertindak sebagai buku besar berurutan untuk mencatat setiap mutasi data dari pengguna (CREATE, UPDATE, DELETE). Manajer Sinkronisasi (Sync Manager) membaca antrean ini saat menjalankan Sinkronisasi Push.
+- **Mutasi Lokal (Local Mutation)**: Aksi pengguna (seperti membuat transaksi baru) yang langsung memperbarui *database* lokal dan seketika ditambahkan ke `sync_queue` untuk menunggu dikirim (push) ke server.
+- **Penerapan Jarak Jauh (Remote Apply)**: Tindakan menerima data dari server (melalui Sinkronisasi Pull atau Hidrasi) dan menuliskannya ke *database* lokal *tanpa* memasukkannya ke `sync_queue`.
+- **Salinan Kerja IndexedDB (IndexedDB Working Copy)**: *database* lokal berkemampuan luring (offline) yang bertindak sebagai sumber kebenaran (source of truth) instan bagi antarmuka React UI. UI HANYA membaca data dari salinan ini.
+- **notification_settings**: Preferensi pengaturan peringatan bagi pengguna (contoh: aktif/nonaktif, pengiriman langsung vs rangkuman/batch). Disimpan secara lokal di IDB dan disinkronkan ke server.
+- **notification_logs**: Rekaman riwayat dari setiap peringatan yang pernah dihasilkan sistem (contoh: "Anggaran Terlampaui"). Disinkronkan antarperangkat agar pengguna melihat kotak masuk notifikasi yang konsisten.
+- **Target Finansial (Financial Target)**: Tujuan keuangan buatan pengguna yang difokuskan pada pencapaian pemasukan. Ini beroperasi terpisah dari anggaran ketat, dan dievaluasi secara *real-time* di perangkat menggunakan IndexedDB tanpa harus menyimpan total saldo di dalam *database*. Berbeda dengan Anggaran (Budget) yang membatasi pengeluaran, Target Finansial digunakan khusus untuk memantau aliran dana masuk.
+- **notification_subscriptions**: Token web-push spesifik-perangkat yang ditautkan ke pengguna. Data ini tidak pernah dihidrasi antarperangkat, karena token *browser* sangat unik pada instalasi peramban/perangkat keras tersebut.
+- **Notifikasi Dalam-Aplikasi (In-App Notification)**: Peringatan visual yang dirender di dalam antarmuka UI React Moneta (contoh: *toast* atau kotak masuk pop-up).
+- **Notifikasi Sistem (System Notification)**: Notifikasi *push* asli dari sistem operasi (OS) yang dipicu melalui fungsi `showNotification()` pada Service Worker browser.
+- **Server Web Push**: Notifikasi *push* yang dipicu dari luar aplikasi oleh tugas terjadwal (CRON) atau skrip rangkuman di sisi server, yang mampu menjangkau pengguna meski aplikasi PWA sedang ditutup.
+- **Nudge (Dorongan Halus)**: Notifikasi yang menyarankan tindakan positif atau sekadar menginformasikan status umum kepada pengguna tanpa menyiratkan bahaya kritis.
+- **Rekomendasi (Recommendation)**: Wawasan (insight) analitis yang disajikan kepada pengguna berdasarkan pola pengeluaran mereka, dirancang untuk meningkatkan kesehatan finansial.
+- **clientId**: UUID tangguh yang dihasilkan di klien saat terjadi mutasi lokal. Berfungsi sebagai kunci penanda utama saat menyinkronkan data antara IndexedDB dan PostgreSQL.
+- **serverId**: Pengidentifikasi internal pada PostgreSQL. Berfungsi sebagai ID utama di *database* server, namun sistem lebih mengandalkan `clientId` untuk logika sinkronisasi *offline*.
+- **dedupeKey**: *String* deterministik (misalnya, `BUDGET_USAGE:userId:budgetId:YYYY-MM:WARNING`) yang digunakan untuk mencegah sistem memicu log notifikasi ganda untuk kejadian ambang batas yang sama.
+- **syncStatus**: Kolom berjenis *enum* pada data (`PENDING`, `SYNCED`, `CONFLICT`) yang menandakan apakah data lokal telah sukses diakui oleh server. Penghapusan data ditangani melalui *timestamp* `deletedAt` (*soft delete*), bukan status sinkronisasi penghapusan.
+- **Mesin Insight (Insight Engine)**: Sistem berbasis aturan lokal (`nudging.ts` dan `local-engine.ts`) yang menganalisis data pengguna untuk menemukan anomali finansial dan membuat dorongan tanpa membutuhkan pemrosesan server.
+- **Insight Fatigue (Kelelahan Wawasan)**: Beban kognitif yang disebabkan oleh terlalu banyaknya peringatan analitis yang muncul di layar, dicegah dengan sistem penyortiran prioritas berbobot dan pembatasan UI.
+
+## Terminologi Frontend UI/UX
+
+- **Menu Aksi (Action Menu)**: Menu ringkas yang menampilkan tindakan sekunder seperti Edit dan Hapus pada sebuah data.
+- **Bottom Sheet (Panel Bawah)**: Panel aksi yang muncul bergeser dari bawah layar, khusus untuk tata letak pada perangkat seluler.
+- **Konfirmasi Penghapusan (Delete Confirmation)**: Dialog peringatan yang mewajibkan konfirmasi eksplisit dari pengguna sebelum menghapus data penting.
+- **Kartu Ringkasan Padat (Compact Summary Card)**: Kartu ringkas pada antarmuka seluler yang menyajikan info pasif tanpa memakan terlalu banyak ruang vertikal.
+- **Empty State (Status Kosong)**: Tampilan visual khusus ketika sebuah daftar belum memiliki data, yang umumnya disertai petunjuk aksi untuk membuat data pertama.
+- **Status Sinkronisasi (Sync Status)**: Indikator visual di antarmuka yang memberi tahu pengguna apakah perubahan lokal sedang menunggu, sedang diproses, berhasil disinkronkan, atau gagal.
+- **Offline-first UI (Antarmuka Luring Utama)**: Antarmuka yang dirancang merespons tindakan pengguna secara instan menggunakan data lokal, tanpa menunggu koneksi atau respons dari server.
+- **Popover**: Kotak menu melayang di versi *desktop* yang biasanya muncul di dekat elemen pemicunya.
+- **Portal Overlay**: Teknik rendering komponen *overlay* (seperti *popover* atau *modal*) di luar hierarki struktur induknya, agar tidak terpotong (clipped) oleh batasan kontainer.
+- **Responsive Layout (Tata Letak Responsif)**: Desain antarmuka yang beradaptasi dengan mulus dari tampilan lebar pada *desktop* (misalnya menggunakan *sidebar*) menuju tampilan padat di seluler (menggunakan navigasi bawah).
