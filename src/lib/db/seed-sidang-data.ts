@@ -173,7 +173,8 @@ export async function seedSidangDataForUser(userId: string, db: any) {
 
   // ══════════════════════════════════════════════════════════════════════════
   // BLOK B: PENGELUARAN MAKANAN BULAN INI — melampaui anggaran Rp 300.000
-  //   Total = 200.000 + 150.000 = 350.000 > 300.000 → BG-00c (di-seed sebagai log)
+  //   Total = 200.000 + 150.000 (Blok B) + 30.000 (Blok D) = 380.000 > 300.000
+  //   Defisit = Rp 80.000 → BG-00c (Rekomendasi Subsidi Silang Rp 80.000)
   // ══════════════════════════════════════════════════════════════════════════
   if (catMakanan) {
     txns.push({
@@ -418,7 +419,7 @@ export async function seedSidangDataForUser(userId: string, db: any) {
         : `BUDGET_USAGE:${userId}:makanan:${currentMonthStr}:101:none`,
       userId,
       title: "Rekomendasi Subsidi Silang",
-      body: "Anggaran Makanan telah melewati batas sebesar Rp 50.000. Kamu dapat mempertimbangkan memindahkan Rp 50.000 dari Belanja Harian. Keputusan tetap ada di tanganmu.",
+      body: "Anggaran Makanan telah melewati batas sebesar Rp 80.000. Kamu dapat mempertimbangkan memindahkan Rp 80.000 dari Belanja Harian. Keputusan tetap ada di tanganmu.",
       type: "0.1",
       eventType: "BUDGET_CRITICAL",
       actionType: "REALLOCATE_BUDGET",
@@ -429,18 +430,18 @@ export async function seedSidangDataForUser(userId: string, db: any) {
       relatedCategoryId: catMakanan ?? undefined,
       sourceBudgetId: budgetBelanja?.clientId,
       targetBudgetId: budgetMakanan?.clientId,
-      recommendedAmount: 50_000,
+      recommendedAmount: 80_000,
       sourceCategoryName: "Belanja Harian",
       targetCategoryName: "Makanan",
       ctaRoute: budgetBelanja && budgetMakanan
-        ? `/budgets?action=reallocate&sourceBudgetId=${budgetBelanja.clientId}&targetBudgetId=${budgetMakanan.clientId}&amount=50000`
+        ? `/budgets?action=reallocate&sourceBudgetId=${budgetBelanja.clientId}&targetBudgetId=${budgetMakanan.clientId}&amount=80000`
         : "/budgets",
       ctaLabel: "Subsidi Silang",
       categoryName: "Makanan",
-      usageRatio: 1.17,
+      usageRatio: 1.27,
       budgetLimit: 300_000,
-      budgetSpent: 350_000,
-      deficitAmount: 50_000,
+      budgetSpent: 380_000,
+      deficitAmount: 80_000,
       createdAt: dayjs().subtract(1, "day").toDate(),
       updatedAt: now,
     },
