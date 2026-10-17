@@ -463,10 +463,12 @@ export async function seedSidangDataForUser(userId: string, db: any) {
 ║  DEMO LIVE — Memicu SP-01 (Pengeluaran Awal Bulan):                   ║
 ║  1. Login & klik "Tarik Data" agar IndexedDB sinkron                  ║
 ║  2. Buka halaman Transaksi → Tambah Transaksi Baru                    ║
-║  3. Isi:  Kategori   = Belanja Harian (atau apapun)                   ║
+║  3. Isi:  Kategori   = Transportasi (JANGAN pilih Belanja Harian      ║
+║                        agar donor Subsidi Silang tetap sisa >= 70%!)  ║
 ║           Nominal    = Rp 1.800.000 (atau lebih)                      ║
 ║           Tanggal    = Hari ini                                        ║
-║  4. Simpan → kartu "Pengeluaran Awal Bulan" langsung muncul!          ║
+║  4. Simpan → kartu "Pengeluaran Awal Bulan" (SP-01) langsung muncul,  ║
+║     DAN "Rekomendasi Subsidi Silang" (BG-00c) tetap aktif!            ║
 ║                                                                       ║
 ║  Cara hitung threshold 40%:                                           ║
 ║    Total anggaran = Rp 300.000 + Rp 5.000.000 = Rp 5.300.000         ║
