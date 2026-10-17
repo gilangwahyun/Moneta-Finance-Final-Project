@@ -30,4 +30,13 @@ export async function clearLocalCache(): Promise<void> {
       tx.onerror = () => reject(tx.error);
     });
   }
+
+  // Reset timestamp sinkronisasi (last_synced_at) di SYNC_META agar penarikan data berikutnya
+  // melakukan full pull / hidrasi ulang dari server, tetapi tetap mempertahankan current_user session.
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORES.SYNC_META, "readwrite");
+    tx.objectStore(STORES.SYNC_META).delete("last_synced_at");
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
 }
