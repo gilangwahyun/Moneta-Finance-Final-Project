@@ -639,4 +639,4 @@ Urutan berikut mengikuti hierarki dependensi tabel (tabel induk didahulukan):
 ---
 
 *Dokumen ini dihasilkan dari reverse engineering `prisma/schema.prisma` (379 baris) dan `src/lib/local-db/schema.ts` (141 baris) dan telah diaudit secara menyeluruh pada tanggal 20 Juni 2026.*
-*Versi Prisma Schema: generator `prisma-client-js`, provider `postgresql` (Neon). Versi IndexedDB: v11.*
+*Versi Prisma Schema: generator `prisma-client-js`, provider `postgresql` (Supabase). Versi IndexedDB: v11.*

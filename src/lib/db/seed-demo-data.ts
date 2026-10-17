@@ -5,8 +5,7 @@
 
 import { randomUUID } from "crypto";
 import dayjs from "dayjs";
-import { prisma } from "@/lib/db/prisma";
-import { DEFAULT_CATEGORIES } from "@/lib/db/default-categories";
+import { DEFAULT_CATEGORIES } from "./default-categories";
 
 /**
  * Menyuntikkan data simulasi keuangan (Dompet, Anggaran, Target Finansial,
@@ -23,7 +22,7 @@ import { DEFAULT_CATEGORIES } from "@/lib/db/default-categories";
  * @param userId - ID Pengguna (UUID) yang akan di-seed.
  * @param db - Instance PrismaClient atau PrismaTransaction.
  */
-export async function seedDemoDataForUser(userId: string, db: any = prisma) {
+export async function seedDemoDataForUser(userId: string, db: any) {
   // 1. Pastikan kategori default tersedia untuk user
   let categoriesDb = await db.category.findMany({
     where: { userId },
@@ -47,6 +46,13 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
 
   const getCatId = (name: string) =>
     categoriesDb.find((c: any) => c.name === name)?.id || null;
+
+  // 1.5 Bersihkan data lama user ini agar proses seeding idempotent
+  await db.transaction.deleteMany({ where: { userId } });
+  await db.notificationLog.deleteMany({ where: { userId } });
+  await db.budget.deleteMany({ where: { userId } });
+  await db.financialTarget.deleteMany({ where: { userId } });
+  await db.wallet.deleteMany({ where: { userId } });
 
   // 2. Buat Dompet Utama (Bank)
   const wallet = await db.wallet.create({
@@ -127,10 +133,6 @@ export async function seedDemoDataForUser(userId: string, db: any = prisma) {
       syncStatus: "SYNCED",
     },
   });
-
-  // 5. Bersihkan transaksi & notifikasi lama untuk user (jika ada) sebelum menyuntikkan data
-  await db.transaction.deleteMany({ where: { userId } });
-  await db.notificationLog.deleteMany({ where: { userId } });
 
   const txns: any[] = [];
 
