@@ -274,7 +274,7 @@ function NotificationListItem({ item, onMarkRead, onNavigate }: { item: DisplayN
           </p>
           
           {/* CTA Button */}
-          {item.actionType === 'REALLOCATE_BUDGET' && item.ctaRoute && (
+          {((item.actionType === 'REALLOCATE_BUDGET') || (Boolean(item.ctaLabel) && Boolean(item.ctaRoute))) && item.ctaRoute && (
             <div className="mt-3">
               <button
                 onClick={async (e) => {
@@ -416,6 +416,22 @@ export default function NotificationsPage() {
       }
     }
     
+    if (targetPath && targetPath.startsWith("/analytics")) {
+      if (
+        item.ctaLabel === "Lihat Tren" || 
+        item.ctaLabel === "Lihat Pola" || 
+        item.eventType === "WANTS_PROJECTION" || 
+        item.eventType === "CATEGORY_SPIKE" || 
+        item.eventType === "PEAK_DAY"
+      ) {
+        targetPath = "/analytics#analytics-trend-chart";
+      } else if (item.ctaLabel === "Analisis Kategori") {
+        targetPath = "/analytics#analytics-category-distribution";
+      } else if (item.ctaLabel === "Lihat Analisis") {
+        targetPath = "/analytics#analytics-detail";
+      }
+    }
+
     if (targetPath !== "/notifications") {
       router.push(targetPath);
     }

@@ -6,7 +6,7 @@
  */
 
 /********** Impor Modul & Dependensi **********/
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   TrendingDown, TrendingUp, Minus,
   AlertTriangle, CheckCircle2, Info,
@@ -67,7 +67,15 @@ function ChartSkeleton({ h = 200 }: { h?: number }) {
  * @param isPrimary - Apakah kartu ini merupakan insight utama (ditampilkan lebih menonjol)
  * @returns Elemen kartu insight
  */
-function InsightCard({ insight, isPrimary }: { insight: NudgeInsight; isPrimary?: boolean }) {
+function InsightCard({
+  insight,
+  isPrimary,
+  onCtaClick,
+}: {
+  insight: NudgeInsight;
+  isPrimary?: boolean;
+  onCtaClick?: (insight: NudgeInsight) => void;
+}) {
   const router = useRouter();
 
   const styles: Record<NudgeSeverity, {
@@ -117,6 +125,36 @@ function InsightCard({ insight, isPrimary }: { insight: NudgeInsight; isPrimary?
 
   const s = styles[insight.severity];
 
+  const handleCta = () => {
+    if (onCtaClick) {
+      onCtaClick(insight);
+      return;
+    }
+
+    const route = insight.ctaRoute || '/analytics';
+    if (route.startsWith('/analytics')) {
+      const hash = route.includes('#') ? route.split('#')[1] : null;
+      let targetId = hash;
+      if (!targetId) {
+        if (insight.ctaLabel === 'Lihat Tren' || insight.ctaLabel === 'Lihat Pola' || insight.title.includes('Tren') || insight.title.includes('Proyeksi')) {
+          targetId = 'analytics-trend-chart';
+        } else if (insight.ctaLabel === 'Analisis Kategori' || insight.title.includes('Kategori') || insight.title.includes('Dominan')) {
+          targetId = 'analytics-category-distribution';
+        } else {
+          targetId = 'analytics-detail';
+        }
+      }
+      const el = document.getElementById(targetId) || document.getElementById('analytics-detail');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.classList.add('ring-2', 'ring-indigo-500/80', 'ring-offset-2', 'dark:ring-offset-slate-900', 'transition-all');
+        setTimeout(() => el.classList.remove('ring-2', 'ring-indigo-500/80', 'ring-offset-2', 'dark:ring-offset-slate-900'), 1500);
+        return;
+      }
+    }
+    router.push(route);
+  };
+
   if (isPrimary) {
     return (
       <div className={`rounded-xl border p-5 shadow-sm transition-all ${s.wrapper}`}>
@@ -126,7 +164,7 @@ function InsightCard({ insight, isPrimary }: { insight: NudgeInsight; isPrimary?
             <p className={`text-base font-bold ${s.titleColor}`}>{insight.title}</p>
             <p className={`mt-1.5 text-sm leading-relaxed ${s.bodyColor}`}>{insight.body}</p>
             <button
-              onClick={() => router.push(insight.ctaRoute)}
+              onClick={handleCta}
               className={`mt-4 inline-flex items-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold shadow-sm transition-all active:scale-95 ${s.ctaBg}`}
             >
               {insight.ctaLabel}
@@ -146,7 +184,7 @@ function InsightCard({ insight, isPrimary }: { insight: NudgeInsight; isPrimary?
           <p className={`text-sm md:text-base font-bold ${s.titleColor}`}>{insight.title}</p>
           <p className={`mt-1 text-sm leading-relaxed ${s.bodyColor}`}>{insight.body}</p>
           <button
-            onClick={() => router.push(insight.ctaRoute)}
+            onClick={handleCta}
             className={`mt-2.5 inline-flex items-center gap-1.5 text-sm font-semibold hover:underline ${s.linkColor}`}
           >
             {insight.ctaLabel}
@@ -164,9 +202,20 @@ function InsightCard({ insight, isPrimary }: { insight: NudgeInsight; isPrimary?
  * @param insights - Daftar insight yang tersedia
  * @param isLoading - Status pemuatan data
  * @param hasData - Apakah ada data transaksi yang tersedia
+ * @param onCtaClick - Fungsi penanganan klik CTA insight
  * @returns Elemen panel insight
  */
-function InsightsPanel({ insights, isLoading, hasData }: { insights: NudgeInsight[]; isLoading: boolean; hasData: boolean }) {
+function InsightsPanel({
+  insights,
+  isLoading,
+  hasData,
+  onCtaClick,
+}: {
+  insights: NudgeInsight[];
+  isLoading: boolean;
+  hasData: boolean;
+  onCtaClick?: (insight: NudgeInsight) => void;
+}) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   /* Urutkan insight berdasarkan tingkat keparahan (severity) */
@@ -224,11 +273,11 @@ function InsightsPanel({ insights, isLoading, hasData }: { insights: NudgeInsigh
         </div>
       ) : (
         <div className="space-y-3">
-          <InsightCard insight={primary} isPrimary={true} />
+          <InsightCard insight={primary} isPrimary={true} onCtaClick={onCtaClick} />
           {secondary.length > 0 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {secondary.map((insight, i) => (
-                <InsightCard key={i} insight={insight} />
+                <InsightCard key={i} insight={insight} onCtaClick={onCtaClick} />
               ))}
             </div>
           )}
@@ -314,6 +363,79 @@ export default function AnalyticsPage() {
   const donutTitle = activeSegment === "EXPENSE" ? "Distribusi Pengeluaran" : "Distribusi Pemasukan";
   /********** [END: Perhitungan State Turunan (Derived State)] **********/
 
+  const router = useRouter();
+
+  /* Penanganan navigasi atau gulir halus saat CTA kartu insight diklik */
+  const handleInsightCta = useCallback((insight: NudgeInsight) => {
+    const route = insight.ctaRoute || '/analytics';
+    if (!route.startsWith('/analytics')) {
+      router.push(route);
+      return;
+    }
+
+    // Ubah segmen transaksi secara cerdas jika insight berfokus pada pemasukan/pengeluaran
+    const titleLower = insight.title.toLowerCase();
+    const bodyLower = insight.body.toLowerCase();
+    const isIncome = titleLower.includes('pemasukan') || bodyLower.includes('pemasukan');
+    const isExpense = titleLower.includes('pengeluaran') || bodyLower.includes('pengeluaran');
+
+    if (isIncome && !isExpense) {
+      setActiveSegment('INCOME');
+    } else if (isExpense) {
+      setActiveSegment('EXPENSE');
+    }
+
+    // Tentukan target anchor ID berdasarkan rute, label, atau topik insight
+    let targetId = 'analytics-trend-chart';
+    if (route.includes('#')) {
+      targetId = route.split('#')[1];
+    } else if (insight.ctaLabel === 'Analisis Kategori' || insight.title.includes('Kategori') || insight.title.includes('Dominan')) {
+      targetId = 'analytics-category-distribution';
+    } else if (insight.ctaLabel === 'Lihat Tren' || insight.ctaLabel === 'Lihat Pola' || insight.title.includes('Tren') || insight.title.includes('Proyeksi')) {
+      targetId = 'analytics-trend-chart';
+    } else if (insight.ctaLabel === 'Lihat Analisis') {
+      targetId = 'analytics-detail';
+    }
+
+    // Gulir halus (smooth scroll) ke elemen target dan berikan indikator visual fokus (ring highlight)
+    requestAnimationFrame(() => {
+      const el = document.getElementById(targetId) || document.getElementById('analytics-detail');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        el.classList.add('ring-2', 'ring-indigo-500/80', 'ring-offset-2', 'dark:ring-offset-slate-900', 'transition-all', 'duration-300');
+        setTimeout(() => {
+          el.classList.remove('ring-2', 'ring-indigo-500/80', 'ring-offset-2', 'dark:ring-offset-slate-900');
+        }, 1800);
+      }
+    });
+  }, [router]);
+
+  /* Tangani navigasi anchor hash URL saat pertama kali dimount atau saat hash berubah */
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const scrollToHash = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (hash) {
+        const el = document.getElementById(hash);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          el.classList.add('ring-2', 'ring-indigo-500/80', 'ring-offset-2', 'dark:ring-offset-slate-900', 'transition-all', 'duration-300');
+          setTimeout(() => {
+            el.classList.remove('ring-2', 'ring-indigo-500/80', 'ring-offset-2', 'dark:ring-offset-slate-900');
+          }, 1800);
+        }
+      }
+    };
+
+    const timer = setTimeout(scrollToHash, 200);
+    window.addEventListener('hashchange', scrollToHash);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('hashchange', scrollToHash);
+    };
+  }, []);
+
   /********** Pengembalian Tata Letak Halaman Analisis (JSX) **********/
   return (
     <div className="space-y-8 pb-12">
@@ -378,12 +500,12 @@ export default function AnalyticsPage() {
       )}
 
 
-      <InsightsPanel insights={nudgeInsights} isLoading={isLoading} hasData={allTxns.length > 0} />
+      <InsightsPanel insights={nudgeInsights} isLoading={isLoading} hasData={allTxns.length > 0} onCtaClick={handleInsightCta} />
 
       <hr className="border-slate-200 dark:border-slate-800" />
 
 
-      <div className="space-y-4">
+      <div id="analytics-detail" className="scroll-mt-20 space-y-4">
         <div className="flex items-center gap-2">
           <PieChart className="h-5 w-5 text-indigo-500" />
           <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
@@ -403,7 +525,7 @@ export default function AnalyticsPage() {
       </div>
 
 
-      <div className="rounded-xl border border-slate-100 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div id="analytics-trend-chart" className="scroll-mt-20 rounded-xl border border-slate-100 bg-white p-5 sm:p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900 transition-all">
         <div className="mb-4">
           <p className="text-base font-bold text-slate-800 dark:text-slate-100">
             {trendTitle}
@@ -441,7 +563,7 @@ export default function AnalyticsPage() {
       </div>
 
 
-      <div className="rounded-xl border border-slate-100 bg-white shadow-sm overflow-hidden dark:border-slate-800 dark:bg-slate-900">
+      <div id="analytics-category-distribution" className="scroll-mt-20 rounded-xl border border-slate-100 bg-white shadow-sm overflow-hidden dark:border-slate-800 dark:bg-slate-900 transition-all">
         <div className="border-b border-slate-100 px-5 sm:px-6 py-4 sm:py-5 dark:border-slate-800">
           <p className="text-base font-bold text-slate-800 dark:text-slate-100">
             {donutTitle}
