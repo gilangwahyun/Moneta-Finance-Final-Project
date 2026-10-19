@@ -84,10 +84,12 @@ export interface Transaction extends SyncMetadata {
   walletId: string;           //********** REQUIRED - source wallet clientId
   targetWalletId?: string | null; //********** Only for TRANSFER type
   categoryId?: string | null; //********** Optional - TRANSFER has no category
+  financialTargetId?: string | null; //********** Optional - direct link to financial target
   userId: string;
   category?: Category;        //********** Joined locally
   wallet?: Wallet;            //********** Joined locally
   targetWallet?: Wallet;      //********** Joined locally
+  financialTarget?: FinancialTarget; //********** Joined locally
 }
 
 //********** Budget **********

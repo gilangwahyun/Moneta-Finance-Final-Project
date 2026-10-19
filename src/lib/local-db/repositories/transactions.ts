@@ -22,6 +22,7 @@ export interface AddTransactionInput {
   walletId: string; /********** clientId of source wallet (required) */
   targetWalletId?: string | null; /********** clientId of destination wallet (TRANSFER only) */
   categoryId?: string | null; /********** clientId of category (optional — null for TRANSFER) */
+  financialTargetId?: string | null;
   userId: string;
 }
 
@@ -46,6 +47,7 @@ export async function addTransaction(input: AddTransactionInput): Promise<Transa
     walletId: input.walletId,
     targetWalletId: input.targetWalletId ?? null,
     categoryId: input.categoryId ?? null,
+    financialTargetId: input.financialTargetId ?? null,
     userId: input.userId,
     syncStatus: 'PENDING',
     createdAt: now,
@@ -91,6 +93,7 @@ export interface UpdateTransactionInput {
   walletId?: string;
   targetWalletId?: string | null;
   categoryId?: string | null;
+  financialTargetId?: string | null;
 }
 
 /**
@@ -114,6 +117,7 @@ export async function updateTransaction(input: UpdateTransactionInput): Promise<
     walletId: input.walletId !== undefined ? input.walletId : existing.walletId,
     targetWalletId: input.targetWalletId !== undefined ? input.targetWalletId : existing.targetWalletId,
     categoryId: input.categoryId !== undefined ? input.categoryId : existing.categoryId,
+    financialTargetId: input.financialTargetId !== undefined ? input.financialTargetId : existing.financialTargetId,
     syncStatus: 'PENDING',
     updatedAt: new Date().toISOString(),
   };

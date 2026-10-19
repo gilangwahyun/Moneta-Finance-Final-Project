@@ -143,10 +143,12 @@ export async function GET(request: NextRequest) {
     /********** Pemetaan Server ID ke Client ID **********/
     const categoryServerIdToClientId = new Map<string, string>();
     const walletServerIdToClientId = new Map<string, string>();
+    const targetServerIdToClientId = new Map<string, string>();
 
     /********** Masukkan semua item yang sudah dipotong ke dalam map. */
     for (const c of trimmedCategories) categoryServerIdToClientId.set(c.id, c.clientId);
     for (const w of trimmedWallets) walletServerIdToClientId.set(w.id, w.clientId);
+    for (const t of trimmedTargets) targetServerIdToClientId.set(t.id, t.clientId);
 
     /********** Kumpulkan ID server kategori dan dompet yang direferensikan oleh transaksi dan budget yang mungkin TIDAK ada dalam delta saat ini. */
     const missingCatIds = [
@@ -160,6 +162,10 @@ export async function GET(request: NextRequest) {
       ...trimmedTransactions.map((t) => t.targetWalletId).filter(Boolean),
       ...trimmedTargets.map((t) => t.walletId).filter(Boolean),
     ].filter((id) => id && !walletServerIdToClientId.has(id));
+
+    const missingTargetIds = [
+      ...trimmedTransactions.map((t) => t.financialTargetId).filter(Boolean),
+    ].filter((id) => id && !targetServerIdToClientId.has(id));
 
     const relationPromises: Promise<void>[] = [];
 
@@ -181,6 +187,17 @@ export async function GET(request: NextRequest) {
           select: { id: true, clientId: true },
         }).then((missingWallets) => {
           for (const mw of missingWallets) walletServerIdToClientId.set(mw.id, mw.clientId);
+        })
+      );
+    }
+
+    if (missingTargetIds.length > 0) {
+      relationPromises.push(
+        prisma.financialTarget.findMany({
+          where: { id: { in: [...new Set(missingTargetIds as string[])] } },
+          select: { id: true, clientId: true },
+        }).then((missingTgts) => {
+          for (const mt of missingTgts) targetServerIdToClientId.set(mt.id, mt.clientId);
         })
       );
     }
@@ -228,6 +245,7 @@ export async function GET(request: NextRequest) {
         categoryId: (t.categoryId ? categoryServerIdToClientId.get(t.categoryId) : null) || t.categoryId,
         walletId: walletServerIdToClientId.get(t.walletId) || t.walletId,
         targetWalletId: (t.targetWalletId ? walletServerIdToClientId.get(t.targetWalletId) : null) || t.targetWalletId,
+        financialTargetId: (t.financialTargetId ? targetServerIdToClientId.get(t.financialTargetId) : null) || t.financialTargetId,
         userId: t.userId,
         syncStatus: t.syncStatus,
         createdAt: t.createdAt.toISOString(),

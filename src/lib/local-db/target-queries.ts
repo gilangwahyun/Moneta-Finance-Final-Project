@@ -82,7 +82,7 @@ export async function calculateTargetProgress(
         /********** Target Finansial hanya melacak transaksi pemasukan (INCOME); EXPENSE dan TRANSFER dilewati. */
         if (txn.type !== "INCOME") continue;
         
-        if (!target.categoryId || txn.categoryId !== target.categoryId) continue;
+        if (txn.financialTargetId !== target.clientId) continue;
         
         if (target.walletId && txn.walletId !== target.walletId) continue;
 

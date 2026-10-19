@@ -854,7 +854,7 @@ export async function evaluateTargetNudges(createdTxn: Transaction): Promise<voi
       if (!isTargetActiveForDate(target, new Date(createdTxn.date))) continue;
 
       if (createdTxn.type !== 'INCOME') continue;
-      if (target.categoryId !== createdTxn.categoryId) continue;
+      if (createdTxn.financialTargetId !== target.clientId) continue;
 
       const progress = await calculateTargetProgress(target, new Date(createdTxn.date));
       if (progress.isNotStarted) continue;

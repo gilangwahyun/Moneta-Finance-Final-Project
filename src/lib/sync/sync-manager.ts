@@ -790,6 +790,7 @@ async function buildPushPayload(entries: SyncQueueEntry[]): Promise<SyncPushPayl
           categoryId: txn.categoryId,
           walletId: txn.walletId,
           targetWalletId: txn.targetWalletId,
+          financialTargetId: txn.financialTargetId,
           updatedAt: txn.updatedAt,
           deletedAt: txn.deletedAt,
         });

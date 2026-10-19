@@ -7,7 +7,7 @@
 /********** Konstanta & Nama Store **********/
 
 export const DB_NAME = "moneta-finance";
-export const DB_VERSION = 12; /* v11: Penambahan store financial_targets */
+export const DB_VERSION = 13; /* v13: Penambahan indeks by_financialTargetId pada store transactions */
 
 export const STORES = {
   CATEGORIES: "categories",
@@ -56,6 +56,7 @@ export const STORE_SCHEMAS: StoreSchema[] = [
       { name: "by_syncStatus", keyPath: "syncStatus" },
       { name: "by_date", keyPath: "date" },
       { name: "by_type", keyPath: "type" },
+      { name: "by_financialTargetId", keyPath: "financialTargetId" },
       { name: "by_updatedAt", keyPath: "updatedAt" },
     ],
   },

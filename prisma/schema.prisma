@@ -80,20 +80,23 @@ model Transaction {
   date           DateTime        @db.Date
   walletId       String
   targetWalletId String?
-  categoryId     String?
-  userId         String
-  clientId       String          @unique
-  syncStatus     SyncStatus      @default(PENDING)
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
-  deletedAt      DateTime?
-  category       Category?       @relation(fields: [categoryId], references: [id])
-  targetWallet   Wallet?         @relation("TargetWalletTransactions", fields: [targetWalletId], references: [id])
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  wallet         Wallet          @relation("WalletTransactions", fields: [walletId], references: [id])
+  categoryId        String?
+  financialTargetId String?
+  userId            String
+  clientId          String           @unique
+  syncStatus        SyncStatus       @default(PENDING)
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+  deletedAt         DateTime?
+  category          Category?        @relation(fields: [categoryId], references: [id])
+  financialTarget   FinancialTarget? @relation(fields: [financialTargetId], references: [id])
+  targetWallet      Wallet?          @relation("TargetWalletTransactions", fields: [targetWalletId], references: [id])
+  user              User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet            Wallet           @relation("WalletTransactions", fields: [walletId], references: [id])
 
   @@index([userId, type, date], map: "idx_txn_user_type_date")
   @@index([userId, categoryId, date], map: "idx_txn_user_category_date")
+  @@index([userId, financialTargetId], map: "idx_txn_user_target")
   @@index([userId, walletId, date], map: "idx_txn_user_wallet_date")
   @@index([userId, date], map: "idx_txn_user_date")
   @@index([userId, deletedAt], map: "idx_txn_user_active")
@@ -211,9 +214,10 @@ model FinancialTarget {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
   deletedAt    DateTime?
-  category     Category?    @relation(fields: [categoryId], references: [id])
-  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  wallet       Wallet?      @relation(fields: [walletId], references: [id])
+  category     Category?     @relation(fields: [categoryId], references: [id])
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wallet       Wallet?       @relation(fields: [walletId], references: [id])
+  transactions Transaction[]
 
   @@index([userId], map: "idx_target_user")
   @@index([userId, type], map: "idx_target_user_type")

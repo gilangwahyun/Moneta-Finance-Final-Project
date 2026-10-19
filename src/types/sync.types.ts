@@ -94,6 +94,7 @@ interface TransactionSyncItem {
   categoryId?: string | null; //********** Optional for TRANSFER
   walletId: string; //********** client-side walletId
   targetWalletId?: string | null; //********** client-side targetWalletId
+  financialTargetId?: string | null; //********** client-side financialTargetId
   updatedAt: string;
   deletedAt?: string | null;
 }

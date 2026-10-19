@@ -1853,6 +1853,37 @@ export namespace Prisma {
 
 
   /**
+   * Count Type FinancialTargetCountOutputType
+   */
+
+  export type FinancialTargetCountOutputType = {
+    transactions: number
+  }
+
+  export type FinancialTargetCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    transactions?: boolean | FinancialTargetCountOutputTypeCountTransactionsArgs
+  }
+
+  // Custom InputTypes
+  /**
+   * FinancialTargetCountOutputType without action
+   */
+  export type FinancialTargetCountOutputTypeDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FinancialTargetCountOutputType
+     */
+    select?: FinancialTargetCountOutputTypeSelect<ExtArgs> | null
+  }
+
+  /**
+   * FinancialTargetCountOutputType without action
+   */
+  export type FinancialTargetCountOutputTypeCountTransactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: TransactionWhereInput
+  }
+
+
+  /**
    * Models
    */
 
@@ -5638,6 +5669,7 @@ export namespace Prisma {
     walletId: string | null
     targetWalletId: string | null
     categoryId: string | null
+    financialTargetId: string | null
     userId: string | null
     clientId: string | null
     syncStatus: $Enums.SyncStatus | null
@@ -5656,6 +5688,7 @@ export namespace Prisma {
     walletId: string | null
     targetWalletId: string | null
     categoryId: string | null
+    financialTargetId: string | null
     userId: string | null
     clientId: string | null
     syncStatus: $Enums.SyncStatus | null
@@ -5674,6 +5707,7 @@ export namespace Prisma {
     walletId: number
     targetWalletId: number
     categoryId: number
+    financialTargetId: number
     userId: number
     clientId: number
     syncStatus: number
@@ -5702,6 +5736,7 @@ export namespace Prisma {
     walletId?: true
     targetWalletId?: true
     categoryId?: true
+    financialTargetId?: true
     userId?: true
     clientId?: true
     syncStatus?: true
@@ -5720,6 +5755,7 @@ export namespace Prisma {
     walletId?: true
     targetWalletId?: true
     categoryId?: true
+    financialTargetId?: true
     userId?: true
     clientId?: true
     syncStatus?: true
@@ -5738,6 +5774,7 @@ export namespace Prisma {
     walletId?: true
     targetWalletId?: true
     categoryId?: true
+    financialTargetId?: true
     userId?: true
     clientId?: true
     syncStatus?: true
@@ -5843,6 +5880,7 @@ export namespace Prisma {
     walletId: string
     targetWalletId: string | null
     categoryId: string | null
+    financialTargetId: string | null
     userId: string
     clientId: string
     syncStatus: $Enums.SyncStatus
@@ -5880,6 +5918,7 @@ export namespace Prisma {
     walletId?: boolean
     targetWalletId?: boolean
     categoryId?: boolean
+    financialTargetId?: boolean
     userId?: boolean
     clientId?: boolean
     syncStatus?: boolean
@@ -5887,6 +5926,7 @@ export namespace Prisma {
     updatedAt?: boolean
     deletedAt?: boolean
     category?: boolean | Transaction$categoryArgs<ExtArgs>
+    financialTarget?: boolean | Transaction$financialTargetArgs<ExtArgs>
     targetWallet?: boolean | Transaction$targetWalletArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
     wallet?: boolean | WalletDefaultArgs<ExtArgs>
@@ -5902,6 +5942,7 @@ export namespace Prisma {
     walletId?: boolean
     targetWalletId?: boolean
     categoryId?: boolean
+    financialTargetId?: boolean
     userId?: boolean
     clientId?: boolean
     syncStatus?: boolean
@@ -5909,6 +5950,7 @@ export namespace Prisma {
     updatedAt?: boolean
     deletedAt?: boolean
     category?: boolean | Transaction$categoryArgs<ExtArgs>
+    financialTarget?: boolean | Transaction$financialTargetArgs<ExtArgs>
     targetWallet?: boolean | Transaction$targetWalletArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
     wallet?: boolean | WalletDefaultArgs<ExtArgs>
@@ -5924,6 +5966,7 @@ export namespace Prisma {
     walletId?: boolean
     targetWalletId?: boolean
     categoryId?: boolean
+    financialTargetId?: boolean
     userId?: boolean
     clientId?: boolean
     syncStatus?: boolean
@@ -5931,6 +5974,7 @@ export namespace Prisma {
     updatedAt?: boolean
     deletedAt?: boolean
     category?: boolean | Transaction$categoryArgs<ExtArgs>
+    financialTarget?: boolean | Transaction$financialTargetArgs<ExtArgs>
     targetWallet?: boolean | Transaction$targetWalletArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
     wallet?: boolean | WalletDefaultArgs<ExtArgs>
@@ -5946,6 +5990,7 @@ export namespace Prisma {
     walletId?: boolean
     targetWalletId?: boolean
     categoryId?: boolean
+    financialTargetId?: boolean
     userId?: boolean
     clientId?: boolean
     syncStatus?: boolean
@@ -5954,21 +5999,24 @@ export namespace Prisma {
     deletedAt?: boolean
   }
 
-  export type TransactionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "amount" | "type" | "description" | "note" | "date" | "walletId" | "targetWalletId" | "categoryId" | "userId" | "clientId" | "syncStatus" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["transaction"]>
+  export type TransactionOmit<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetOmit<"id" | "amount" | "type" | "description" | "note" | "date" | "walletId" | "targetWalletId" | "categoryId" | "financialTargetId" | "userId" | "clientId" | "syncStatus" | "createdAt" | "updatedAt" | "deletedAt", ExtArgs["result"]["transaction"]>
   export type TransactionInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     category?: boolean | Transaction$categoryArgs<ExtArgs>
+    financialTarget?: boolean | Transaction$financialTargetArgs<ExtArgs>
     targetWallet?: boolean | Transaction$targetWalletArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
     wallet?: boolean | WalletDefaultArgs<ExtArgs>
   }
   export type TransactionIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     category?: boolean | Transaction$categoryArgs<ExtArgs>
+    financialTarget?: boolean | Transaction$financialTargetArgs<ExtArgs>
     targetWallet?: boolean | Transaction$targetWalletArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
     wallet?: boolean | WalletDefaultArgs<ExtArgs>
   }
   export type TransactionIncludeUpdateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     category?: boolean | Transaction$categoryArgs<ExtArgs>
+    financialTarget?: boolean | Transaction$financialTargetArgs<ExtArgs>
     targetWallet?: boolean | Transaction$targetWalletArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
     wallet?: boolean | WalletDefaultArgs<ExtArgs>
@@ -5978,6 +6026,7 @@ export namespace Prisma {
     name: "Transaction"
     objects: {
       category: Prisma.$CategoryPayload<ExtArgs> | null
+      financialTarget: Prisma.$FinancialTargetPayload<ExtArgs> | null
       targetWallet: Prisma.$WalletPayload<ExtArgs> | null
       user: Prisma.$UserPayload<ExtArgs>
       wallet: Prisma.$WalletPayload<ExtArgs>
@@ -5992,6 +6041,7 @@ export namespace Prisma {
       walletId: string
       targetWalletId: string | null
       categoryId: string | null
+      financialTargetId: string | null
       userId: string
       clientId: string
       syncStatus: $Enums.SyncStatus
@@ -6393,6 +6443,7 @@ export namespace Prisma {
   export interface Prisma__TransactionClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, GlobalOmitOptions = {}> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     category<T extends Transaction$categoryArgs<ExtArgs> = {}>(args?: Subset<T, Transaction$categoryArgs<ExtArgs>>): Prisma__CategoryClient<$Result.GetResult<Prisma.$CategoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    financialTarget<T extends Transaction$financialTargetArgs<ExtArgs> = {}>(args?: Subset<T, Transaction$financialTargetArgs<ExtArgs>>): Prisma__FinancialTargetClient<$Result.GetResult<Prisma.$FinancialTargetPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     targetWallet<T extends Transaction$targetWalletArgs<ExtArgs> = {}>(args?: Subset<T, Transaction$targetWalletArgs<ExtArgs>>): Prisma__WalletClient<$Result.GetResult<Prisma.$WalletPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     wallet<T extends WalletDefaultArgs<ExtArgs> = {}>(args?: Subset<T, WalletDefaultArgs<ExtArgs>>): Prisma__WalletClient<$Result.GetResult<Prisma.$WalletPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
@@ -6434,6 +6485,7 @@ export namespace Prisma {
     readonly walletId: FieldRef<"Transaction", 'String'>
     readonly targetWalletId: FieldRef<"Transaction", 'String'>
     readonly categoryId: FieldRef<"Transaction", 'String'>
+    readonly financialTargetId: FieldRef<"Transaction", 'String'>
     readonly userId: FieldRef<"Transaction", 'String'>
     readonly clientId: FieldRef<"Transaction", 'String'>
     readonly syncStatus: FieldRef<"Transaction", 'SyncStatus'>
@@ -6852,6 +6904,25 @@ export namespace Prisma {
      */
     include?: CategoryInclude<ExtArgs> | null
     where?: CategoryWhereInput
+  }
+
+  /**
+   * Transaction.financialTarget
+   */
+  export type Transaction$financialTargetArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the FinancialTarget
+     */
+    select?: FinancialTargetSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the FinancialTarget
+     */
+    omit?: FinancialTargetOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: FinancialTargetInclude<ExtArgs> | null
+    where?: FinancialTargetWhereInput
   }
 
   /**
@@ -12127,6 +12198,8 @@ export namespace Prisma {
     category?: boolean | FinancialTarget$categoryArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
     wallet?: boolean | FinancialTarget$walletArgs<ExtArgs>
+    transactions?: boolean | FinancialTarget$transactionsArgs<ExtArgs>
+    _count?: boolean | FinancialTargetCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["financialTarget"]>
 
   export type FinancialTargetSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
@@ -12200,6 +12273,8 @@ export namespace Prisma {
     category?: boolean | FinancialTarget$categoryArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
     wallet?: boolean | FinancialTarget$walletArgs<ExtArgs>
+    transactions?: boolean | FinancialTarget$transactionsArgs<ExtArgs>
+    _count?: boolean | FinancialTargetCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type FinancialTargetIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     category?: boolean | FinancialTarget$categoryArgs<ExtArgs>
@@ -12218,6 +12293,7 @@ export namespace Prisma {
       category: Prisma.$CategoryPayload<ExtArgs> | null
       user: Prisma.$UserPayload<ExtArgs>
       wallet: Prisma.$WalletPayload<ExtArgs> | null
+      transactions: Prisma.$TransactionPayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -12634,6 +12710,7 @@ export namespace Prisma {
     category<T extends FinancialTarget$categoryArgs<ExtArgs> = {}>(args?: Subset<T, FinancialTarget$categoryArgs<ExtArgs>>): Prisma__CategoryClient<$Result.GetResult<Prisma.$CategoryPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
     user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | Null, Null, ExtArgs, GlobalOmitOptions>
     wallet<T extends FinancialTarget$walletArgs<ExtArgs> = {}>(args?: Subset<T, FinancialTarget$walletArgs<ExtArgs>>): Prisma__WalletClient<$Result.GetResult<Prisma.$WalletPayload<ExtArgs>, T, "findUniqueOrThrow", GlobalOmitOptions> | null, null, ExtArgs, GlobalOmitOptions>
+    transactions<T extends FinancialTarget$transactionsArgs<ExtArgs> = {}>(args?: Subset<T, FinancialTarget$transactionsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TransactionPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -13114,6 +13191,30 @@ export namespace Prisma {
   }
 
   /**
+   * FinancialTarget.transactions
+   */
+  export type FinancialTarget$transactionsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Transaction
+     */
+    select?: TransactionSelect<ExtArgs> | null
+    /**
+     * Omit specific fields from the Transaction
+     */
+    omit?: TransactionOmit<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: TransactionInclude<ExtArgs> | null
+    where?: TransactionWhereInput
+    orderBy?: TransactionOrderByWithRelationInput | TransactionOrderByWithRelationInput[]
+    cursor?: TransactionWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: TransactionScalarFieldEnum | TransactionScalarFieldEnum[]
+  }
+
+  /**
    * FinancialTarget without action
    */
   export type FinancialTargetDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -13202,6 +13303,7 @@ export namespace Prisma {
     walletId: 'walletId',
     targetWalletId: 'targetWalletId',
     categoryId: 'categoryId',
+    financialTargetId: 'financialTargetId',
     userId: 'userId',
     clientId: 'clientId',
     syncStatus: 'syncStatus',
@@ -13801,6 +13903,7 @@ export namespace Prisma {
     walletId?: StringFilter<"Transaction"> | string
     targetWalletId?: StringNullableFilter<"Transaction"> | string | null
     categoryId?: StringNullableFilter<"Transaction"> | string | null
+    financialTargetId?: StringNullableFilter<"Transaction"> | string | null
     userId?: StringFilter<"Transaction"> | string
     clientId?: StringFilter<"Transaction"> | string
     syncStatus?: EnumSyncStatusFilter<"Transaction"> | $Enums.SyncStatus
@@ -13808,6 +13911,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Transaction"> | Date | string
     deletedAt?: DateTimeNullableFilter<"Transaction"> | Date | string | null
     category?: XOR<CategoryNullableScalarRelationFilter, CategoryWhereInput> | null
+    financialTarget?: XOR<FinancialTargetNullableScalarRelationFilter, FinancialTargetWhereInput> | null
     targetWallet?: XOR<WalletNullableScalarRelationFilter, WalletWhereInput> | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     wallet?: XOR<WalletScalarRelationFilter, WalletWhereInput>
@@ -13823,6 +13927,7 @@ export namespace Prisma {
     walletId?: SortOrder
     targetWalletId?: SortOrderInput | SortOrder
     categoryId?: SortOrderInput | SortOrder
+    financialTargetId?: SortOrderInput | SortOrder
     userId?: SortOrder
     clientId?: SortOrder
     syncStatus?: SortOrder
@@ -13830,6 +13935,7 @@ export namespace Prisma {
     updatedAt?: SortOrder
     deletedAt?: SortOrderInput | SortOrder
     category?: CategoryOrderByWithRelationInput
+    financialTarget?: FinancialTargetOrderByWithRelationInput
     targetWallet?: WalletOrderByWithRelationInput
     user?: UserOrderByWithRelationInput
     wallet?: WalletOrderByWithRelationInput
@@ -13849,12 +13955,14 @@ export namespace Prisma {
     walletId?: StringFilter<"Transaction"> | string
     targetWalletId?: StringNullableFilter<"Transaction"> | string | null
     categoryId?: StringNullableFilter<"Transaction"> | string | null
+    financialTargetId?: StringNullableFilter<"Transaction"> | string | null
     userId?: StringFilter<"Transaction"> | string
     syncStatus?: EnumSyncStatusFilter<"Transaction"> | $Enums.SyncStatus
     createdAt?: DateTimeFilter<"Transaction"> | Date | string
     updatedAt?: DateTimeFilter<"Transaction"> | Date | string
     deletedAt?: DateTimeNullableFilter<"Transaction"> | Date | string | null
     category?: XOR<CategoryNullableScalarRelationFilter, CategoryWhereInput> | null
+    financialTarget?: XOR<FinancialTargetNullableScalarRelationFilter, FinancialTargetWhereInput> | null
     targetWallet?: XOR<WalletNullableScalarRelationFilter, WalletWhereInput> | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     wallet?: XOR<WalletScalarRelationFilter, WalletWhereInput>
@@ -13870,6 +13978,7 @@ export namespace Prisma {
     walletId?: SortOrder
     targetWalletId?: SortOrderInput | SortOrder
     categoryId?: SortOrderInput | SortOrder
+    financialTargetId?: SortOrderInput | SortOrder
     userId?: SortOrder
     clientId?: SortOrder
     syncStatus?: SortOrder
@@ -13896,6 +14005,7 @@ export namespace Prisma {
     walletId?: StringWithAggregatesFilter<"Transaction"> | string
     targetWalletId?: StringNullableWithAggregatesFilter<"Transaction"> | string | null
     categoryId?: StringNullableWithAggregatesFilter<"Transaction"> | string | null
+    financialTargetId?: StringNullableWithAggregatesFilter<"Transaction"> | string | null
     userId?: StringWithAggregatesFilter<"Transaction"> | string
     clientId?: StringWithAggregatesFilter<"Transaction"> | string
     syncStatus?: EnumSyncStatusWithAggregatesFilter<"Transaction"> | $Enums.SyncStatus
@@ -14378,6 +14488,7 @@ export namespace Prisma {
     category?: XOR<CategoryNullableScalarRelationFilter, CategoryWhereInput> | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     wallet?: XOR<WalletNullableScalarRelationFilter, WalletWhereInput> | null
+    transactions?: TransactionListRelationFilter
   }
 
   export type FinancialTargetOrderByWithRelationInput = {
@@ -14401,6 +14512,7 @@ export namespace Prisma {
     category?: CategoryOrderByWithRelationInput
     user?: UserOrderByWithRelationInput
     wallet?: WalletOrderByWithRelationInput
+    transactions?: TransactionOrderByRelationAggregateInput
   }
 
   export type FinancialTargetWhereUniqueInput = Prisma.AtLeast<{
@@ -14427,6 +14539,7 @@ export namespace Prisma {
     category?: XOR<CategoryNullableScalarRelationFilter, CategoryWhereInput> | null
     user?: XOR<UserScalarRelationFilter, UserWhereInput>
     wallet?: XOR<WalletNullableScalarRelationFilter, WalletWhereInput> | null
+    transactions?: TransactionListRelationFilter
   }, "id" | "clientId">
 
   export type FinancialTargetOrderByWithAggregationInput = {
@@ -14803,6 +14916,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     category?: CategoryCreateNestedOneWithoutTransactionsInput
+    financialTarget?: FinancialTargetCreateNestedOneWithoutTransactionsInput
     targetWallet?: WalletCreateNestedOneWithoutIncomingTransfersInput
     user: UserCreateNestedOneWithoutTransactionsInput
     wallet: WalletCreateNestedOneWithoutTransactionsInput
@@ -14818,6 +14932,7 @@ export namespace Prisma {
     walletId: string
     targetWalletId?: string | null
     categoryId?: string | null
+    financialTargetId?: string | null
     userId: string
     clientId: string
     syncStatus?: $Enums.SyncStatus
@@ -14839,6 +14954,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     category?: CategoryUpdateOneWithoutTransactionsNestedInput
+    financialTarget?: FinancialTargetUpdateOneWithoutTransactionsNestedInput
     targetWallet?: WalletUpdateOneWithoutIncomingTransfersNestedInput
     user?: UserUpdateOneRequiredWithoutTransactionsNestedInput
     wallet?: WalletUpdateOneRequiredWithoutTransactionsNestedInput
@@ -14854,6 +14970,7 @@ export namespace Prisma {
     walletId?: StringFieldUpdateOperationsInput | string
     targetWalletId?: NullableStringFieldUpdateOperationsInput | string | null
     categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    financialTargetId?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus
@@ -14872,6 +14989,7 @@ export namespace Prisma {
     walletId: string
     targetWalletId?: string | null
     categoryId?: string | null
+    financialTargetId?: string | null
     userId: string
     clientId: string
     syncStatus?: $Enums.SyncStatus
@@ -14904,6 +15022,7 @@ export namespace Prisma {
     walletId?: StringFieldUpdateOperationsInput | string
     targetWalletId?: NullableStringFieldUpdateOperationsInput | string | null
     categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    financialTargetId?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus
@@ -15457,6 +15576,7 @@ export namespace Prisma {
     category?: CategoryCreateNestedOneWithoutFinancialTargetsInput
     user: UserCreateNestedOneWithoutTargetsInput
     wallet?: WalletCreateNestedOneWithoutFinancialTargetsInput
+    transactions?: TransactionCreateNestedManyWithoutFinancialTargetInput
   }
 
   export type FinancialTargetUncheckedCreateInput = {
@@ -15477,6 +15597,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    transactions?: TransactionUncheckedCreateNestedManyWithoutFinancialTargetInput
   }
 
   export type FinancialTargetUpdateInput = {
@@ -15497,6 +15618,7 @@ export namespace Prisma {
     category?: CategoryUpdateOneWithoutFinancialTargetsNestedInput
     user?: UserUpdateOneRequiredWithoutTargetsNestedInput
     wallet?: WalletUpdateOneWithoutFinancialTargetsNestedInput
+    transactions?: TransactionUpdateManyWithoutFinancialTargetNestedInput
   }
 
   export type FinancialTargetUncheckedUpdateInput = {
@@ -15517,6 +15639,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    transactions?: TransactionUncheckedUpdateManyWithoutFinancialTargetNestedInput
   }
 
   export type FinancialTargetCreateManyInput = {
@@ -15999,6 +16122,11 @@ export namespace Prisma {
     isNot?: CategoryWhereInput | null
   }
 
+  export type FinancialTargetNullableScalarRelationFilter = {
+    is?: FinancialTargetWhereInput | null
+    isNot?: FinancialTargetWhereInput | null
+  }
+
   export type WalletNullableScalarRelationFilter = {
     is?: WalletWhereInput | null
     isNot?: WalletWhereInput | null
@@ -16019,6 +16147,7 @@ export namespace Prisma {
     walletId?: SortOrder
     targetWalletId?: SortOrder
     categoryId?: SortOrder
+    financialTargetId?: SortOrder
     userId?: SortOrder
     clientId?: SortOrder
     syncStatus?: SortOrder
@@ -16041,6 +16170,7 @@ export namespace Prisma {
     walletId?: SortOrder
     targetWalletId?: SortOrder
     categoryId?: SortOrder
+    financialTargetId?: SortOrder
     userId?: SortOrder
     clientId?: SortOrder
     syncStatus?: SortOrder
@@ -16059,6 +16189,7 @@ export namespace Prisma {
     walletId?: SortOrder
     targetWalletId?: SortOrder
     categoryId?: SortOrder
+    financialTargetId?: SortOrder
     userId?: SortOrder
     clientId?: SortOrder
     syncStatus?: SortOrder
@@ -17164,6 +17295,12 @@ export namespace Prisma {
     connect?: CategoryWhereUniqueInput
   }
 
+  export type FinancialTargetCreateNestedOneWithoutTransactionsInput = {
+    create?: XOR<FinancialTargetCreateWithoutTransactionsInput, FinancialTargetUncheckedCreateWithoutTransactionsInput>
+    connectOrCreate?: FinancialTargetCreateOrConnectWithoutTransactionsInput
+    connect?: FinancialTargetWhereUniqueInput
+  }
+
   export type WalletCreateNestedOneWithoutIncomingTransfersInput = {
     create?: XOR<WalletCreateWithoutIncomingTransfersInput, WalletUncheckedCreateWithoutIncomingTransfersInput>
     connectOrCreate?: WalletCreateOrConnectWithoutIncomingTransfersInput
@@ -17194,6 +17331,16 @@ export namespace Prisma {
     delete?: CategoryWhereInput | boolean
     connect?: CategoryWhereUniqueInput
     update?: XOR<XOR<CategoryUpdateToOneWithWhereWithoutTransactionsInput, CategoryUpdateWithoutTransactionsInput>, CategoryUncheckedUpdateWithoutTransactionsInput>
+  }
+
+  export type FinancialTargetUpdateOneWithoutTransactionsNestedInput = {
+    create?: XOR<FinancialTargetCreateWithoutTransactionsInput, FinancialTargetUncheckedCreateWithoutTransactionsInput>
+    connectOrCreate?: FinancialTargetCreateOrConnectWithoutTransactionsInput
+    upsert?: FinancialTargetUpsertWithoutTransactionsInput
+    disconnect?: FinancialTargetWhereInput | boolean
+    delete?: FinancialTargetWhereInput | boolean
+    connect?: FinancialTargetWhereUniqueInput
+    update?: XOR<XOR<FinancialTargetUpdateToOneWithWhereWithoutTransactionsInput, FinancialTargetUpdateWithoutTransactionsInput>, FinancialTargetUncheckedUpdateWithoutTransactionsInput>
   }
 
   export type WalletUpdateOneWithoutIncomingTransfersNestedInput = {
@@ -17326,6 +17473,20 @@ export namespace Prisma {
     connect?: WalletWhereUniqueInput
   }
 
+  export type TransactionCreateNestedManyWithoutFinancialTargetInput = {
+    create?: XOR<TransactionCreateWithoutFinancialTargetInput, TransactionUncheckedCreateWithoutFinancialTargetInput> | TransactionCreateWithoutFinancialTargetInput[] | TransactionUncheckedCreateWithoutFinancialTargetInput[]
+    connectOrCreate?: TransactionCreateOrConnectWithoutFinancialTargetInput | TransactionCreateOrConnectWithoutFinancialTargetInput[]
+    createMany?: TransactionCreateManyFinancialTargetInputEnvelope
+    connect?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+  }
+
+  export type TransactionUncheckedCreateNestedManyWithoutFinancialTargetInput = {
+    create?: XOR<TransactionCreateWithoutFinancialTargetInput, TransactionUncheckedCreateWithoutFinancialTargetInput> | TransactionCreateWithoutFinancialTargetInput[] | TransactionUncheckedCreateWithoutFinancialTargetInput[]
+    connectOrCreate?: TransactionCreateOrConnectWithoutFinancialTargetInput | TransactionCreateOrConnectWithoutFinancialTargetInput[]
+    createMany?: TransactionCreateManyFinancialTargetInputEnvelope
+    connect?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+  }
+
   export type EnumTargetTypeFieldUpdateOperationsInput = {
     set?: $Enums.TargetType
   }
@@ -17360,6 +17521,34 @@ export namespace Prisma {
     delete?: WalletWhereInput | boolean
     connect?: WalletWhereUniqueInput
     update?: XOR<XOR<WalletUpdateToOneWithWhereWithoutFinancialTargetsInput, WalletUpdateWithoutFinancialTargetsInput>, WalletUncheckedUpdateWithoutFinancialTargetsInput>
+  }
+
+  export type TransactionUpdateManyWithoutFinancialTargetNestedInput = {
+    create?: XOR<TransactionCreateWithoutFinancialTargetInput, TransactionUncheckedCreateWithoutFinancialTargetInput> | TransactionCreateWithoutFinancialTargetInput[] | TransactionUncheckedCreateWithoutFinancialTargetInput[]
+    connectOrCreate?: TransactionCreateOrConnectWithoutFinancialTargetInput | TransactionCreateOrConnectWithoutFinancialTargetInput[]
+    upsert?: TransactionUpsertWithWhereUniqueWithoutFinancialTargetInput | TransactionUpsertWithWhereUniqueWithoutFinancialTargetInput[]
+    createMany?: TransactionCreateManyFinancialTargetInputEnvelope
+    set?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    disconnect?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    delete?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    connect?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    update?: TransactionUpdateWithWhereUniqueWithoutFinancialTargetInput | TransactionUpdateWithWhereUniqueWithoutFinancialTargetInput[]
+    updateMany?: TransactionUpdateManyWithWhereWithoutFinancialTargetInput | TransactionUpdateManyWithWhereWithoutFinancialTargetInput[]
+    deleteMany?: TransactionScalarWhereInput | TransactionScalarWhereInput[]
+  }
+
+  export type TransactionUncheckedUpdateManyWithoutFinancialTargetNestedInput = {
+    create?: XOR<TransactionCreateWithoutFinancialTargetInput, TransactionUncheckedCreateWithoutFinancialTargetInput> | TransactionCreateWithoutFinancialTargetInput[] | TransactionUncheckedCreateWithoutFinancialTargetInput[]
+    connectOrCreate?: TransactionCreateOrConnectWithoutFinancialTargetInput | TransactionCreateOrConnectWithoutFinancialTargetInput[]
+    upsert?: TransactionUpsertWithWhereUniqueWithoutFinancialTargetInput | TransactionUpsertWithWhereUniqueWithoutFinancialTargetInput[]
+    createMany?: TransactionCreateManyFinancialTargetInputEnvelope
+    set?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    disconnect?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    delete?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    connect?: TransactionWhereUniqueInput | TransactionWhereUniqueInput[]
+    update?: TransactionUpdateWithWhereUniqueWithoutFinancialTargetInput | TransactionUpdateWithWhereUniqueWithoutFinancialTargetInput[]
+    updateMany?: TransactionUpdateManyWithWhereWithoutFinancialTargetInput | TransactionUpdateManyWithWhereWithoutFinancialTargetInput[]
+    deleteMany?: TransactionScalarWhereInput | TransactionScalarWhereInput[]
   }
 
   export type NestedStringFilter<$PrismaModel = never> = {
@@ -17787,6 +17976,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     category?: CategoryCreateNestedOneWithoutFinancialTargetsInput
     wallet?: WalletCreateNestedOneWithoutFinancialTargetsInput
+    transactions?: TransactionCreateNestedManyWithoutFinancialTargetInput
   }
 
   export type FinancialTargetUncheckedCreateWithoutUserInput = {
@@ -17806,6 +17996,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    transactions?: TransactionUncheckedCreateNestedManyWithoutFinancialTargetInput
   }
 
   export type FinancialTargetCreateOrConnectWithoutUserInput = {
@@ -17976,6 +18167,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     category?: CategoryCreateNestedOneWithoutTransactionsInput
+    financialTarget?: FinancialTargetCreateNestedOneWithoutTransactionsInput
     targetWallet?: WalletCreateNestedOneWithoutIncomingTransfersInput
     wallet: WalletCreateNestedOneWithoutTransactionsInput
   }
@@ -17990,6 +18182,7 @@ export namespace Prisma {
     walletId: string
     targetWalletId?: string | null
     categoryId?: string | null
+    financialTargetId?: string | null
     clientId: string
     syncStatus?: $Enums.SyncStatus
     createdAt?: Date | string
@@ -18304,6 +18497,7 @@ export namespace Prisma {
     walletId?: StringFilter<"Transaction"> | string
     targetWalletId?: StringNullableFilter<"Transaction"> | string | null
     categoryId?: StringNullableFilter<"Transaction"> | string | null
+    financialTargetId?: StringNullableFilter<"Transaction"> | string | null
     userId?: StringFilter<"Transaction"> | string
     clientId?: StringFilter<"Transaction"> | string
     syncStatus?: EnumSyncStatusFilter<"Transaction"> | $Enums.SyncStatus
@@ -18361,6 +18555,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     category?: CategoryCreateNestedOneWithoutFinancialTargetsInput
     user: UserCreateNestedOneWithoutTargetsInput
+    transactions?: TransactionCreateNestedManyWithoutFinancialTargetInput
   }
 
   export type FinancialTargetUncheckedCreateWithoutWalletInput = {
@@ -18380,6 +18575,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    transactions?: TransactionUncheckedCreateNestedManyWithoutFinancialTargetInput
   }
 
   export type FinancialTargetCreateOrConnectWithoutWalletInput = {
@@ -18405,6 +18601,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     category?: CategoryCreateNestedOneWithoutTransactionsInput
+    financialTarget?: FinancialTargetCreateNestedOneWithoutTransactionsInput
     user: UserCreateNestedOneWithoutTransactionsInput
     wallet: WalletCreateNestedOneWithoutTransactionsInput
   }
@@ -18418,6 +18615,7 @@ export namespace Prisma {
     date: Date | string
     walletId: string
     categoryId?: string | null
+    financialTargetId?: string | null
     userId: string
     clientId: string
     syncStatus?: $Enums.SyncStatus
@@ -18449,6 +18647,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     deletedAt?: Date | string | null
     category?: CategoryCreateNestedOneWithoutTransactionsInput
+    financialTarget?: FinancialTargetCreateNestedOneWithoutTransactionsInput
     targetWallet?: WalletCreateNestedOneWithoutIncomingTransfersInput
     user: UserCreateNestedOneWithoutTransactionsInput
   }
@@ -18462,6 +18661,7 @@ export namespace Prisma {
     date: Date | string
     targetWalletId?: string | null
     categoryId?: string | null
+    financialTargetId?: string | null
     userId: string
     clientId: string
     syncStatus?: $Enums.SyncStatus
@@ -18696,6 +18896,7 @@ export namespace Prisma {
     deletedAt?: Date | string | null
     user: UserCreateNestedOneWithoutTargetsInput
     wallet?: WalletCreateNestedOneWithoutFinancialTargetsInput
+    transactions?: TransactionCreateNestedManyWithoutFinancialTargetInput
   }
 
   export type FinancialTargetUncheckedCreateWithoutCategoryInput = {
@@ -18715,6 +18916,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    transactions?: TransactionUncheckedCreateNestedManyWithoutFinancialTargetInput
   }
 
   export type FinancialTargetCreateOrConnectWithoutCategoryInput = {
@@ -18739,6 +18941,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     deletedAt?: Date | string | null
+    financialTarget?: FinancialTargetCreateNestedOneWithoutTransactionsInput
     targetWallet?: WalletCreateNestedOneWithoutIncomingTransfersInput
     user: UserCreateNestedOneWithoutTransactionsInput
     wallet: WalletCreateNestedOneWithoutTransactionsInput
@@ -18753,6 +18956,7 @@ export namespace Prisma {
     date: Date | string
     walletId: string
     targetWalletId?: string | null
+    financialTargetId?: string | null
     userId: string
     clientId: string
     syncStatus?: $Enums.SyncStatus
@@ -18899,6 +19103,51 @@ export namespace Prisma {
   export type CategoryCreateOrConnectWithoutTransactionsInput = {
     where: CategoryWhereUniqueInput
     create: XOR<CategoryCreateWithoutTransactionsInput, CategoryUncheckedCreateWithoutTransactionsInput>
+  }
+
+  export type FinancialTargetCreateWithoutTransactionsInput = {
+    id?: string
+    clientId: string
+    name: string
+    type: $Enums.TargetType
+    targetAmount: Decimal | DecimalJsLike | number | string
+    period: $Enums.TargetPeriod
+    startDate: Date | string
+    endDate?: Date | string | null
+    isActive?: boolean
+    note?: string | null
+    syncStatus?: $Enums.SyncStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    category?: CategoryCreateNestedOneWithoutFinancialTargetsInput
+    user: UserCreateNestedOneWithoutTargetsInput
+    wallet?: WalletCreateNestedOneWithoutFinancialTargetsInput
+  }
+
+  export type FinancialTargetUncheckedCreateWithoutTransactionsInput = {
+    id?: string
+    clientId: string
+    name: string
+    type: $Enums.TargetType
+    targetAmount: Decimal | DecimalJsLike | number | string
+    period: $Enums.TargetPeriod
+    startDate: Date | string
+    endDate?: Date | string | null
+    categoryId?: string | null
+    walletId?: string | null
+    isActive?: boolean
+    note?: string | null
+    userId: string
+    syncStatus?: $Enums.SyncStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type FinancialTargetCreateOrConnectWithoutTransactionsInput = {
+    where: FinancialTargetWhereUniqueInput
+    create: XOR<FinancialTargetCreateWithoutTransactionsInput, FinancialTargetUncheckedCreateWithoutTransactionsInput>
   }
 
   export type WalletCreateWithoutIncomingTransfersInput = {
@@ -19051,6 +19300,57 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     budgets?: BudgetUncheckedUpdateManyWithoutCategoryNestedInput
     financialTargets?: FinancialTargetUncheckedUpdateManyWithoutCategoryNestedInput
+  }
+
+  export type FinancialTargetUpsertWithoutTransactionsInput = {
+    update: XOR<FinancialTargetUpdateWithoutTransactionsInput, FinancialTargetUncheckedUpdateWithoutTransactionsInput>
+    create: XOR<FinancialTargetCreateWithoutTransactionsInput, FinancialTargetUncheckedCreateWithoutTransactionsInput>
+    where?: FinancialTargetWhereInput
+  }
+
+  export type FinancialTargetUpdateToOneWithWhereWithoutTransactionsInput = {
+    where?: FinancialTargetWhereInput
+    data: XOR<FinancialTargetUpdateWithoutTransactionsInput, FinancialTargetUncheckedUpdateWithoutTransactionsInput>
+  }
+
+  export type FinancialTargetUpdateWithoutTransactionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    type?: EnumTargetTypeFieldUpdateOperationsInput | $Enums.TargetType
+    targetAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    period?: EnumTargetPeriodFieldUpdateOperationsInput | $Enums.TargetPeriod
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    category?: CategoryUpdateOneWithoutFinancialTargetsNestedInput
+    user?: UserUpdateOneRequiredWithoutTargetsNestedInput
+    wallet?: WalletUpdateOneWithoutFinancialTargetsNestedInput
+  }
+
+  export type FinancialTargetUncheckedUpdateWithoutTransactionsInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    type?: EnumTargetTypeFieldUpdateOperationsInput | $Enums.TargetType
+    targetAmount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    period?: EnumTargetPeriodFieldUpdateOperationsInput | $Enums.TargetPeriod
+    startDate?: DateTimeFieldUpdateOperationsInput | Date | string
+    endDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    walletId?: NullableStringFieldUpdateOperationsInput | string | null
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: StringFieldUpdateOperationsInput | string
+    syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
   }
 
   export type WalletUpsertWithoutIncomingTransfersInput = {
@@ -19693,6 +19993,52 @@ export namespace Prisma {
     create: XOR<WalletCreateWithoutFinancialTargetsInput, WalletUncheckedCreateWithoutFinancialTargetsInput>
   }
 
+  export type TransactionCreateWithoutFinancialTargetInput = {
+    id?: string
+    amount: Decimal | DecimalJsLike | number | string
+    type: $Enums.TransactionType
+    description?: string | null
+    note?: string | null
+    date: Date | string
+    clientId: string
+    syncStatus?: $Enums.SyncStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+    category?: CategoryCreateNestedOneWithoutTransactionsInput
+    targetWallet?: WalletCreateNestedOneWithoutIncomingTransfersInput
+    user: UserCreateNestedOneWithoutTransactionsInput
+    wallet: WalletCreateNestedOneWithoutTransactionsInput
+  }
+
+  export type TransactionUncheckedCreateWithoutFinancialTargetInput = {
+    id?: string
+    amount: Decimal | DecimalJsLike | number | string
+    type: $Enums.TransactionType
+    description?: string | null
+    note?: string | null
+    date: Date | string
+    walletId: string
+    targetWalletId?: string | null
+    categoryId?: string | null
+    userId: string
+    clientId: string
+    syncStatus?: $Enums.SyncStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type TransactionCreateOrConnectWithoutFinancialTargetInput = {
+    where: TransactionWhereUniqueInput
+    create: XOR<TransactionCreateWithoutFinancialTargetInput, TransactionUncheckedCreateWithoutFinancialTargetInput>
+  }
+
+  export type TransactionCreateManyFinancialTargetInputEnvelope = {
+    data: TransactionCreateManyFinancialTargetInput | TransactionCreateManyFinancialTargetInput[]
+    skipDuplicates?: boolean
+  }
+
   export type CategoryUpsertWithoutFinancialTargetsInput = {
     update: XOR<CategoryUpdateWithoutFinancialTargetsInput, CategoryUncheckedUpdateWithoutFinancialTargetsInput>
     create: XOR<CategoryCreateWithoutFinancialTargetsInput, CategoryUncheckedCreateWithoutFinancialTargetsInput>
@@ -19822,6 +20168,22 @@ export namespace Prisma {
     transactions?: TransactionUncheckedUpdateManyWithoutWalletNestedInput
   }
 
+  export type TransactionUpsertWithWhereUniqueWithoutFinancialTargetInput = {
+    where: TransactionWhereUniqueInput
+    update: XOR<TransactionUpdateWithoutFinancialTargetInput, TransactionUncheckedUpdateWithoutFinancialTargetInput>
+    create: XOR<TransactionCreateWithoutFinancialTargetInput, TransactionUncheckedCreateWithoutFinancialTargetInput>
+  }
+
+  export type TransactionUpdateWithWhereUniqueWithoutFinancialTargetInput = {
+    where: TransactionWhereUniqueInput
+    data: XOR<TransactionUpdateWithoutFinancialTargetInput, TransactionUncheckedUpdateWithoutFinancialTargetInput>
+  }
+
+  export type TransactionUpdateManyWithWhereWithoutFinancialTargetInput = {
+    where: TransactionScalarWhereInput
+    data: XOR<TransactionUpdateManyMutationInput, TransactionUncheckedUpdateManyWithoutFinancialTargetInput>
+  }
+
   export type BudgetCreateManyUserInput = {
     id?: string
     amount: Decimal | DecimalJsLike | number | string
@@ -19925,6 +20287,7 @@ export namespace Prisma {
     walletId: string
     targetWalletId?: string | null
     categoryId?: string | null
+    financialTargetId?: string | null
     clientId: string
     syncStatus?: $Enums.SyncStatus
     createdAt?: Date | string
@@ -20045,6 +20408,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     category?: CategoryUpdateOneWithoutFinancialTargetsNestedInput
     wallet?: WalletUpdateOneWithoutFinancialTargetsNestedInput
+    transactions?: TransactionUpdateManyWithoutFinancialTargetNestedInput
   }
 
   export type FinancialTargetUncheckedUpdateWithoutUserInput = {
@@ -20064,6 +20428,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    transactions?: TransactionUncheckedUpdateManyWithoutFinancialTargetNestedInput
   }
 
   export type FinancialTargetUncheckedUpdateManyWithoutUserInput = {
@@ -20242,6 +20607,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     category?: CategoryUpdateOneWithoutTransactionsNestedInput
+    financialTarget?: FinancialTargetUpdateOneWithoutTransactionsNestedInput
     targetWallet?: WalletUpdateOneWithoutIncomingTransfersNestedInput
     wallet?: WalletUpdateOneRequiredWithoutTransactionsNestedInput
   }
@@ -20256,6 +20622,7 @@ export namespace Prisma {
     walletId?: StringFieldUpdateOperationsInput | string
     targetWalletId?: NullableStringFieldUpdateOperationsInput | string | null
     categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    financialTargetId?: NullableStringFieldUpdateOperationsInput | string | null
     clientId?: StringFieldUpdateOperationsInput | string
     syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -20273,6 +20640,7 @@ export namespace Prisma {
     walletId?: StringFieldUpdateOperationsInput | string
     targetWalletId?: NullableStringFieldUpdateOperationsInput | string | null
     categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    financialTargetId?: NullableStringFieldUpdateOperationsInput | string | null
     clientId?: StringFieldUpdateOperationsInput | string
     syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -20350,6 +20718,7 @@ export namespace Prisma {
     date: Date | string
     walletId: string
     categoryId?: string | null
+    financialTargetId?: string | null
     userId: string
     clientId: string
     syncStatus?: $Enums.SyncStatus
@@ -20367,6 +20736,7 @@ export namespace Prisma {
     date: Date | string
     targetWalletId?: string | null
     categoryId?: string | null
+    financialTargetId?: string | null
     userId: string
     clientId: string
     syncStatus?: $Enums.SyncStatus
@@ -20392,6 +20762,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     category?: CategoryUpdateOneWithoutFinancialTargetsNestedInput
     user?: UserUpdateOneRequiredWithoutTargetsNestedInput
+    transactions?: TransactionUpdateManyWithoutFinancialTargetNestedInput
   }
 
   export type FinancialTargetUncheckedUpdateWithoutWalletInput = {
@@ -20411,6 +20782,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    transactions?: TransactionUncheckedUpdateManyWithoutFinancialTargetNestedInput
   }
 
   export type FinancialTargetUncheckedUpdateManyWithoutWalletInput = {
@@ -20445,6 +20817,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     category?: CategoryUpdateOneWithoutTransactionsNestedInput
+    financialTarget?: FinancialTargetUpdateOneWithoutTransactionsNestedInput
     user?: UserUpdateOneRequiredWithoutTransactionsNestedInput
     wallet?: WalletUpdateOneRequiredWithoutTransactionsNestedInput
   }
@@ -20458,6 +20831,7 @@ export namespace Prisma {
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     walletId?: StringFieldUpdateOperationsInput | string
     categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    financialTargetId?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus
@@ -20475,6 +20849,7 @@ export namespace Prisma {
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     walletId?: StringFieldUpdateOperationsInput | string
     categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    financialTargetId?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus
@@ -20496,6 +20871,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     category?: CategoryUpdateOneWithoutTransactionsNestedInput
+    financialTarget?: FinancialTargetUpdateOneWithoutTransactionsNestedInput
     targetWallet?: WalletUpdateOneWithoutIncomingTransfersNestedInput
     user?: UserUpdateOneRequiredWithoutTransactionsNestedInput
   }
@@ -20509,6 +20885,7 @@ export namespace Prisma {
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     targetWalletId?: NullableStringFieldUpdateOperationsInput | string | null
     categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    financialTargetId?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus
@@ -20526,6 +20903,7 @@ export namespace Prisma {
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     targetWalletId?: NullableStringFieldUpdateOperationsInput | string | null
     categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    financialTargetId?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus
@@ -20574,6 +20952,7 @@ export namespace Prisma {
     date: Date | string
     walletId: string
     targetWalletId?: string | null
+    financialTargetId?: string | null
     userId: string
     clientId: string
     syncStatus?: $Enums.SyncStatus
@@ -20635,6 +21014,7 @@ export namespace Prisma {
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     user?: UserUpdateOneRequiredWithoutTargetsNestedInput
     wallet?: WalletUpdateOneWithoutFinancialTargetsNestedInput
+    transactions?: TransactionUpdateManyWithoutFinancialTargetNestedInput
   }
 
   export type FinancialTargetUncheckedUpdateWithoutCategoryInput = {
@@ -20654,6 +21034,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    transactions?: TransactionUncheckedUpdateManyWithoutFinancialTargetNestedInput
   }
 
   export type FinancialTargetUncheckedUpdateManyWithoutCategoryInput = {
@@ -20687,6 +21068,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    financialTarget?: FinancialTargetUpdateOneWithoutTransactionsNestedInput
     targetWallet?: WalletUpdateOneWithoutIncomingTransfersNestedInput
     user?: UserUpdateOneRequiredWithoutTransactionsNestedInput
     wallet?: WalletUpdateOneRequiredWithoutTransactionsNestedInput
@@ -20701,6 +21083,7 @@ export namespace Prisma {
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     walletId?: StringFieldUpdateOperationsInput | string
     targetWalletId?: NullableStringFieldUpdateOperationsInput | string | null
+    financialTargetId?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus
@@ -20718,6 +21101,79 @@ export namespace Prisma {
     date?: DateTimeFieldUpdateOperationsInput | Date | string
     walletId?: StringFieldUpdateOperationsInput | string
     targetWalletId?: NullableStringFieldUpdateOperationsInput | string | null
+    financialTargetId?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type TransactionCreateManyFinancialTargetInput = {
+    id?: string
+    amount: Decimal | DecimalJsLike | number | string
+    type: $Enums.TransactionType
+    description?: string | null
+    note?: string | null
+    date: Date | string
+    walletId: string
+    targetWalletId?: string | null
+    categoryId?: string | null
+    userId: string
+    clientId: string
+    syncStatus?: $Enums.SyncStatus
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    deletedAt?: Date | string | null
+  }
+
+  export type TransactionUpdateWithoutFinancialTargetInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    type?: EnumTransactionTypeFieldUpdateOperationsInput | $Enums.TransactionType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    category?: CategoryUpdateOneWithoutTransactionsNestedInput
+    targetWallet?: WalletUpdateOneWithoutIncomingTransfersNestedInput
+    user?: UserUpdateOneRequiredWithoutTransactionsNestedInput
+    wallet?: WalletUpdateOneRequiredWithoutTransactionsNestedInput
+  }
+
+  export type TransactionUncheckedUpdateWithoutFinancialTargetInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    type?: EnumTransactionTypeFieldUpdateOperationsInput | $Enums.TransactionType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    walletId?: StringFieldUpdateOperationsInput | string
+    targetWalletId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    userId?: StringFieldUpdateOperationsInput | string
+    clientId?: StringFieldUpdateOperationsInput | string
+    syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    deletedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  }
+
+  export type TransactionUncheckedUpdateManyWithoutFinancialTargetInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    amount?: DecimalFieldUpdateOperationsInput | Decimal | DecimalJsLike | number | string
+    type?: EnumTransactionTypeFieldUpdateOperationsInput | $Enums.TransactionType
+    description?: NullableStringFieldUpdateOperationsInput | string | null
+    note?: NullableStringFieldUpdateOperationsInput | string | null
+    date?: DateTimeFieldUpdateOperationsInput | Date | string
+    walletId?: StringFieldUpdateOperationsInput | string
+    targetWalletId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoryId?: NullableStringFieldUpdateOperationsInput | string | null
     userId?: StringFieldUpdateOperationsInput | string
     clientId?: StringFieldUpdateOperationsInput | string
     syncStatus?: EnumSyncStatusFieldUpdateOperationsInput | $Enums.SyncStatus

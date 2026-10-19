@@ -108,7 +108,10 @@ export async function POST(request: NextRequest) {
     const budgetIds = payloadBudgets.map(b => b.clientId);
     const budgetPeriods = [...new Set(payloadBudgets.map(b => b.period))];
 
-    const targetIds = payloadTargets.map(t => t.clientId);
+    const targetIds = [...new Set([
+      ...payloadTargets.map(t => t.clientId),
+      ...payloadTransactions.map(t => t.financialTargetId).filter(Boolean)
+    ])];
 
     const logIds = payloadLogs.map(l => l.clientId);
     const logDedupeKeys = payloadLogs.map(l => l.dedupeKey).filter(Boolean);
@@ -130,7 +133,7 @@ export async function POST(request: NextRequest) {
       transactionIds.length > 0 ? prisma.transaction.findMany({ where: { userId, clientId: { in: transactionIds as string[] } } }) : Promise.resolve([]),
       budgetIds.length > 0 ? prisma.budget.findMany({ where: { userId, clientId: { in: budgetIds } } }) : Promise.resolve([]),
       budgetPeriods.length > 0 ? prisma.budget.findMany({ where: { userId, period: { in: budgetPeriods } } }) : Promise.resolve([]),
-      targetIds.length > 0 ? prisma.financialTarget.findMany({ where: { userId, clientId: { in: targetIds } } }) : Promise.resolve([]),
+      targetIds.length > 0 ? prisma.financialTarget.findMany({ where: { userId, clientId: { in: targetIds as string[] } } }) : Promise.resolve([]),
       logIds.length > 0 ? prisma.notificationLog.findMany({ where: { userId, clientId: { in: logIds } } }) : Promise.resolve([]),
       logDedupeKeys.length > 0 ? prisma.notificationLog.findMany({ where: { userId, dedupeKey: { in: logDedupeKeys as string[] } } }) : Promise.resolve([]),
       payloadSettings.length > 0 ? prisma.notificationSettings.findMany({ where: { userId } }) : Promise.resolve([]),
@@ -597,6 +600,11 @@ export async function POST(request: NextRequest) {
             continue;
           }
 
+          let financialTarget = null;
+          if (txn.financialTargetId) {
+            financialTarget = targetByClientId.get(txn.financialTargetId);
+          }
+
           const existing = transactionByClientId.get(txn.clientId);
 
           if (existing) {
@@ -615,6 +623,7 @@ export async function POST(request: NextRequest) {
                   categoryId: category?.id,
                   walletId: wallet.id,
                   targetWalletId: targetWallet?.id,
+                  financialTargetId: financialTarget?.id ?? (txn.financialTargetId === null ? null : undefined),
                   deletedAt: txn.deletedAt ? new Date(txn.deletedAt) : null,
                   syncStatus: "SYNCED",
                 },
@@ -640,6 +649,12 @@ export async function POST(request: NextRequest) {
                   if (w.id === existing.targetWalletId) existingTargetWalletClientId = w.clientId;
                 }
               }
+              let existingFinancialTargetClientId: string | undefined = undefined;
+              if (existing.financialTargetId) {
+                for (const t of targetByClientId.values()) {
+                  if (t.id === existing.financialTargetId) existingFinancialTargetClientId = t.clientId;
+                }
+              }
 
               conflicts.push({
                 clientId: txn.clientId,
@@ -655,6 +670,7 @@ export async function POST(request: NextRequest) {
                   categoryId: existingCatClientId || undefined,
                   walletId: existingWalletClientId || "",
                   targetWalletId: existingTargetWalletClientId || undefined,
+                  financialTargetId: existingFinancialTargetClientId || undefined,
                   userId: existing.userId,
                   syncStatus: existing.syncStatus,
                   createdAt: existing.createdAt.toISOString(),
@@ -676,6 +692,7 @@ export async function POST(request: NextRequest) {
                 categoryId: category?.id,
                 walletId: wallet.id,
                 targetWalletId: targetWallet?.id,
+                financialTargetId: financialTarget?.id ?? null,
                 userId,
                 syncStatus: "SYNCED",
                 deletedAt: txn.deletedAt ? new Date(txn.deletedAt) : null,

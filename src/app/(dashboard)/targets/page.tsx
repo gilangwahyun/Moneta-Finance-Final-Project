@@ -9,9 +9,10 @@
 import { useState, useMemo } from 'react';
 import { useTargets } from '@/hooks/use-targets';
 import { TargetModal } from '@/components/targets/TargetModal';
+import { TransactionModal } from '@/components/transactions/TransactionModal';
 import { FinancialTarget } from '@/types/models.types';
 import { formatCurrency, formatDate } from '@/lib/utils/helpers';
-import { Plus, Target as TargetIcon, Trash2, Edit2, AlertCircle, Info, X } from 'lucide-react';
+import { Plus, Target as TargetIcon, AlertCircle, Info, X } from 'lucide-react';
 import { EntityActionMenu } from '@/components/ui/EntityActionMenu';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
 import { FilterBottomSheet } from '@/components/ui/FilterBottomSheet';
@@ -33,6 +34,13 @@ export default function TargetsPage() {
   const { targets, isLoading, addTarget, editTarget, deleteTarget } = useTargets();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTarget, setEditingTarget] = useState<FinancialTarget | null>(null);
+  const [isTxnModalOpen, setIsTxnModalOpen] = useState(false);
+  const [targetForTxn, setTargetForTxn] = useState<string | null>(null);
+
+  const handleRecordIncome = (targetClientId: string) => {
+    setTargetForTxn(targetClientId);
+    setIsTxnModalOpen(true);
+  };
 
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -233,24 +241,19 @@ export default function TargetsPage() {
 
             let progressColor = 'bg-indigo-500';
             let statusText = 'Belum Tercapai';
-            let statusTextColor = 'text-indigo-600 dark:text-indigo-400';
 
             if (target.progress.isNotStarted) {
               progressColor = 'bg-slate-300 dark:bg-slate-600';
               statusText = 'Belum Aktif';
-              statusTextColor = 'text-slate-600 dark:text-slate-400';
             } else if (target.progress.isExpired) {
               progressColor = 'bg-slate-400 dark:bg-slate-600';
               statusText = 'Periode Berakhir';
-              statusTextColor = 'text-slate-500 dark:text-slate-400';
             } else if (target.progress.percentage >= 100) {
               progressColor = 'bg-emerald-500';
               statusText = 'Tercapai';
-              statusTextColor = 'text-emerald-600 dark:text-emerald-400';
             } else if (target.progress.percentage >= 80) {
               progressColor = 'bg-amber-500';
               statusText = 'Hampir Tercapai';
-              statusTextColor = 'text-amber-600 dark:text-amber-400';
             }
 
             return (
@@ -329,6 +332,20 @@ export default function TargetsPage() {
                       style={{ width: `${clampedPercentage}%` }}
                     />
                   </div>
+
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      {clampedPercentage}% tercapai
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => handleRecordIncome(target.clientId!)}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-100 active:scale-95 dark:bg-indigo-950/40 dark:text-indigo-300 dark:hover:bg-indigo-900/50"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Catat Pemasukan
+                    </button>
+                  </div>
                 </div>
               </div>
             );
@@ -337,6 +354,16 @@ export default function TargetsPage() {
       )}
 
       <TargetModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} editingTarget={editingTarget} onSave={handleSave} />
+
+      <TransactionModal
+        isOpen={isTxnModalOpen}
+        onClose={() => {
+          setIsTxnModalOpen(false);
+          setTargetForTxn(null);
+        }}
+        initialType="INCOME"
+        initialTargetId={targetForTxn || undefined}
+      />
 
       <DeleteConfirmDialog
         isOpen={!!deleteConfirmId}

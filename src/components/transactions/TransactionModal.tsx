@@ -11,9 +11,10 @@ import { useState, useEffect, FormEvent, useMemo, useRef } from "react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useCategories } from "@/hooks/use-categories";
 import { useWallets } from "@/hooks/use-wallets";
+import { useTargets } from "@/hooks/use-targets";
 import { Transaction, TransactionType } from "@/types/models.types";
 import { showSyncToast } from "@/lib/utils/show-toast";
-import { TrendingDown, TrendingUp, ArrowLeftRight, X, ClipboardPaste, CheckCircle2, AlertCircle, ChevronDown, Plus } from "lucide-react";
+import { TrendingDown, TrendingUp, ArrowLeftRight, X, ClipboardPaste, CheckCircle2, AlertCircle, ChevronDown, Plus, Target } from "lucide-react";
 import { parseMutationText } from "@/lib/utils/parse-mutation";
 import { DynamicIcon } from "@/components/ui/DynamicIcon";
 import { getWalletIcon } from "@/lib/utils/wallet-icons";
@@ -61,6 +62,7 @@ interface TransactionModalProps {
   /** Transaksi terbaru dari IndexedDB untuk kalkulasi smart default dompet dan kategori */
   recentTransactions?: Transaction[];
   initialWalletId?: string;
+  initialTargetId?: string;
 }
 
 const TYPE_TABS: { value: TransactionType; label: string; icon: React.ReactNode }[] = [
@@ -84,17 +86,20 @@ export function TransactionModal({
   initialType = "EXPENSE",
   recentTransactions = [],
   initialWalletId,
+  initialTargetId,
 }: TransactionModalProps) {
   /********** [START: Inisialisasi State Form Transaksi & Hook] **********/
   const { addTransaction, editTransaction, deleteTransaction } = useTransactions();
   const { expenseCategories, incomeCategories, addCategory } = useCategories();
   const { wallets } = useWallets();
+  const { targets } = useTargets();
 
   /* State nilai isian form transaksi */
   const [formType, setFormType] = useState<TransactionType>(initialType);
   const [formAmount, setFormAmount] = useState("");
   const [formDate, setFormDate] = useState(todayString());
   const [formCategoryId, setFormCategoryId] = useState("");
+  const [formFinancialTargetId, setFormFinancialTargetId] = useState("");
   const [formWalletId, setFormWalletId] = useState("");
   const [formTargetWalletId, setFormTargetWalletId] = useState("");
   const [formDescription, setFormDescription] = useState("");
@@ -121,6 +126,17 @@ export function TransactionModal({
     () => (formType === "EXPENSE" ? expenseCategories : incomeCategories),
     [formType, expenseCategories, incomeCategories]
   );
+
+  const matchingTargets = useMemo(() => {
+    if (formType !== "INCOME") return [];
+    return targets.filter((t) => {
+      if (!t.isActive || t.deletedAt) return false;
+      if (formCategoryId) {
+        return !t.categoryId || t.categoryId === formCategoryId;
+      }
+      return true;
+    });
+  }, [targets, formType, formCategoryId]);
   /********** [END: Inisialisasi State Form Transaksi & Hook] **********/
 
   /********** [START: Logika Default Cerdas & Pengisian Otomatis (Smart Defaults)] **********/
@@ -196,6 +212,7 @@ export function TransactionModal({
         setFormAmount(String(Math.round(editingTxn.amount)));
         setFormDate(editingTxn.date.split("T")[0]);
         setFormCategoryId(editingTxn.categoryId ?? "");
+        setFormFinancialTargetId(editingTxn.financialTargetId ?? "");
         setFormWalletId(editingTxn.walletId ?? "");
         setFormTargetWalletId(editingTxn.targetWalletId ?? "");
         setFormDescription(editingTxn.description || "");
@@ -207,7 +224,6 @@ export function TransactionModal({
         setFormType(initialType);
         setFormAmount("");
         setFormDate(todayString());
-        setFormCategoryId("");
         setFormDescription("");
         setFormNote("");
         setShowNote(false);
@@ -222,9 +238,25 @@ export function TransactionModal({
         if (initialWalletId) {
           setFormWalletId(initialWalletId);
         }
+        if (initialTargetId) {
+          setFormFinancialTargetId(initialTargetId);
+          setFormType("INCOME");
+          const tgt = targets.find((t) => t.clientId === initialTargetId);
+          if (tgt?.categoryId) {
+            setFormCategoryId(tgt.categoryId);
+          } else {
+            setFormCategoryId("");
+          }
+          if (tgt?.walletId) {
+            setFormWalletId(tgt.walletId);
+          }
+        } else {
+          setFormFinancialTargetId("");
+          setFormCategoryId("");
+        }
       }
     }
-  }, [isOpen, editingTxn, initialType, initialWalletId]);
+  }, [isOpen, editingTxn, initialType, initialWalletId, initialTargetId, targets]);
   /********** [END: Logika Default Cerdas & Pengisian Otomatis (Smart Defaults)] **********/
 
   /********** [START: Fungsi Penanganan Aksi Form Transaksi (Event Handlers)] **********/
@@ -291,6 +323,7 @@ export function TransactionModal({
           walletId: formWalletId,
           targetWalletId: isTransfer ? formTargetWalletId : null,
           categoryId: isTransfer ? null : formCategoryId,
+          financialTargetId: (formType === "INCOME" && formFinancialTargetId) ? formFinancialTargetId : null,
           description: formDescription || null,
           note: formNote || null,
         });
@@ -299,13 +332,14 @@ export function TransactionModal({
           "Disimpan luring. Akan disinkronkan saat terhubung."
         );
       } else {
-        const created = await addTransaction({
+        await addTransaction({
           amount,
           type: formType,
           date: formDate,
           walletId: formWalletId,
           targetWalletId: isTransfer ? formTargetWalletId : null,
           categoryId: isTransfer ? null : formCategoryId,
+          financialTargetId: (formType === "INCOME" && formFinancialTargetId) ? formFinancialTargetId : null,
           description: formDescription || null,
           note: formNote || null,
         });
@@ -710,6 +744,57 @@ export function TransactionModal({
               {!formCategoryId && (
                 <p className="text-[11px] text-rose-500 dark:text-rose-400">
                   Pilih kategori untuk melanjutkan.
+                </p>
+              )}
+            </div>
+          )}
+
+          {/* Pilihan Target Keuangan (Khusus Pemasukan) */}
+          {formType === "INCOME" && (
+            <div className="animate-in fade-in duration-150 space-y-2">
+              <div className="flex items-center justify-between">
+                <label className={labelCls}>Alokasikan ke Target Keuangan</label>
+                <span className="text-[11px] text-slate-500 dark:text-slate-400">Opsional</span>
+              </div>
+
+              {matchingTargets.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setFormFinancialTargetId("")}
+                    className={[
+                      "inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-all active:scale-95",
+                      !formFinancialTargetId
+                        ? "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-700/60 dark:bg-indigo-950/40 dark:text-indigo-300 shadow-sm"
+                        : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800",
+                    ].join(" ")}
+                  >
+                    <span>Tanpa Target (Umum)</span>
+                  </button>
+
+                  {matchingTargets.map((tgt) => {
+                    const isActive = tgt.clientId === formFinancialTargetId;
+                    return (
+                      <button
+                        key={tgt.clientId}
+                        type="button"
+                        onClick={() => setFormFinancialTargetId(tgt.clientId)}
+                        className={[
+                          "inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-all active:scale-95",
+                          isActive
+                            ? "border-indigo-300 bg-indigo-50 text-indigo-700 dark:border-indigo-700/60 dark:bg-indigo-950/40 dark:text-indigo-300 shadow-sm ring-1 ring-indigo-400 dark:ring-indigo-600"
+                            : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800",
+                        ].join(" ")}
+                      >
+                        <Target className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
+                        <span className="font-semibold">{tgt.name}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-500 dark:text-slate-400 italic">
+                  Belum ada target aktif untuk kategori ini. Pemasukan akan dicatat sebagai pemasukan umum.
                 </p>
               )}
             </div>
