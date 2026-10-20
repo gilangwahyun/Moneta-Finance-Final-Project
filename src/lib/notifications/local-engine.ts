@@ -302,7 +302,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
       return null;
     })();
 
-    /********** [WL-02] Low Cash Warning — saldo dompet menipis. */
+    /********** [WL-02] Kilas Saldo Dompet. */
     const lowCashWarning = (() => {
       if (allWallets.length === 0) return null;
 
@@ -430,8 +430,8 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
         const targetBudgetInfo = allBudgetsInfo.find((b) => b.id === budget.clientId);
 
         const deficitAmount = spent - budgetLimit;
-        let mergedTitle = 'Kilas Batas Anggaran';
-        let mergedBody = `Alokasi ${catName} telah mencapai 100% (${formatCurrency(spent)} dari ${formatCurrency(budgetLimit)}). Tersedia opsi penyesuaian alokasi antar kategori jika diperlukan.`;
+        let mergedTitle = 'Kilas Alokasi';
+        let mergedBody = `Alokasi ${catName} bulan ini sudah terpakai penuh. Penyesuaian antar kategori tersedia jika diperlukan.`;
         let mergedCtaLabel = 'Lihat Anggaran';
         let mergedCtaRoute = '/budgets';
         let actionType: string | undefined = undefined;
@@ -463,9 +463,9 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
             const currentPeriodStr = dayjs(createdTxn.date).format('YYYY-MM');
             dedupeKeyOverride = `BUDGET_REALLOCATION_RECOMMENDATION:${userId}:${currentPeriodStr}:${recommendation.targetBudgetId}:${recommendation.sourceBudgetId}:${contextHash}`;
 
-            mergedTitle = 'Rekomendasi Subsidi Silang';
-            mergedBody = `Alokasi ${catName} telah mencapai 100%+ (${formatCurrency(spent)}). Tersedia alokasi sisa di ${recommendation.sourceCategoryName} sebesar ${formatCurrency(recommendation.recommendedAmount)} jika ingin disesuaikan.`;
-            mergedCtaLabel = 'Subsidi Silang';
+            mergedTitle = 'Kilas Penyesuaian';
+            mergedBody = `Tersedia sisa ${formatCurrency(recommendation.recommendedAmount)} di kategori ${recommendation.sourceCategoryName} untuk mendukung kategori ${catName}.`;
+            mergedCtaLabel = 'Tinjau Opsi Penyeimbangan';
             mergedCtaRoute = `/budgets?action=reallocate&sourceBudgetId=${recommendation.sourceBudgetId}&targetBudgetId=${recommendation.targetBudgetId}&amount=${recommendation.recommendedAmount}`;
             actionType = 'REALLOCATE_BUDGET';
             sourceBudgetId = recommendation.sourceBudgetId;
@@ -502,8 +502,8 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
           ...baseInsight,
           priority: BUDGET_CRITICAL_PRIORITY,
           severity: 'info',
-          title: 'Batas Anggaran Tercapai',
-          body: `Alokasi ${catName} telah mencapai 100% batas bulan ini (${formatCurrency(spent)}).`,
+          title: 'Kilas Alokasi',
+          body: `Alokasi ${catName} bulan ini sudah terpakai penuh (${formatCurrency(spent)} dari ${formatCurrency(budgetLimit)}).`,
           ctaLabel: 'Lihat Anggaran',
           ctaRoute: '/budgets',
           relatedBudgetId: budget.clientId,
@@ -512,7 +512,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
           budgetUpdatedAt: budget.updatedAt,
         });
       } else if (ratio >= 0.8) {
-        let title = 'Progres Alokasi Anggaran';
+        let title = 'Progres Alokasi';
         if (comparisonAmount) {
           title = `Dinamika Pengeluaran ${catName}`;
         }
@@ -521,7 +521,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
           priority: BUDGET_WARNING_PRIORITY,
           severity: 'info',
           title: title,
-          body: `Alokasi ${catName} telah terpakai 80% (${formatCurrency(spent)} dari ${formatCurrency(budgetLimit)}).${comparisonText} Tersisa ${formatCurrency(budgetLimit - spent)} untuk sisa periode ini.`,
+          body: `Alokasi ${catName} tersisa ${formatCurrency(budgetLimit - spent)} untuk sisa periode ini.${comparisonText}`,
           ctaLabel: 'Lihat Anggaran',
           ctaRoute: '/budgets',
           relatedBudgetId: budget.clientId,
@@ -534,8 +534,8 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
           ...baseInsight,
           priority: BUDGET_INFO_PRIORITY,
           severity: 'info',
-          title: 'Penggunaan Anggaran Berjalan',
-          body: `Alokasi ${catName} telah terpakai 50% (${formatCurrency(spent)} dari ${formatCurrency(budgetLimit)}).`,
+          title: 'Progres Alokasi',
+          body: `Alokasi ${catName} tersisa ${formatCurrency(budgetLimit - spent)} (50% dari total alokasi awal).`,
           ctaLabel: 'Lihat Anggaran',
           ctaRoute: '/budgets',
           relatedBudgetId: budget.clientId,

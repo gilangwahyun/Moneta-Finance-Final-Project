@@ -225,10 +225,10 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
       if (recommendation) {
         fresh = {
           type: 'critical',
-          title: 'Rekomendasi Subsidi Silang',
-          message: `Alokasi ${recommendation.targetCategoryName} telah mencapai 100%+. Tersedia alokasi sisa di ${recommendation.sourceCategoryName} sebesar Rp${recommendation.recommendedAmount.toLocaleString('id-ID')} jika ingin dialokasikan.`,
+          title: 'Kilas Penyesuaian',
+          message: `Tersedia sisa Rp${recommendation.recommendedAmount.toLocaleString('id-ID')} di kategori ${recommendation.sourceCategoryName} untuk mendukung kategori ${recommendation.targetCategoryName}.`,
           action: {
-            label: 'Subsidi Silang',
+            label: 'Tinjau Opsi Penyeimbangan',
             route: `/budgets?action=reallocate&sourceBudgetId=${recommendation.sourceBudgetId}&targetBudgetId=${recommendation.targetBudgetId}&amount=${recommendation.recommendedAmount}`,
           },
         };
@@ -257,7 +257,7 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
         if (limit > 0 && totalSpent > limit * 0.4) {
           fresh = {
             type: 'warning',
-            title: 'Dinamika Arus Kas Awal Bulan',
+            title: 'Dinamika Arus Kas',
             message: `${Math.round((totalSpent / limit) * 100)}% dari batas aman telah dialokasikan dalam ${Math.max(1, daysSincePayday)} hari pertama.`,
           };
           writeInsightCache(currentPeriod, fresh);

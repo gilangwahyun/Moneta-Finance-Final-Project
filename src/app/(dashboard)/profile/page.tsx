@@ -394,7 +394,7 @@ export default function ProfilePage() {
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-medium text-slate-900 dark:text-slate-50">Pengaturan Notifikasi</p>
-              <p className="text-xs text-slate-600 dark:text-slate-400">Kelola peringatan dan ringkasan harian</p>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Kelola preferensi dan ringkasan berkala</p>
             </div>
             <div className="text-slate-600 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-600 dark:group-hover:text-slate-300">
               <ChevronRight className="h-5 w-5" />

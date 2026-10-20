@@ -138,8 +138,8 @@ self.addEventListener("message", (event) => {
       const tag = tier === "T1" ? "moneta-budget-tier1" : "moneta-budget-tier2";
       event.waitUntil(
         triggerLocalNotification(
-          title || "Peringatan Anggaran",
-          body || "Anggaran kategorimu sudah mendekati batas.",
+          title || "Progres Alokasi",
+          body || "Alokasi kategorimu telah mencapai 80%.",
           "INSTANT",
           logId || null,
           tag,
@@ -158,14 +158,14 @@ self.addEventListener("message", (event) => {
       const { title, body, logId } = event.data;
       event.waitUntil(
         triggerLocalNotification(
-          title || "Peringatan Batas Anggaran",
-          body || "Batas anggaran kategori ini telah terlampaui.",
+          title || "Kilas Alokasi",
+          body || "Alokasi bulan ini sudah terpakai penuh.",
           "DEFICIT",
           logId || null,
           "moneta-budget-deficit",
           "G2",
           [
-            { action: "adjust-budget", title: "Sesuaikan Budget" },
+            { action: "adjust-budget", title: "Tinjau Alokasi" },
             { action: "dismiss", title: "Abaikan" },
           ]
         )

@@ -155,7 +155,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 1,
       severity: 'critical',
-      title: 'Pengeluaran Awal Bulan',
+      title: 'Dinamika Arus Kas',
       body: `${paydayLeak.percentage}% dari alokasi pemasukan bulan ini telah dialokasikan dalam ${paydayLeak.days} hari pertama.`,
       ctaLabel: 'Lihat Transaksi',
       ctaRoute: '/transactions',
@@ -171,8 +171,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 1.1,
       severity: 'critical',
-      title: 'Data Pemasukan Kosong',
-      body: `Belum ada pemasukan yang tercatat bulan ini untuk melengkapi analisis arus kas.`,
+      title: 'Selisih Arus Kas',
+      body: `Belum ada catatan pemasukan bulan ini untuk melengkapi analisis arus kas.`,
       ctaLabel: 'Catat Pemasukan',
       ctaRoute: '/transactions',
     });
@@ -181,8 +181,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 1.1,
       severity: 'critical',
-      title: 'Defisit Arus Kas',
-      body: `Total pengeluaran bulan ini tercatat melampaui pemasukan sebesar ${formatCurrency(Math.abs(netCashflow))}.`,
+      title: 'Selisih Arus Kas',
+      body: `Total pengeluaran bulan ini tercatat melampaui pemasukan dengan selisih ${formatCurrency(Math.abs(netCashflow))}.`,
       ctaLabel: 'Analisis Kategori',
       ctaRoute: '/analytics',
     });
@@ -191,7 +191,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 1.1,
       severity: 'warning',
-      title: 'Rasio Pengeluaran Tinggi',
+      title: 'Selisih Arus Kas',
       body: `Pengeluaran bulan ini telah mencapai ${Math.round(expenseRatio * 100)}% dari total pemasukan tercatat.`,
       ctaLabel: 'Analisis Kategori',
       ctaRoute: '/analytics',
@@ -203,7 +203,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 2,
       severity: 'warning',
-      title: 'Pola Pengeluaran Akhir Pekan',
+      title: 'Distribusi Waktu',
       body: `Sekitar ${weekendTrap.percentage}% pengeluaran minggu ini tercatat pada akhir pekan (Sabtu & Minggu).`,
       ctaLabel: 'Cek Transaksi',
       ctaRoute: '/transactions',
@@ -216,7 +216,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 2.1,
       severity: 'warning',
       title: 'Pola Pengeluaran Malam Hari',
-      body: `Tercatat total ${formatCurrency(nightOwl.totalAmount)} pengeluaran pada rentang waktu malam hingga dini hari bulan ini.`,
+      body: `Tercatat pengeluaran sebesar ${formatCurrency(nightOwl.totalAmount)} pada rentang waktu malam hingga dini hari (22.00–04.00) bulan ini.`,
       ctaLabel: 'Lihat Pola',
       ctaRoute: '/analytics',
     });
@@ -230,8 +230,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       insights.push({
         priority: 2.2,
         severity: 'warning',
-        title: 'Pengeluaran Melonjak',
-        body: `Pengeluaran kategori ${topExpenseCategory.name} tercatat ${spike}% (+${formatCurrency(selisihNominal)}) lebih tinggi dibanding bulan lalu.`,
+        title: 'Dinamika Pengeluaran Kategori',
+        body: `Pengeluaran kategori ${topExpenseCategory.name} tercatat ${spike}% (+${formatCurrency(selisihNominal)}) dibanding bulan lalu.`,
         ctaLabel: 'Lihat Tren',
         ctaRoute: '/analytics',
       });
@@ -266,7 +266,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 3,
       severity: 'info',
       title: 'Frekuensi Pengeluaran Rutin',
-      body: `Tercatat ${frequentTxn.count} transaksi untuk '${frequentTxn.name}' bulan ini dengan total ${formatCurrency(frequentTxn.totalAmount)}.`,
+      body: `Terdapat ${frequentTxn.count} transaksi tercatat untuk '${frequentTxn.name}' bulan ini dengan akumulasi ${formatCurrency(frequentTxn.totalAmount)}.`,
       ctaLabel: 'Lihat Transaksi',
       ctaRoute: '/transactions',
     });
@@ -277,8 +277,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 3.1,
       severity: 'warning',
-      title: 'Evaluasi Langganan',
-      body: `Terdapat ${subscriptions.count} tagihan rutin bulanan yang mengambil porsi ${subscriptions.percentage}% dari total pemasukanmu.`,
+      title: 'Evaluasi Langganan Rutin',
+      body: `Terdapat ${subscriptions.count} tagihan rutin berulang yang mengambil porsi ${subscriptions.percentage}% dari total pemasukan tercatat.`,
       ctaLabel: 'Cek Pengeluaran',
       ctaRoute: '/transactions',
     });
@@ -289,8 +289,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 3.5,
       severity: 'positive',
-      title: 'Kamu Berhasil Berhemat!',
-      body: `Hebat! Kamu berhasil menyisakan ${formatCurrency(weeklySavings)} pada 7 hari terakhir. Pertahankan kebiasaan baik ini.`,
+      title: 'Surplus Mingguan',
+      body: `Kamu berhasil menyisakan saldo positif ${formatCurrency(weeklySavings)} pada 7 hari terakhir. Kebiasaan pencatatan berjalan teratur.`,
       ctaLabel: 'Lihat Rincian',
       ctaRoute: '/transactions',
     });
@@ -305,7 +305,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
         priority: 3.6,
         severity: 'positive',
         title: 'Pemasukan Meningkat',
-        body: `Pemasukan naik ${pct}% (+${formatCurrency(selisihNominal)}). Tersedia ruang tambahan untuk mempercepat pencapaian target keuanganmu.`,
+        body: `Pemasukan naik ${pct}% (+${formatCurrency(selisihNominal)}). Tersedia ruang tambahan untuk mempercepat pencapaian target keuangan.`,
         ctaLabel: 'Kelola Dompet',
         ctaRoute: '/wallets',
       });
@@ -316,15 +316,15 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
   if (peakDay) {
     let bodyText = '';
     if (peakDay.dominantCategoryName) {
-      bodyText = `Pengeluaran bulan ini paling terkonsentrasi pada hari ${peakDay.dayName} (${peakDay.percentage}% dari total pengeluaran), dengan kontribusi terbesar pada kategori ${peakDay.dominantCategoryName}.`;
+      bodyText = `Akumulasi pengeluaran tertinggi bulan ini tercatat pada hari ${peakDay.dayName} (${peakDay.percentage}% dari total pengeluaran), dengan kontribusi terbesar pada kategori ${peakDay.dominantCategoryName}.`;
     } else {
-      bodyText = `Pengeluaran bulan ini paling terkonsentrasi pada hari ${peakDay.dayName} (${peakDay.percentage}% dari total pengeluaran).`;
+      bodyText = `Akumulasi pengeluaran tertinggi bulan ini tercatat pada hari ${peakDay.dayName} (${peakDay.percentage}% dari total pengeluaran).`;
     }
 
     insights.push({
       priority: 3.8,
       severity: 'neutral',
-      title: 'Pola Pengeluaran Ditemukan',
+      title: 'Pola Hari Transaksi',
       body: bodyText,
       ctaLabel: 'Lihat Tren',
       ctaRoute: '/analytics',
@@ -340,8 +340,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 3.2,
       severity: 'info',
-      title: 'Kenaikan Transaksi Rutin',
-      body: `Transaksi untuk '${recurringMerchantGrowth.merchantName}' meningkat signifikan dibanding bulan lalu (${recurringMerchantGrowth.prevCount} → ${recurringMerchantGrowth.currentCount} kali). Total bulan ini: ${formatCurrency(recurringMerchantGrowth.amount)}.`,
+      title: 'Dinamika Transaksi Rutin',
+      body: `Frekuensi transaksi pada '${recurringMerchantGrowth.merchantName}' tercatat ${recurringMerchantGrowth.currentCount} kali bulan ini (dibanding ${recurringMerchantGrowth.prevCount} kali bulan lalu) dengan total ${formatCurrency(recurringMerchantGrowth.amount)}.`,
       ctaLabel: 'Lihat Transaksi',
       ctaRoute: '/transactions',
     });
@@ -353,7 +353,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 3.3,
       severity: 'neutral',
       title: 'Pola Waktu Pengeluaran',
-      body: `Lebih dari ${Math.round(morningVsEvening.ratio * 100)}% pengeluaranmu bulan ini terkonsentrasi di sesi ${morningVsEvening.dominantSession} hari (total ${formatCurrency(morningVsEvening.total)}).`,
+      body: `Sebesar ${Math.round(morningVsEvening.ratio * 100)}% pengeluaran bulan ini tercatat pada sesi ${morningVsEvening.dominantSession} hari (total ${formatCurrency(morningVsEvening.total)}).`,
       ctaLabel: 'Lihat Analisis',
       ctaRoute: '/analytics',
     });
@@ -364,8 +364,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 3.4,
       severity: 'neutral',
-      title: 'Konsentrasi Pengeluaran',
-      body: `Lebih dari ${Math.round(dayOfMonthClustering.ratio * 100)}% pengeluaran bulan ini terpusat pada ${dayOfMonthClustering.topDays.length} hari tertentu saja.`,
+      title: 'Konsentrasi Tanggal Belanja',
+      body: `Sebesar ${Math.round(dayOfMonthClustering.ratio * 100)}% pengeluaran bulan ini terpusat pada ${dayOfMonthClustering.topDays.length} hari transaksi tertentu.`,
       ctaLabel: 'Lihat Analisis',
       ctaRoute: '/analytics',
     });
@@ -377,7 +377,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 1.5,
       severity: 'info',
       title: 'Pengeluaran Tanpa Anggaran',
-      body: `Kamu sudah mencatat ${formatCurrency(zeroBudgetCategory.amount)} pengeluaran di '${zeroBudgetCategory.categoryName}' bulan ini, tapi belum ada anggaran untuk kategori ini.`,
+      body: `Tercatat pengeluaran sebesar ${formatCurrency(zeroBudgetCategory.amount)} pada '${zeroBudgetCategory.categoryName}' bulan ini tanpa batas alokasi anggaran yang aktif.`,
       ctaLabel: 'Buat Anggaran',
       ctaRoute: '/budgets',
       relatedCategoryId: zeroBudgetCategory.categoryId,
@@ -389,8 +389,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 1.6,
       severity: 'info',
-      title: 'Saran Anggaran Baru',
-      body: `Kamu rutin mencatat rata-rata ${formatCurrency(smartBudgetSuggestion.averageAmount)}/bulan di '${smartBudgetSuggestion.categoryName}'. Pertimbangkan membuat anggaran dengan nominal tersebut.`,
+      title: 'Saran Alokasi Anggaran',
+      body: `Rata-rata pengeluaran bulanan pada '${smartBudgetSuggestion.categoryName}' tercatat ${formatCurrency(smartBudgetSuggestion.averageAmount)}/bulan berdasarkan riwayat transaksi.`,
       ctaLabel: 'Buat Anggaran',
       ctaRoute: '/budgets',
       relatedCategoryId: smartBudgetSuggestion.categoryId,
@@ -403,7 +403,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 3.9,
       severity: 'neutral',
       title: 'Penggunaan Dompet Dominan',
-      body: `Sebagian besar transaksimu bulan ini (${Math.round(singleWalletUsage.ratio * 100)}%) dicatat menggunakan dompet '${singleWalletUsage.walletName}'.`,
+      body: `Sebagian besar transaksi bulan ini (${Math.round(singleWalletUsage.ratio * 100)}%) dicatat menggunakan dompet '${singleWalletUsage.walletName}'.`,
       ctaLabel: 'Lihat Dompet',
       ctaRoute: '/wallets',
     });
@@ -414,8 +414,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 1.7,
       severity: 'warning',
-      title: 'Pemasukan Tertinggal',
-      body: `Hingga pertengahan bulan ini, pemasukan tercatat (${formatCurrency(incomeMomentum.currentIncome)}) berada di bawah rata-rata historis (${formatCurrency(incomeMomentum.avgPrevIncome)}).`,
+      title: 'Momentum Arus Kas Masuk',
+      body: `Hingga pertengahan bulan, catatan pemasukan (${formatCurrency(incomeMomentum.currentIncome)}) berada di bawah rata-rata historis (${formatCurrency(incomeMomentum.avgPrevIncome)}).`,
       ctaLabel: 'Catat Pemasukan',
       ctaRoute: '/transactions',
     });
@@ -430,8 +430,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 1.9,
       severity: 'warning',
-      title: 'Anggaran Berisiko Habis Lebih Awal',
-      body: `Dengan laju harian saat ini, alokasi '${budgetRunway.categoryName}' diperkirakan cukup hingga ${budgetRunway.daysUntilExhausted} hari ke depan (sisa periode: ${budgetRunway.daysRemaining} hari).`,
+      title: 'Proyeksi Daya Tahan Alokasi',
+      body: `Dengan laju harian saat ini, alokasi '${budgetRunway.categoryName}' dapat mencukupi hingga ${budgetRunway.daysUntilExhausted} hari ke depan (sisa periode: ${budgetRunway.daysRemaining} hari).`,
       ctaLabel: 'Lihat Anggaran',
       ctaRoute: '/budgets',
     });
@@ -460,7 +460,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 2.4,
       severity: 'info',
       title: 'Pengeluaran vs Target Pemasukan',
-      body: `Total pengeluaranmu ${timeframeStr} (${formatCurrency(targetProgressImpact.expenseAmount)}) sudah mencapai proporsi yang besar terhadap target pemasukan '${targetProgressImpact.targetName}' (${formatCurrency(targetProgressImpact.targetAmount)}).`,
+      body: `Total pengeluaran ${timeframeStr} (${formatCurrency(targetProgressImpact.expenseAmount)}) telah mencapai proporsi signifikan terhadap target pemasukan '${targetProgressImpact.targetName}' (${formatCurrency(targetProgressImpact.targetAmount)}).`,
       ctaLabel: 'Lihat Target',
       ctaRoute: '/targets',
     });
@@ -472,7 +472,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 2.6,
       severity: 'info',
       title: 'Kategori Pengeluaran Baru',
-      body: `Kamu mulai mencatat pengeluaran di '${newCategoryEmergence.categoryName}' (${formatCurrency(newCategoryEmergence.amount)} bulan ini). Kategori ini belum pernah muncul dalam 3 bulan terakhir.`,
+      body: `Tercatat transaksi baru pada kategori '${newCategoryEmergence.categoryName}' (${formatCurrency(newCategoryEmergence.amount)} bulan ini) yang belum pernah tercatat dalam 3 bulan terakhir.`,
       ctaLabel: 'Lihat Transaksi',
       ctaRoute: '/transactions',
     });
@@ -483,8 +483,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 2.7,
       severity: 'info',
-      title: 'Pergeseran Pengeluaran Terbesar',
-      body: `Pengeluaran terbesar bulan ini berpindah dari '${categoryDominanceShift.prevTopName}' ke '${categoryDominanceShift.newTopName}' (naik ${categoryDominanceShift.growthPct}% dibanding bulan lalu).`,
+      title: 'Pergeseran Kategori Terbesar',
+      body: `Porsi pengeluaran terbesar bulan ini beralih ke '${categoryDominanceShift.newTopName}' (naik ${categoryDominanceShift.growthPct}% dibanding bulan lalu).`,
       ctaLabel: 'Lihat Analisis',
       ctaRoute: '/analytics',
     });
@@ -495,8 +495,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 2.8,
       severity: 'neutral',
-      title: 'Perubahan Pola Pengeluaran',
-      body: `Porsi pengeluaran gaya hidupmu naik menjadi ${Math.round(discretionaryDrift.ratioNow * 100)}% dari total pengeluaran (naik ${discretionaryDrift.diffPct} poin dari 3 bulan lalu).`,
+      title: 'Dinamika Pengeluaran Gaya Hidup',
+      body: `Porsi pengeluaran diskresioner tercatat di angka ${Math.round(discretionaryDrift.ratioNow * 100)}% dari total pengeluaran bulan ini (bergeser ${discretionaryDrift.diffPct} poin dari 3 bulan lalu).`,
       ctaLabel: 'Analisis Kategori',
       ctaRoute: '/analytics',
     });
@@ -511,8 +511,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 2.9,
       severity: 'warning',
-      title: 'Pengeluaran Kategori Merayap Naik',
-      body: `Pengeluaran di kategori '${params.categoryCreep.categoryName}' tercatat naik konsisten dalam 3 bulan terakhir (saat ini ${formatCurrency(params.categoryCreep.currentAmount)}).`,
+      title: 'Tren Pengeluaran Kategori',
+      body: `Pengeluaran pada kategori '${params.categoryCreep.categoryName}' tercatat meningkat bertahap dalam 3 bulan terakhir (saat ini ${formatCurrency(params.categoryCreep.currentAmount)}).`,
       ctaLabel: 'Lihat Analisis',
       ctaRoute: '/analytics',
     });
@@ -523,9 +523,9 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 3.1,
       severity: 'warning',
-      title: 'Selisih Bersih Menipis',
-      body: `Selisih bersih pemasukan terhadap pengeluaran berada di angka ${formatCurrency(params.savingsGapShrinking.netNow)} bulan ini.`,
-      ctaLabel: 'Evaluasi Anggaran',
+      title: 'Dinamika Saldo Bersih',
+      body: `Selisih bersih pemasukan terhadap pengeluaran tercatat menyusut dalam 3 bulan terakhir (tersisa ${formatCurrency(params.savingsGapShrinking.netNow)} bulan lalu).`,
+      ctaLabel: 'Tinjau Alokasi',
       ctaRoute: '/budgets',
     });
   }
@@ -535,9 +535,9 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 3.2,
       severity: 'warning',
-      title: 'Anggaran Mungkin Tidak Realistis',
-      body: `Rata-rata pengeluaran aktual '${params.budgetAccuracyAlert.categoryName}' dalam 3 bulan terakhir berada di angka ${formatCurrency(params.budgetAccuracyAlert.avgExpense)}, melampaui batas yang diatur (${formatCurrency(params.budgetAccuracyAlert.budgetAmount)}).`,
-      ctaLabel: 'Sesuaikan Anggaran',
+      title: 'Realisasi vs Anggaran',
+      body: `Realisasi pengeluaran '${params.budgetAccuracyAlert.categoryName}' tercatat melebihi alokasi >20% dalam 3 bulan berturut-turut (rata-rata ${formatCurrency(params.budgetAccuracyAlert.avgExpense)} dari batas ${formatCurrency(params.budgetAccuracyAlert.budgetAmount)}).`,
+      ctaLabel: 'Tinjau Alokasi',
       ctaRoute: '/budgets',
     });
   }
@@ -547,8 +547,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 3.3,
       severity: 'warning',
-      title: 'Lonjakan Pengeluaran Kategori',
-      body: `Pengeluaran '${params.categorySpike.categoryName}' bulan ini tercatat ${formatCurrency(params.categorySpike.currentAmount)}, ${params.categorySpike.spikePct}% lebih tinggi dari rata-rata 3 bulan terakhir.`,
+      title: 'Dinamika Pengeluaran Kategori',
+      body: `Pengeluaran '${params.categorySpike.categoryName}' bulan ini tercatat ${formatCurrency(params.categorySpike.currentAmount)}, ${params.categorySpike.spikePct}% dibanding rata-rata 3 bulan terakhir.`,
       ctaLabel: 'Lihat Transaksi',
       ctaRoute: '/transactions',
     });
@@ -563,8 +563,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 3.4,
       severity: 'positive',
-      title: 'Pemulihan Anggaran Berhasil',
-      body: `Kerja bagus! Bulan lalu kamu berhasil menekan pengeluaran '${params.budgetRecovery.categoryName}' kembali ke batas anggaran (hemat ${formatCurrency(params.budgetRecovery.savedAmount)} dari bulan sebelumnya). Pertahankan!`,
+      title: 'Pemulihan Alokasi Anggaran',
+      body: `Bulan lalu realisasi pengeluaran '${params.budgetRecovery.categoryName}' kembali berada dalam batas alokasi anggaran (selisih ${formatCurrency(params.budgetRecovery.savedAmount)} dibanding bulan sebelumnya).`,
       ctaLabel: 'Lihat Anggaran',
       ctaRoute: '/budgets',
     });
@@ -576,7 +576,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 3.5,
       severity: 'positive',
       title: 'Konsistensi Target Terjaga',
-      body: `Luar biasa! Kamu berhasil mencapai target pemasukan '${params.targetStreak.targetName}' selama ${params.targetStreak.streakCount} bulan berturut-turut.`,
+      body: `Target pemasukan '${params.targetStreak.targetName}' berhasil tercapai selama ${params.targetStreak.streakCount} bulan berturut-turut.`,
       ctaLabel: 'Lihat Target',
       ctaRoute: '/targets',
     });
@@ -588,7 +588,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 3.8, /********** Prioritas rendah — insight informatif. */
       severity: 'neutral',
       title: 'Pola Penggunaan Dompet',
-      body: `Sekadar info: ${params.walletCategoryPattern.percentage}% pengeluaran '${params.walletCategoryPattern.categoryName}'-mu selalu menggunakan dompet '${params.walletCategoryPattern.walletName}'.`,
+      body: `Sebesar ${params.walletCategoryPattern.percentage}% pengeluaran '${params.walletCategoryPattern.categoryName}' tercatat menggunakan dompet '${params.walletCategoryPattern.walletName}'.`,
       ctaLabel: 'Lihat Dompet',
       ctaRoute: '/wallets',
     });
@@ -600,8 +600,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     insights.push({
       priority: 3.75,
       severity: 'neutral',
-      title: 'Rasio Pengeluaran Tidak Konsisten',
-      body: `Rasio pengeluaran terhadap pemasukanmu berubah-ubah dalam 3 bulan terakhir: ${r1}% → ${r2}% → ${r3}%. Konsistensi yang lebih stabil memudahkan perencanaan keuangan.`,
+      title: 'Variasi Rasio Pengeluaran',
+      body: `Rasio pengeluaran terhadap pemasukan tercatat berfluktuasi dalam 3 bulan terakhir (${r1}% → ${r2}% → ${r3}%).`,
       ctaLabel: 'Lihat Analisis',
       ctaRoute: '/analytics',
     });
@@ -615,7 +615,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 4,
       severity: 'neutral',
       title: 'Pola Pengeluaran Stabil',
-      body: `Arus kas kamu bulan ini berjalan stabil. Yuk, tinjau kembali pengeluaranmu untuk memastikan semuanya tetap berada di jalurnya.`,
+      body: `Arus kas bulan ini berjalan stabil. Tinjauan berkala membantu memastikan perencanaan tetap pada jalurnya.`,
       ctaLabel: 'Lihat Transaksi',
       ctaRoute: '/transactions',
     });

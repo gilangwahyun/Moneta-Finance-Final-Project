@@ -286,4 +286,72 @@ test.describe.serial('2.3 Transactions (Transaksi)', () => {
     await expect(page.locator('div.group.relative').filter({ hasText: 'Makan Siang QA' })).not.toBeVisible();
   });
 
+  test('[AU-04-04_01] Point-of-Decision Cue: Menampilkan sisa alokasi tenang dan adaptif di modal transaksi', async () => {
+    // 1. Buat anggaran untuk Makanan (1.000.000)
+    await page.goto('/budgets');
+    await page.click('button:has-text("Atur Anggaran")');
+    await expect(page.locator('h2:has-text("Buat Anggaran Baru")')).toBeVisible();
+    await page.locator('span:text-is("Makanan")').locator('..').click();
+    await page.locator('input[placeholder="0"]').clear();
+    await page.locator('input[placeholder="0"]').pressSequentially('1000000', { delay: 10 });
+    await page.click('button[type="submit"]:has-text("Simpan Anggaran")');
+    await expect(page.locator('h2:has-text("Buat Anggaran Baru")')).not.toBeVisible();
+
+    // 2. Buka modal tambah transaksi di /transactions
+    await page.goto('/transactions');
+    await page.click('button:has-text("Tambah Transaksi")');
+    const modal = page.locator('.relative.z-10').filter({ hasText: 'Tambah Transaksi' });
+    await expect(modal).toBeVisible();
+
+    // Pastikan default Pengeluaran terpilih
+    // Pilih kategori Makanan yang sudah memiliki anggaran
+    await page.locator('button[aria-label="Makanan"]').click();
+
+    // Cue harus muncul dengan sisa alokasi tenang
+    const cue = page.locator('#budget-cue-container');
+    await expect(cue).toBeVisible();
+    await expect(cue).toContainText('Sisa alokasi bulan ini:');
+    await expect(cue).toContainText('/hari)');
+
+    // Bilah progress tipis netral harus ada dan tidak memiliki kelas warna bahaya/amber/red
+    const cueBar = page.locator('#budget-cue-bar');
+    await expect(cueBar).toBeVisible();
+    const barClass = await cueBar.getAttribute('class');
+    expect(barClass).not.toMatch(/bg-(rose|red|amber|orange)/);
+
+    // Saat beralih ke Pemasukan, cue TIDAK boleh muncul
+    await modal.locator('button:has-text("Pemasukan")').first().click();
+    await expect(cue).not.toBeVisible();
+
+    // Saat beralih ke Transfer, cue TIDAK boleh muncul
+    await modal.locator('button:has-text("Transfer")').first().click();
+    await expect(cue).not.toBeVisible();
+
+    // Kembalikan ke Pengeluaran
+    await modal.locator('button:has-text("Pengeluaran")').first().click();
+
+    // Uji tampilan mobile (375px) dengan input nominal ekstrem Rp 99.999.999 (Rico's test case)
+    await page.setViewportSize({ width: 375, height: 667 });
+    await page.locator('button[aria-label="Makanan"]').click();
+    await expect(cue).toBeVisible();
+
+    await page.locator('#txn-amount').clear();
+    await page.locator('#txn-amount').pressSequentially('99999999', { delay: 10 });
+
+    // Cek bahwa tidak terjadi horizontal overflow pada cue container
+    const isOverflowing = await page.evaluate(() => {
+      const el = document.getElementById('budget-cue-container');
+      return el ? el.scrollWidth > el.clientWidth : false;
+    });
+    expect(isOverflowing).toBe(false);
+
+    // Kembalikan ukuran viewport
+    await page.setViewportSize({ width: 1280, height: 720 });
+
+    // Tutup modal
+    await modal.locator('button:has-text("Batal")').click();
+    await expect(modal).not.toBeVisible();
+  });
+
 });
+

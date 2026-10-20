@@ -394,7 +394,7 @@ export default function NotificationSettingsPage() {
   return (
     <SecondaryPageLayout
       title="Pengaturan Notifikasi"
-      description="Pilih satu mode notifikasi. Moneta hanya mengirim peringatan saat benar-benar diperlukan."
+      description="Pilih satu mode notifikasi. Moneta hanya mengirim informasi saat benar-benar diperlukan."
       backRoute="/profile"
     >
       {isLoading ? (
@@ -418,7 +418,7 @@ export default function NotificationSettingsPage() {
               <div className="flex-1">
                 <p className="text-xs font-semibold text-indigo-800 dark:text-indigo-300">Izin notifikasi diperlukan</p>
                 <p className="mt-0.5 text-xs text-indigo-700 dark:text-indigo-400">
-                  Izinkan notifikasi dari browser untuk mengaktifkan peringatan OS.
+                  Izinkan notifikasi dari browser untuk mengaktifkan notifikasi perangkat.
                 </p>
                 <button
                   id="btn-request-permission"
@@ -487,14 +487,14 @@ export default function NotificationSettingsPage() {
           </div>
 
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Mode Peringatan Anggaran</p>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-slate-600 dark:text-slate-400">Mode Notifikasi Anggaran</p>
 
             <div className="space-y-2.5" role="radiogroup" aria-label="Mode notifikasi">
               <ModeCard
                 id="INSTANT"
                 icon={<Zap className="h-4 w-4" />}
-                title="Peringatan Instan (Hanya Krisis)"
-                description="Notifikasi OS dikirim saat anggaran kategori mendekati (50%) atau melewati batas (100%). Hening untuk transaksi biasa."
+                title="Notifikasi Berjalan"
+                description="Notifikasi perangkat dikirim saat alokasi kategori mencapai progres penting (50% atau 100%). Hening untuk transaksi biasa."
                 selected={notifMode === 'INSTANT'}
                 onSelect={() => setNotifMode('INSTANT')}
               />
@@ -522,15 +522,15 @@ export default function NotificationSettingsPage() {
               <div className="flex items-start gap-3">
                 <Info className="mt-0.5 h-4 w-4 shrink-0 text-indigo-500" />
                 <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-                  Moneta mengirim peringatan saat anggaran mendekati atau melewati batas. Kamu tetap bisa membatasi jumlah push harian.
+                  Moneta mengirim notifikasi saat anggaran mencapai progres penting atau alokasi penuh. Kamu tetap bisa membatasi jumlah push harian.
                 </p>
               </div>
-              <AdvancedSettings title="Lihat aturan peringatan">
+              <AdvancedSettings title="Lihat aturan notifikasi">
                 <ul className="list-inside list-disc space-y-1.5 text-xs text-slate-600 dark:text-slate-400">
-                  <li>Penggunaan 20%: informasi</li>
-                  <li>Penggunaan 50%: peringatan</li>
-                  <li>Penggunaan 100%: peringatan kritis</li>
-                  <li>Melewati batas: rekomendasi tindakan jika tersedia</li>
+                  <li>Penggunaan 50%: progres alokasi</li>
+                  <li>Penggunaan 80%: progres alokasi</li>
+                  <li>Penggunaan 100%: kilas alokasi penuh</li>
+                  <li>Alokasi penuh: tinjau opsi penyesuaian jika tersedia</li>
                 </ul>
               </AdvancedSettings>
             </div>

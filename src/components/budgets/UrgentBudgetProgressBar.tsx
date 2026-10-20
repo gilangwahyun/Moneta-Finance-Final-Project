@@ -35,23 +35,22 @@ const URGENCY_STYLES: Record<
   }
 > = {
   safe: {
-    bar: "bg-indigo-500",
+    bar: "bg-indigo-500 dark:bg-indigo-400",
     remaining: "text-indigo-700 dark:text-indigo-300",
     remainingBg: "bg-indigo-50 dark:bg-indigo-950/60",
     remainingBorder: "border-indigo-100 dark:border-indigo-900/60",
   },
   warning: {
-    bar: "bg-amber-500",
-    remaining: "text-amber-700 dark:text-amber-300",
-    remainingBg: "bg-amber-50 dark:bg-amber-950/60",
-    remainingBorder: "border-amber-100 dark:border-amber-900/60",
+    bar: "bg-indigo-500/80 dark:bg-indigo-400/80",
+    remaining: "text-slate-700 dark:text-slate-300",
+    remainingBg: "bg-slate-100 dark:bg-slate-800/60",
+    remainingBorder: "border-slate-200 dark:border-slate-700",
   },
   critical: {
-    /* Melebihi anggaran: Menggunakan warna rose-500 untuk bilah (pengingat penghindaran kerugian) */
-    bar: "bg-rose-500",
-    remaining: "text-rose-600 dark:text-rose-400",
-    remainingBg: "bg-rose-50 dark:bg-rose-950/60",
-    remainingBorder: "border-rose-200 dark:border-rose-900/60",
+    bar: "bg-slate-600 dark:bg-slate-400",
+    remaining: "text-slate-700 dark:text-slate-300",
+    remainingBg: "bg-slate-100 dark:bg-slate-800/60",
+    remainingBorder: "border-slate-200 dark:border-slate-700",
   },
 };
 
@@ -62,7 +61,7 @@ interface UrgentBudgetProgressBarProps {
 }
 
 /**
- * Merender bilah kemajuan untuk kategori anggaran yang memerlukan perhatian mendesak beserta indikator sisa dana/defisit.
+ * Merender bilah kemajuan untuk kategori anggaran beserta indikator alokasi dan sisa dana.
  *
  * @param props - Properti item progres anggaran
  * @returns Elemen JSX bilah progres mendesak
@@ -75,8 +74,8 @@ export function UrgentBudgetProgressBar({ item }: UrgentBudgetProgressBarProps) 
   /* Kalkulasi jumlah kelebihan nominal pengeluaran di atas batas anggaran */
   const deficitAmount = isExceeded ? item.spentAmount - item.budgetAmount : 0;
   
-  /* Warna bilah: rose-500 saat melebihi anggaran, atau mengikuti gaya urgensi */
-  const barClass = isExceeded ? "bg-rose-500" : styles.bar;
+  /* Warna bilah: slate saat alokasi penuh, atau mengikuti gaya alokasi */
+  const barClass = isExceeded ? "bg-slate-600 dark:bg-slate-400" : styles.bar;
   /********** [END: Kalkulasi Defisit & Kelas Warna Urgensi] **********/
 
   return (
@@ -97,14 +96,13 @@ export function UrgentBudgetProgressBar({ item }: UrgentBudgetProgressBarProps) 
         <div
           className={`shrink-0 rounded-lg border px-2.5 py-1 ${
             isExceeded
-              ? "bg-rose-50 border-rose-200 dark:bg-rose-950/60 dark:border-rose-900/60"
+              ? "bg-slate-100 border-slate-200 dark:bg-slate-800/60 dark:border-slate-700"
               : `${styles.remainingBg} ${styles.remainingBorder}`
           }`}
         >
           {isExceeded ? (
-            <span className="flex items-center gap-1 text-xs font-semibold text-rose-600 dark:text-rose-400">
-              <AlertCircle className="h-3 w-3 shrink-0" />
-              Melebihi batas
+            <span className="flex items-center gap-1 text-xs font-semibold text-slate-700 dark:text-slate-300">
+              Alokasi penuh
             </span>
           ) : (
             <span className={`whitespace-nowrap text-xs font-bold ${styles.remaining}`}>
@@ -131,9 +129,8 @@ export function UrgentBudgetProgressBar({ item }: UrgentBudgetProgressBarProps) 
           {" "}dari {formatCurrency(item.budgetAmount)}
         </p>
         {isExceeded ? (
-          /* Menampilkan nominal defisit berlebih yang mudah dibaca alih-alih persentase esktrem */
-          <p className="text-xs font-semibold text-rose-500 dark:text-rose-400">
-            +{formatCurrency(deficitAmount)} lebih
+          <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+            +{formatCurrency(deficitAmount)}
           </p>
         ) : (
           <p className="text-xs font-medium text-slate-600 dark:text-slate-400">

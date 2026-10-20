@@ -24,6 +24,7 @@ import { CategoryBuilder } from "@/components/categories/CategoryBuilder";
 import { getBudgetsByPeriod } from "@/lib/local-db/repositories/budgets";
 import { getCurrentUser } from "@/lib/local-db/repositories/users";
 import { formatCurrency } from "@/lib/utils/helpers";
+import { calculateBudgetRhythm } from "@/lib/utils/budget-rhythm";
 
 /********** Fungsi Bantu (Helper Functions) **********/
 
@@ -155,13 +156,13 @@ export function TransactionModal({
   /* Peta kapasitas dan serapan anggaran per kategori pengeluaran bulan berjalan */
   const categorySpendingMap = useMemo(() => {
     if (formType !== "EXPENSE" || activeBudgets.length === 0) {
-      return new Map<string, { limit: number; spent: number; remaining: number; percentage: number }>();
+      return new Map<string, { limit: number; spent: number; remaining: number; percentage: number; period: string }>();
     }
     const now = new Date();
     const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
     const allExpenses = (recentTransactions && recentTransactions.length > 0) ? recentTransactions : (transactions || []);
 
-    const map = new Map<string, { limit: number; spent: number; remaining: number; percentage: number }>();
+    const map = new Map<string, { limit: number; spent: number; remaining: number; percentage: number; period: string }>();
     for (const b of activeBudgets) {
       const limit = Number(b.amount);
       const spent = allExpenses
@@ -169,59 +170,27 @@ export function TransactionModal({
         .reduce((sum, t) => sum + Number(t.amount), 0);
       const remaining = limit - spent;
       const percentage = limit > 0 ? Math.round((spent / limit) * 100) : 0;
-      map.set(b.categoryId, { limit, spent, remaining, percentage });
+      map.set(b.categoryId, { limit, spent, remaining, percentage, period: b.period });
     }
     return map;
   }, [formType, activeBudgets, recentTransactions, transactions]);
 
-  /* Choice Architecture (Spatial Ordering):
-   * Untuk transaksi EXPENSE, urutkan kategori berdasarkan kesehatan sisa anggaran:
-   * 1. Kategori yang memiliki anggaran dengan sisa alokasi paling melimpah (surplus) diletakkan di urutan paling atas.
-   * 2. Kategori yang mendekati limit atau telah mencapai 100%+ digeser ke bawah.
-   * 3. Jika suatu kategori sedang dipilih (formCategoryId aktif), pastikan tetap berada di 8 teratas agar selalu terlihat.
-   */
-  const displayCategories = useMemo(() => {
-    if (formType !== "EXPENSE" || categorySpendingMap.size === 0) {
-      return availableCategories;
-    }
+  /* Urutan tombol kategori tetap stabil dan tidak diacak oleh sisa anggaran */
+  const displayCategories = availableCategories;
 
-    const sorted = [...availableCategories].sort((a, b) => {
-      const dataA = categorySpendingMap.get(a.clientId);
-      const dataB = categorySpendingMap.get(b.clientId);
-
-      if (dataA && dataB) {
-        return dataB.remaining - dataA.remaining;
-      }
-      if (dataA && !dataB) {
-        return dataA.remaining > 0 ? -1 : 1;
-      }
-      if (!dataA && dataB) {
-        return dataB.remaining > 0 ? 1 : -1;
-      }
-      return 0;
-    });
-
-    if (formCategoryId && sorted.length > 8) {
-      const activeIdx = sorted.findIndex((c) => c.clientId === formCategoryId);
-      if (activeIdx >= 8) {
-        const [activeCat] = sorted.splice(activeIdx, 1);
-        sorted.splice(7, 0, activeCat);
-      }
-    }
-
-    return sorted;
-  }, [availableCategories, formType, categorySpendingMap, formCategoryId]);
-
-  /* Kalkulasi sisa anggaran pasif untuk kategori pengeluaran terpilih (Ambient Nudge) */
+  /* Kalkulasi sisa anggaran pasif untuk kategori pengeluaran terpilih (Point-of-Decision Cue) */
   const activeCategoryBudget = useMemo(() => {
     if (formType !== "EXPENSE" || !formCategoryId) return null;
     const matched = categorySpendingMap.get(formCategoryId);
     if (!matched) return null;
 
+    const rhythm = calculateBudgetRhythm(matched.limit, matched.spent, matched.period);
+
     return {
       limit: matched.limit,
       spent: matched.spent,
-      remaining: Math.max(0, matched.remaining),
+      remaining: matched.remaining,
+      dailySafeRemaining: rhythm.dailySafeRemaining,
       percentage: matched.percentage,
       isExceeded: matched.spent >= matched.limit,
     };
@@ -657,11 +626,7 @@ export function TransactionModal({
                 placeholder="0"
                 required
                 autoFocus
-                className={`w-full min-h-[56px] rounded-lg border py-3 pl-12 pr-4 text-2xl font-bold shadow-sm focus:outline-none focus:ring-2 transition-all duration-300 ${
-                  activeCategoryBudget && activeCategoryBudget.percentage >= 85
-                    ? "border-amber-300/70 bg-amber-50/20 text-slate-900 focus:border-amber-400 focus:ring-amber-400/20 dark:border-amber-700/60 dark:bg-amber-950/15 dark:text-slate-50"
-                    : "border-slate-200 bg-white text-slate-900 focus:border-indigo-500 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-50"
-                }`}
+                className="w-full min-h-[56px] rounded-lg border border-slate-200 bg-white py-3 pl-12 pr-4 text-2xl font-bold text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-50 transition-all duration-200"
               />
             </div>
           </div>
@@ -852,34 +817,33 @@ export function TransactionModal({
                 </button>
               )}
 
-              {/* Ambient In-Situ Budget Cue ("Buah di Meja Makan" Nudge) */}
+              {/* In-situ Point-of-Decision Cue ("Buah di Meja Makan") */}
               {activeCategoryBudget && (
-                <div className="space-y-1.5 rounded-xl bg-slate-50/90 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 px-3.5 py-2.5 text-xs transition-all animate-in fade-in duration-200">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className={`h-2 w-2 rounded-full shrink-0 ${activeCategoryBudget.isExceeded ? 'bg-slate-400' : 'bg-indigo-500'}`} />
-                      <span className="text-slate-600 dark:text-slate-400 truncate">
-                        Alokasi bulan ini: <span className="font-medium text-slate-800 dark:text-slate-200">{formatCurrency(activeCategoryBudget.limit)}</span>
+                <div id="budget-cue-container" className="space-y-1 rounded-lg bg-slate-50/90 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 px-3 py-2 text-xs transition-all animate-in fade-in duration-150">
+                  <div className="flex flex-wrap items-baseline justify-between gap-x-2 gap-y-0.5 font-medium">
+                    {activeCategoryBudget.remaining > 0 ? (
+                      <>
+                        <span className="text-slate-600 dark:text-slate-400">
+                          Sisa alokasi bulan ini:
+                        </span>
+                        <span className="font-semibold text-slate-900 dark:text-slate-100">
+                          {formatCurrency(activeCategoryBudget.remaining)}{" "}
+                          <span className="font-normal text-slate-500 dark:text-slate-400">
+                            (~ {formatCurrency(activeCategoryBudget.dailySafeRemaining)}/hari)
+                          </span>
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-slate-600 dark:text-slate-400 font-medium">
+                        Alokasi bulan ini sudah terpakai penuh
                       </span>
-                    </div>
-                    <div className="font-semibold text-slate-700 dark:text-slate-300 shrink-0 ml-2">
-                      {activeCategoryBudget.isExceeded ? (
-                        <span className="text-slate-500 dark:text-slate-400">Alokasi Penuh ({activeCategoryBudget.percentage}%)</span>
-                      ) : (
-                        <span>Sisa: {formatCurrency(activeCategoryBudget.remaining)} ({activeCategoryBudget.percentage}%)</span>
-                      )}
-                    </div>
+                    )}
                   </div>
-                  {/* Bilah Progres Pasif Mini */}
-                  <div className="h-1 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-700/80">
+                  {/* Bilah Tipis Netral (~2px) Tanpa Warna Alarm */}
+                  <div className="h-[2px] w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
                     <div
-                      className={`h-full rounded-full transition-all duration-300 ${
-                        activeCategoryBudget.isExceeded
-                          ? "bg-slate-400"
-                          : activeCategoryBudget.percentage >= 85
-                          ? "bg-amber-500/80"
-                          : "bg-indigo-500"
-                      }`}
+                      id="budget-cue-bar"
+                      className="h-full rounded-full bg-indigo-500/80 dark:bg-indigo-400/80 transition-all duration-300"
                       style={{ width: `${Math.min(100, activeCategoryBudget.percentage)}%` }}
                     />
                   </div>

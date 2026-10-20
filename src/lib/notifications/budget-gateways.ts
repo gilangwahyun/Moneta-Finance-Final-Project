@@ -261,15 +261,15 @@ export function evaluateBudgetGateways(
   const remainingFmt = fmtRupiah(Math.max(0, remainingAmount));
 
   if (tier === 'DEFICIT') {
-    title = 'Peringatan Batas Anggaran';
-    body = `Anggaran ${categoryName} kamu sudah habis. Sisa ${fmtRupiah(0)} dari ${fmtRupiah(budgetAmount)}. Pertimbangkan realokasi dari kategori lain.`;
+    title = 'Kilas Batas Alokasi';
+    body = `Alokasi ${categoryName} mencapai batas yang ditentukan. Tercatat ${fmtRupiah(budgetAmount)}. Tersedia opsi penyeimbangan alokasi.`;
   } else if (tier === 'T2') {
-    title = 'Peringatan Batas Anggaran';
-    body = `Sisa anggaran ${categoryName} kamu kritis, tinggal ${remainingFmt}. Pertimbangkan kembali pengeluaran berikutnya.`;
+    title = 'Progres Alokasi';
+    body = `Alokasi ${categoryName} telah terpakai 80%, tersisa ${remainingFmt}.`;
   } else {
     /********** T1 */
-    title = 'Pengingat Anggaran';
-    body = `Sudah separuh anggaran ${categoryName} terpakai. Sisa anggaran: ${remainingFmt}. Pertahankan ritme pengeluaranmu.`;
+    title = 'Progres Alokasi';
+    body = `Alokasi ${categoryName} telah mencapai 50%, tersisa ${remainingFmt}.`;
   }
 
   /********** Rekam threshold sebagai sudah dikirim. */

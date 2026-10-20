@@ -92,30 +92,30 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
       expect(rule).toBeUndefined();
     });
 
-    // BG-04: Saran Anggaran Baru
-    test('[BG-04] VALID: smartBudgetSuggestion triggers "Saran Anggaran Baru"', async () => {
+    // BG-04: Saran Alokasi Anggaran
+    test('[BG-04] VALID: smartBudgetSuggestion triggers "Saran Alokasi Anggaran"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         smartBudgetSuggestion: { categoryName: 'Makan & Minum', categoryId: 'cat-2', averageAmount: 750_000 },
       });
-      const rule = insights.find((i: any) => i.title === 'Saran Anggaran Baru');
+      const rule = insights.find((i: any) => i.title === 'Saran Alokasi Anggaran');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('info');
     });
 
     test('[BG-04] INVALID: null smartBudgetSuggestion does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, smartBudgetSuggestion: null });
-      const rule = insights.find((i: any) => i.title === 'Saran Anggaran Baru');
+      const rule = insights.find((i: any) => i.title === 'Saran Alokasi Anggaran');
       expect(rule).toBeUndefined();
     });
 
-    // BG-01: Anggaran Berisiko Habis Lebih Awal
-    test('[BG-01] VALID: budgetRunway triggers "Anggaran Berisiko Habis Lebih Awal"', async () => {
+    // BG-01: Proyeksi Daya Tahan Alokasi
+    test('[BG-01] VALID: budgetRunway triggers "Proyeksi Daya Tahan Alokasi"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         budgetRunway: { categoryName: 'Transport', budgetId: 'bgt-1', daysUntilExhausted: 5, daysRemaining: 15 },
       });
-      const rule = insights.find((i: any) => i.title === 'Anggaran Berisiko Habis Lebih Awal');
+      const rule = insights.find((i: any) => i.title === 'Proyeksi Daya Tahan Alokasi');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('warning');
       expect(rule.priority).toBe(1.9);
@@ -123,61 +123,61 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
 
     test('[BG-01] INVALID: null budgetRunway does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, budgetRunway: null });
-      const rule = insights.find((i: any) => i.title === 'Anggaran Berisiko Habis Lebih Awal');
+      const rule = insights.find((i: any) => i.title === 'Proyeksi Daya Tahan Alokasi');
       expect(rule).toBeUndefined();
     });
 
-    // BG-02: Pemulihan Anggaran Berhasil
-    test('[BG-02] VALID: budgetRecovery triggers "Pemulihan Anggaran Berhasil"', async () => {
+    // BG-02: Pemulihan Alokasi Anggaran
+    test('[BG-02] VALID: budgetRecovery triggers "Pemulihan Alokasi Anggaran"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         budgetRecovery: { categoryName: 'Hiburan', budgetId: 'bgt-2', savedAmount: 500_000 },
       });
-      const rule = insights.find((i: any) => i.title === 'Pemulihan Anggaran Berhasil');
+      const rule = insights.find((i: any) => i.title === 'Pemulihan Alokasi Anggaran');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('positive');
     });
 
     test('[BG-02] INVALID: null budgetRecovery does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, budgetRecovery: null });
-      const rule = insights.find((i: any) => i.title === 'Pemulihan Anggaran Berhasil');
+      const rule = insights.find((i: any) => i.title === 'Pemulihan Alokasi Anggaran');
       expect(rule).toBeUndefined();
     });
 
-    // BG-05: Anggaran Mungkin Tidak Realistis
-    test('[BG-05] VALID: budgetAccuracyAlert triggers "Anggaran Mungkin Tidak Realistis"', async () => {
+    // BG-05: Realisasi vs Anggaran
+    test('[BG-05] VALID: budgetAccuracyAlert triggers "Realisasi vs Anggaran"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         budgetAccuracyAlert: { categoryName: 'Belanja', budgetId: 'bgt-3', budgetAmount: 1_000_000, avgExpense: 1_400_000 },
       });
-      const rule = insights.find((i: any) => i.title === 'Anggaran Mungkin Tidak Realistis');
+      const rule = insights.find((i: any) => i.title === 'Realisasi vs Anggaran');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('warning');
     });
 
     test('[BG-05] INVALID: null budgetAccuracyAlert does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, budgetAccuracyAlert: null });
-      const rule = insights.find((i: any) => i.title === 'Anggaran Mungkin Tidak Realistis');
+      const rule = insights.find((i: any) => i.title === 'Realisasi vs Anggaran');
       expect(rule).toBeUndefined();
     });
 
-    // BG-00: Top Category Spike (Pengeluaran Melonjak) — via topExpenseCategory
-    test('[BG-00] VALID: topExpenseCategory spike >= 20% triggers "Pengeluaran Melonjak"', async () => {
+    // BG-00: Top Category Spike (Dinamika Pengeluaran Kategori) — via topExpenseCategory
+    test('[BG-00] VALID: topExpenseCategory spike >= 20% triggers "Dinamika Pengeluaran Kategori"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         topExpenseCategory: { name: 'Belanja', value: 1_500_000, prevValue: 1_000_000 }, // spike 50%
       });
-      const rule = insights.find((i: any) => i.title === 'Pengeluaran Melonjak');
+      const rule = insights.find((i: any) => i.title === 'Dinamika Pengeluaran Kategori');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('warning');
     });
 
-    test('[BG-00] INVALID: topExpenseCategory spike < 20% does NOT trigger "Pengeluaran Melonjak"', async () => {
+    test('[BG-00] INVALID: topExpenseCategory spike < 20% does NOT trigger "Dinamika Pengeluaran Kategori"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         topExpenseCategory: { name: 'Belanja', value: 1_100_000, prevValue: 1_000_000 }, // spike 10%
       });
-      const rule = insights.find((i: any) => i.title === 'Pengeluaran Melonjak');
+      const rule = insights.find((i: any) => i.title === 'Dinamika Pengeluaran Kategori');
       expect(rule).toBeUndefined();
     });
 
@@ -223,12 +223,12 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
   test.describe('Kelompok B — Spending Pattern', () => {
 
     // SP-01: Payday Leak
-    test('[SP-01] VALID: paydayLeak triggers "Pengeluaran Awal Bulan" (critical)', async () => {
+    test('[SP-01] VALID: paydayLeak triggers "Dinamika Arus Kas" (critical)', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         paydayLeak: { percentage: 55, days: 2 },
       });
-      const rule = insights.find((i: any) => i.title === 'Pengeluaran Awal Bulan');
+      const rule = insights.find((i: any) => i.title === 'Dinamika Arus Kas');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('critical');
       expect(rule.priority).toBe(1);
@@ -236,24 +236,24 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
 
     test('[SP-01] INVALID: null paydayLeak does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, paydayLeak: null });
-      const rule = insights.find((i: any) => i.title === 'Pengeluaran Awal Bulan');
+      const rule = insights.find((i: any) => i.title === 'Dinamika Arus Kas');
       expect(rule).toBeUndefined();
     });
 
     // SP-02: Weekend Trap
-    test('[SP-02] VALID: weekendTrap > 70% triggers "Pola Pengeluaran Akhir Pekan"', async () => {
+    test('[SP-02] VALID: weekendTrap > 70% triggers "Distribusi Waktu"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         weekendTrap: { percentage: 75 },
       });
-      const rule = insights.find((i: any) => i.title === 'Pola Pengeluaran Akhir Pekan');
+      const rule = insights.find((i: any) => i.title === 'Distribusi Waktu');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('warning');
     });
 
     test('[SP-02] INVALID: null weekendTrap does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, weekendTrap: null });
-      const rule = insights.find((i: any) => i.title === 'Pola Pengeluaran Akhir Pekan');
+      const rule = insights.find((i: any) => i.title === 'Distribusi Waktu');
       expect(rule).toBeUndefined();
     });
 
@@ -275,19 +275,19 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
     });
 
     // SP-04: Category Spike
-    test('[SP-04] VALID: categorySpike > 50% avg triggers "Lonjakan Pengeluaran Kategori"', async () => {
+    test('[SP-04] VALID: categorySpike > 50% avg triggers "Dinamika Pengeluaran Kategori"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         categorySpike: { categoryName: 'Belanja', categoryId: 'cat-3', currentAmount: 1_500_000, avgAmount: 900_000, spikePct: 67 },
       });
-      const rule = insights.find((i: any) => i.title === 'Lonjakan Pengeluaran Kategori');
+      const rule = insights.find((i: any) => i.title === 'Dinamika Pengeluaran Kategori');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('warning');
     });
 
     test('[SP-04] INVALID: null categorySpike does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, categorySpike: null });
-      const rule = insights.find((i: any) => i.title === 'Lonjakan Pengeluaran Kategori');
+      const rule = insights.find((i: any) => i.title === 'Dinamika Pengeluaran Kategori');
       expect(rule).toBeUndefined();
     });
 
@@ -309,53 +309,53 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
     });
 
     // SP-06: Subscription Cannibalization
-    test('[SP-06] VALID: subscriptions >= 3 triggers "Evaluasi Langganan"', async () => {
+    test('[SP-06] VALID: subscriptions >= 3 triggers "Evaluasi Langganan Rutin"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         subscriptions: { count: 4, percentage: 22 },
       });
-      const rule = insights.find((i: any) => i.title === 'Evaluasi Langganan');
+      const rule = insights.find((i: any) => i.title === 'Evaluasi Langganan Rutin');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('warning');
     });
 
     test('[SP-06] INVALID: null subscriptions does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, subscriptions: null });
-      const rule = insights.find((i: any) => i.title === 'Evaluasi Langganan');
+      const rule = insights.find((i: any) => i.title === 'Evaluasi Langganan Rutin');
       expect(rule).toBeUndefined();
     });
 
     // SP-07 / PR-01: Positive Reinforcement — Berhasil Berhemat
-    test('[SP-07/PR-01] VALID: weeklySavings > 0 triggers "Kamu Berhasil Berhemat!"', async () => {
+    test('[SP-07/PR-01] VALID: weeklySavings > 0 triggers "Surplus Mingguan"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         weeklySavings: 500_000,
       });
-      const rule = insights.find((i: any) => i.title === 'Kamu Berhasil Berhemat!');
+      const rule = insights.find((i: any) => i.title === 'Surplus Mingguan');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('positive');
     });
 
     test('[SP-07/PR-01] INVALID: weeklySavings = 0 does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, weeklySavings: 0 });
-      const rule = insights.find((i: any) => i.title === 'Kamu Berhasil Berhemat!');
+      const rule = insights.find((i: any) => i.title === 'Surplus Mingguan');
       expect(rule).toBeUndefined();
     });
 
     // SP-07: Recurring Merchant Growth
-    test('[SP-07] VALID: recurringMerchantGrowth >= 2x triggers "Kenaikan Transaksi Rutin"', async () => {
+    test('[SP-07] VALID: recurringMerchantGrowth >= 2x triggers "Dinamika Transaksi Rutin"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         recurringMerchantGrowth: { merchantName: 'GrabFood', currentCount: 6, prevCount: 2, amount: 600_000 },
       });
-      const rule = insights.find((i: any) => i.title === 'Kenaikan Transaksi Rutin');
+      const rule = insights.find((i: any) => i.title === 'Dinamika Transaksi Rutin');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('info');
     });
 
     test('[SP-07] INVALID: null recurringMerchantGrowth does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, recurringMerchantGrowth: null });
-      const rule = insights.find((i: any) => i.title === 'Kenaikan Transaksi Rutin');
+      const rule = insights.find((i: any) => i.title === 'Dinamika Transaksi Rutin');
       expect(rule).toBeUndefined();
     });
 
@@ -377,19 +377,19 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
     });
 
     // SP-09: Day of Month Clustering
-    test('[SP-09] VALID: dayOfMonthClustering > 50% triggers "Konsentrasi Pengeluaran"', async () => {
+    test('[SP-09] VALID: dayOfMonthClustering > 50% triggers "Konsentrasi Tanggal Belanja"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         dayOfMonthClustering: { ratio: 0.65, topDays: [1, 15, 28], totalAmount: 1_300_000 },
       });
-      const rule = insights.find((i: any) => i.title === 'Konsentrasi Pengeluaran');
+      const rule = insights.find((i: any) => i.title === 'Konsentrasi Tanggal Belanja');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('neutral');
     });
 
     test('[SP-09] INVALID: null dayOfMonthClustering does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, dayOfMonthClustering: null });
-      const rule = insights.find((i: any) => i.title === 'Konsentrasi Pengeluaran');
+      const rule = insights.find((i: any) => i.title === 'Konsentrasi Tanggal Belanja');
       expect(rule).toBeUndefined();
     });
 
@@ -402,12 +402,12 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
   test.describe('Kelompok C — Analitik Pola', () => {
 
     // AN-01: Peak Spending Day
-    test('[AN-01] VALID: peakDay triggers "Pola Pengeluaran Ditemukan"', async () => {
+    test('[AN-01] VALID: peakDay triggers "Pola Hari Transaksi"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         peakDay: { dayName: 'Sabtu', percentage: 45, dominantCategoryName: 'Belanja', totalAmountOnThatDay: 900_000, transactionCountOnThatDay: 5 },
       });
-      const rule = insights.find((i: any) => i.title === 'Pola Pengeluaran Ditemukan');
+      const rule = insights.find((i: any) => i.title === 'Pola Hari Transaksi');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('neutral');
       expect(rule.priority).toBe(3.8);
@@ -415,17 +415,17 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
 
     test('[AN-01] INVALID: null peakDay does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, peakDay: null });
-      const rule = insights.find((i: any) => i.title === 'Pola Pengeluaran Ditemukan');
+      const rule = insights.find((i: any) => i.title === 'Pola Hari Transaksi');
       expect(rule).toBeUndefined();
     });
 
     // AN-02: Category Creep
-    test('[AN-02] VALID: categoryCreep (3-month naik >10%) triggers "Pengeluaran Kategori Merayap Naik"', async () => {
+    test('[AN-02] VALID: categoryCreep (3-month naik >10%) triggers "Tren Pengeluaran Kategori"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         categoryCreep: { categoryName: 'Jajan', categoryId: 'cat-4', currentAmount: 1_500_000, growthPct: 15 },
       });
-      const rule = insights.find((i: any) => i.title === 'Pengeluaran Kategori Merayap Naik');
+      const rule = insights.find((i: any) => i.title === 'Tren Pengeluaran Kategori');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('warning');
       expect(rule.priority).toBe(2.9);
@@ -433,24 +433,24 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
 
     test('[AN-02] INVALID: null categoryCreep does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, categoryCreep: null });
-      const rule = insights.find((i: any) => i.title === 'Pengeluaran Kategori Merayap Naik');
+      const rule = insights.find((i: any) => i.title === 'Tren Pengeluaran Kategori');
       expect(rule).toBeUndefined();
     });
 
     // AN-03: Savings Gap Shrinking
-    test('[AN-03] VALID: savingsGapShrinking (turun >10%/bln) triggers "Selisih Bersih Menipis"', async () => {
+    test('[AN-03] VALID: savingsGapShrinking (turun >10%/bln) triggers "Dinamika Saldo Bersih"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         savingsGapShrinking: { netNow: 500_000, netThen: 2_000_000, dropPct: 75 },
       });
-      const rule = insights.find((i: any) => i.title === 'Selisih Bersih Menipis');
+      const rule = insights.find((i: any) => i.title === 'Dinamika Saldo Bersih');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('warning');
     });
 
     test('[AN-03] INVALID: null savingsGapShrinking does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, savingsGapShrinking: null });
-      const rule = insights.find((i: any) => i.title === 'Selisih Bersih Menipis');
+      const rule = insights.find((i: any) => i.title === 'Dinamika Saldo Bersih');
       expect(rule).toBeUndefined();
     });
 
@@ -472,29 +472,29 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
     });
 
     // AN-05: Category Dominance Shift
-    test('[AN-05] VALID: categoryDominanceShift >= 30% growth triggers "Pergeseran Pengeluaran Terbesar"', async () => {
+    test('[AN-05] VALID: categoryDominanceShift >= 30% growth triggers "Pergeseran Kategori Terbesar"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         categoryDominanceShift: { newTopName: 'Belanja', newTopAmount: 1_500_000, prevTopName: 'Makan & Minum', growthPct: 50 },
       });
-      const rule = insights.find((i: any) => i.title === 'Pergeseran Pengeluaran Terbesar');
+      const rule = insights.find((i: any) => i.title === 'Pergeseran Kategori Terbesar');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('info');
     });
 
     test('[AN-05] INVALID: null categoryDominanceShift does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, categoryDominanceShift: null });
-      const rule = insights.find((i: any) => i.title === 'Pergeseran Pengeluaran Terbesar');
+      const rule = insights.find((i: any) => i.title === 'Pergeseran Kategori Terbesar');
       expect(rule).toBeUndefined();
     });
 
     // AN-06: Expense-to-Income Consistency
-    test('[AN-06] VALID: expenseConsistency (max-min > 0.20) triggers "Rasio Pengeluaran Tidak Konsisten"', async () => {
+    test('[AN-06] VALID: expenseConsistency (max-min > 0.20) triggers "Variasi Rasio Pengeluaran"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         expenseConsistency: { ratios: [0.5, 0.7, 0.95], minRatio: 0.5, maxRatio: 0.95 },
       });
-      const rule = insights.find((i: any) => i.title === 'Rasio Pengeluaran Tidak Konsisten');
+      const rule = insights.find((i: any) => i.title === 'Variasi Rasio Pengeluaran');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('neutral');
     });
@@ -505,34 +505,34 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
         ...EMPTY_PARAMS,
         expenseConsistency: null, // engine already evaluated as null for small variance
       });
-      const rule = insights.find((i: any) => i.title === 'Rasio Pengeluaran Tidak Konsisten');
+      const rule = insights.find((i: any) => i.title === 'Variasi Rasio Pengeluaran');
       expect(rule).toBeUndefined();
     });
 
     // AN-07: Discretionary Drift
-    test('[AN-07] VALID: discretionaryDrift > 0.15 triggers "Perubahan Pola Pengeluaran"', async () => {
+    test('[AN-07] VALID: discretionaryDrift > 0.15 triggers "Dinamika Pengeluaran Gaya Hidup"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         discretionaryDrift: { ratioNow: 0.50, ratioThen: 0.30, diffPct: 20 },
       });
-      const rule = insights.find((i: any) => i.title === 'Perubahan Pola Pengeluaran');
+      const rule = insights.find((i: any) => i.title === 'Dinamika Pengeluaran Gaya Hidup');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('neutral');
     });
 
     test('[AN-07] INVALID: null discretionaryDrift does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, discretionaryDrift: null });
-      const rule = insights.find((i: any) => i.title === 'Perubahan Pola Pengeluaran');
+      const rule = insights.find((i: any) => i.title === 'Dinamika Pengeluaran Gaya Hidup');
       expect(rule).toBeUndefined();
     });
 
     // AN-08: Income Momentum Alert
-    test('[AN-08] VALID: incomeMomentum < 50% avgPrev triggers "Pemasukan Tertinggal"', async () => {
+    test('[AN-08] VALID: incomeMomentum < 50% avgPrev triggers "Momentum Arus Kas Masuk"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         incomeMomentum: { currentIncome: 2_000_000, avgPrevIncome: 5_000_000 },
       });
-      const rule = insights.find((i: any) => i.title === 'Pemasukan Tertinggal');
+      const rule = insights.find((i: any) => i.title === 'Momentum Arus Kas Masuk');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('warning');
       expect(rule.priority).toBe(1.7);
@@ -540,7 +540,7 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
 
     test('[AN-08] INVALID: null incomeMomentum does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, incomeMomentum: null });
-      const rule = insights.find((i: any) => i.title === 'Pemasukan Tertinggal');
+      const rule = insights.find((i: any) => i.title === 'Momentum Arus Kas Masuk');
       expect(rule).toBeUndefined();
     });
 
@@ -570,68 +570,68 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
       expect(rule).toBeUndefined();
     });
 
-    // AN-10 (a): Data Pemasukan Kosong
-    test('[AN-10a] VALID: income=0, expense>0 triggers "Data Pemasukan Kosong" (critical)', async () => {
+    // AN-10 (a): Data Pemasukan Kosong -> Selisih Arus Kas
+    test('[AN-10a] VALID: income=0, expense>0 triggers "Selisih Arus Kas" (critical)', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         current: { income: 0, expense: 2_000_000, net: -2_000_000 },
       });
-      const rule = insights.find((i: any) => i.title === 'Data Pemasukan Kosong');
+      const rule = insights.find((i: any) => i.title === 'Selisih Arus Kas');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('critical');
     });
 
-    // AN-10 (b): Defisit Arus Kas
-    test('[AN-10b] VALID: expense > income triggers "Defisit Arus Kas" (critical)', async () => {
+    // AN-10 (b): Defisit Arus Kas -> Selisih Arus Kas
+    test('[AN-10b] VALID: expense > income triggers "Selisih Arus Kas" (critical)', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         current: { income: 3_000_000, expense: 4_000_000, net: -1_000_000 },
       });
-      const rule = insights.find((i: any) => i.title === 'Defisit Arus Kas');
+      const rule = insights.find((i: any) => i.title === 'Selisih Arus Kas');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('critical');
       expect(rule.priority).toBe(1.1);
     });
 
-    // AN-10 (c): Rasio Pengeluaran Tinggi
-    test('[AN-10c] VALID: expense/income >= 0.8 triggers "Rasio Pengeluaran Tinggi" (warning)', async () => {
+    // AN-10 (c): Rasio Pengeluaran Tinggi -> Selisih Arus Kas
+    test('[AN-10c] VALID: expense/income >= 0.8 triggers "Selisih Arus Kas" (warning)', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         current: { income: 5_000_000, expense: 4_200_000, net: 800_000 },
       });
-      const rule = insights.find((i: any) => i.title === 'Rasio Pengeluaran Tinggi');
+      const rule = insights.find((i: any) => i.title === 'Selisih Arus Kas');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('warning');
     });
 
-    test('[AN-10c] INVALID: expense/income = 0.5 does NOT trigger "Rasio Pengeluaran Tinggi"', async () => {
+    test('[AN-10c] INVALID: expense/income = 0.5 does NOT trigger "Selisih Arus Kas"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         current: { income: 5_000_000, expense: 2_500_000, net: 2_500_000 },
       });
-      const rule = insights.find((i: any) => i.title === 'Rasio Pengeluaran Tinggi');
+      const rule = insights.find((i: any) => i.title === 'Selisih Arus Kas');
       expect(rule).toBeUndefined();
     });
 
     // AN-10a INVALID
-    test('[AN-10a] INVALID: income=0 AND expense=0 does NOT trigger "Data Pemasukan Kosong"', async () => {
+    test('[AN-10a] INVALID: income=0 AND expense=0 does NOT trigger "Selisih Arus Kas"', async () => {
       // Kondisi: income <= 0 && expense > 0 — jika expense juga 0, rule tidak terpicu
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         current: { income: 0, expense: 0, net: 0 },
       });
-      const rule = insights.find((i: any) => i.title === 'Data Pemasukan Kosong');
+      const rule = insights.find((i: any) => i.title === 'Selisih Arus Kas');
       expect(rule).toBeUndefined();
     });
 
     // AN-10b INVALID
-    test('[AN-10b] INVALID: income >= expense does NOT trigger "Defisit Arus Kas"', async () => {
+    test('[AN-10b] INVALID: income >= expense does NOT trigger "Selisih Arus Kas"', async () => {
       // Kondisi: expense > income — jika expense <= income, rule tidak terpicu
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         current: { income: 4_000_000, expense: 3_000_000, net: 1_000_000 },
       });
-      const rule = insights.find((i: any) => i.title === 'Defisit Arus Kas');
+      const rule = insights.find((i: any) => i.title === 'Selisih Arus Kas');
       expect(rule).toBeUndefined();
     });
 
@@ -834,7 +834,7 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
         recurringMerchantGrowth: { merchantName: 'Steam', currentCount: 5, prevCount: 2, amount: 500_000 },
         nightOwl: { totalAmount: 400_000 },
       });
-      const idxGrowth = insights.findIndex((i: any) => i.title === 'Kenaikan Transaksi Rutin');
+      const idxGrowth = insights.findIndex((i: any) => i.title === 'Dinamika Transaksi Rutin');
       const idxNight = insights.findIndex((i: any) => i.title === 'Pola Pengeluaran Malam Hari');
       expect(idxNight).toBeLessThan(idxGrowth);
     });

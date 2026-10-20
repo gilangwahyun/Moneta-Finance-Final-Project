@@ -126,8 +126,8 @@ function groupNotifications(notifications: DisplayNotification[]): NotificationG
 function TypeBadge({ type, eventType }: { type: string; eventType?: string }) {
   const colors: Record<string, string> = {
     system: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-    BUDGET_CRITICAL: 'bg-rose-50 text-rose-600 dark:bg-rose-950/20 dark:text-rose-400',
-    BUDGET_WARNING: 'bg-amber-50 text-amber-700 dark:bg-amber-950/20 dark:text-amber-300',
+    BUDGET_CRITICAL: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+    BUDGET_WARNING: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
     BUDGET_INFO: 'bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300',
     TARGET_PROGRESS: 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300',
     TARGET_ACHIEVED: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400',
@@ -139,8 +139,8 @@ function TypeBadge({ type, eventType }: { type: string; eventType?: string }) {
   };
   const label: Record<string, string> = {
     system: 'Sistem',
-    BUDGET_CRITICAL: 'Kritis',
-    BUDGET_WARNING: 'Peringatan',
+    BUDGET_CRITICAL: 'Alokasi Penuh',
+    BUDGET_WARNING: 'Progres Alokasi',
     BUDGET_INFO: 'Info Anggaran',
     TARGET_PROGRESS: 'Target',
     TARGET_ACHIEVED: 'Tercapai ✓',
@@ -212,7 +212,7 @@ function EmptyState() {
       </div>
       <h3 className="text-base font-semibold text-slate-900 dark:text-slate-50">Semua aman!</h3>
       <p className="mt-1.5 max-w-xs text-sm text-slate-600 dark:text-slate-400">
-        Belum ada peringatan keuangan untukmu saat ini. Kami akan memberitahumu jika ada hal penting.
+        Belum ada wawasan keuangan untukmu saat ini. Kamu akan melihat dinamika dan progres finansial di sini.
       </p>
     </div>
   );

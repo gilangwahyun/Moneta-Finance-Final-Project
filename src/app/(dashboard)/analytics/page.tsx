@@ -218,16 +218,11 @@ function InsightsPanel({
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  /* Urutkan insight berdasarkan tingkat keparahan (severity) */
-  const severityScore: Record<NudgeSeverity, number> = { critical: 3, warning: 2, positive: 1, neutral: 0, info: -1 };
-  const sortedInsights = [...insights].sort((a, b) => severityScore[b.severity] - severityScore[a.severity]);
+  /* Urutkan insight secara murni berdasarkan prioritas numerik */
+  const sortedInsights = [...insights].sort((a, b) => a.priority - b.priority);
 
-  const criticalInsights = sortedInsights.filter(i => i.severity === 'critical');
-  const otherInsights = sortedInsights.filter(i => i.severity !== 'critical');
-  
-  const visibleOtherCount = Math.max(0, 3 - criticalInsights.length);
-  const defaultVisible = [...criticalInsights, ...otherInsights.slice(0, visibleOtherCount)];
-  const hiddenCount = otherInsights.length - visibleOtherCount;
+  const defaultVisible = sortedInsights.slice(0, 3);
+  const hiddenCount = Math.max(0, sortedInsights.length - 3);
 
   const visibleInsights = isExpanded ? sortedInsights : defaultVisible;
 
@@ -237,9 +232,9 @@ function InsightsPanel({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
-        <Lightbulb className="h-5 w-5 text-amber-500" />
+        <Compass className="h-5 w-5 text-indigo-500" />
         <h2 className="text-lg font-bold text-slate-900 dark:text-slate-50">
-          Insight & Rekomendasi
+          Wawasan & Panduan Arah
         </h2>
       </div>
 

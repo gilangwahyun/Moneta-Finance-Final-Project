@@ -149,7 +149,7 @@ test.describe.serial('6. Notifications (Notifikasi)', () => {
     await expect(page.locator('h2:has-text("Tambah Transaksi")')).not.toBeVisible();
     
     // Check if notification 50% appears
-    const toast50 = page.locator('text="Penggunaan Anggaran Berjalan"');
+    const toast50 = page.locator('text="Progres Alokasi"');
     await expect(toast50.first()).toBeVisible({ timeout: 10000 });
 
     // 4. Add Expense 300.000 (Total 80%) -> Should trigger BG-00b
@@ -162,7 +162,7 @@ test.describe.serial('6. Notifications (Notifikasi)', () => {
     await expect(page.locator('h2:has-text("Tambah Transaksi")')).not.toBeVisible();
 
     // Check if notification 80% appears
-    const toast80 = page.locator('text=/Progres Alokasi Anggaran|Anggaran Mulai Menipis/i');
+    const toast80 = page.locator('text=/Progres Alokasi/i');
     await expect(toast80.first()).toBeVisible({ timeout: 10000 });
 
     // 5. Add Expense 200.000 (Total 100%) -> Should trigger BG-00c
@@ -175,8 +175,7 @@ test.describe.serial('6. Notifications (Notifikasi)', () => {
     await expect(page.locator('h2:has-text("Tambah Transaksi")')).not.toBeVisible();
 
     // Check if notification 100% appears
-    // Can be "Batas Anggaran Tercapai" or "Batas Anggaran Terlampaui" or "Subsidi Silang" or "Kilas Batas Anggaran"
-    const toast100 = page.locator('text=/Batas Anggaran|Subsidi Silang/i');
+    const toast100 = page.locator('text=/Kilas Alokasi|Kilas Penyesuaian/i');
     await expect(toast100.first()).toBeVisible({ timeout: 10000 });
   });
 

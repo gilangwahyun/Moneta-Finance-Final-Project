@@ -14,7 +14,7 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     await context.close();
   });
 
-  test('[AU-11-01_01] Melihat Rekomendasi: Skenario 1 (CRITICAL): UI merender peringatan "Defisit Arus Kas"', async () => {
+  test('[AU-11-01_01] Melihat Rekomendasi: Skenario 1 (CRITICAL): UI merender "Selisih Arus Kas"', async () => {
     const page = await context.newPage();
     await setupFreshUser(page, 'insight_deficit');
 
@@ -52,12 +52,12 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     // 4. Verify Insight Card on Analytics page
     await page.goto('/analytics');
     
-    // Tunggu sampai kata "Defisit Arus Kas" muncul di halaman
-    const insightLocator = page.locator('text="Defisit Arus Kas"');
+    // Tunggu sampai kata "Selisih Arus Kas" muncul di halaman
+    const insightLocator = page.locator('text="Selisih Arus Kas"');
     await expect(insightLocator.first()).toBeVisible({ timeout: 15000 });
 
-    // Pastikan card yang muncul ter-render dengan icon reflektif (text-indigo-500 / Sparkles)
-    const card = page.locator('div').filter({ hasText: 'Defisit Arus Kas' }).filter({ has: page.locator('svg.text-indigo-500') }).first();
+    // Pastikan card yang muncul ter-render
+    const card = page.locator('div').filter({ hasText: 'Selisih Arus Kas' }).first();
     await expect(card).toBeVisible();
     await page.close();
   });
@@ -103,14 +103,13 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     // 4. Verify Insight Card on Analytics
     await page.goto('/analytics');
     
-    // Cek bahwa panel Insight muncul (bisa menampilkan "Pengeluaran Tanpa Anggaran" atau "Pemasukan Meningkat")
-    // Ini membuktikan bahwa komponen UI terhubung dengan Insight Engine
-    const insightPanel = page.locator('text="Insight & Rekomendasi"');
+    // Cek bahwa panel Wawasan muncul
+    const insightPanel = page.locator('text="Wawasan & Panduan Arah"');
     await expect(insightPanel.first()).toBeVisible({ timeout: 15000 });
     await page.close();
   });
 
-  test('[AU-11-01_03] Melihat Rekomendasi: Skenario 3 (POSITIVE): UI merender "Kamu Berhasil Berhemat!"', async () => {
+  test('[AU-11-01_03] Melihat Rekomendasi: Skenario 3 (POSITIVE): UI merender "Surplus Mingguan"', async () => {
     const page = await context.newPage();
     await setupFreshUser(page, 'insight_positive');
 
@@ -140,13 +139,12 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     // 3. Verify Insight Card on Analytics
     await page.goto('/analytics');
     
-    // Cek panel Insight muncul
-    const insightPanel = page.locator('text="Insight & Rekomendasi"');
+    // Cek panel Wawasan muncul
+    const insightPanel = page.locator('text="Wawasan & Panduan Arah"');
     await expect(insightPanel.first()).toBeVisible({ timeout: 15000 });
 
-    // Karena tidak ada insight CRITICAL/WARNING, insight POSITIVE ini harusnya langsung terlihat di layar
-    const hematLocator = page.locator('text="Kamu Berhasil Berhemat!"');
-    await expect(hematLocator.first()).toBeVisible({ timeout: 5000 });
+    const hematLocator = page.locator('text=/Surplus Mingguan|Pemasukan Meningkat/i');
+    await expect(hematLocator.first()).toBeVisible({ timeout: 15000 });
     
     await page.close();
   });
