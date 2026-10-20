@@ -148,34 +148,34 @@ Seluruh tangkapan layar di bawah ini direkam langsung dari eksekusi aplikasi men
 
 ### 1. Modal Transaksi — Sisa Alokasi Positif
 Menampilkan *in-situ point-of-decision cue* dengan sisa alokasi bulanan dan estimasi sisa harian adaptif serta bilah tipis netral (tanpa warna merah/amber):
-![Modal Transaksi Sisa Positif](/C:/Users/lenovo/.gemini/antigravity-ide/brain/65a11d1f-1b70-4e26-8ec2-8c7ef0e54880/01-modal-transaksi-sisa-positif.png)
+![Modal Transaksi Sisa Positif](screenshots/01-modal-transaksi-sisa-positif.png)
 
 ---
 
 ### 2. Modal Transaksi — Alokasi Sudah Terpakai Penuh
 Menampilkan teks netral faktual `"Alokasi bulan ini sudah terpakai penuh"` tanpa kata penghakiman atau warna peringatan:
-![Modal Transaksi Alokasi Penuh](/C:/Users/lenovo/.gemini/antigravity-ide/brain/65a11d1f-1b70-4e26-8ec2-8c7ef0e54880/02-modal-transaksi-alokasi-penuh.png)
+![Modal Transaksi Alokasi Penuh](screenshots/02-modal-transaksi-alokasi-penuh.png)
 
 ---
 
 ### 3. Dasbor — Kartu Wawasan (Calm UI)
 Menampilkan kartu wawasan reflektif dengan ikon kompas tanpa kotak alarm merah, serta bilah kemajuan anggaran berstatus tenang `"Alokasi penuh"`:
-![Dashboard Insight Cards](/C:/Users/lenovo/.gemini/antigravity-ide/brain/65a11d1f-1b70-4e26-8ec2-8c7ef0e54880/03-dashboard-insight-cards.png)
+![Dashboard Insight Cards](screenshots/03-dashboard-insight-cards.png)
 
 ---
 
 ### 4. Halaman Analitik — Moving Average & Panduan Arah
 Menampilkan kurva dinamis *Moving Average* yang bersih tanpa garis rata-rata harian statis yang membingungkan, serta kartu wawasan faktual di bagian atas:
-![Halaman Analitik Moving Average](/C:/Users/lenovo/.gemini/antigravity-ide/brain/65a11d1f-1b70-4e26-8ec2-8c7ef0e54880/04-halaman-analitik.png)
+![Halaman Analitik Moving Average](screenshots/04-halaman-analitik.png)
 
 ---
 
 ### 5. Halaman Notifikasi — Lencana "Alokasi Penuh"
 Menampilkan daftar notifikasi dengan lencana berwarna slate tenang `"Alokasi Penuh"` dan judul netral `"Kilas Alokasi"`:
-![Halaman Notifikasi](/C:/Users/lenovo/.gemini/antigravity-ide/brain/65a11d1f-1b70-4e26-8ec2-8c7ef0e54880/05-halaman-notifikasi.png)
+![Halaman Notifikasi](screenshots/05-halaman-notifikasi.png)
 
 ---
 
 ### 6. Tampilan Responsif Mobile (375px — iPhone SE Viewport)
 Menampilkan kepatuhan layout pada layar ponsel sempit (375px): teks cue beradaptasi dengan rapi tanpa *horizontal overflow* atau teks terpotong:
-![Tampilan Mobile 375px](/C:/Users/lenovo/.gemini/antigravity-ide/brain/65a11d1f-1b70-4e26-8ec2-8c7ef0e54880/06-tampilan-mobile-375px.png)
+![Tampilan Mobile 375px](screenshots/06-tampilan-mobile-375px.png)
