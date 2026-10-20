@@ -16,14 +16,13 @@ This document defines the core terminology used across the Moneta architecture t
 - **In-App Notification**: A visual alert rendered purely within the Moneta React UI (e.g., via sonner toasts or an inbox dropdown).
 - **System Notification**: A native OS-level notification fired via the browser's Service Worker (`showNotification()`).
 - **Server Web Push**: A notification triggered externally by a server-side CRON job or digest script, reaching the user even when the PWA is closed.
-- **Nudge**: A gentle notification recommending a positive action or informing the user of general status without implying danger.
-- **Recommendation**: Analytical insights served to the user based on spending patterns, designed to improve financial health.
-- **clientId**: A robust UUID generated entirely on the client during a local mutation. It serves as the primary anchor for syncing records between IndexedDB and PostgreSQL.
-- **serverId**: The internal PostgreSQL ID. It serves as the primary database identifier, though the system heavily relies on `clientId` for offline sync logic.
-- **dedupeKey**: A deterministic string (e.g., `BUDGET_USAGE:userId:budgetId:YYYY-MM:WARNING`) used to prevent the system from firing duplicate notification logs for the same recurring event threshold.
-- **syncStatus**: An enum field on records (`PENDING`, `SYNCED`, `CONFLICT`) indicating whether a local record has been successfully acknowledged by the server. Deletions are handled via a `deletedAt` timestamp flag rather than a dedicated deletion status.
-- **Insight Engine**: A local rule-based system (`nudging.ts` and `local-engine.ts`) that analyzes user data to detect financial anomalies and generate nudges without server processing.
-- **Insight Fatigue**: Cognitive overload caused by displaying too many analytical alerts at once, mitigated by weighted sorting and collapsible UI limits.
+- **Choice Architecture**: The deliberate design of decision environments (rooted in Richard Thaler's libertarian paternalism) that gently guides financial behavior through objective data reflections, spatial stability, and point-of-decision cues without restricting user freedom of choice.
+- **Calm UI**: A non-judgmental design approach that presents financial metrics factually using calm palettes (slate/indigo) and neutral terminology, avoiding alarmist red/amber colors or moralizing feedback.
+- **Nudge**: A gentle behavioral intervention (preventive or appreciative) delivered as an objective data mirror that guides users in managing financial momentum without judgment.
+- **3-Tier Output Taxonomy**: The classification of Moneta's 37 active rule outputs into: Tier 1 (Pattern Insight — Descriptive Data Mirror), Tier 2 (Nudge — Choice Architecture Preventive/Appreciative), and Tier 3 (Executive Advice — Structured Actionable Recommendations).
+- **Point-of-Decision Cue**: A contextual budget health indicator presented right at the moment a transaction is created (inside the transaction modal), calculating adaptive daily rhythm (`calculateBudgetRhythm`) without blocking inputs.
+- **Insight Engine**: A local rule-based system (`nudging.ts` and `local-engine.ts`) evaluating 37 active rules locally via IndexedDB without requiring server roundtrips.
+- **Insight Fatigue**: Cognitive overload caused by displaying too many analytical alerts, mitigated by pure numeric priority sorting and a default limit of 3 visible cards with collapsible expansion.
 
 ## Frontend UI/UX Terminology
 
