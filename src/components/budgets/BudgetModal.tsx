@@ -22,6 +22,8 @@ interface BudgetModalProps {
   editingBudget: Budget | null;
   currentPeriod: string; /* Format periode YYYY-MM */
   existingBudgetCategoryIds: string[];
+  initialCategoryId?: string;
+  initialAmount?: string;
 }
 
 /********** Komponen Modal Pembuatan/Penyuntingan Anggaran (BudgetModal) **********/
@@ -38,6 +40,8 @@ export function BudgetModal({
   editingBudget,
   currentPeriod,
   existingBudgetCategoryIds,
+  initialCategoryId,
+  initialAmount,
 }: BudgetModalProps) {
   const { expenseCategories } = useCategories();
   const { editBudget } = useBudgetActions();
@@ -53,17 +57,17 @@ export function BudgetModal({
   useEffect(() => {
     if (isOpen && !prevIsOpen.current) {
       if (editingBudget) {
-        setAmount(String(Math.round(Number(editingBudget.amount))));
+        setAmount(initialAmount ? String(Math.round(Number(initialAmount))) : String(Math.round(Number(editingBudget.amount))));
         setCategoryId(editingBudget.categoryId);
       } else {
-        setAmount("");
-        setCategoryId(""); /* Membiarkan pengguna memilih kategori secara eksplisit */
+        setAmount(initialAmount ? String(Math.round(Number(initialAmount))) : "");
+        setCategoryId(initialCategoryId || ""); /* Pre-select category jika diarahkan via fasilitasi nudge */
       }
       /* Jeda singkat agar input nominal langsung menerima fokus */
       setTimeout(() => amountRef.current?.focus(), 50);
     }
     prevIsOpen.current = isOpen;
-  }, [isOpen, editingBudget]);
+  }, [isOpen, editingBudget, initialCategoryId, initialAmount]);
 
   const handleClose = () => {
     onClose();

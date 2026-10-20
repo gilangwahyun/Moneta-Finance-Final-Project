@@ -60,6 +60,11 @@ export default function BudgetsPage() {
   const sourceBudgetIdParam = searchParams.get('sourceBudgetId');
   const targetBudgetIdParam = searchParams.get('targetBudgetId');
   const amountParam = searchParams.get('amount');
+  const categoryIdParam = searchParams.get('categoryId');
+  const budgetIdParam = searchParams.get('budgetId');
+
+  const [initialCreateCategoryId, setInitialCreateCategoryId] = useState<string | undefined>(undefined);
+  const [initialCreateAmount, setInitialCreateAmount] = useState<string | undefined>(undefined);
 
   const [isReallocateModalOpen, setIsReallocateModalOpen] = useState(false);
   const [reallocateSourceId, setReallocateSourceId] = useState<string | null>(null);
@@ -94,10 +99,11 @@ export default function BudgetsPage() {
   );
   /********** [END: Kalkulasi Periode, Nama Bulan, & Filter Status (Derived State)] **********/
 
-  /********** [START: Efek Samping (Side Effects) - Pemrosesan Parameter URL Subsidi Silang] **********/
+  /********** [START: Efek Samping (Side Effects) - Pemrosesan Parameter URL Fasilitasi Nudge] **********/
 
-  /* Memeriksa parameter URL untuk secara otomatis membuka modal subsidi silang jika dipicu melalui rekomendasi */
+  /* Memeriksa parameter URL untuk secara otomatis membuka modal aksi dengan data pre-filled (Choice Architecture) */
   useEffect(() => {
+    // 1. Subsidi Silang (BG-00c)
     if (!hasProcessedUrlParams && budgets.length > 0 && actionParam === 'reallocate' && sourceBudgetIdParam && targetBudgetIdParam) {
       const sourceBudget = budgets.find((b) => b.clientId === sourceBudgetIdParam);
       const targetBudget = budgets.find((b) => b.clientId === targetBudgetIdParam);
@@ -141,8 +147,26 @@ export default function BudgetsPage() {
       setIsReallocateModalOpen(true);
       setHasProcessedUrlParams(true);
     }
-  }, [actionParam, sourceBudgetIdParam, targetBudgetIdParam, amountParam, budgets, transactions, currentPeriod, hasProcessedUrlParams]);
-  /********** [END: Efek Samping (Side Effects) - Pemrosesan Parameter URL Subsidi Silang] **********/
+    // 2. Buat Anggaran Baru Terfasilitasi (BG-03, BG-04)
+    else if (!hasProcessedUrlParams && actionParam === 'create') {
+      if (categoryIdParam) setInitialCreateCategoryId(categoryIdParam);
+      if (amountParam) setInitialCreateAmount(amountParam);
+      setEditingBudget(null);
+      setIsModalOpen(true);
+      setHasProcessedUrlParams(true);
+    }
+    // 3. Sesuaikan Anggaran Terfasilitasi (BG-05)
+    else if (!hasProcessedUrlParams && budgets.length > 0 && actionParam === 'edit' && budgetIdParam) {
+      const targetB = budgets.find((b) => b.clientId === budgetIdParam);
+      if (targetB) {
+        setEditingBudget(targetB);
+        if (amountParam) setInitialCreateAmount(amountParam);
+        setIsModalOpen(true);
+        setHasProcessedUrlParams(true);
+      }
+    }
+  }, [actionParam, sourceBudgetIdParam, targetBudgetIdParam, amountParam, categoryIdParam, budgetIdParam, budgets, transactions, currentPeriod, hasProcessedUrlParams]);
+  /********** [END: Efek Samping (Side Effects) - Pemrosesan Parameter URL Fasilitasi Nudge] **********/
 
   /********** [START: Fungsi Penanganan Aksi Pengguna & Navigasi (Event Handlers)] **********/
 
@@ -357,10 +381,17 @@ export default function BudgetsPage() {
 
       <BudgetModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setEditingBudget(null);
+          setInitialCreateCategoryId(undefined);
+          setInitialCreateAmount(undefined);
+        }}
         editingBudget={editingBudget}
         currentPeriod={currentPeriod}
         existingBudgetCategoryIds={budgets.map((b) => b.categoryId)}
+        initialCategoryId={initialCreateCategoryId}
+        initialAmount={initialCreateAmount}
       />
 
       {isReallocateModalOpen && (

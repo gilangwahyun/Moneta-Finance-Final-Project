@@ -95,11 +95,21 @@ export default function TransactionsPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  const searchParams = useSearchParams();
+  const searchParam = searchParams.get('search') || searchParams.get('q');
+
   /* State filter jenis transaksi, pencarian, dan pengurutan */
   const { activeRange, setRange, rangeKey } = useTimeFilter();
   const [filterType, setFilterType] = useState<'ALL' | 'EXPENSE' | 'INCOME'>('ALL');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState(searchParam || '');
   const [sortOrder] = useState<'desc' | 'asc'>('desc');
+
+  /* Sinkronisasi kata kunci pencarian jika dipicu dari fasilitasi Nudge (misal SP-05 merchant atau AN-04 kategori) */
+  useEffect(() => {
+    if (searchParam) {
+      setSearchQuery(searchParam);
+    }
+  }, [searchParam]);
 
   /* State tampilan UI seperti bottom sheet filter dan rentang tanggal kustom */
   const [showFilterSheet, setShowFilterSheet] = useState(false);

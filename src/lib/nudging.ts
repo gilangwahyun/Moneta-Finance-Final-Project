@@ -267,8 +267,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       severity: 'info',
       title: 'Frekuensi Pengeluaran Rutin',
       body: `Terdapat ${frequentTxn.count} transaksi tercatat untuk '${frequentTxn.name}' bulan ini dengan akumulasi ${formatCurrency(frequentTxn.totalAmount)}.`,
-      ctaLabel: 'Lihat Transaksi',
-      ctaRoute: '/transactions',
+      ctaLabel: 'Cek Rincian',
+      ctaRoute: frequentTxn.name ? `/transactions?search=${encodeURIComponent(frequentTxn.name)}` : '/transactions',
     });
   }
 
@@ -379,7 +379,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       title: 'Pengeluaran Tanpa Anggaran',
       body: `Tercatat pengeluaran sebesar ${formatCurrency(zeroBudgetCategory.amount)} pada '${zeroBudgetCategory.categoryName}' bulan ini tanpa batas alokasi anggaran yang aktif.`,
       ctaLabel: 'Buat Anggaran',
-      ctaRoute: '/budgets',
+      ctaRoute: zeroBudgetCategory.categoryId ? `/budgets?action=create&categoryId=${zeroBudgetCategory.categoryId}` : '/budgets',
       relatedCategoryId: zeroBudgetCategory.categoryId,
     });
   }
@@ -392,7 +392,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       title: 'Saran Alokasi Anggaran',
       body: `Rata-rata pengeluaran bulanan pada '${smartBudgetSuggestion.categoryName}' tercatat ${formatCurrency(smartBudgetSuggestion.averageAmount)}/bulan berdasarkan riwayat transaksi.`,
       ctaLabel: 'Buat Anggaran',
-      ctaRoute: '/budgets',
+      ctaRoute: smartBudgetSuggestion.categoryId ? `/budgets?action=create&categoryId=${smartBudgetSuggestion.categoryId}&amount=${Math.round(smartBudgetSuggestion.averageAmount)}` : '/budgets',
       relatedCategoryId: smartBudgetSuggestion.categoryId,
     });
   }
@@ -474,7 +474,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       title: 'Kategori Pengeluaran Baru',
       body: `Tercatat transaksi baru pada kategori '${newCategoryEmergence.categoryName}' (${formatCurrency(newCategoryEmergence.amount)} bulan ini) yang belum pernah tercatat dalam 3 bulan terakhir.`,
       ctaLabel: 'Lihat Transaksi',
-      ctaRoute: '/transactions',
+      ctaRoute: newCategoryEmergence.categoryName ? `/transactions?search=${encodeURIComponent(newCategoryEmergence.categoryName)}` : '/transactions',
     });
   }
 
@@ -537,8 +537,8 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       severity: 'warning',
       title: 'Realisasi vs Anggaran',
       body: `Realisasi pengeluaran '${params.budgetAccuracyAlert.categoryName}' tercatat melebihi alokasi >20% dalam 3 bulan berturut-turut (rata-rata ${formatCurrency(params.budgetAccuracyAlert.avgExpense)} dari batas ${formatCurrency(params.budgetAccuracyAlert.budgetAmount)}).`,
-      ctaLabel: 'Tinjau Alokasi',
-      ctaRoute: '/budgets',
+      ctaLabel: 'Sesuaikan Anggaran',
+      ctaRoute: params.budgetAccuracyAlert.budgetId ? `/budgets?action=edit&budgetId=${params.budgetAccuracyAlert.budgetId}&amount=${Math.round(params.budgetAccuracyAlert.avgExpense)}` : '/budgets',
     });
   }
 

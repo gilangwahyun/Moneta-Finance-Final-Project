@@ -128,9 +128,17 @@ Rangkaian pengujian otomatis dijalankan pada seluruh berkas spesifikasi pengujia
      - **Notifikasi Berjalan**: dikirim saat mencapai progres alokasi (50% atau 100%).
      - **Ringkasan Berkala (Malam Hari)**: dikirim satu kali dalam bentuk ringkasan pada jam yang dipilih.
      - **Nonaktif**: tanpa notifikasi push perangkat (riwayat tetap dapat dibaca di halaman notifikasi).
-4. **Fitur P2 (Subsidi Silang & Cue Kategori)**:
-   - **Tautan Pra-Terisi Subsidi Silang**: Mengakses `/budgets?action=reallocate&sourceBudgetId=...&targetBudgetId=...&amount=...` secara otomatis memvalidasi kondisi saldo dan membuka modal subsidi silang dengan kategori asal, kategori tujuan, dan nominal yang telah terisi (*pre-filled*).
-   - **Point-of-Decision Cue di Modal Transaksi**: Menampilkan sisa alokasi bulanan dan estimasi sisa harian adaptif saat kategori beranggaran dipilih. Saat alokasi telah habis, menampilkan cermin objektif: `"Alokasi bulan ini sudah terpakai penuh"`.
+4. **Fitur Fasilitasi Pilihan (Path of Least Resistance & Choice Architecture)**:
+   - **Tautan Pra-Terisi Subsidi Silang (`BG-00c`)**: Mengakses `/budgets?action=reallocate&sourceBudgetId=...&targetBudgetId=...&amount=...` secara otomatis memvalidasi kondisi saldo dan membuka modal subsidi silang dengan kategori asal, kategori tujuan, dan nominal yang telah terisi (*pre-filled*).
+   - **Fasilitasi Buat Anggaran Instan (`BG-03` & `BG-04`)**:
+     - `BG-03`: Mengakses `/budgets?action=create&categoryId=...` langsung membuka modal *Buat Anggaran Baru* dengan kategori terpilih.
+     - `BG-04`: Mengakses `/budgets?action=create&categoryId=...&amount=...` langsung membuka modal *Buat Anggaran Baru* dengan kategori dan nominal saran terisi otomatis (*smart default* berbasis histori transaksi).
+   - **Fasilitasi Penyesuaian Anggaran Instan (`BG-05`)**:
+     - `BG-05`: Mengakses `/budgets?action=edit&budgetId=...&amount=...` langsung membuka form ubah anggaran dengan nominal saran realistis dari histori 3 bulan.
+   - **Fasilitasi Isolasi Pencarian Transaksi (`SP-05` & `AN-04`)**:
+     - `SP-05`: Mengakses `/transactions?search=...` langsung mengisolasi daftar transaksi pada merchant berulang yang sering dikunjungi.
+     - `AN-04`: Mengakses `/transactions?search=...` langsung mengisolasi daftar transaksi pada kategori baru untuk inspeksi transparan.
+   - **Point-of-Decision Cue di Modal Transaksi (`BG-00`, `BG-00b`)**: Menampilkan sisa alokasi bulanan dan estimasi sisa harian adaptif saat kategori beranggaran dipilih. Saat alokasi telah habis, menampilkan cermin objektif: `"Alokasi bulan ini sudah terpakai penuh"`.
 
 ---
 
