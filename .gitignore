@@ -49,6 +49,9 @@ next-env.d.ts
 !/docs/data-flow.md
 !/docs/glossary.md
 !/docs/project-structure.md
+!/docs/DOKUMENTASI_REVISI_CALM_NUDGING.md
+!/docs/screenshots/
+!/docs/screenshots/*
 
 # prisma generated client (di-generate ulang saat npm install via postinstall)
 /src/generated/

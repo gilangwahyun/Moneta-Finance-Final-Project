@@ -1,0 +1,728 @@
+[
+  {
+    "file": "src/app/(dashboard)/analytics/page.tsx",
+    "line": 84,
+    "word": "warning",
+    "snippet": "warning: {"
+  },
+  {
+    "file": "src/app/(dashboard)/budgets/page.tsx",
+    "line": 47,
+    "word": "warning",
+    "snippet": "type StatusFilter = 'ALL' | 'SAFE' | 'WARNING' | 'DANGER';"
+  },
+  {
+    "file": "src/app/(dashboard)/budgets/page.tsx",
+    "line": 90,
+    "word": "warning",
+    "snippet": "{ value: 'WARNING', label: 'Mendekati Batas' },"
+  },
+  {
+    "file": "src/app/(dashboard)/notifications/page.tsx",
+    "line": 3,
+    "word": "peringatan",
+    "snippet": "* Description: Komponen halaman pusat notifikasi finansial pengguna (peringatan anggaran, progres target, insight harian)."
+  },
+  {
+    "file": "src/app/(dashboard)/page.tsx",
+    "line": 5,
+    "word": "peringatan",
+    "snippet": "* Description: Komponen halaman utama (Beranda/Dashboard) Moneta yang menampilkan ringkasan keuangan, peringatan nudging digital, kondisi anggaran, saldo dompet, dan transaksi terbaru."
+  },
+  {
+    "file": "src/app/(dashboard)/page.tsx",
+    "line": 14,
+    "word": "warning",
+    "snippet": "*   2. Burn Rate Warning Nudge (jika berlaku)"
+  },
+  {
+    "file": "src/app/(dashboard)/page.tsx",
+    "line": 18,
+    "word": "kritis",
+    "snippet": "*   6. UrgentBudgetProgressBar per kategori (top 4 paling kritis)"
+  },
+  {
+    "file": "src/app/(dashboard)/page.tsx",
+    "line": 48,
+    "word": "kritis",
+    "snippet": "* peringatan anggaran kritis, serta status saldo dan daftar transaksi terbaru."
+  },
+  {
+    "file": "src/app/(dashboard)/page.tsx",
+    "line": 48,
+    "word": "peringatan",
+    "snippet": "* peringatan anggaran kritis, serta status saldo dan daftar transaksi terbaru."
+  },
+  {
+    "file": "src/app/(dashboard)/page.tsx",
+    "line": 111,
+    "word": "warning",
+    "snippet": "${dashboardInsight.type === 'warning' ? 'border-slate-200 bg-slate-50/90 dark:border-slate-800/60 dark:bg-slate-900/60' : ''}"
+  },
+  {
+    "file": "src/app/(dashboard)/page.tsx",
+    "line": 119,
+    "word": "warning",
+    "snippet": "{dashboardInsight.type === 'warning' && ("
+  },
+  {
+    "file": "src/app/(dashboard)/page.tsx",
+    "line": 133,
+    "word": "warning",
+    "snippet": "${dashboardInsight.type === 'warning' ? 'text-slate-900 dark:text-slate-100' : ''}"
+  },
+  {
+    "file": "src/app/(dashboard)/page.tsx",
+    "line": 143,
+    "word": "warning",
+    "snippet": "${dashboardInsight.type === 'warning' ? 'text-slate-600 dark:text-slate-300' : ''}"
+  },
+  {
+    "file": "src/app/(dashboard)/page.tsx",
+    "line": 155,
+    "word": "warning",
+    "snippet": "${dashboardInsight.type === 'warning' ? 'bg-slate-800 hover:bg-slate-700 shadow-slate-500/20 dark:bg-slate-700 dark:hover:bg-slate-600' : ''}"
+  },
+  {
+    "file": "src/app/(dashboard)/profile/notifications/page.tsx",
+    "line": 5,
+    "word": "peringatan",
+    "snippet": "*   EITHER \"Peringatan Instan\" OR \"Ringkasan Berkala\", never both."
+  },
+  {
+    "file": "src/app/(dashboard)/targets/page.tsx",
+    "line": 59,
+    "word": "warning",
+    "snippet": "type StatusFilter = 'ALL' | 'NOT_STARTED' | 'SAFE' | 'WARNING' | 'DANGER' | 'EXPIRED';"
+  },
+  {
+    "file": "src/app/(dashboard)/targets/page.tsx",
+    "line": 68,
+    "word": "warning",
+    "snippet": "{ value: 'WARNING', label: 'Hampir Tercapai' },"
+  },
+  {
+    "file": "src/app/(dashboard)/targets/page.tsx",
+    "line": 80,
+    "word": "warning",
+    "snippet": "let status: 'NOT_STARTED' | 'SAFE' | 'WARNING' | 'DANGER' | 'EXPIRED' = 'SAFE';"
+  },
+  {
+    "file": "src/app/(dashboard)/targets/page.tsx",
+    "line": 89,
+    "word": "warning",
+    "snippet": "status = 'WARNING';"
+  },
+  {
+    "file": "src/components/budgets/BudgetCard.tsx",
+    "line": 57,
+    "word": "warning",
+    "snippet": "if (budget.status === 'WARNING') {"
+  },
+  {
+    "file": "src/components/budgets/BudgetCard.tsx",
+    "line": 110,
+    "word": "warning",
+    "snippet": ": budget.status === 'WARNING'"
+  },
+  {
+    "file": "src/components/budgets/BudgetCard.tsx",
+    "line": 158,
+    "word": "peringatan",
+    "snippet": "{/* Blok Peringatan atau Alokasi Harian Adaptif */}"
+  },
+  {
+    "file": "src/components/budgets/UrgentBudgetProgressBar.tsx",
+    "line": 23,
+    "word": "warning",
+    "snippet": "urgencyLevel: \"safe\" | \"warning\" | \"critical\";"
+  },
+  {
+    "file": "src/components/budgets/UrgentBudgetProgressBar.tsx",
+    "line": 43,
+    "word": "warning",
+    "snippet": "warning: {"
+  },
+  {
+    "file": "src/components/budgets/UrgentBudgetProgressBar.tsx",
+    "line": 70,
+    "word": "defisit",
+    "snippet": "/********** [START: Kalkulasi Defisit & Kelas Warna Urgensi] **********/"
+  },
+  {
+    "file": "src/components/budgets/UrgentBudgetProgressBar.tsx",
+    "line": 79,
+    "word": "defisit",
+    "snippet": "/********** [END: Kalkulasi Defisit & Kelas Warna Urgensi] **********/"
+  },
+  {
+    "file": "src/components/budgets/UrgentBudgetProgressBar.tsx",
+    "line": 123,
+    "word": "defisit",
+    "snippet": "{/* Baris Bawah: Terpakai/Total + Persentase atau Label Defisit */}"
+  },
+  {
+    "file": "src/components/transactions/TransactionModal.tsx",
+    "line": 817,
+    "word": "peringatan",
+    "snippet": "{/* Peringatan Kategori Belum Dipilih */}"
+  },
+  {
+    "file": "src/components/ui/DeleteConfirmDialog.tsx",
+    "line": 19,
+    "word": "warning",
+    "snippet": "* Locks body scroll while open and displays a warning visual."
+  },
+  {
+    "file": "src/components/ui/DonutChart.tsx",
+    "line": 86,
+    "word": "warning",
+    "snippet": "/********** Warning: amber-500 when spending > 80% of budget. Critical: rose-500 when >= 100% */"
+  },
+  {
+    "file": "src/generated/client/runtime/edge-esm.js",
+    "line": 16,
+    "word": "warning",
+    "snippet": "${t}`,U(r,!0))}};N(er,\"RequestError\");async function je(e,t,r=n=>n){let{clientVersion:n,...i}=t,o=r(fetch);try{return await o(e,i)}catch(s){let a=s.message??\"Unknown error\";throw new er(a,{clientVersion:n,cause:s})}}var op=/^[1-9][0-9]*\\.[0-9]+\\.[0-9]+$/,Ds=Z(\"prisma:client:dataproxyEngine\");async function sp(e,t){let r=ks[\"@prisma/engines-version\"],n=t.clientVersion??\"unknown\";if(y.env.PRISMA_CLIENT_DATA_PROXY_CLIENT_VERSION||globalThis.PRISMA_CLIENT_DATA_PROXY_CLIENT_VERSION)return y.env.PRISMA_CLIENT_DATA_PROXY_CLIENT_VERSION||globalThis.PRISMA_CLIENT_DATA_PROXY_CLIENT_VERSION;if(e.includes(\"accelerate\")&&n!==\"0.0.0\"&&n!==\"in-memory\")return n;let[i,o]=n?.split(\"-\")??[];if(o===void 0&&op.test(i))return i;if(o!==void 0||n===\"0.0.0\"||n===\"in-memory\"){let[s]=r.split(\"-\")??[],[a,l,d]=s.split(\".\"),g=ap(`<=${a}.${l}.${d}`),h=await je(g,{clientVersion:n});if(!h.ok)throw new Error(`Failed to fetch stable Prisma version, unpkg.com status ${h.status} ${h.statusText}, response body: ${await h.text()||\"<empty body>\"}`);let T=await h.text();Ds(\"length of body fetched from unpkg.com\",T.length);let I;try{I=JSON.parse(T)}catch(S){throw console.error(\"JSON.parse error: body fetched from unpkg.com: \",T),S}return I.version}throw new Ve(\"Only `major.minor.patch` versions are supported by Accelerate.\",{clientVersion:n})}async function Ms(e,t){let r=await sp(e,t);return Ds(\"version\",r),r}function ap(e){return encodeURI(`https://unpkg.com/prisma@${e}/package.json`)}var _s=3,tr=Z(\"prisma:client:dataproxyEngine\"),yt=class{name=\"DataProxyEngine\";inlineSchema;inlineSchemaHash;inlineDatasources;config;logEmitter;env;clientVersion;engineHash;tracingHelper;remoteClientVersion;host;headerBuilder;startPromise;protocol;constructor(t){Os(t),this.config=t,this.env=t.env,this.inlineSchema=Is(t.inlineSchema),this.inlineDatasources=t.inlineDatasources,this.inlineSchemaHash=t.inlineSchemaHash,this.clientVersion=t.clientVersion,this.engineHash=t.engineVersion,this.logEmitter=t.logEmitter,this.tracingHelper=t.tracingHelper}apiKey(){return this.headerBuilder.apiKey}version(){return this.engineHash}async start(){this.startPromise!==void 0&&await this.startPromise,this.startPromise=(async()=>{let{apiKey:t,url:r}=this.getURLAndAPIKey();this.host=r.host,this.protocol=r.protocol,this.headerBuilder=new Hr({apiKey:t,tracingHelper:this.tracingHelper,logLevel:this.config.logLevel??\"error\",logQueries:this.config.logQueries,engineHash:this.engineHash}),this.remoteClientVersion=await Ms(this.host,this.config),tr(\"host\",this.host),tr(\"protocol\",this.protocol)})(),await this.startPromise}async stop(){}propagateResponseExtensions(t){t?.logs?.length&&t.logs.forEach(r=>{switch(r.level){case\"debug\":case\"trace\":tr(r);break;case\"error\":case\"warn\":case\"info\":{this.logEmitter.emit(r.level,{timestamp:Qn(r.timestamp),message:r.attributes.message??\"\",target:r.target??\"BinaryEngine\"});break}case\"query\":{this.logEmitter.emit(\"query\",{query:r.attributes.query??\"\",timestamp:Qn(r.timestamp),duration:r.attributes.duration_ms??0,params:r.attributes.params??\"\",target:r.target??\"BinaryEngine\"});break}default:r.level}}),t?.traces?.length&&this.tracingHelper.dispatchEngineSpans(t.traces)}onBeforeExit(){throw new Error('\"beforeExit\" hook is not applicable to the remote query engine')}async url(t){return await this.start(),`${this.protocol}//${this.host}/${this.remoteClientVersion}/${this.inlineSchemaHash}/${t}`}async uploadSchema(){let t={name:\"schemaUpload\",internal:!0};return this.tracingHelper.runInChildSpan(t,async()=>{let r=await je(await this.url(\"schema\"),{method:\"PUT\",headers:this.headerBuilder.build(),body:this.inlineSchema,clientVersion:this.clientVersion});r.ok||tr(\"schema response status\",r.status);let n=await Xt(r,this.clientVersion);if(n)throw this.logEmitter.emit(\"warn\",{message:`Error while uploading schema: ${n.message}`,timestamp:new Date,target:\"\"}),n;this.logEmitter.emit(\"info\",{message:`Schema (re)uploaded (hash: ${this.inlineSchemaHash})`,timestamp:new Date,target:\"\"})})}request(t,{traceparent:r,interactiveTransaction:n,customDataProxyFetch:i}){return this.requestInternal({body:t,traceparent:r,interactiveTransaction:n,customDataProxyFetch:i})}async requestBatch(t,{traceparent:r,transaction:n,customDataProxyFetch:i}){let o=n?.kind===\"itx\"?n.options:void 0,s=Gr(t,n);return(await this.requestInternal({body:s,customDataProxyFetch:i,interactiveTransaction:o,traceparent:r})).map(l=>(l.extensions&&this.propagateResponseExtensions(l.extensions),\"errors\"in l?this.convertProtocolErrorsToClientError(l.errors):l))}requestInternal({body:t,traceparent:r,customDataProxyFetch:n,interactiveTransaction:i}){return this.withRetry({actionGerund:\"querying\",callback:async({logHttpCall:o})=>{let s=i?`${i.payload.endpoint}/graphql`:await this.url(\"graphql\");o(s);let a=await je(s,{method:\"POST\",headers:this.headerBuilder.build({traceparent:r,transactionId:i?.id}),body:JSON.stringify(t),clientVersion:this.clientVersion},n);a.ok||tr(\"graphql response status\",a.status),await this.handleError(await Xt(a,this.clientVersion));let l=await a.json();if(l.extensions&&this.propagateResponseExtensions(l.extensions),\"errors\"in l)throw this.convertProtocolErrorsToClientError(l.errors);return\"batchResult\"in l?l.batchResult:l}})}async transaction(t,r,n){let i={start:\"starting\",commit:\"committing\",rollback:\"rolling back\"};return this.withRetry({actionGerund:`${i[t]} transaction`,callback:async({logHttpCall:o})=>{if(t===\"start\"){let s=JSON.stringify({max_wait:n.maxWait,timeout:n.timeout,isolation_level:n.isolationLevel}),a=await this.url(\"transaction/start\");o(a);let l=await je(a,{method:\"POST\",headers:this.headerBuilder.build({traceparent:r.traceparent}),body:s,clientVersion:this.clientVersion});await this.handleError(await Xt(l,this.clientVersion));let d=await l.json(),{extensions:g}=d;g&&this.propagateResponseExtensions(g);let h=d.id,T=d[\"data-proxy\"].endpoint;return{id:h,payload:{endpoint:T}}}else{let s=`${n.payload.endpoint}/${t}`;o(s);let a=await je(s,{method:\"POST\",headers:this.headerBuilder.build({traceparent:r.traceparent}),clientVersion:this.clientVersion});await this.handleError(await Xt(a,this.clientVersion));let l=await a.json(),{extensions:d}=l;d&&this.propagateResponseExtensions(d);return}}})}getURLAndAPIKey(){return Rs({clientVersion:this.clientVersion,env:this.env,inlineDatasources:this.inlineDatasources,overrideDatasources:this.config.overrideDatasources})}metrics(){throw new Ve(\"Metrics are not yet supported for Accelerate\",{clientVersion:this.clientVersion})}async withRetry(t){for(let r=0;;r++){let n=i=>{this.logEmitter.emit(\"info\",{message:`Calling ${i} (n=${r})`,timestamp:new Date,target:\"\"})};try{return await t.callback({logHttpCall:n})}catch(i){if(!(i instanceof ie)||!i.isRetryable)throw i;if(r>=_s)throw i instanceof dt?i.cause:i;this.logEmitter.emit(\"warn\",{message:`Attempt ${r+1}/${_s} failed for ${t.actionGerund}: ${i.message??\"(unknown)\"}`,timestamp:new Date,target:\"\"});let o=await Ss(r);this.logEmitter.emit(\"warn\",{message:`Retrying after ${o}ms`,timestamp:new Date,target:\"\"})}}}async handleError(t){if(t instanceof $e)throw await this.uploadSchema(),new dt({clientVersion:this.clientVersion,cause:t});if(t)throw t}convertProtocolErrorsToClientError(t){return t.length===1?Jr(t[0],this.config.clientVersion,this.config.activeProvider):new ae(JSON.stringify(t),{clientVersion:this.config.clientVersion})}applyPendingMigrations(){throw new Error(\"Method not implemented.\")}};f();u();c();p();m();function Ns({url:e,adapter:t,copyEngine:r,targetBuildType:n}){let i=[],o=[],s=C=>{i.push({_tag:\"warning\",value:C})},a=C=>{let M=C.join(`"
+  },
+  {
+    "file": "src/generated/client/runtime/edge.js",
+    "line": 16,
+    "word": "warning",
+    "snippet": "${t}`,U(r,!0))}};N(nr,\"RequestError\");async function je(e,t,r=n=>n){let{clientVersion:n,...i}=t,o=r(fetch);try{return await o(e,i)}catch(s){let a=s.message??\"Unknown error\";throw new nr(a,{clientVersion:n,cause:s})}}var up=/^[1-9][0-9]*\\.[0-9]+\\.[0-9]+$/,Bs=z(\"prisma:client:dataproxyEngine\");async function cp(e,t){let r=Us[\"@prisma/engines-version\"],n=t.clientVersion??\"unknown\";if(y.env.PRISMA_CLIENT_DATA_PROXY_CLIENT_VERSION||globalThis.PRISMA_CLIENT_DATA_PROXY_CLIENT_VERSION)return y.env.PRISMA_CLIENT_DATA_PROXY_CLIENT_VERSION||globalThis.PRISMA_CLIENT_DATA_PROXY_CLIENT_VERSION;if(e.includes(\"accelerate\")&&n!==\"0.0.0\"&&n!==\"in-memory\")return n;let[i,o]=n?.split(\"-\")??[];if(o===void 0&&up.test(i))return i;if(o!==void 0||n===\"0.0.0\"||n===\"in-memory\"){let[s]=r.split(\"-\")??[],[a,l,d]=s.split(\".\"),g=pp(`<=${a}.${l}.${d}`),h=await je(g,{clientVersion:n});if(!h.ok)throw new Error(`Failed to fetch stable Prisma version, unpkg.com status ${h.status} ${h.statusText}, response body: ${await h.text()||\"<empty body>\"}`);let T=await h.text();Bs(\"length of body fetched from unpkg.com\",T.length);let I;try{I=JSON.parse(T)}catch(S){throw console.error(\"JSON.parse error: body fetched from unpkg.com: \",T),S}return I.version}throw new Ve(\"Only `major.minor.patch` versions are supported by Accelerate.\",{clientVersion:n})}async function qs(e,t){let r=await cp(e,t);return Bs(\"version\",r),r}function pp(e){return encodeURI(`https://unpkg.com/prisma@${e}/package.json`)}var Vs=3,ir=z(\"prisma:client:dataproxyEngine\"),Et=class{name=\"DataProxyEngine\";inlineSchema;inlineSchemaHash;inlineDatasources;config;logEmitter;env;clientVersion;engineHash;tracingHelper;remoteClientVersion;host;headerBuilder;startPromise;protocol;constructor(t){Ls(t),this.config=t,this.env=t.env,this.inlineSchema=Fs(t.inlineSchema),this.inlineDatasources=t.inlineDatasources,this.inlineSchemaHash=t.inlineSchemaHash,this.clientVersion=t.clientVersion,this.engineHash=t.engineVersion,this.logEmitter=t.logEmitter,this.tracingHelper=t.tracingHelper}apiKey(){return this.headerBuilder.apiKey}version(){return this.engineHash}async start(){this.startPromise!==void 0&&await this.startPromise,this.startPromise=(async()=>{let{apiKey:t,url:r}=this.getURLAndAPIKey();this.host=r.host,this.protocol=r.protocol,this.headerBuilder=new en({apiKey:t,tracingHelper:this.tracingHelper,logLevel:this.config.logLevel??\"error\",logQueries:this.config.logQueries,engineHash:this.engineHash}),this.remoteClientVersion=await qs(this.host,this.config),ir(\"host\",this.host),ir(\"protocol\",this.protocol)})(),await this.startPromise}async stop(){}propagateResponseExtensions(t){t?.logs?.length&&t.logs.forEach(r=>{switch(r.level){case\"debug\":case\"trace\":ir(r);break;case\"error\":case\"warn\":case\"info\":{this.logEmitter.emit(r.level,{timestamp:Yn(r.timestamp),message:r.attributes.message??\"\",target:r.target??\"BinaryEngine\"});break}case\"query\":{this.logEmitter.emit(\"query\",{query:r.attributes.query??\"\",timestamp:Yn(r.timestamp),duration:r.attributes.duration_ms??0,params:r.attributes.params??\"\",target:r.target??\"BinaryEngine\"});break}default:r.level}}),t?.traces?.length&&this.tracingHelper.dispatchEngineSpans(t.traces)}onBeforeExit(){throw new Error('\"beforeExit\" hook is not applicable to the remote query engine')}async url(t){return await this.start(),`${this.protocol}//${this.host}/${this.remoteClientVersion}/${this.inlineSchemaHash}/${t}`}async uploadSchema(){let t={name:\"schemaUpload\",internal:!0};return this.tracingHelper.runInChildSpan(t,async()=>{let r=await je(await this.url(\"schema\"),{method:\"PUT\",headers:this.headerBuilder.build(),body:this.inlineSchema,clientVersion:this.clientVersion});r.ok||ir(\"schema response status\",r.status);let n=await rr(r,this.clientVersion);if(n)throw this.logEmitter.emit(\"warn\",{message:`Error while uploading schema: ${n.message}`,timestamp:new Date,target:\"\"}),n;this.logEmitter.emit(\"info\",{message:`Schema (re)uploaded (hash: ${this.inlineSchemaHash})`,timestamp:new Date,target:\"\"})})}request(t,{traceparent:r,interactiveTransaction:n,customDataProxyFetch:i}){return this.requestInternal({body:t,traceparent:r,interactiveTransaction:n,customDataProxyFetch:i})}async requestBatch(t,{traceparent:r,transaction:n,customDataProxyFetch:i}){let o=n?.kind===\"itx\"?n.options:void 0,s=Wr(t,n);return(await this.requestInternal({body:s,customDataProxyFetch:i,interactiveTransaction:o,traceparent:r})).map(l=>(l.extensions&&this.propagateResponseExtensions(l.extensions),\"errors\"in l?this.convertProtocolErrorsToClientError(l.errors):l))}requestInternal({body:t,traceparent:r,customDataProxyFetch:n,interactiveTransaction:i}){return this.withRetry({actionGerund:\"querying\",callback:async({logHttpCall:o})=>{let s=i?`${i.payload.endpoint}/graphql`:await this.url(\"graphql\");o(s);let a=await je(s,{method:\"POST\",headers:this.headerBuilder.build({traceparent:r,transactionId:i?.id}),body:JSON.stringify(t),clientVersion:this.clientVersion},n);a.ok||ir(\"graphql response status\",a.status),await this.handleError(await rr(a,this.clientVersion));let l=await a.json();if(l.extensions&&this.propagateResponseExtensions(l.extensions),\"errors\"in l)throw this.convertProtocolErrorsToClientError(l.errors);return\"batchResult\"in l?l.batchResult:l}})}async transaction(t,r,n){let i={start:\"starting\",commit:\"committing\",rollback:\"rolling back\"};return this.withRetry({actionGerund:`${i[t]} transaction`,callback:async({logHttpCall:o})=>{if(t===\"start\"){let s=JSON.stringify({max_wait:n.maxWait,timeout:n.timeout,isolation_level:n.isolationLevel}),a=await this.url(\"transaction/start\");o(a);let l=await je(a,{method:\"POST\",headers:this.headerBuilder.build({traceparent:r.traceparent}),body:s,clientVersion:this.clientVersion});await this.handleError(await rr(l,this.clientVersion));let d=await l.json(),{extensions:g}=d;g&&this.propagateResponseExtensions(g);let h=d.id,T=d[\"data-proxy\"].endpoint;return{id:h,payload:{endpoint:T}}}else{let s=`${n.payload.endpoint}/${t}`;o(s);let a=await je(s,{method:\"POST\",headers:this.headerBuilder.build({traceparent:r.traceparent}),clientVersion:this.clientVersion});await this.handleError(await rr(a,this.clientVersion));let l=await a.json(),{extensions:d}=l;d&&this.propagateResponseExtensions(d);return}}})}getURLAndAPIKey(){return Ms({clientVersion:this.clientVersion,env:this.env,inlineDatasources:this.inlineDatasources,overrideDatasources:this.config.overrideDatasources})}metrics(){throw new Ve(\"Metrics are not yet supported for Accelerate\",{clientVersion:this.clientVersion})}async withRetry(t){for(let r=0;;r++){let n=i=>{this.logEmitter.emit(\"info\",{message:`Calling ${i} (n=${r})`,timestamp:new Date,target:\"\"})};try{return await t.callback({logHttpCall:n})}catch(i){if(!(i instanceof ae)||!i.isRetryable)throw i;if(r>=Vs)throw i instanceof ht?i.cause:i;this.logEmitter.emit(\"warn\",{message:`Attempt ${r+1}/${Vs} failed for ${t.actionGerund}: ${i.message??\"(unknown)\"}`,timestamp:new Date,target:\"\"});let o=await Ns(r);this.logEmitter.emit(\"warn\",{message:`Retrying after ${o}ms`,timestamp:new Date,target:\"\"})}}}async handleError(t){if(t instanceof $e)throw await this.uploadSchema(),new ht({clientVersion:this.clientVersion,cause:t});if(t)throw t}convertProtocolErrorsToClientError(t){return t.length===1?Hr(t[0],this.config.clientVersion,this.config.activeProvider):new ie(JSON.stringify(t),{clientVersion:this.config.clientVersion})}applyPendingMigrations(){throw new Error(\"Method not implemented.\")}};f();u();c();p();m();function $s({url:e,adapter:t,copyEngine:r,targetBuildType:n}){let i=[],o=[],s=C=>{i.push({_tag:\"warning\",value:C})},a=C=>{let M=C.join(`"
+  },
+  {
+    "file": "src/generated/client/runtime/library.js",
+    "line": 9,
+    "word": "warning",
+    "snippet": "${JSON.stringify(a,null,2)}`),a}async function Zu(){let e=\"/etc/os-release\";try{let r=await mi.default.readFile(e,{encoding:\"utf-8\"});return zu(r)}catch{return{targetDistro:void 0,familyDistro:void 0,originalDistro:void 0}}}function Xu(e){let r=/^OpenSSL\\s(\\d+\\.\\d+)\\.\\d+/.exec(e);if(r){let t=`${r[1]}.x`;return zo(t)}}function Wo(e){let r=/libssl\\.so\\.(\\d)(\\.\\d)?/.exec(e);if(r){let t=`${r[1]}${r[2]??\".0\"}.x`;return zo(t)}}function zo(e){let r=(()=>{if(Xo(e))return e;let t=e.split(\".\");return t[1]=\"0\",t.join(\".\")})();if(Yu.includes(r))return r}function ec(e){return hr(e).with({familyDistro:\"musl\"},()=>(ee('Trying platform-specific paths for \"alpine\"'),[\"/lib\",\"/usr/lib\"])).with({familyDistro:\"debian\"},({archFromUname:r})=>(ee('Trying platform-specific paths for \"debian\" (and \"ubuntu\")'),[`/usr/lib/${r}-linux-gnu`,`/lib/${r}-linux-gnu`])).with({familyDistro:\"rhel\"},()=>(ee('Trying platform-specific paths for \"rhel\"'),[\"/lib64\",\"/usr/lib64\"])).otherwise(({familyDistro:r,arch:t,archFromUname:n})=>(ee(`Don't know any platform-specific paths for \"${r}\" on ${t} (${n})`),[]))}async function rc(e){let r='grep -v \"libssl.so.0\"',t=await Jo(e);if(t){ee(`Found libssl.so file using platform-specific paths: ${t}`);let o=Wo(t);if(ee(`The parsed libssl version is: ${o}`),o)return{libssl:o,strategy:\"libssl-specific-path\"}}ee('Falling back to \"ldconfig\" and other generic paths');let n=await Yt(`ldconfig -p | sed \"s/.*=>s*//\" | sed \"s|.*/||\" | grep libssl | sort | ${r}`);if(n||(n=await Jo([\"/lib64\",\"/usr/lib64\",\"/lib\",\"/usr/lib\"])),n){ee(`Found libssl.so file using \"ldconfig\" or other generic paths: ${n}`);let o=Wo(n);if(ee(`The parsed libssl version is: ${o}`),o)return{libssl:o,strategy:\"ldconfig\"}}let i=await Yt(\"openssl version -v\");if(i){ee(`Found openssl binary with version: ${i}`);let o=Xu(i);if(ee(`The parsed openssl version is: ${o}`),o)return{libssl:o,strategy:\"openssl-binary\"}}return ee(\"Couldn't find any version of libssl or OpenSSL in the system\"),{}}async function Jo(e){for(let r of e){let t=await tc(r);if(t)return t}}async function tc(e){try{return(await mi.default.readdir(e)).find(t=>t.startsWith(\"libssl.so.\")&&!t.startsWith(\"libssl.so.0\"))}catch(r){if(r.code===\"ENOENT\")return;throw r}}async function ir(){let{binaryTarget:e}=await Zo();return e}function nc(e){return e.binaryTarget!==void 0}async function fi(){let{memoized:e,...r}=await Zo();return r}var Kt={};async function Zo(){if(nc(Kt))return Promise.resolve({...Kt,memoized:!0});let e=await Yo(),r=ic(e);return Kt={...e,binaryTarget:r},{...Kt,memoized:!1}}function ic(e){let{platform:r,arch:t,archFromUname:n,libssl:i,targetDistro:o,familyDistro:s,originalDistro:a}=e;r===\"linux\"&&![\"x64\",\"arm64\"].includes(t)&&Jt(`Prisma only officially supports Linux on amd64 (x86_64) and arm64 (aarch64) system architectures (detected \"${t}\" instead). If you are using your own custom Prisma engines, you can ignore this warning, as long as you've compiled the engines for your system architecture \"${n}\".`);let l=\"1.1.x\";if(r===\"linux\"&&i===void 0){let c=hr({familyDistro:s}).with({familyDistro:\"debian\"},()=>\"Please manually install OpenSSL via `apt-get update -y && apt-get install -y openssl` and try installing Prisma again. If you're running Prisma on Docker, add this command to your Dockerfile, or switch to an image that already has OpenSSL installed.\").otherwise(()=>\"Please manually install OpenSSL and try installing Prisma again.\");Jt(`Prisma failed to detect the libssl/openssl version to use, and may not work as expected. Defaulting to \"openssl-${l}\"."
+  },
+  {
+    "file": "src/generated/client/runtime/library.js",
+    "line": 117,
+    "word": "warning",
+    "snippet": "${a.backtrace}`,{clientVersion:this.config.clientVersion})}}async requestBatch(r,{transaction:t,traceparent:n}){Re(\"requestBatch\");let i=Mr(r,t);await this.start();let o=await this.adapterPromise;this.lastQuery=JSON.stringify(i),this.executingQueryPromise=this.engine?.query(this.lastQuery,JSON.stringify({traceparent:n}),Ol(t));let s=await this.executingQueryPromise,a=this.parseEngineResponse(s);if(a.errors)throw a.errors.length===1?this.buildQueryError(a.errors[0],o?.errorRegistry):new V(JSON.stringify(a.errors),{clientVersion:this.config.clientVersion});let{batchResult:l,errors:u}=a;if(Array.isArray(l))return l.map(c=>c.errors&&c.errors.length>0?this.loggerRustPanic??this.buildQueryError(c.errors[0],o?.errorRegistry):{data:c});throw u&&u.length===1?new Error(u[0].error):new Error(JSON.stringify(a))}buildQueryError(r,t){if(r.user_facing_error.is_panic)return new ae(Po(this,r.user_facing_error.message),this.config.clientVersion);let n=this.getExternalAdapterError(r.user_facing_error,t);return n?n.error:$r(r,this.config.clientVersion,this.config.activeProvider)}getExternalAdapterError(r,t){if(r.error_code===hf&&t){let n=r.meta?.id;ln(typeof n==\"number\",\"Malformed external JS error received from the engine\");let i=t.consumeError(n);return ln(i,\"External error with reported id was not registered\"),i}}async metrics(r){await this.start();let t=await this.engine.metrics(JSON.stringify(r));return r.format===\"prometheus\"?t:this.parseEngineResponse(t)}};function xf(e){return typeof e==\"object\"&&e!==null&&e.error_code!==void 0}function Po(e,r){return El({binaryTarget:e.binaryTarget,title:r,version:e.config.clientVersion,engineVersion:e.versionInfo?.commit,database:e.config.activeProvider,query:e.lastQuery})}function Fl({url:e,adapter:r,copyEngine:t,targetBuildType:n}){let i=[],o=[],s=g=>{i.push({_tag:\"warning\",value:g})},a=g=>{let I=g.join(`"
+  },
+  {
+    "file": "src/generated/client/runtime/react-native.js",
+    "line": 65,
+    "word": "warning",
+    "snippet": "${a.backtrace}`,{clientVersion:this.config.clientVersion})}}async requestBatch(t,{transaction:r,traceparent:n}){Te(\"requestBatch\");let i=Vr(t,r);await this.start();let o=await this.adapterPromise;this.lastQuery=JSON.stringify(i),this.executingQueryPromise=this.engine?.query(this.lastQuery,JSON.stringify({traceparent:n}),Ls(r));let s=await this.executingQueryPromise,a=this.parseEngineResponse(s);if(a.errors)throw a.errors.length===1?this.buildQueryError(a.errors[0],o?.errorRegistry):new G(JSON.stringify(a.errors),{clientVersion:this.config.clientVersion});let{batchResult:l,errors:u}=a;if(Array.isArray(l))return l.map(g=>g.errors&&g.errors.length>0?this.loggerRustPanic??this.buildQueryError(g.errors[0],o?.errorRegistry):{data:g});throw u&&u.length===1?new Error(u[0].error):new Error(JSON.stringify(a))}buildQueryError(t,r){if(t.user_facing_error.is_panic)return new ce(Hn(this,t.user_facing_error.message),this.config.clientVersion);let n=this.getExternalAdapterError(t.user_facing_error,r);return n?n.error:Qr(t,this.config.clientVersion,this.config.activeProvider)}getExternalAdapterError(t,r){if(t.error_code===Lp&&r){let n=t.meta?.id;ur(typeof n==\"number\",\"Malformed external JS error received from the engine\");let i=r.consumeError(n);return ur(i,\"External error with reported id was not registered\"),i}}async metrics(t){await this.start();let r=await this.engine.metrics(JSON.stringify(t));return t.format===\"prometheus\"?r:this.parseEngineResponse(r)}};function $p(e){return typeof e==\"object\"&&e!==null&&e.error_code!==void 0}function Hn(e,t){return Fs({binaryTarget:e.binaryTarget,title:t,version:e.config.clientVersion,engineVersion:e.versionInfo?.commit,database:e.config.activeProvider,query:e.lastQuery})}m();c();p();d();f();function qs({url:e,adapter:t,copyEngine:r,targetBuildType:n}){let i=[],o=[],s=S=>{i.push({_tag:\"warning\",value:S})},a=S=>{let F=S.join(`"
+  },
+  {
+    "file": "src/generated/client/runtime/wasm-compiler-edge.js",
+    "line": 64,
+    "word": "warning",
+    "snippet": "${t}`,N(r,!0))}};D(Qr,\"RequestError\");async function ct(e,t,r=n=>n){let{clientVersion:n,...i}=t,o=r(fetch);try{return await o(e,i)}catch(s){let a=s.message??\"Unknown error\";throw new Qr(a,{clientVersion:n,cause:s})}}var hf=/^[1-9][0-9]*\\.[0-9]+\\.[0-9]+$/,Tc=K(\"prisma:client:dataproxyEngine\");async function wf(e,t){let r=Pc[\"@prisma/engines-version\"],n=t.clientVersion??\"unknown\";if(g.env.PRISMA_CLIENT_DATA_PROXY_CLIENT_VERSION||globalThis.PRISMA_CLIENT_DATA_PROXY_CLIENT_VERSION)return g.env.PRISMA_CLIENT_DATA_PROXY_CLIENT_VERSION||globalThis.PRISMA_CLIENT_DATA_PROXY_CLIENT_VERSION;if(e.includes(\"accelerate\")&&n!==\"0.0.0\"&&n!==\"in-memory\")return n;let[i,o]=n?.split(\"-\")??[];if(o===void 0&&hf.test(i))return i;if(o!==void 0||n===\"0.0.0\"||n===\"in-memory\"){let[s]=r.split(\"-\")??[],[a,f,w]=s.split(\".\"),A=bf(`<=${a}.${f}.${w}`),R=await ct(A,{clientVersion:n});if(!R.ok)throw new Error(`Failed to fetch stable Prisma version, unpkg.com status ${R.status} ${R.statusText}, response body: ${await R.text()||\"<empty body>\"}`);let S=await R.text();Tc(\"length of body fetched from unpkg.com\",S.length);let C;try{C=JSON.parse(S)}catch(L){throw console.error(\"JSON.parse error: body fetched from unpkg.com: \",S),L}return C.version}throw new at(\"Only `major.minor.patch` versions are supported by Accelerate.\",{clientVersion:n})}async function vc(e,t){let r=await wf(e,t);return Tc(\"version\",r),r}function bf(e){return encodeURI(`https://unpkg.com/prisma@${e}/package.json`)}var Ac=3,Hr=K(\"prisma:client:dataproxyEngine\"),Gr=class{name=\"DataProxyEngine\";inlineSchema;inlineSchemaHash;inlineDatasources;config;logEmitter;env;clientVersion;engineHash;tracingHelper;remoteClientVersion;host;headerBuilder;startPromise;protocol;constructor(t){xc(t),this.config=t,this.env=t.env,this.inlineSchema=Ec(t.inlineSchema),this.inlineDatasources=t.inlineDatasources,this.inlineSchemaHash=t.inlineSchemaHash,this.clientVersion=t.clientVersion,this.engineHash=t.engineVersion,this.logEmitter=t.logEmitter,this.tracingHelper=t.tracingHelper}apiKey(){return this.headerBuilder.apiKey}version(){return this.engineHash}async start(){this.startPromise!==void 0&&await this.startPromise,this.startPromise=(async()=>{let{apiKey:t,url:r}=this.getURLAndAPIKey();this.host=r.host,this.protocol=r.protocol,this.headerBuilder=new Bt({apiKey:t,tracingHelper:this.tracingHelper,logLevel:this.config.logLevel??\"error\",logQueries:this.config.logQueries,engineHash:this.engineHash}),this.remoteClientVersion=await vc(this.host,this.config),Hr(\"host\",this.host),Hr(\"protocol\",this.protocol)})(),await this.startPromise}async stop(){}propagateResponseExtensions(t){t?.logs?.length&&t.logs.forEach(r=>{switch(r.level){case\"debug\":case\"trace\":Hr(r);break;case\"error\":case\"warn\":case\"info\":{this.logEmitter.emit(r.level,{timestamp:jt(r.timestamp),message:r.attributes.message??\"\",target:r.target??\"BinaryEngine\"});break}case\"query\":{this.logEmitter.emit(\"query\",{query:r.attributes.query??\"\",timestamp:jt(r.timestamp),duration:r.attributes.duration_ms??0,params:r.attributes.params??\"\",target:r.target??\"BinaryEngine\"});break}default:r.level}}),t?.traces?.length&&this.tracingHelper.dispatchEngineSpans(t.traces)}onBeforeExit(){throw new Error('\"beforeExit\" hook is not applicable to the remote query engine')}async url(t){return await this.start(),`${this.protocol}//${this.host}/${this.remoteClientVersion}/${this.inlineSchemaHash}/${t}`}async uploadSchema(){let t={name:\"schemaUpload\",internal:!0};return this.tracingHelper.runInChildSpan(t,async()=>{let r=await ct(await this.url(\"schema\"),{method:\"PUT\",headers:this.headerBuilder.build(),body:this.inlineSchema,clientVersion:this.clientVersion});r.ok||Hr(\"schema response status\",r.status);let n=await jr(r,this.clientVersion);if(n)throw this.logEmitter.emit(\"warn\",{message:`Error while uploading schema: ${n.message}`,timestamp:new Date,target:\"\"}),n;this.logEmitter.emit(\"info\",{message:`Schema (re)uploaded (hash: ${this.inlineSchemaHash})`,timestamp:new Date,target:\"\"})})}request(t,{traceparent:r,interactiveTransaction:n,customDataProxyFetch:i}){return this.requestInternal({body:t,traceparent:r,interactiveTransaction:n,customDataProxyFetch:i})}async requestBatch(t,{traceparent:r,transaction:n,customDataProxyFetch:i}){let o=n?.kind===\"itx\"?n.options:void 0,s=kt(t,n);return(await this.requestInternal({body:s,customDataProxyFetch:i,interactiveTransaction:o,traceparent:r})).map(f=>(f.extensions&&this.propagateResponseExtensions(f.extensions),\"errors\"in f?this.convertProtocolErrorsToClientError(f.errors):f))}requestInternal({body:t,traceparent:r,customDataProxyFetch:n,interactiveTransaction:i}){return this.withRetry({actionGerund:\"querying\",callback:async({logHttpCall:o})=>{let s=i?`${i.payload.endpoint}/graphql`:await this.url(\"graphql\");o(s);let a=await ct(s,{method:\"POST\",headers:this.headerBuilder.build({traceparent:r,transactionId:i?.id}),body:JSON.stringify(t),clientVersion:this.clientVersion},n);a.ok||Hr(\"graphql response status\",a.status),await this.handleError(await jr(a,this.clientVersion));let f=await a.json();if(f.extensions&&this.propagateResponseExtensions(f.extensions),\"errors\"in f)throw this.convertProtocolErrorsToClientError(f.errors);return\"batchResult\"in f?f.batchResult:f}})}async transaction(t,r,n){let i={start:\"starting\",commit:\"committing\",rollback:\"rolling back\"};return this.withRetry({actionGerund:`${i[t]} transaction`,callback:async({logHttpCall:o})=>{if(t===\"start\"){let s=JSON.stringify({max_wait:n.maxWait,timeout:n.timeout,isolation_level:n.isolationLevel}),a=await this.url(\"transaction/start\");o(a);let f=await ct(a,{method:\"POST\",headers:this.headerBuilder.build({traceparent:r.traceparent}),body:s,clientVersion:this.clientVersion});await this.handleError(await jr(f,this.clientVersion));let w=await f.json(),{extensions:A}=w;A&&this.propagateResponseExtensions(A);let R=w.id,S=w[\"data-proxy\"].endpoint;return{id:R,payload:{endpoint:S}}}else{let s=`${n.payload.endpoint}/${t}`;o(s);let a=await ct(s,{method:\"POST\",headers:this.headerBuilder.build({traceparent:r.traceparent}),clientVersion:this.clientVersion});await this.handleError(await jr(a,this.clientVersion));let f=await a.json(),{extensions:w}=f;w&&this.propagateResponseExtensions(w);return}}})}getURLAndAPIKey(){return ni({clientVersion:this.clientVersion,env:this.env,inlineDatasources:this.inlineDatasources,overrideDatasources:this.config.overrideDatasources})}metrics(){throw new at(\"Metrics are not yet supported for Accelerate\",{clientVersion:this.clientVersion})}async withRetry(t){for(let r=0;;r++){let n=i=>{this.logEmitter.emit(\"info\",{message:`Calling ${i} (n=${r})`,timestamp:new Date,target:\"\"})};try{return await t.callback({logHttpCall:n})}catch(i){if(!(i instanceof ge)||!i.isRetryable)throw i;if(r>=Ac)throw i instanceof Qt?i.cause:i;this.logEmitter.emit(\"warn\",{message:`Attempt ${r+1}/${Ac} failed for ${t.actionGerund}: ${i.message??\"(unknown)\"}`,timestamp:new Date,target:\"\"});let o=await bc(r);this.logEmitter.emit(\"warn\",{message:`Retrying after ${o}ms`,timestamp:new Date,target:\"\"})}}}async handleError(t){if(t instanceof lt)throw await this.uploadSchema(),new Qt({clientVersion:this.clientVersion,cause:t});if(t)throw t}convertProtocolErrorsToClientError(t){return t.length===1?_n(t[0],this.config.clientVersion,this.config.activeProvider):new ne(JSON.stringify(t),{clientVersion:this.config.clientVersion})}applyPendingMigrations(){throw new Error(\"Method not implemented.\")}};c();u();p();m();d();l();function Rc({url:e,adapter:t,copyEngine:r,targetBuildType:n}){let i=[],o=[],s=k=>{i.push({_tag:\"warning\",value:k})},a=k=>{let M=k.join(`"
+  },
+  {
+    "file": "src/generated/client/runtime/wasm-engine-edge.js",
+    "line": 17,
+    "word": "warning",
+    "snippet": "${a.backtrace}`,{clientVersion:this.config.clientVersion})}}async requestBatch(e,{transaction:r,traceparent:n}){be(\"requestBatch\");let i=ot(e,r);await this.start();let o=await this.adapterPromise;this.lastQuery=JSON.stringify(i),this.executingQueryPromise=this.engine?.query(this.lastQuery,JSON.stringify({traceparent:n}),os(r));let s=await this.executingQueryPromise,a=this.parseEngineResponse(s);if(a.errors)throw a.errors.length===1?this.buildQueryError(a.errors[0],o?.errorRegistry):new Q(JSON.stringify(a.errors),{clientVersion:this.config.clientVersion});let{batchResult:f,errors:v}=a;if(Array.isArray(f))return f.map(R=>R.errors&&R.errors.length>0?this.loggerRustPanic??this.buildQueryError(R.errors[0],o?.errorRegistry):{data:R});throw v&&v.length===1?new Error(v[0].error):new Error(JSON.stringify(a))}buildQueryError(e,r){e.user_facing_error.is_panic;let n=this.getExternalAdapterError(e.user_facing_error,r);return n?n.error:st(e,this.config.clientVersion,this.config.activeProvider)}getExternalAdapterError(e,r){if(e.error_code===Ru&&r){let n=e.meta?.id;yr(typeof n==\"number\",\"Malformed external JS error received from the engine\");let i=r.consumeError(n);return yr(i,\"External error with reported id was not registered\"),i}}async metrics(e){await this.start();let r=await this.engine.metrics(JSON.stringify(e));return e.format===\"prometheus\"?r:this.parseEngineResponse(r)}};function Du(t){return typeof t==\"object\"&&t!==null&&t.error_code!==void 0}u();c();p();m();d();l();function as({url:t,adapter:e,copyEngine:r,targetBuildType:n}){let i=[],o=[],s=D=>{i.push({_tag:\"warning\",value:D})},a=D=>{let k=D.join(`"
+  },
+  {
+    "file": "src/hooks/use-analytics.ts",
+    "line": 769,
+    "word": "warning",
+    "snippet": "// Hanya aktif jika pengeluaran < 80% (belum terdeteksi oleh budget warning)"
+  },
+  {
+    "file": "src/hooks/use-analytics.ts",
+    "line": 1227,
+    "word": "warning",
+    "snippet": "const severityRank: Record<string, number> = { critical: 0, warning: 1, positive: 2, info: 3, neutral: 4 };"
+  },
+  {
+    "file": "src/hooks/use-budgets.ts",
+    "line": 21,
+    "word": "warning",
+    "snippet": "status: \"SAFE\" | \"WARNING\" | \"DANGER\";"
+  },
+  {
+    "file": "src/hooks/use-budgets.ts",
+    "line": 123,
+    "word": "warning",
+    "snippet": "let status: \"SAFE\" | \"WARNING\" | \"DANGER\" = \"SAFE\";"
+  },
+  {
+    "file": "src/hooks/use-budgets.ts",
+    "line": 125,
+    "word": "warning",
+    "snippet": "else if (percentage >= 80) status = \"WARNING\";"
+  },
+  {
+    "file": "src/hooks/use-dashboard.ts",
+    "line": 22,
+    "word": "warning",
+    "snippet": "type: 'critical' | 'warning' | 'positive' | 'info';"
+  },
+  {
+    "file": "src/hooks/use-dashboard.ts",
+    "line": 162,
+    "word": "warning",
+    "snippet": "const urgencyLevel: BudgetProgressItem['urgencyLevel'] = percentage >= 100 ? 'critical' : percentage >= 75 ? 'warning' : 'safe';"
+  },
+  {
+    "file": "src/hooks/use-dashboard.ts",
+    "line": 201,
+    "word": "kritis",
+    "snippet": "/********** [START: Langkah 1 — Deteksi Realokasi Anggaran (Kritis)] **********/"
+  },
+  {
+    "file": "src/hooks/use-dashboard.ts",
+    "line": 239,
+    "word": "kritis",
+    "snippet": "/********** [END: Langkah 1 — Deteksi Realokasi Anggaran (Kritis)] **********/"
+  },
+  {
+    "file": "src/hooks/use-dashboard.ts",
+    "line": 259,
+    "word": "warning",
+    "snippet": "type: 'warning',"
+  },
+  {
+    "file": "src/hooks/use-dashboard.ts",
+    "line": 279,
+    "word": "warning",
+    "snippet": "type: 'warning',"
+  },
+  {
+    "file": "src/hooks/use-dashboard.ts",
+    "line": 301,
+    "word": "warning",
+    "snippet": "type: 'warning',"
+  },
+  {
+    "file": "src/hooks/use-dashboard.ts",
+    "line": 322,
+    "word": "warning",
+    "snippet": "type: 'warning',"
+  },
+  {
+    "file": "src/hooks/use-hydration.ts",
+    "line": 81,
+    "word": "periksa",
+    "snippet": "/* Periksa apakah store kategori dan transaksi di IndexedDB masih kosong */"
+  },
+  {
+    "file": "src/lib/db/seed-demo-data.ts",
+    "line": 15,
+    "word": "menipis",
+    "snippet": "* 1. BG-00b (Anggaran Mulai Menipis - kategori Makanan 84% terpakai)"
+  },
+  {
+    "file": "src/lib/db/seed-demo-data.ts",
+    "line": 18,
+    "word": "menipis",
+    "snippet": "* 4. WL-02  (Saldo Dompet Menipis)"
+  },
+  {
+    "file": "src/lib/db/seed-demo-data.ts",
+    "line": 442,
+    "word": "warning",
+    "snippet": "severity: \"WARNING\","
+  },
+  {
+    "file": "src/lib/db/seed-demo-data.ts",
+    "line": 472,
+    "word": "warning",
+    "snippet": "severity: \"WARNING\","
+  },
+  {
+    "file": "src/lib/db/seed-demo-data.ts",
+    "line": 487,
+    "word": "warning",
+    "snippet": "severity: \"WARNING\","
+  },
+  {
+    "file": "src/lib/db/seed-demo-data.ts",
+    "line": 502,
+    "word": "warning",
+    "snippet": "severity: \"WARNING\","
+  },
+  {
+    "file": "src/lib/db/seed-sidang-data.ts",
+    "line": 109,
+    "word": "defisit",
+    "snippet": "//   5. Makanan        (Rp 300.000, terpakai Rp 380.000 = 126.7%)  → Defisit Rp 80.000 (BG-00c Subsidi Silang)"
+  },
+  {
+    "file": "src/lib/db/seed-sidang-data.ts",
+    "line": 282,
+    "word": "defisit",
+    "snippet": "//   Defisit = Rp 80.000 → BG-00c (Rekomendasi Subsidi Silang Rp 80.000)"
+  },
+  {
+    "file": "src/lib/db/seed-sidang-data.ts",
+    "line": 490,
+    "word": "warning",
+    "snippet": "// ① FT-01 — Target Belum Ada Progres (Priority 2.3, warning/reflective)"
+  },
+  {
+    "file": "src/lib/db/seed-sidang-data.ts",
+    "line": 616,
+    "word": "defisit",
+    "snippet": "║      Makanan (defisit) terdorong ke bawah.                                       ║"
+  },
+  {
+    "file": "src/lib/local-db/repositories/notification-logs.ts",
+    "line": 15,
+    "word": "peringatan",
+    "snippet": "dedupeKey: string; /* Kunci untuk mencegah peringatan ganda */"
+  },
+  {
+    "file": "src/lib/local-db/schema.ts",
+    "line": 113,
+    "word": "peringatan",
+    "snippet": "/* Mendukung sinkronisasi offline-first untuk jejak audit riset dan peringatan sistem */"
+  },
+  {
+    "file": "src/lib/notifications/budget-gateways.ts",
+    "line": 184,
+    "word": "peringatan",
+    "snippet": "// Jika \"Peringatan Instan\" tidak aktif, tidak ada yang dikirim"
+  },
+  {
+    "file": "src/lib/notifications/local-engine.ts",
+    "line": 326,
+    "word": "kritis",
+    "snippet": "/********** Kita bisa komputasi indikator lainnya, tapi cukupkan yang kritis"
+  },
+  {
+    "file": "src/lib/notifications/server-digest.ts",
+    "line": 124,
+    "word": "kritis",
+    "snippet": "* (deficit kritis > reallocation > usage warning > comparison spike)."
+  },
+  {
+    "file": "src/lib/notifications/server-digest.ts",
+    "line": 124,
+    "word": "warning",
+    "snippet": "* (deficit kritis > reallocation > usage warning > comparison spike)."
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 6,
+    "word": "kritis",
+    "snippet": "*  - Priority 1-2   : Anomali kritis (cashflow, budget, payday)"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 17,
+    "word": "warning",
+    "snippet": "export type NudgeSeverity = 'warning' | 'positive' | 'neutral' | 'critical' | 'info';"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 113,
+    "word": "kritis",
+    "snippet": "* Insight diurutkan secara ascending berdasarkan prioritas — semakin kecil = semakin kritis."
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 151,
+    "word": "kritis",
+    "snippet": "/********** [START: Insight Priority 1 — Anomali Kritis] **********/"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 180,
+    "word": "defisit",
+    "snippet": "/********** Case B — Cashflow defisit (pengeluaran melampaui pemasukan). */"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 193,
+    "word": "warning",
+    "snippet": "severity: 'warning',"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 205,
+    "word": "warning",
+    "snippet": "severity: 'warning',"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 217,
+    "word": "warning",
+    "snippet": "severity: 'warning',"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 232,
+    "word": "warning",
+    "snippet": "severity: 'warning',"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 255,
+    "word": "warning",
+    "snippet": "severity: 'warning',"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 279,
+    "word": "warning",
+    "snippet": "severity: 'warning',"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 334,
+    "word": "kritis",
+    "snippet": "/********** [END: Insight Priority 1 — Anomali Kritis] **********/"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 416,
+    "word": "warning",
+    "snippet": "severity: 'warning',"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 432,
+    "word": "warning",
+    "snippet": "severity: 'warning',"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 433,
+    "word": "tahan",
+    "snippet": "title: 'Proyeksi Daya Tahan Alokasi',"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 444,
+    "word": "warning",
+    "snippet": "severity: 'warning',"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 513,
+    "word": "warning",
+    "snippet": "severity: 'warning',"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 525,
+    "word": "warning",
+    "snippet": "severity: 'warning',"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 537,
+    "word": "warning",
+    "snippet": "severity: 'warning',"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 549,
+    "word": "warning",
+    "snippet": "severity: 'warning',"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 624,
+    "word": "kritis",
+    "snippet": "/********** Priority Triage (Weighted Sorting): Sort ascending agar nudge kritis muncul duluan."
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 628,
+    "word": "warning",
+    "snippet": "const severityRank: Record<NudgeSeverity, number> = { critical: 0, warning: 1, positive: 2, info: 3, neutral: 4 };"
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 652,
+    "word": "defisit",
+    "snippet": "* menutupi defisit budget target."
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 657,
+    "word": "defisit",
+    "snippet": "* - Jumlah yang direkomendasikan = min(defisit, maksimum yang bisa ditransfer)."
+  },
+  {
+    "file": "src/lib/nudging.ts",
+    "line": 659,
+    "word": "defisit",
+    "snippet": "* @param targetBudget - Budget yang sedang defisit (spent >= limit)."
+  },
+  {
+    "file": "src/lib/sw/register.ts",
+    "line": 230,
+    "word": "defisit",
+    "snippet": "* Gateway 2: Kirim notifikasi Defisit Mutlak (100% limit terlampaui)."
+  },
+  {
+    "file": "src/lib/sync/queue.ts",
+    "line": 131,
+    "word": "kritis",
+    "snippet": "/********** Abaikan error dynamic import / DB — tidak kritis. */"
+  },
+  {
+    "file": "src/lib/utils/budget-rhythm.ts",
+    "line": 72,
+    "word": "peringatan",
+    "snippet": "/********** Pengeluaran 10% lebih cepat dari ideal akan memicu peringatan (OFF_TRACK). */"
+  },
+  {
+    "file": "src/lib/utils/persistent-storage.ts",
+    "line": 22,
+    "word": "periksa",
+    "snippet": "/********** Periksa apakah penyimpanan sudah bersifat persisten. */"
+  },
+  {
+    "file": "public/sw.js",
+    "line": 156,
+    "word": "defisit",
+    "snippet": "// ── Gateway 2: Defisit Mutlak ─────────────────────────"
+  },
+  {
+    "file": "tests/03-transactions.spec.ts",
+    "line": 339,
+    "word": "bahaya",
+    "snippet": "// Bilah progress tipis netral harus ada dan tidak memiliki kelas warna bahaya/amber/red"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 112,
+    "word": "tahan",
+    "snippet": "// BG-01: Proyeksi Daya Tahan Alokasi"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 113,
+    "word": "tahan",
+    "snippet": "test('[BG-01] VALID: budgetRunway triggers \"Proyeksi Daya Tahan Alokasi\"', async () => {"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 118,
+    "word": "tahan",
+    "snippet": "const rule = insights.find((i: any) => i.title === 'Proyeksi Daya Tahan Alokasi');"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 120,
+    "word": "warning",
+    "snippet": "expect(rule.severity).toBe('warning');"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 126,
+    "word": "tahan",
+    "snippet": "const rule = insights.find((i: any) => i.title === 'Proyeksi Daya Tahan Alokasi');"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 155,
+    "word": "warning",
+    "snippet": "expect(rule.severity).toBe('warning');"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 172,
+    "word": "warning",
+    "snippet": "expect(rule.severity).toBe('warning');"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 251,
+    "word": "warning",
+    "snippet": "expect(rule.severity).toBe('warning');"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 268,
+    "word": "warning",
+    "snippet": "expect(rule.severity).toBe('warning');"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 285,
+    "word": "warning",
+    "snippet": "expect(rule.severity).toBe('warning');"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 319,
+    "word": "warning",
+    "snippet": "expect(rule.severity).toBe('warning');"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 430,
+    "word": "warning",
+    "snippet": "expect(rule.severity).toBe('warning');"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 448,
+    "word": "warning",
+    "snippet": "expect(rule.severity).toBe('warning');"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 537,
+    "word": "warning",
+    "snippet": "expect(rule.severity).toBe('warning');"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 564,
+    "word": "warning",
+    "snippet": "expect(rule.severity).toBe('warning');"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 584,
+    "word": "defisit",
+    "snippet": "// AN-10 (b): Defisit Arus Kas -> Selisih Arus Kas"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 597,
+    "word": "warning",
+    "snippet": "test('[AN-10c] VALID: expense/income >= 0.8 triggers \"Selisih Arus Kas\" (warning)', async () => {"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 604,
+    "word": "warning",
+    "snippet": "expect(rule.severity).toBe('warning');"
+  },
+  {
+    "file": "tests/08-insight-engine.spec.ts",
+    "line": 699,
+    "word": "warning",
+    "snippet": "expect(rule.severity).toBe('warning');"
+  },
+  {
+    "file": "tests/10-notifications.spec.ts",
+    "line": 30,
+    "word": "peringatan",
+    "snippet": "// Ini mensimulasikan pengguna mematikan/menyalakan switch preferensi (misal \"Peringatan Anggaran\")"
+  },
+  {
+    "file": "tests/10-notifications.spec.ts",
+    "line": 31,
+    "word": "peringatan",
+    "snippet": "// Karena kita tidak tahu persis label UI-nya, kita asumsikan menggunakan text seperti \"Peringatan Anggaran\" atau switch"
+  },
+  {
+    "file": "tests/10-notifications.spec.ts",
+    "line": 182,
+    "word": "warning",
+    "snippet": "test('[AU-13-01_02] Menerima Notifikasi: System Triggers Low Cash Warning [Ref: WL-02]', async () => {"
+  },
+  {
+    "file": "tests/10-notifications.spec.ts",
+    "line": 216,
+    "word": "menipis",
+    "snippet": "await page.fill('#txn-desc', 'Uji Dompet Menipis');"
+  }
+]
