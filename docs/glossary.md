@@ -58,14 +58,13 @@ Dokumen ini mendefinisikan terminologi inti yang digunakan di seluruh arsitektur
 - **Notifikasi Dalam-Aplikasi (In-App Notification)**: Peringatan visual yang dirender di dalam antarmuka UI React Moneta (contoh: *toast* atau kotak masuk pop-up).
 - **Notifikasi Sistem (System Notification)**: Notifikasi *push* asli dari sistem operasi (OS) yang dipicu melalui fungsi `showNotification()` pada Service Worker browser.
 - **Server Web Push**: Notifikasi *push* yang dipicu dari luar aplikasi oleh tugas terjadwal (CRON) atau skrip rangkuman di sisi server, yang mampu menjangkau pengguna meski aplikasi PWA sedang ditutup.
-- **Nudge (Dorongan Halus)**: Notifikasi yang menyarankan tindakan positif atau sekadar menginformasikan status umum kepada pengguna tanpa menyiratkan bahaya kritis.
-- **Rekomendasi (Recommendation)**: Wawasan (insight) analitis yang disajikan kepada pengguna berdasarkan pola pengeluaran mereka, dirancang untuk meningkatkan kesehatan finansial.
-- **clientId**: UUID tangguh yang dihasilkan di klien saat terjadi mutasi lokal. Berfungsi sebagai kunci penanda utama saat menyinkronkan data antara IndexedDB dan PostgreSQL.
-- **serverId**: Pengidentifikasi internal pada PostgreSQL. Berfungsi sebagai ID utama di *database* server, namun sistem lebih mengandalkan `clientId` untuk logika sinkronisasi *offline*.
-- **dedupeKey**: *String* deterministik (misalnya, `BUDGET_USAGE:userId:budgetId:YYYY-MM:WARNING`) yang digunakan untuk mencegah sistem memicu log notifikasi ganda untuk kejadian ambang batas yang sama.
-- **syncStatus**: Kolom berjenis *enum* pada data (`PENDING`, `SYNCED`, `CONFLICT`) yang menandakan apakah data lokal telah sukses diakui oleh server. Penghapusan data ditangani melalui *timestamp* `deletedAt` (*soft delete*), bukan status sinkronisasi penghapusan.
-- **Mesin Insight (Insight Engine)**: Sistem berbasis aturan lokal (`nudging.ts` dan `local-engine.ts`) yang menganalisis data pengguna untuk menemukan anomali finansial dan membuat dorongan tanpa membutuhkan pemrosesan server.
-- **Insight Fatigue (Kelelahan Wawasan)**: Beban kognitif yang disebabkan oleh terlalu banyaknya peringatan analitis yang muncul di layar, dicegah dengan sistem penyortiran prioritas berbobot dan pembatasan UI.
+- **Arsitektur Pilihan (Choice Architecture)**: Penataan tata letak antarmuka dan penyajian informasi berdasarkan teori Richard Thaler yang mendorong pengambilan keputusan rasional dan mandiri tanpa paksaan (*libertarian paternalism*).
+- **Calm UI (Antarmuka Tenang)**: Pendekatan visual yang menyajikan status finansial secara objektif, menenangkan, dan bebas dari warna alarmis merah/amber atau diksi menghakimi.
+- **Nudge (Dorongan Halus)**: Intervensi perilaku berbasis cermin data (*objective data mirror*) atau dorongan halus preventif/apresiatif yang memandu pengguna mengatur ritme finansial tanpa membatasi kebebasan bertindak.
+- **Taksonomi 3 Tingkat Luaran**: Klasifikasi luaran sistem berbasis aturan Moneta menjadi: Tingkat 1 (Insight Pola — Faktual/Deskriptif), Tingkat 2 (Nudge — Choice Architecture Preventif/Apresiasi), dan Tingkat 3 (Saran Eksekutif — Rekomendasi Tindakan Terstruktur).
+- **Point-of-Decision Cue**: Petunjuk alokasi kontekstual yang dihadirkan langsung pada momen pengambilan keputusan (misalnya petunjuk sisa alokasi harian di modal transaksi) sebelum aksi final disimpan.
+- **Mesin Insight (Insight Engine)**: Sistem berbasis 37 aturan lokal (`nudging.ts` dan `local-engine.ts`) yang menganalisis data pengguna untuk membaca pola finansial secara luring (*offline-first*) tanpa ketergantungan server.
+- **Insight Fatigue (Kelelahan Wawasan)**: Beban kognitif yang disebabkan oleh terlalu banyaknya informasi analitis yang muncul di layar, dimitigasi dengan pengurutan prioritas murni dan pembatasan default 3 kartu di antarmuka.
 
 ## Terminologi Frontend UI/UX
 

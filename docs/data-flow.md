@@ -235,7 +235,7 @@ Untuk mencegah penumpukan **Phantom Delete Queue** (antrean penghapusan fiktif) 
 1. **Pembaruan UI**: Pengguna menetapkan batas anggaran (Anggaran) untuk kategori pengeluaran, atau membuat Target Finansial (Target Pemasukan).
 2. **Local DB**: Data Anggaran/Target dibuat atau diperbarui di IDB (`syncStatus = "PENDING"`, `updatedAt` diperbarui).
 3. **sync_queue**: Mutasi `CREATE`/`UPDATE` untuk anggaran atau target dimasukkan ke antrean.
-4. **Perilaku Notifikasi**: Evaluasi ulang anggaran atau target terhadap status saat ini dapat langsung memicu peringatan lokal atau pembaruan target yang positif.
+4. **Perilaku Notifikasi**: Evaluasi ulang anggaran atau target terhadap status saat ini dapat langsung memicu evaluasi nudging lokal atau pencatatan status target secara positif.
 5. **Server API**: Dikirim ke server. Mutasi Anggaran dan Target diproses *sebelum* Transaksi untuk memenuhi konstrain kunci asing (*foreign key*).
 
 **Catatan tentang Subsidi Silang (Budget Reallocation)**: Subsidi silang diimplementasikan sebagai dua pembaruan anggaran lokal:
@@ -255,7 +255,7 @@ Evaluasi Kejadian  →  Pembuatan Log (selalu)  →  Keputusan Pengiriman (berda
 ### Lapisan 1: Evaluasi Kejadian
 - Pembuatan atau pembaruan transaksi menyebabkan total pengeluaran menembus ambang batas anggaran (50%, 80%, 100%, atau >100%).
 - `local-engine.ts` dipanggil melalui `evaluateAndTriggerNudges()` dari `transactions.ts`.
-- Insight yang dihasilkan berdasarkan batas anggaran dan saldo dompet dievaluasi. Insight paling kritis dan tidak duplikat akan dipilih.
+- Insight yang dihasilkan berdasarkan batas anggaran dan saldo dompet dievaluasi secara objektif, dan insight dengan prioritas tertinggi yang tidak duplikat akan dipilih.
 
 ### Lapisan 2: Pembuatan Log (selalu berjalan, tidak terpengaruh mode pengiriman)
 - Sebuah data `notification_log` ditulis ke IDB dengan status: `'delivered'`.
@@ -278,7 +278,7 @@ Evaluasi Kejadian  →  Pembuatan Log (selalu)  →  Keputusan Pengiriman (berda
 ### Lapisan 4: Eksekusi Pengiriman
 - `reg.showNotification()` dipanggil dengan muatan `notification.data = { clientId, logId, ctaRoute, type }`.
   - `renotify: true` mencegah tabrakan tag yang bisa membuat notifikasi tertumpuk tanpa memunculkan *banner*.
-  - `requireInteraction: true` hanya diberikan untuk peringatan kritis (100%).
+  - `requireInteraction: true` diberikan saat alokasi mencapai atau melampaui 100% agar status alokasi disadari pengguna sebelum dismissed.
 - Setelah `showNotification()` berhasil berjalan, angka *counter* notifikasi di localStorage akan bertambah.
 
 ### Pengiriman Mode Rangkuman (DIGEST mode)
@@ -333,10 +333,14 @@ Evaluasi Kejadian  →  Pembuatan Log (selalu)  →  Keputusan Pengiriman (berda
 2. **Server API**: *Hanya saat Online.* Aplikasi memanggil *endpoint* `/api/export` secara langsung tanpa antrean.
 3. **Respons**: Server melakukan kueri langsung ke PostgreSQL dan mengembalikan file (buffer) *spreadsheet* yang sudah di-*generate*.
 
-## 12. Pemicu Insight Analitik (Dashboard)
+## 12. Pemicu Insight Analitik (Dashboard & Analytics)
 
 1. **Pemicu**: Pengguna membuka *dashboard* Analitik atau halaman Beranda (Home).
 2. **Local DB**: Hook `use-analytics.ts` menarik data riwayat transaksi hingga 3 bulan ke belakang dari IndexedDB lokal.
-3. **Mesin Logika (Logic Engine)**: Fungsi `generateNudges()` dari `nudging.ts` mengevaluasi data tersebut terhadap berbagai aturan perilaku finansial yang sudah didefinisikan (memberikan nilai `priority` berupa desimal yang menaik, misalnya dari 1.0 hingga 4.0, di mana nilai yang lebih kecil berarti semakin kritis).
-4. **Pengurutan Prioritas Berbobot**: Di lapisan UI (`InsightsPanel`), *insight* yang dihasilkan tersebut kemudian dikelompokkan dan diurutkan kembali berdasarkan tingkat keparahan (severity): Kritis (3) > Peringatan (2) > Positif (1) > Netral (0) > Info (-1).
-5. **Batasan Pintar & Pencegahan**: Untuk menghindari "Insight Fatigue" (rasa lelah melihat notifikasi yang terlalu banyak), UI menetapkan batasan tampilan maksimal. Semua insight Kritis (Critical) akan selalu ditampilkan. Sisa slot yang kosong (maksimal hingga batas *default* 3) akan diisi oleh *insight* prioritas tertinggi lainnya. Segala sisa insight tambahan disembunyikan dan baru muncul jika tombol "Lihat insight lainnya" ditekan.
+3. **Mesin Logika (Logic Engine)**: Fungsi `generateNudges()` dari `nudging.ts` mengevaluasi 37 aturan perilaku finansial yang didefinisikan secara independen, menghasilkan koleksi objek `NudgeInsight` dengan nilai `priority` numerik (angka lebih kecil = prioritas lebih tinggi/relevan).
+4. **Penyajian Calm UI & Choice Architecture**:
+   - Di lapisan antarmuka (`analytics/page.tsx`), insight diurutkan secara murni berdasarkan nilai prioritas (`sort((a, b) => a.priority - b.priority)`), tanpa pengelompokan tingkatan keparahan (*severity buckets*) yang kaku.
+   - Menggunakan header netral berikon kompas (*"Wawasan & Panduan Arah"*) serta palet warna tenang (slate/indigo) tanpa warna peringatan merah/amber yang memicu kecemasan finansial.
+5. **Mitigasi Insight Fatigue**:
+   - UI membatasi tampilan *default* hanya pada 3 insight teratas (1 kartu utama *primary* berukuran penuh + 2 kartu sekunder dalam kisi responsif).
+   - Seluruh insight tambahan disembunyikan secara rapi dan dapat dibuka secara bertahap melalui tombol `"Lihat {n} insight lainnya..."` / `"Sembunyikan"`.

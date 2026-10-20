@@ -125,7 +125,7 @@ This document outlines the purpose, boundaries, and naming conventions for each 
   - `QA_CHECKLIST.md` — Comprehensive manual Black Box testing checklist.
   - `DATA_DESIGN.md` — Database ERD and IndexedDB schema definitions.
   - `AUDIT_REPORT.md` — Project health and compliance audits.
-  - `RULE_BASED_INSIGHT_ENGINE.md` — Complete reference of the 30 rules implemented for Analytics Insights and Local Push Notifications.
+  - `rule-based-insight-engine.md` — Complete reference of the 37 active rules implemented for Analytics Insights and Local Push Notifications under Calm UI and Choice Architecture.
 
 ---
 
@@ -256,4 +256,4 @@ Dokumen ini menguraikan tujuan, batasan, dan konvensi penamaan untuk setiap dire
   - `QA_CHECKLIST.md` — Kumpulan daftar perintah panduan pengujian terukur dari sudut pemakai ujung manusia metode Kotak Hitam (*Black Box Manual Checklist*).
   - `DATA_DESIGN.md` — Panduan kamus arsitektur ERD yang menjelaskan rancang bangun relasi referensi dan hierarki penyimpanan skema IndexedDB dengan basis tabel server yang diatur PostgreSQL.
   - `AUDIT_REPORT.md` — Hasil rekap laporan penyehatan kode dengan status kondisi terakhir pelurusan pembersihan teknis kelayakan operasional (*System Audit/Compliance*).
-  - `RULE_BASED_INSIGHT_ENGINE.md` — Inti referensi logika mendalam aturan analitis berbobot berisikan pustaka ke 30 peraturan penemu wawasan perilaku peringatan (Analytics Insights dan Push Nudge) mesin penggerak kepekaan analitis di pusat notifikasi.
+  - `rule-based-insight-engine.md` — Inti referensi logika mendalam aturan analitis berbobot berisikan pustaka 37 aturan aktif sistem (Analytics Insights dan Push Nudge) dengan arsitektur pilihan bebas-vonis (Choice Architecture) dan Calm UI.
