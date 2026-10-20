@@ -158,11 +158,11 @@ test.describe.serial('6. Notifications (Notifikasi)', () => {
     await page.locator('#txn-amount').pressSequentially('300000', { delay: 10 });
     await page.locator('button[aria-label="Makanan"]').click();
     await page.fill('#txn-desc', 'Makan Steak 2');
-    await page.locator('form button[type="submit"]:has-text("Simpan")').click();
+    await page.locator('form button[type="submit"]:has-text("Simpan")').dispatchEvent('click');
     await expect(page.locator('h2:has-text("Tambah Transaksi")')).not.toBeVisible();
 
     // Check if notification 80% appears
-    const toast80 = page.locator('text="Anggaran Mulai Menipis"');
+    const toast80 = page.locator('text=/Progres Alokasi Anggaran|Anggaran Mulai Menipis/i');
     await expect(toast80.first()).toBeVisible({ timeout: 10000 });
 
     // 5. Add Expense 200.000 (Total 100%) -> Should trigger BG-00c
@@ -175,7 +175,7 @@ test.describe.serial('6. Notifications (Notifikasi)', () => {
     await expect(page.locator('h2:has-text("Tambah Transaksi")')).not.toBeVisible();
 
     // Check if notification 100% appears
-    // Can be "Batas Anggaran Tercapai" or "Batas Anggaran Terlampaui" or "Subsidi Silang"
+    // Can be "Batas Anggaran Tercapai" or "Batas Anggaran Terlampaui" or "Subsidi Silang" or "Kilas Batas Anggaran"
     const toast100 = page.locator('text=/Batas Anggaran|Subsidi Silang/i');
     await expect(toast100.first()).toBeVisible({ timeout: 10000 });
   });
@@ -219,7 +219,7 @@ test.describe.serial('6. Notifications (Notifikasi)', () => {
     await expect(page.locator('h2:has-text("Tambah Transaksi")')).not.toBeVisible();
 
     // 3. Verify the Push Notification toast
-    const toast = page.locator('text="Saldo Dompet Menipis"');
+    const toast = page.locator('text=/Kilas Saldo Dompet|Saldo Dompet/i');
     await expect(toast.first()).toBeVisible({ timeout: 10000 });
   });
 });

@@ -430,9 +430,9 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
         const targetBudgetInfo = allBudgetsInfo.find((b) => b.id === budget.clientId);
 
         const deficitAmount = spent - budgetLimit;
-        let mergedTitle = 'Batas Anggaran Terlampaui';
-        let mergedBody = `Anggaran ${catName} telah melewati batas sebesar ${formatCurrency(deficitAmount)}. Kamu dapat meninjau pengeluaran atau mempertimbangkan penyesuaian anggaran.`;
-        let mergedCtaLabel = 'Tinjau Anggaran';
+        let mergedTitle = 'Kilas Batas Anggaran';
+        let mergedBody = `Alokasi ${catName} telah mencapai 100% (${formatCurrency(spent)} dari ${formatCurrency(budgetLimit)}). Tersedia opsi penyesuaian alokasi antar kategori jika diperlukan.`;
+        let mergedCtaLabel = 'Lihat Anggaran';
         let mergedCtaRoute = '/budgets';
         let actionType: string | undefined = undefined;
         let sourceBudgetId: string | undefined = undefined;
@@ -464,7 +464,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
             dedupeKeyOverride = `BUDGET_REALLOCATION_RECOMMENDATION:${userId}:${currentPeriodStr}:${recommendation.targetBudgetId}:${recommendation.sourceBudgetId}:${contextHash}`;
 
             mergedTitle = 'Rekomendasi Subsidi Silang';
-            mergedBody = `Anggaran ${catName} telah melewati batas sebesar ${formatCurrency(deficitAmount)}. Kamu dapat mempertimbangkan memindahkan ${formatCurrency(recommendation.recommendedAmount)} dari ${recommendation.sourceCategoryName}. Keputusan tetap ada di tanganmu.`;
+            mergedBody = `Alokasi ${catName} telah mencapai 100%+ (${formatCurrency(spent)}). Tersedia alokasi sisa di ${recommendation.sourceCategoryName} sebesar ${formatCurrency(recommendation.recommendedAmount)} jika ingin disesuaikan.`;
             mergedCtaLabel = 'Subsidi Silang';
             mergedCtaRoute = `/budgets?action=reallocate&sourceBudgetId=${recommendation.sourceBudgetId}&targetBudgetId=${recommendation.targetBudgetId}&amount=${recommendation.recommendedAmount}`;
             actionType = 'REALLOCATE_BUDGET';
@@ -479,7 +479,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
         nudgeInsights.push({
           ...baseInsight,
           priority: BUDGET_CRITICAL_PRIORITY,
-          severity: 'critical',
+          severity: 'info',
           title: mergedTitle,
           body: mergedBody,
           ctaLabel: mergedCtaLabel,
@@ -501,10 +501,10 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
         nudgeInsights.push({
           ...baseInsight,
           priority: BUDGET_CRITICAL_PRIORITY,
-          severity: 'critical',
+          severity: 'info',
           title: 'Batas Anggaran Tercapai',
-          body: `Anggaran ${catName} sudah mencapai batas bulan ini. Pengeluaran berikutnya akan membuat anggaran melewati limit.`,
-          ctaLabel: 'Tinjau Anggaran',
+          body: `Alokasi ${catName} telah mencapai 100% batas bulan ini (${formatCurrency(spent)}).`,
+          ctaLabel: 'Lihat Anggaran',
           ctaRoute: '/budgets',
           relatedBudgetId: budget.clientId,
           relatedCategoryId: budget.categoryId,
@@ -512,16 +512,16 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
           budgetUpdatedAt: budget.updatedAt,
         });
       } else if (ratio >= 0.8) {
-        let title = 'Anggaran Mulai Menipis';
+        let title = 'Progres Alokasi Anggaran';
         if (comparisonAmount) {
-          title = `Pengeluaran ${catName} Naik`;
+          title = `Dinamika Pengeluaran ${catName}`;
         }
         nudgeInsights.push({
           ...baseInsight,
           priority: BUDGET_WARNING_PRIORITY,
-          severity: 'warning',
+          severity: 'info',
           title: title,
-          body: `Anggaran ${catName} sudah terpakai 80%.${comparisonText} Pertimbangkan menahan pengeluaran berikutnya agar tidak melewati batas.`,
+          body: `Alokasi ${catName} telah terpakai 80% (${formatCurrency(spent)} dari ${formatCurrency(budgetLimit)}).${comparisonText} Tersisa ${formatCurrency(budgetLimit - spent)} untuk sisa periode ini.`,
           ctaLabel: 'Lihat Anggaran',
           ctaRoute: '/budgets',
           relatedBudgetId: budget.clientId,
@@ -535,7 +535,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
           priority: BUDGET_INFO_PRIORITY,
           severity: 'info',
           title: 'Penggunaan Anggaran Berjalan',
-          body: `Anggaran ${catName} sudah terpakai 50%. Masih ada ruang, tetapi mulai pantau agar tetap sesuai rencana.`,
+          body: `Alokasi ${catName} telah terpakai 50% (${formatCurrency(spent)} dari ${formatCurrency(budgetLimit)}).`,
           ctaLabel: 'Lihat Anggaran',
           ctaRoute: '/budgets',
           relatedBudgetId: budget.clientId,
@@ -552,9 +552,9 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
     if (lowCashWarning) {
       nudgeInsights.push({
         priority: 0.5,
-        severity: 'critical',
-        title: 'Saldo Dompet Menipis',
-        body: `Saldo dompet '${lowCashWarning.walletName}' saat ini ${formatCurrency(lowCashWarning.currentBalance)}. Pertimbangkan untuk melakukan top up agar kebutuhan harian terpenuhi.`,
+        severity: 'info',
+        title: 'Kilas Saldo Dompet',
+        body: `Saldo dompet '${lowCashWarning.walletName}' saat ini tercatat ${formatCurrency(lowCashWarning.currentBalance)}.`,
         ctaLabel: 'Lihat Dompet',
         ctaRoute: '/wallets',
       });
@@ -593,9 +593,9 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
     if (walletDrainRate) {
       nudgeInsights.push({
         priority: 1.8,
-        severity: 'warning',
-        title: 'Saldo Dompet Turun Cepat',
-        body: `Laju pengeluaran dari dompet '${walletDrainRate.walletName}' bulan ini 1,5× lebih cepat dari bulan lalu. Pantau transaksimu dari dompet ini.`,
+        severity: 'info',
+        title: 'Dinamika Pengeluaran Dompet',
+        body: `Laju pengeluaran dari dompet '${walletDrainRate.walletName}' bulan ini tercatat 1,5× lebih cepat dibanding bulan sebelumnya.`,
         ctaLabel: 'Lihat Dompet',
         ctaRoute: '/wallets',
       });

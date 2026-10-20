@@ -226,7 +226,7 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
         fresh = {
           type: 'critical',
           title: 'Rekomendasi Subsidi Silang',
-          message: `Anggaran ${recommendation.targetCategoryName} jebol. Pindahkan Rp${recommendation.recommendedAmount.toLocaleString('id-ID')} dari ${recommendation.sourceCategoryName}?`,
+          message: `Alokasi ${recommendation.targetCategoryName} telah mencapai 100%+. Tersedia alokasi sisa di ${recommendation.sourceCategoryName} sebesar Rp${recommendation.recommendedAmount.toLocaleString('id-ID')} jika ingin dialokasikan.`,
           action: {
             label: 'Subsidi Silang',
             route: `/budgets?action=reallocate&sourceBudgetId=${recommendation.sourceBudgetId}&targetBudgetId=${recommendation.targetBudgetId}&amount=${recommendation.recommendedAmount}`,
@@ -242,7 +242,7 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
     const allIncomes = transactions.filter((t) => t.type === 'INCOME' && dayjs(t.date).isAfter(thirtyDaysAgo));
     const currentExpTxns = transactions.filter((t) => t.type === 'EXPENSE' && t.date.startsWith(currentPeriod));
 
-    /********** [START: Langkah 2 — Deteksi Kebocoran Awal Bulan (Payday Leak)] **********/
+    /********** [START: Langkah 2 — Deteksi Alokasi Awal Bulan (Payday Leak)] **********/
     if (allIncomes.length > 0) {
       let maxIncome = allIncomes[0];
       for (const inc of allIncomes) {
@@ -257,15 +257,15 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
         if (limit > 0 && totalSpent > limit * 0.4) {
           fresh = {
             type: 'warning',
-            title: 'Pengeluaran Awal Bulan',
-            message: `${Math.round((totalSpent / limit) * 100)}% dari batas aman telah terpakai hanya dalam ${Math.max(1, daysSincePayday)} hari (setelah gajian).`,
+            title: 'Dinamika Arus Kas Awal Bulan',
+            message: `${Math.round((totalSpent / limit) * 100)}% dari batas aman telah dialokasikan dalam ${Math.max(1, daysSincePayday)} hari pertama.`,
           };
           writeInsightCache(currentPeriod, fresh);
           return fresh;
         }
       }
     }
-    /********** [END: Langkah 2 — Deteksi Kebocoran Awal Bulan (Payday Leak)] **********/
+    /********** [END: Langkah 2 — Deteksi Alokasi Awal Bulan (Payday Leak)] **********/
 
     /********** [START: Langkah 3 — Deteksi Kecepatan Pengeluaran (Burn Rate)] **********/
     const now = new Date();
@@ -277,16 +277,16 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
     if (totalBudget > 0 && spentPct - timePassedPct > 10) {
       fresh = {
         type: 'warning',
-        title: 'Kecepatan Pengeluaran Meningkat',
+        title: 'Kecepatan Alokasi Pengeluaran',
         message:
-          'Laju pengeluaranmu lebih cepat dari kalender bulan ini. Pertimbangkan untuk mengatur ulang pengeluaran beberapa hari ke depan.',
+          'Laju pengeluaran bulan ini tercatat bergerak lebih cepat dari pergantian hari kalender.',
       };
       writeInsightCache(currentPeriod, fresh);
       return fresh;
     }
     /********** [END: Langkah 3 — Deteksi Kecepatan Pengeluaran (Burn Rate)] **********/
 
-    /********** [START: Langkah 4 — Deteksi Jebakan Akhir Pekan (Weekend Trap)] **********/
+    /********** [START: Langkah 4 — Deteksi Distribusi Akhir Pekan (Weekend Trap)] **********/
     const thisWeekExpenses = currentExpTxns.filter((t) => dayjs(t.date).isSame(dayjs(), 'week'));
     let weekTotal = 0,
       weekendTotal = 0;
@@ -299,13 +299,13 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
     if (weekTotal > 0 && (weekendTotal / weekTotal) > 0.7) {
       fresh = {
         type: 'warning',
-        title: 'Pola Pengeluaran Akhir Pekan',
-        message: `Sekitar ${Math.round((weekendTotal / weekTotal) * 100)}% pengeluaran minggumu terjadi di akhir pekan. Pastikan tetap sesuai dengan rencana anggaranmu, ya.`,
+        title: 'Distribusi Pengeluaran Mingguan',
+        message: `Sekitar ${Math.round((weekendTotal / weekTotal) * 100)}% pengeluaran minggumu tercatat pada akhir pekan (Sabtu & Minggu).`,
       };
       writeInsightCache(currentPeriod, fresh);
       return fresh;
     }
-    /********** [END: Langkah 4 — Deteksi Jebakan Akhir Pekan (Weekend Trap)] **********/
+    /********** [END: Langkah 4 — Deteksi Distribusi Akhir Pekan (Weekend Trap)] **********/
 
     /********** [START: Langkah 5 — Deteksi Pengeluaran Larut Malam (Night Owl)] **********/
     const wantsRegex = /(hiburan|jajan|pribadi|gaya hidup|hobi)/i;
@@ -321,7 +321,7 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
       fresh = {
         type: 'warning',
         title: 'Pengeluaran Larut Malam',
-        message: `Tercatat Rp${nightTotal.toLocaleString('id-ID')} pengeluaran gaya hidup di larut malam. Kurangi kebiasaan checkout di jam tidur.`,
+        message: `Tercatat Rp${nightTotal.toLocaleString('id-ID')} pengeluaran gaya hidup pada rentang waktu malam hingga dini hari bulan ini.`,
       };
       writeInsightCache(currentPeriod, fresh);
       return fresh;
@@ -347,7 +347,7 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
       fresh = {
         type: 'info',
         title: 'Belum Ada Anggaran',
-        message: 'Atur anggaran pertamamu untuk mendapatkan lebih banyak peringatan dan perlindungan pengeluaran.',
+        message: 'Atur alokasi anggaran bulanan untuk mengaktifkan panduan pengeluaran.',
       };
     }
     /********** [END: Langkah 6 — Fallback Status Positif atau Info] **********/

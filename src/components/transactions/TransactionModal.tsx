@@ -12,7 +12,7 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { useCategories } from "@/hooks/use-categories";
 import { useWallets } from "@/hooks/use-wallets";
 import { useTargets } from "@/hooks/use-targets";
-import { Transaction, TransactionType } from "@/types/models.types";
+import { Budget, Transaction, TransactionType } from "@/types/models.types";
 import { showSyncToast } from "@/lib/utils/show-toast";
 import { TrendingDown, TrendingUp, ArrowLeftRight, X, ClipboardPaste, CheckCircle2, AlertCircle, ChevronDown, Plus, Target } from "lucide-react";
 import { parseMutationText } from "@/lib/utils/parse-mutation";
@@ -21,6 +21,9 @@ import { getWalletIcon } from "@/lib/utils/wallet-icons";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { QuickChipGrid } from "@/components/ui/QuickChipGrid";
 import { CategoryBuilder } from "@/components/categories/CategoryBuilder";
+import { getBudgetsByPeriod } from "@/lib/local-db/repositories/budgets";
+import { getCurrentUser } from "@/lib/local-db/repositories/users";
+import { formatCurrency } from "@/lib/utils/helpers";
 
 /********** Fungsi Bantu (Helper Functions) **********/
 
@@ -89,7 +92,7 @@ export function TransactionModal({
   initialTargetId,
 }: TransactionModalProps) {
   /********** [START: Inisialisasi State Form Transaksi & Hook] **********/
-  const { addTransaction, editTransaction, deleteTransaction } = useTransactions();
+  const { transactions, addTransaction, editTransaction, deleteTransaction } = useTransactions();
   const { expenseCategories, incomeCategories, addCategory } = useCategories();
   const { wallets } = useWallets();
   const { targets } = useTargets();
@@ -106,6 +109,28 @@ export function TransactionModal({
   const [formNote, setFormNote] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showNote, setShowNote] = useState(false);
+
+  /* State anggaran aktif untuk ambient in-situ nudge */
+  const [activeBudgets, setActiveBudgets] = useState<Budget[]>([]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    let isMounted = true;
+    const fetchBudgets = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (!user || !isMounted) return;
+        const now = new Date();
+        const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+        const b = await getBudgetsByPeriod(user.id, period);
+        if (isMounted) setActiveBudgets(b);
+      } catch (err) {
+        console.error("Failed to load budgets in TransactionModal", err);
+      }
+    };
+    fetchBudgets();
+    return () => { isMounted = false; };
+  }, [isOpen]);
 
   /* State pemindai teks mutasi m-banking */
   const [showMutationParser, setShowMutationParser] = useState(false);
@@ -126,6 +151,81 @@ export function TransactionModal({
     () => (formType === "EXPENSE" ? expenseCategories : incomeCategories),
     [formType, expenseCategories, incomeCategories]
   );
+
+  /* Peta kapasitas dan serapan anggaran per kategori pengeluaran bulan berjalan */
+  const categorySpendingMap = useMemo(() => {
+    if (formType !== "EXPENSE" || activeBudgets.length === 0) {
+      return new Map<string, { limit: number; spent: number; remaining: number; percentage: number }>();
+    }
+    const now = new Date();
+    const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const allExpenses = (recentTransactions && recentTransactions.length > 0) ? recentTransactions : (transactions || []);
+
+    const map = new Map<string, { limit: number; spent: number; remaining: number; percentage: number }>();
+    for (const b of activeBudgets) {
+      const limit = Number(b.amount);
+      const spent = allExpenses
+        .filter((t) => t.type === "EXPENSE" && t.categoryId === b.categoryId && t.date.startsWith(period))
+        .reduce((sum, t) => sum + Number(t.amount), 0);
+      const remaining = limit - spent;
+      const percentage = limit > 0 ? Math.round((spent / limit) * 100) : 0;
+      map.set(b.categoryId, { limit, spent, remaining, percentage });
+    }
+    return map;
+  }, [formType, activeBudgets, recentTransactions, transactions]);
+
+  /* Choice Architecture (Spatial Ordering):
+   * Untuk transaksi EXPENSE, urutkan kategori berdasarkan kesehatan sisa anggaran:
+   * 1. Kategori yang memiliki anggaran dengan sisa alokasi paling melimpah (surplus) diletakkan di urutan paling atas.
+   * 2. Kategori yang mendekati limit atau telah mencapai 100%+ digeser ke bawah.
+   * 3. Jika suatu kategori sedang dipilih (formCategoryId aktif), pastikan tetap berada di 8 teratas agar selalu terlihat.
+   */
+  const displayCategories = useMemo(() => {
+    if (formType !== "EXPENSE" || categorySpendingMap.size === 0) {
+      return availableCategories;
+    }
+
+    const sorted = [...availableCategories].sort((a, b) => {
+      const dataA = categorySpendingMap.get(a.clientId);
+      const dataB = categorySpendingMap.get(b.clientId);
+
+      if (dataA && dataB) {
+        return dataB.remaining - dataA.remaining;
+      }
+      if (dataA && !dataB) {
+        return dataA.remaining > 0 ? -1 : 1;
+      }
+      if (!dataA && dataB) {
+        return dataB.remaining > 0 ? 1 : -1;
+      }
+      return 0;
+    });
+
+    if (formCategoryId && sorted.length > 8) {
+      const activeIdx = sorted.findIndex((c) => c.clientId === formCategoryId);
+      if (activeIdx >= 8) {
+        const [activeCat] = sorted.splice(activeIdx, 1);
+        sorted.splice(7, 0, activeCat);
+      }
+    }
+
+    return sorted;
+  }, [availableCategories, formType, categorySpendingMap, formCategoryId]);
+
+  /* Kalkulasi sisa anggaran pasif untuk kategori pengeluaran terpilih (Ambient Nudge) */
+  const activeCategoryBudget = useMemo(() => {
+    if (formType !== "EXPENSE" || !formCategoryId) return null;
+    const matched = categorySpendingMap.get(formCategoryId);
+    if (!matched) return null;
+
+    return {
+      limit: matched.limit,
+      spent: matched.spent,
+      remaining: Math.max(0, matched.remaining),
+      percentage: matched.percentage,
+      isExceeded: matched.spent >= matched.limit,
+    };
+  }, [formType, formCategoryId, categorySpendingMap]);
 
   const matchingTargets = useMemo(() => {
     if (formType !== "INCOME") return [];
@@ -175,25 +275,31 @@ export function TransactionModal({
     }
   }, [formType, availableCategories, editingTxn, isTransfer, recentTransactions]);
 
-  /* Smart Default kategori saat form pertama dibuka: menangkap kasus saat daftar kategori dimuat secara asinkron setelah mount */
+  /* Smart Default kategori saat form dibuka atau tipe berubah:
+   * Jika formCategoryId kosong atau tidak ada di availableCategories yang aktif, pilih kategori default yang valid
+   */
   useEffect(() => {
     if (
-      !formCategoryId &&
       availableCategories.length > 0 &&
       !editingTxn &&
       !isTransfer
     ) {
-      const mostUsedId = getMostFrequent(
-        recentTransactions
-          .filter((t) => t.type === formType && t.categoryId)
-          .map((t) => t.categoryId as string)
+      const isCurrentCategoryValid = availableCategories.some(
+        (c) => c.clientId === formCategoryId
       );
-      const preferred = availableCategories.find(
-        (c) => c.clientId === mostUsedId
-      );
-      setFormCategoryId(
-        preferred?.clientId ?? availableCategories[0].clientId
-      );
+      if (!formCategoryId || !isCurrentCategoryValid) {
+        const mostUsedId = getMostFrequent(
+          recentTransactions
+            .filter((t) => t.type === formType && t.categoryId)
+            .map((t) => t.categoryId as string)
+        );
+        const preferred = availableCategories.find(
+          (c) => c.clientId === mostUsedId
+        );
+        setFormCategoryId(
+          preferred?.clientId ?? availableCategories[0].clientId
+        );
+      }
     }
   }, [
     availableCategories,
@@ -222,6 +328,8 @@ export function TransactionModal({
       } else {
         /* Form baru: atur ulang semua field kecuali dompet terpilih sebelumnya */
         setFormType(initialType);
+        setFormCategoryId("");
+        setFormFinancialTargetId("");
         setFormAmount("");
         setFormDate(todayString());
         setFormDescription("");
@@ -549,7 +657,11 @@ export function TransactionModal({
                 placeholder="0"
                 required
                 autoFocus
-                className="w-full min-h-[56px] rounded-lg border border-slate-200 bg-white py-3 pl-12 pr-4 text-2xl font-bold text-slate-900 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-50"
+                className={`w-full min-h-[56px] rounded-lg border py-3 pl-12 pr-4 text-2xl font-bold shadow-sm focus:outline-none focus:ring-2 transition-all duration-300 ${
+                  activeCategoryBudget && activeCategoryBudget.percentage >= 85
+                    ? "border-amber-300/70 bg-amber-50/20 text-slate-900 focus:border-amber-400 focus:ring-amber-400/20 dark:border-amber-700/60 dark:bg-amber-950/15 dark:text-slate-50"
+                    : "border-slate-200 bg-white text-slate-900 focus:border-indigo-500 focus:ring-indigo-500/20 dark:border-slate-800 dark:bg-slate-800 dark:text-slate-50"
+                }`}
               />
             </div>
           </div>
@@ -660,11 +772,11 @@ export function TransactionModal({
             <div className="animate-in fade-in duration-150 space-y-2">
               <label className={labelCls}>Kategori</label>
 
-              {/* Grid Kategori Utama (8 kategori teratas saat diringkas) */}
+              {/* Grid Kategori Utama (8 kategori teratas dengan prioritas Choice Architecture) */}
               <div className="grid grid-cols-4 gap-2">
                 {(isCategoryExpanded
-                  ? availableCategories
-                  : availableCategories.slice(0, 8)
+                  ? displayCategories
+                  : displayCategories.slice(0, 8)
                 ).map((cat) => {
                   const isActive = cat.clientId === formCategoryId;
                   return (
@@ -723,7 +835,7 @@ export function TransactionModal({
               </div>
 
               {/* Tombol Ekspansi dan Ringkasan Daftar Kategori */}
-              {availableCategories.length > 8 && (
+              {displayCategories.length > 8 && (
                 <button
                   type="button"
                   onClick={() => {
@@ -736,8 +848,42 @@ export function TransactionModal({
                       isCategoryExpanded ? "rotate-180" : ""
                     }`}
                   />
-                  {isCategoryExpanded ? "Lebih Sedikit" : `${availableCategories.length - 8} kategori lainnya`}
+                  {isCategoryExpanded ? "Lebih Sedikit" : `${displayCategories.length - 8} kategori lainnya`}
                 </button>
+              )}
+
+              {/* Ambient In-Situ Budget Cue ("Buah di Meja Makan" Nudge) */}
+              {activeCategoryBudget && (
+                <div className="space-y-1.5 rounded-xl bg-slate-50/90 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 px-3.5 py-2.5 text-xs transition-all animate-in fade-in duration-200">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className={`h-2 w-2 rounded-full shrink-0 ${activeCategoryBudget.isExceeded ? 'bg-slate-400' : 'bg-indigo-500'}`} />
+                      <span className="text-slate-600 dark:text-slate-400 truncate">
+                        Alokasi bulan ini: <span className="font-medium text-slate-800 dark:text-slate-200">{formatCurrency(activeCategoryBudget.limit)}</span>
+                      </span>
+                    </div>
+                    <div className="font-semibold text-slate-700 dark:text-slate-300 shrink-0 ml-2">
+                      {activeCategoryBudget.isExceeded ? (
+                        <span className="text-slate-500 dark:text-slate-400">Alokasi Penuh ({activeCategoryBudget.percentage}%)</span>
+                      ) : (
+                        <span>Sisa: {formatCurrency(activeCategoryBudget.remaining)} ({activeCategoryBudget.percentage}%)</span>
+                      )}
+                    </div>
+                  </div>
+                  {/* Bilah Progres Pasif Mini */}
+                  <div className="h-1 w-full overflow-hidden rounded-full bg-slate-200/80 dark:bg-slate-700/80">
+                    <div
+                      className={`h-full rounded-full transition-all duration-300 ${
+                        activeCategoryBudget.isExceeded
+                          ? "bg-slate-400"
+                          : activeCategoryBudget.percentage >= 85
+                          ? "bg-amber-500/80"
+                          : "bg-indigo-500"
+                      }`}
+                      style={{ width: `${Math.min(100, activeCategoryBudget.percentage)}%` }}
+                    />
+                  </div>
+                </div>
               )}
 
               {/* Peringatan Kategori Belum Dipilih */}

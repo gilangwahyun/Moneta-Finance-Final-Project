@@ -150,19 +150,19 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
 
   /********** [START: Insight Priority 1 — Anomali Kritis] **********/
 
-  /********** Priority 1: Payday Leak — boros di awal bulan setelah gajian. */
+  /********** Priority 1: Payday Leak — alokasi awal bulan setelah gajian. */
   if (paydayLeak) {
     insights.push({
       priority: 1,
       severity: 'critical',
       title: 'Pengeluaran Awal Bulan',
-      body: `${paydayLeak.percentage}% dari pemasukan bulan ini telah terpakai hanya dalam ${paydayLeak.days} hari terakhir. Periksa kembali pengeluaran agar keuangan akhir bulan tetap terkendali.`,
+      body: `${paydayLeak.percentage}% dari alokasi pemasukan bulan ini telah dialokasikan dalam ${paydayLeak.days} hari pertama.`,
       ctaLabel: 'Lihat Transaksi',
       ctaRoute: '/transactions',
     });
   }
 
-  /********** Priority 1.1: Expense vs income ratio — deteksi cashflow negatif. */
+  /********** Priority 1.1: Expense vs income ratio — deteksi cashflow. */
   const netCashflow = current.income - current.expense;
   const expenseRatio = current.income > 0 ? current.expense / current.income : 0;
 
@@ -172,17 +172,17 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 1.1,
       severity: 'critical',
       title: 'Data Pemasukan Kosong',
-      body: `Belum ada pemasukan tercatat bulan ini, sehingga rasio pengeluaran terhadap pemasukan belum dapat dihitung secara akurat. Catat pemasukan agar analisis arus kas lebih lengkap.`,
+      body: `Belum ada pemasukan yang tercatat bulan ini untuk melengkapi analisis arus kas.`,
       ctaLabel: 'Catat Pemasukan',
       ctaRoute: '/transactions',
     });
   } else if (current.income > 0 && current.expense > current.income) {
-    /********** Case B — Cashflow defisit (pengeluaran melebihi pemasukan). */
+    /********** Case B — Cashflow defisit (pengeluaran melampaui pemasukan). */
     insights.push({
       priority: 1.1,
       severity: 'critical',
       title: 'Defisit Arus Kas',
-      body: `Pengeluaran bulan ini melebihi pemasukan sebesar ${formatCurrency(Math.abs(netCashflow))}. Tinjau kembali kategori pengeluaran terbesar agar arus kas bulanan tetap terkendali.`,
+      body: `Total pengeluaran bulan ini tercatat melampaui pemasukan sebesar ${formatCurrency(Math.abs(netCashflow))}.`,
       ctaLabel: 'Analisis Kategori',
       ctaRoute: '/analytics',
     });
@@ -192,7 +192,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 1.1,
       severity: 'warning',
       title: 'Rasio Pengeluaran Tinggi',
-      body: `Pengeluaran bulan ini sudah mencapai ${Math.round(expenseRatio * 100)}% dari pemasukan bulan ini. Pertimbangkan menyisihkan sebagian pemasukan terlebih dahulu sebelum menambah pengeluaran.`,
+      body: `Pengeluaran bulan ini telah mencapai ${Math.round(expenseRatio * 100)}% dari total pemasukan tercatat.`,
       ctaLabel: 'Analisis Kategori',
       ctaRoute: '/analytics',
     });
@@ -204,25 +204,25 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 2,
       severity: 'warning',
       title: 'Pola Pengeluaran Akhir Pekan',
-      body: `Sekitar ${weekendTrap.percentage}% pengeluaranmu minggu ini terjadi di akhir pekan. Pastikan tetap sesuai dengan rencana anggaranmu, ya.`,
+      body: `Sekitar ${weekendTrap.percentage}% pengeluaran minggu ini tercatat pada akhir pekan (Sabtu & Minggu).`,
       ctaLabel: 'Cek Transaksi',
       ctaRoute: '/transactions',
     });
   }
 
-  /********** Priority 2.1: Night-Owl Spending — belanja banyak di larut malam. */
+  /********** Priority 2.1: Night-Owl Spending — belanja di larut malam. */
   if (nightOwl) {
     insights.push({
       priority: 2.1,
       severity: 'warning',
       title: 'Pola Pengeluaran Malam Hari',
-      body: `Pengeluaran pada larut malam terdeteksi cukup tinggi (${formatCurrency(nightOwl.totalAmount)} bulan ini). Periksa kembali transaksi tersebut agar pengeluaran tetap sesuai rencana.`,
+      body: `Tercatat total ${formatCurrency(nightOwl.totalAmount)} pengeluaran pada rentang waktu malam hingga dini hari bulan ini.`,
       ctaLabel: 'Lihat Pola',
       ctaRoute: '/analytics',
     });
   }
 
-  /********** Priority 2.2: Loss-aversion / Nominal Framing (Top category spike) — kategori lonjak. */
+  /********** Priority 2.2: Loss-aversion / Nominal Framing (Top category spike) — pergerakan kategori. */
   if (topExpenseCategory && topExpenseCategory.prevValue > 0) {
     const spike = Math.round(((topExpenseCategory.value - topExpenseCategory.prevValue) / topExpenseCategory.prevValue) * 100);
     if (spike >= 20) {
@@ -231,7 +231,7 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
         priority: 2.2,
         severity: 'warning',
         title: 'Pengeluaran Melonjak',
-        body: `Pengeluaran kategori ${topExpenseCategory.name} meningkat ${spike}% (+${formatCurrency(selisihNominal)}). Perlu diperhatikan agar alokasi ini tidak memotong rencana keuangan lainnya.`,
+        body: `Pengeluaran kategori ${topExpenseCategory.name} tercatat ${spike}% (+${formatCurrency(selisihNominal)}) lebih tinggi dibanding bulan lalu.`,
         ctaLabel: 'Lihat Tren',
         ctaRoute: '/analytics',
       });
@@ -240,15 +240,15 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
 
   /********** Priority 2.5: Snowball Projection (Counterfactuals) — proyeksi pengeluaran tahunan. */
   if (wantsProjection) {
-    let bodyText = `Bulan ini kategori ${wantsProjection.categoryName} menjadi salah satu pengeluaran terbesar dengan total ${formatCurrency(wantsProjection.monthlyTotal)}. `;
+    let bodyText = `Bulan ini kategori ${wantsProjection.categoryName} mencatat total pengeluaran ${formatCurrency(wantsProjection.monthlyTotal)}. `;
 
     if (wantsProjection.transactionCount >= 5) {
-      bodyText += `Kamu sudah melakukan transaksi ini sebanyak ${wantsProjection.transactionCount} kali secara berulang. `;
+      bodyText += `Transaksi ini tercatat sebanyak ${wantsProjection.transactionCount} kali. `;
     } else if (wantsProjection.averageTransaction >= 250000) {
-      bodyText += `Meski jarang, nilai tiap transaksinya cukup besar (rata-rata ${formatCurrency(wantsProjection.averageTransaction)}). `;
+      bodyText += `Rata-rata tiap transaksi berada di angka ${formatCurrency(wantsProjection.averageTransaction)}. `;
     }
 
-    bodyText += `Jika pola ini berlanjut, estimasi tahunannya dapat mencapai ${formatCurrency(wantsProjection.annualized)}. Pertimbangkan memantau pola pengeluaran ini agar tetap terkendali.`;
+    bodyText += `Dengan pola saat ini, akumulasi kategori ini diproyeksikan mencapai ${formatCurrency(wantsProjection.annualized)} dalam setahun.`;
 
     insights.push({
       priority: 2.5,
@@ -260,25 +260,25 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     });
   }
 
-  /********** Priority 3: Latte Factor (Frequency Detection) — transaksi kecil yang sering berulang. */
+  /********** Priority 3: Latte Factor (Frequency Detection) — transaksi rutin berulang. */
   if (frequentTxn) {
     insights.push({
       priority: 3,
       severity: 'info',
       title: 'Frekuensi Pengeluaran Rutin',
-      body: `Terdapat ${frequentTxn.count} transaksi untuk '${frequentTxn.name}' bulan ini dengan total ${formatCurrency(frequentTxn.totalAmount)}. Perhatikan frekuensinya jika kamu berencana berhemat.`,
+      body: `Tercatat ${frequentTxn.count} transaksi untuk '${frequentTxn.name}' bulan ini dengan total ${formatCurrency(frequentTxn.totalAmount)}.`,
       ctaLabel: 'Lihat Transaksi',
       ctaRoute: '/transactions',
     });
   }
 
-  /********** Priority 3.1: Subscription Cannibalization — terlalu banyak tagihan rutin. */
+  /********** Priority 3.1: Subscription Cannibalization — alokasi tagihan rutin. */
   if (subscriptions) {
     insights.push({
       priority: 3.1,
       severity: 'warning',
       title: 'Evaluasi Langganan',
-      body: `Kamu punya ${subscriptions.count} tagihan rutin bulanan yang memakan ${subscriptions.percentage}% dari total pemasukanmu. Coba evaluasi, apakah semua layanan ini masih rutin kamu pakai?`,
+      body: `Terdapat ${subscriptions.count} tagihan rutin bulanan yang mengambil porsi ${subscriptions.percentage}% dari total pemasukanmu.`,
       ctaLabel: 'Cek Pengeluaran',
       ctaRoute: '/transactions',
     });
@@ -301,25 +301,24 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
     const pct = Math.round(((current.income - prev.income) / prev.income) * 100);
     if (pct >= 10) {
       const selisihNominal = current.income - prev.income;
-      const hemat50 = selisihNominal / 2;
       insights.push({
         priority: 3.6,
         severity: 'positive',
         title: 'Pemasukan Meningkat',
-        body: `Pemasukan naik ${pct}%. Coba sisihkan ${formatCurrency(hemat50)} langsung ke dana darurat untuk memperkuat fondasi keuanganmu.`,
+        body: `Pemasukan naik ${pct}% (+${formatCurrency(selisihNominal)}). Tersedia ruang tambahan untuk mempercepat pencapaian target keuanganmu.`,
         ctaLabel: 'Kelola Dompet',
         ctaRoute: '/wallets',
       });
     }
   }
 
-  /********** Priority 3.8: Peak Spending Day (Time-Series Pattern) — hari paling boros. */
+  /********** Priority 3.8: Peak Spending Day (Time-Series Pattern) — konsentrasi hari pengeluaran. */
   if (peakDay) {
     let bodyText = '';
     if (peakDay.dominantCategoryName) {
-      bodyText = `Pengeluaran tertinggimu bulan ini paling sering terjadi pada hari ${peakDay.dayName}, terutama pada kategori ${peakDay.dominantCategoryName}. Hari tersebut menyumbang ${peakDay.percentage}% dari total pengeluaran. Pertimbangkan menetapkan batas pengeluaran khusus untuk hari ${peakDay.dayName} atau mengevaluasi transaksi ${peakDay.dominantCategoryName} pada hari tersebut.`;
+      bodyText = `Pengeluaran bulan ini paling terkonsentrasi pada hari ${peakDay.dayName} (${peakDay.percentage}% dari total pengeluaran), dengan kontribusi terbesar pada kategori ${peakDay.dominantCategoryName}.`;
     } else {
-      bodyText = `Pengeluaran tertinggimu bulan ini selalu terjadi pada hari ${peakDay.dayName} (menyumbang ${peakDay.percentage}% dari total). Pertimbangkan meninjau kembali transaksi pada hari tersebut agar pengeluaran tetap terkendali.`;
+      bodyText = `Pengeluaran bulan ini paling terkonsentrasi pada hari ${peakDay.dayName} (${peakDay.percentage}% dari total pengeluaran).`;
     }
 
     insights.push({
@@ -416,37 +415,35 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
       priority: 1.7,
       severity: 'warning',
       title: 'Pemasukan Tertinggal',
-      body: `Hingga pertengahan bulan ini, pemasukan tercatat (${formatCurrency(incomeMomentum.currentIncome)}) lebih rendah dari biasanya (rata-rata ${formatCurrency(incomeMomentum.avgPrevIncome)}). Pastikan semua pemasukan sudah dicatat.`,
+      body: `Hingga pertengahan bulan ini, pemasukan tercatat (${formatCurrency(incomeMomentum.currentIncome)}) berada di bawah rata-rata historis (${formatCurrency(incomeMomentum.avgPrevIncome)}).`,
       ctaLabel: 'Catat Pemasukan',
       ctaRoute: '/transactions',
     });
   }
 
-
-
   /********** [END: Phase 1 Rules — Insight Perilaku Bulan Ini] **********/
 
   /********** [START: Phase 2 Rules — Proyeksi & Target] **********/
 
-  /********** [BG-01] Budget Runway Projection — anggaran berisiko habis lebih awal. */
+  /********** [BG-01] Budget Runway Projection — proyeksi ketahanan anggaran. */
   if (budgetRunway) {
     insights.push({
       priority: 1.9,
       severity: 'warning',
       title: 'Anggaran Berisiko Habis Lebih Awal',
-      body: `Dengan laju pengeluaran saat ini, anggaran '${budgetRunway.categoryName}' diperkirakan habis dalam ${budgetRunway.daysUntilExhausted} hari, padahal bulan masih ${budgetRunway.daysRemaining} hari lagi.`,
+      body: `Dengan laju harian saat ini, alokasi '${budgetRunway.categoryName}' diperkirakan cukup hingga ${budgetRunway.daysUntilExhausted} hari ke depan (sisa periode: ${budgetRunway.daysRemaining} hari).`,
       ctaLabel: 'Lihat Anggaran',
       ctaRoute: '/budgets',
     });
   }
 
-  /********** [FT-01] Target Gap Alert — target berjalan tapi belum ada progres. */
+  /********** [FT-01] Target Gap Alert — progres periode target. */
   if (targetGapAlert) {
     insights.push({
       priority: 2.3,
       severity: 'warning',
       title: 'Target Belum Ada Progres',
-      body: `Target '${targetGapAlert.targetName}' sudah berjalan ${Math.round(targetGapAlert.elapsedPct * 100)}% dari periodenya, namun belum ada pemasukan yang tercatat. Pastikan target sudah sesuai rencanamu.`,
+      body: `Target '${targetGapAlert.targetName}' telah memasuki ${Math.round(targetGapAlert.elapsedPct * 100)}% dari periode waktunya.`,
       ctaLabel: 'Lihat Target',
       ctaRoute: '/targets',
     });
@@ -509,49 +506,49 @@ export function generateNudges(params: NudgeEngineParams): NudgeInsight[] {
 
   /********** [START: Phase 3 Rules — Histori Multi-Bulan] **********/
 
-  /********** [AN-02] Category Creep — pengeluaran merayap naik >10%/bulan selama 3 bulan. */
+  /********** [AN-02] Category Creep — kenaikan bertahap kategori pengeluaran. */
   if (params.categoryCreep) {
     insights.push({
       priority: 2.9,
       severity: 'warning',
       title: 'Pengeluaran Kategori Merayap Naik',
-      body: `Pengeluaranmu di kategori '${params.categoryCreep.categoryName}' terus naik >10% tiap bulan selama 3 bulan terakhir (sekarang ${formatCurrency(params.categoryCreep.currentAmount)}).`,
+      body: `Pengeluaran di kategori '${params.categoryCreep.categoryName}' tercatat naik konsisten dalam 3 bulan terakhir (saat ini ${formatCurrency(params.categoryCreep.currentAmount)}).`,
       ctaLabel: 'Lihat Analisis',
       ctaRoute: '/analytics',
     });
   }
 
-  /********** [AN-03] Savings Gap Shrinking — selisih bersih terus menyusut. */
+  /********** [AN-03] Savings Gap Shrinking — selisih bersih menyusut. */
   if (params.savingsGapShrinking) {
     insights.push({
       priority: 3.1,
       severity: 'warning',
       title: 'Selisih Bersih Menipis',
-      body: `Selisih pemasukan dan pengeluaranmu terus menyusut selama 3 bulan terakhir (sekarang sisa ${formatCurrency(params.savingsGapShrinking.netNow)}). Hati-hati agar tidak defisit bulan depan.`,
+      body: `Selisih bersih pemasukan terhadap pengeluaran berada di angka ${formatCurrency(params.savingsGapShrinking.netNow)} bulan ini.`,
       ctaLabel: 'Evaluasi Anggaran',
       ctaRoute: '/budgets',
     });
   }
 
-  /********** [BG-05] Budget Accuracy — anggaran secara konsisten terlampaui >20%. */
+  /********** [BG-05] Budget Accuracy — evaluasi akurasi batas anggaran. */
   if (params.budgetAccuracyAlert) {
     insights.push({
       priority: 3.2,
       severity: 'warning',
       title: 'Anggaran Mungkin Tidak Realistis',
-      body: `Kamu secara konsisten melampaui anggaran '${params.budgetAccuracyAlert.categoryName}' >20% dalam 3 bulan terakhir (rata-rata ${formatCurrency(params.budgetAccuracyAlert.avgExpense)} dari budget ${formatCurrency(params.budgetAccuracyAlert.budgetAmount)}). Pertimbangkan untuk menyesuaikan budget ini.`,
+      body: `Rata-rata pengeluaran aktual '${params.budgetAccuracyAlert.categoryName}' dalam 3 bulan terakhir berada di angka ${formatCurrency(params.budgetAccuracyAlert.avgExpense)}, melampaui batas yang diatur (${formatCurrency(params.budgetAccuracyAlert.budgetAmount)}).`,
       ctaLabel: 'Sesuaikan Anggaran',
       ctaRoute: '/budgets',
     });
   }
 
-  /********** [SP-04] Category Spike (Refinement) — lonjakan dibanding rata-rata 3 bulan. */
+  /********** [SP-04] Category Spike (Refinement) — perbandingan dengan rata-rata 3 bulan. */
   if (params.categorySpike) {
     insights.push({
       priority: 3.3,
       severity: 'warning',
       title: 'Lonjakan Pengeluaran Kategori',
-      body: `Pengeluaran '${params.categorySpike.categoryName}' bulan ini melonjak tajam (${formatCurrency(params.categorySpike.currentAmount)}), ${params.categorySpike.spikePct}% lebih tinggi dari rata-rata 3 bulan terakhirmu.`,
+      body: `Pengeluaran '${params.categorySpike.categoryName}' bulan ini tercatat ${formatCurrency(params.categorySpike.currentAmount)}, ${params.categorySpike.spikePct}% lebih tinggi dari rata-rata 3 bulan terakhir.`,
       ctaLabel: 'Lihat Transaksi',
       ctaRoute: '/transactions',
     });

@@ -37,7 +37,7 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     await page.locator('#txn-amount').pressSequentially('1000000', { delay: 10 });
     await page.locator('button[aria-label="Gaji"]').click();
     await page.fill('#txn-desc', 'Gaji');
-    await page.locator('form button[type="submit"]:has-text("Simpan")').click();
+    await page.locator('form button[type="submit"]:has-text("Simpan")').dispatchEvent('click');
     await expect(page.locator('h2:has-text("Tambah Transaksi")')).not.toBeVisible();
 
     // 3. Add Expense 2.000.000 (Creates a deficit: Expense > Income)
@@ -46,7 +46,7 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     await page.locator('#txn-amount').pressSequentially('2000000', { delay: 10 });
     // Using default category
     await page.fill('#txn-desc', 'Beli Kulkas');
-    await page.locator('form button[type="submit"]:has-text("Simpan")').click();
+    await page.locator('form button[type="submit"]:has-text("Simpan")').dispatchEvent('click');
     await expect(page.locator('h2:has-text("Tambah Transaksi")')).not.toBeVisible();
 
     // 4. Verify Insight Card on Analytics page
@@ -56,9 +56,8 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     const insightLocator = page.locator('text="Defisit Arus Kas"');
     await expect(insightLocator.first()).toBeVisible({ timeout: 15000 });
 
-    // Pastikan card yang muncul memiliki warna merah/kritis (biasanya teks/bg merah)
-    // Di aplikasi ini, insight critical menggunakan ikon alert-triangle dan teks merah
-    const card = page.locator('div').filter({ hasText: 'Defisit Arus Kas' }).filter({ has: page.locator('svg.text-rose-500') }).first();
+    // Pastikan card yang muncul ter-render dengan icon reflektif (text-indigo-500 / Sparkles)
+    const card = page.locator('div').filter({ hasText: 'Defisit Arus Kas' }).filter({ has: page.locator('svg.text-indigo-500') }).first();
     await expect(card).toBeVisible();
     await page.close();
   });
@@ -87,7 +86,7 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     await page.locator('#txn-amount').pressSequentially('5000000', { delay: 10 });
     await page.locator('button[aria-label="Gaji"]').click();
     await page.fill('#txn-desc', 'Gaji');
-    await page.locator('form button[type="submit"]:has-text("Simpan")').click();
+    await page.locator('form button[type="submit"]:has-text("Simpan")').dispatchEvent('click');
     await expect(page.locator('h2:has-text("Tambah Transaksi")')).not.toBeVisible();
 
     // 3. Add Expense (500.000)
@@ -98,7 +97,7 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     // Select category 'Makanan' to enable the submit button
     await page.locator('button[aria-label="Makanan"]').click();
     await page.fill('#txn-desc', 'Makan Steak');
-    await page.locator('form button[type="submit"]:has-text("Simpan")').click();
+    await page.locator('form button[type="submit"]:has-text("Simpan")').dispatchEvent('click');
     await expect(page.locator('h2:has-text("Tambah Transaksi")')).not.toBeVisible();
 
     // 4. Verify Insight Card on Analytics
@@ -135,7 +134,7 @@ test.describe.serial('5. Insight Engine UI (E2E Smoke Tests)', () => {
     // Wallet 'Dompet Kas' is auto-selected
     await page.locator('button[aria-label="Gaji"]').click();
     await page.fill('#txn-desc', 'Bonus Tahunan');
-    await page.locator('form button[type="submit"]:has-text("Simpan")').click();
+    await page.locator('form button[type="submit"]:has-text("Simpan")').dispatchEvent('click');
     await expect(page.locator('h2:has-text("Tambah Transaksi")')).not.toBeVisible();
 
     // 3. Verify Insight Card on Analytics

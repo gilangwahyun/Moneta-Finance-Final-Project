@@ -9,7 +9,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 import {
   TrendingDown, TrendingUp, Minus,
-  AlertTriangle, CheckCircle2, Info,
+  Sparkles, Compass, CheckCircle2, Info,
   ArrowRight, BarChart2, Lightbulb,
   ChevronRight, ShieldCheck, PieChart,
   ArrowUpRight, ArrowDownRight, Activity
@@ -82,16 +82,16 @@ function InsightCard({
     wrapper: string; icon: React.ReactNode; titleColor: string; bodyColor: string; ctaBg: string; linkColor: string;
   }> = {
     warning: {
-      wrapper: "border-amber-200 bg-white dark:border-amber-500/30 dark:bg-slate-900",
-      icon: <AlertTriangle className={`${isPrimary ? 'h-5 w-5' : 'h-4 w-4'} shrink-0 text-amber-500 mt-0.5`} />,
+      wrapper: "border-slate-200 bg-white dark:border-slate-700/60 dark:bg-slate-900",
+      icon: <Compass className={`${isPrimary ? 'h-5 w-5' : 'h-4 w-4'} shrink-0 text-slate-500 dark:text-slate-400 mt-0.5`} />,
       titleColor: "text-slate-900 dark:text-slate-50",
       bodyColor: "text-slate-600 dark:text-slate-400",
       ctaBg: "bg-indigo-600 text-white shadow-md shadow-indigo-500/20 hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400",
       linkColor: "text-indigo-600 hover:text-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
     },
     critical: {
-      wrapper: "border-rose-200 bg-white dark:border-rose-500/30 dark:bg-slate-900",
-      icon: <AlertTriangle className={`${isPrimary ? 'h-5 w-5' : 'h-4 w-4'} shrink-0 text-rose-500 mt-0.5`} />,
+      wrapper: "border-indigo-200 bg-white dark:border-indigo-500/30 dark:bg-slate-900",
+      icon: <Sparkles className={`${isPrimary ? 'h-5 w-5' : 'h-4 w-4'} shrink-0 text-indigo-500 mt-0.5`} />,
       titleColor: "text-slate-900 dark:text-slate-50",
       bodyColor: "text-slate-600 dark:text-slate-400",
       ctaBg: "bg-indigo-600 text-white shadow-md shadow-indigo-500/20 hover:bg-indigo-500 dark:bg-indigo-500 dark:hover:bg-indigo-400",

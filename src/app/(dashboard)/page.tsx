@@ -35,7 +35,7 @@ import { useDashboard } from '@/hooks/use-dashboard';
 import { formatCurrency } from '@/lib/utils/helpers';
 import { useState, useMemo } from 'react';
 import { BudgetHealthBar } from '@/components/budgets/BudgetHealthBar';
-import { ArrowDownRight, ArrowUpRight, LayoutList } from 'lucide-react';
+import { ArrowDownRight, ArrowUpRight, LayoutList, Sparkles, Compass, CheckCircle2, Info } from 'lucide-react';
 import { TransactionItem } from '@/components/transactions/TransactionItem';
 import { WalletWidget } from '@/components/wallets/WalletWidget';
 import { HiddenBalanceWidget } from '@/components/wallets/HiddenBalanceWidget';
@@ -107,90 +107,42 @@ export default function DashboardPage() {
       {!isLoading && dashboardInsight && (
         <div
           className={`flex items-start gap-3 rounded-xl border p-4 shadow-sm transition-all
-            ${dashboardInsight.type === 'critical' ? 'border-rose-200 bg-rose-50/80 dark:border-rose-800/60 dark:bg-rose-950/20' : ''}
-            ${dashboardInsight.type === 'warning' ? 'border-amber-200 bg-amber-50/80 dark:border-amber-800/60 dark:bg-amber-950/20' : ''}
+            ${dashboardInsight.type === 'critical' ? 'border-indigo-200 bg-indigo-50/70 dark:border-indigo-800/60 dark:bg-indigo-950/20' : ''}
+            ${dashboardInsight.type === 'warning' ? 'border-slate-200 bg-slate-50/90 dark:border-slate-800/60 dark:bg-slate-900/60' : ''}
             ${dashboardInsight.type === 'positive' ? 'border-emerald-200 bg-emerald-50/80 dark:border-emerald-800/60 dark:bg-emerald-950/20' : ''}
-            ${dashboardInsight.type === 'info' ? 'border-blue-200 bg-blue-50/80 dark:border-blue-800/60 dark:bg-blue-950/20' : ''}
+            ${dashboardInsight.type === 'info' ? 'border-sky-200 bg-sky-50/80 dark:border-sky-800/60 dark:bg-sky-950/20' : ''}
           `}
         >
           {dashboardInsight.type === 'critical' && (
-            <svg
-              aria-hidden="true"
-              className="mt-0.5 h-5 w-5 shrink-0 text-rose-600 dark:text-rose-400"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-              />
-            </svg>
+            <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-indigo-600 dark:text-indigo-400" />
           )}
           {dashboardInsight.type === 'warning' && (
-            <svg
-              aria-hidden="true"
-              className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-              />
-            </svg>
+            <Compass className="mt-0.5 h-5 w-5 shrink-0 text-slate-600 dark:text-slate-400" />
           )}
           {dashboardInsight.type === 'positive' && (
-            <svg
-              aria-hidden="true"
-              className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
+            <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
           )}
           {dashboardInsight.type === 'info' && (
-            <svg
-              aria-hidden="true"
-              className="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth={2}
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z"
-              />
-            </svg>
+            <Info className="mt-0.5 h-5 w-5 shrink-0 text-sky-600 dark:text-sky-400" />
           )}
 
           <div className="flex-1 min-w-0">
             <p
               className={`text-sm font-bold
-              ${dashboardInsight.type === 'critical' ? 'text-rose-900 dark:text-rose-300' : ''}
-              ${dashboardInsight.type === 'warning' ? 'text-amber-900 dark:text-amber-300' : ''}
-              ${dashboardInsight.type === 'positive' ? 'text-emerald-900 dark:text-emerald-300' : ''}
-              ${dashboardInsight.type === 'info' ? 'text-blue-900 dark:text-blue-300' : ''}
+              ${dashboardInsight.type === 'critical' ? 'text-indigo-950 dark:text-indigo-200' : ''}
+              ${dashboardInsight.type === 'warning' ? 'text-slate-900 dark:text-slate-100' : ''}
+              ${dashboardInsight.type === 'positive' ? 'text-emerald-950 dark:text-emerald-200' : ''}
+              ${dashboardInsight.type === 'info' ? 'text-sky-950 dark:text-sky-200' : ''}
             `}
             >
               {dashboardInsight.title}
             </p>
             <p
               className={`mt-1 text-sm leading-relaxed
-              ${dashboardInsight.type === 'critical' ? 'text-rose-800 dark:text-rose-200/80' : ''}
-              ${dashboardInsight.type === 'warning' ? 'text-amber-800 dark:text-amber-200/80' : ''}
-              ${dashboardInsight.type === 'positive' ? 'text-emerald-800 dark:text-emerald-200/80' : ''}
-              ${dashboardInsight.type === 'info' ? 'text-blue-800 dark:text-blue-200/80' : ''}
+              ${dashboardInsight.type === 'critical' ? 'text-indigo-900/80 dark:text-indigo-300/80' : ''}
+              ${dashboardInsight.type === 'warning' ? 'text-slate-600 dark:text-slate-300' : ''}
+              ${dashboardInsight.type === 'positive' ? 'text-emerald-900/80 dark:text-emerald-300/80' : ''}
+              ${dashboardInsight.type === 'info' ? 'text-sky-900/80 dark:text-sky-300/80' : ''}
             `}
             >
               {dashboardInsight.message}
@@ -199,10 +151,10 @@ export default function DashboardPage() {
               <a
                 href={dashboardInsight.action.route}
                 className={`mt-3 inline-flex items-center gap-1.5 rounded-lg px-4 py-2 text-xs font-bold text-white shadow-sm transition-all active:scale-95
-                  ${dashboardInsight.type === 'critical' ? 'bg-rose-600 hover:bg-rose-500 shadow-rose-500/20' : ''}
-                  ${dashboardInsight.type === 'warning' ? 'bg-amber-600 hover:bg-amber-500 shadow-amber-500/20' : ''}
+                  ${dashboardInsight.type === 'critical' ? 'bg-indigo-600 hover:bg-indigo-500 shadow-indigo-500/20' : ''}
+                  ${dashboardInsight.type === 'warning' ? 'bg-slate-800 hover:bg-slate-700 shadow-slate-500/20 dark:bg-slate-700 dark:hover:bg-slate-600' : ''}
                   ${dashboardInsight.type === 'positive' ? 'bg-emerald-600 hover:bg-emerald-500 shadow-emerald-500/20' : ''}
-                  ${dashboardInsight.type === 'info' ? 'bg-blue-600 hover:bg-blue-500 shadow-blue-500/20' : ''}
+                  ${dashboardInsight.type === 'info' ? 'bg-sky-600 hover:bg-sky-500 shadow-sky-500/20' : ''}
                 `}
               >
                 {dashboardInsight.action.label}
