@@ -46,8 +46,6 @@ function CustomTooltip({
   active,
   payload,
   label,
-  dailyAvg,
-  mode,
 }: {
   active?: boolean;
   payload?: { name: string; value: number; color?: string; fill?: string }[];
@@ -56,10 +54,6 @@ function CustomTooltip({
   mode?: "expense" | "income";
 }) {
   if (!active || !payload?.length) return null;
-  const isExpense = mode === undefined || mode === "expense";
-  const mainEntry = payload.find((p) => p.name === "expense" || p.name === "income");
-  const isOverAvg =
-    isExpense && dailyAvg !== undefined && ((mainEntry?.value ?? 0) > dailyAvg);
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-xl dark:border-slate-700 dark:bg-slate-800">
@@ -86,32 +80,22 @@ function CustomTooltip({
           </div>
         );
       })}
-      {isOverAvg && (
-        <p className="mt-1.5 text-[10px] font-medium text-rose-500 dark:text-rose-400">
-          Melewati rata-rata harian
-        </p>
-      )}
     </div>
   );
 }
 
-/********** Token Warna Batang Grafik **********/
-/*
- * EXPENSE_SAFE: Warna slate-400 meredam secara visual hari-hari yang aman (dorongan tenang)
- * EXPENSE_OVER: Warna red-500 tegas untuk pengeluaran yang melewati rata-rata harian (peringatan)
- */
-const EXPENSE_SAFE = "#94a3b8";
-const EXPENSE_OVER = "#ef4444";
-const INCOME_COLOR = "#10b981";
+/********** Token Warna Batang & Garis Grafik **********/
+const EXPENSE_BAR = "#f43f5e";
+const INCOME_BAR = "#10b981";
 
 /**
- * Merender grafik batang tren pengeluaran atau pemasukan harian dengan indikator rata-rata harian
- * serta garis tren rata-rata bergerak (Moving Average).
+ * Merender grafik batang tren pengeluaran atau pemasukan harian dengan
+ * garis tren rata-rata bergerak (Moving Average).
  *
  * @param props - Properti konfigurasi grafik tren batang
  * @returns Elemen JSX grafik Recharts responsif
  */
-export function BarTrendChart({ data, dailyAvg, mode = "expense" }: BarTrendChartProps) {
+export function BarTrendChart({ data, mode = "expense" }: BarTrendChartProps) {
   const isExpense = mode === "expense";
 
   /********** [START: Perenderan Grafik Tren Batang Recharts] **********/
@@ -142,50 +126,15 @@ export function BarTrendChart({ data, dailyAvg, mode = "expense" }: BarTrendChar
           width={40}
         />
         <Tooltip
-          content={<CustomTooltip dailyAvg={dailyAvg} mode={mode} />}
+          content={<CustomTooltip />}
           cursor={{ fill: "rgba(99,102,241,0.06)" }}
         />
 
-        {/* Garis referensi putus-putus batas rata-rata aman harian */}
-        {isExpense && dailyAvg !== undefined && dailyAvg > 0 && (
-          <ReferenceLine
-            y={dailyAvg}
-            stroke="#f59e0b"
-            strokeDasharray="5 4"
-            strokeWidth={1.5}
-            label={{
-              value: "Rata-rata Aman Harian",
-              position: "insideTopRight",
-              fontSize: 10,
-              fill: "#f59e0b",
-              fontWeight: 600,
-              dy: -4,
-            }}
-          />
-        )}
-
-        {/* Batang bersyarat berdasarkan mode pengeluaran atau pemasukan */}
+        {/* Batang berdasarkan mode pengeluaran atau pemasukan */}
         {isExpense ? (
-          <Bar dataKey="expense" name="expense" radius={[4, 4, 0, 0]} maxBarSize={32}>
-            {data.map((entry, i) => {
-              const isOver =
-                dailyAvg !== undefined && entry.expense > dailyAvg;
-              return (
-                <Cell
-                  key={i}
-                  fill={isOver ? EXPENSE_OVER : EXPENSE_SAFE}
-                  /* Opasitas penuh jika melebihi batas, sedikit diredam jika aman */
-                  opacity={isOver ? 1 : 0.75}
-                />
-              );
-            })}
-          </Bar>
+          <Bar dataKey="expense" name="expense" fill={EXPENSE_BAR} fillOpacity={0.7} radius={[4, 4, 0, 0]} maxBarSize={32} />
         ) : (
-          <Bar dataKey="income" name="income" radius={[4, 4, 0, 0]} maxBarSize={32}>
-            {data.map((_, i) => (
-              <Cell key={i} fill={INCOME_COLOR} />
-            ))}
-          </Bar>
+          <Bar dataKey="income" name="income" fill={INCOME_BAR} fillOpacity={0.7} radius={[4, 4, 0, 0]} maxBarSize={32} />
         )}
 
         {/* Garis tren Moving Average dinamis */}

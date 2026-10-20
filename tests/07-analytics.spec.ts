@@ -121,14 +121,14 @@ test.describe.serial('3. Analytics & Export', () => {
     await page.locator('button').filter({ has: page.locator('svg.lucide-x') }).first().click();
     await expect(drawerTitle).not.toBeVisible();
   });
-  test('[AU-10-03_01] Pengujian Tampil Tren Pengeluaran/Pemasukan: User can view the bar chart and daily average', async () => {
+  test('[AU-10-03_01] Pengujian Tampil Tren Pengeluaran/Pemasukan: User can view the bar chart and moving average', async () => {
     await page.goto('/analytics');
     
     // Check if the "Tren Pengeluaran" title is visible
     await expect(page.locator('p', { hasText: 'Tren Pengeluaran' }).first()).toBeVisible({ timeout: 10000 });
     
-    // Check if daily average text is visible
-    await expect(page.locator('span', { hasText: 'Rata-rata:' }).first()).toBeVisible();
+    // Check if Moving Average indicator is visible
+    await expect(page.locator('text=Moving Average').first()).toBeVisible();
     
     // Recharts Bar chart container
     const chartSvg = page.locator('.recharts-surface').nth(1);

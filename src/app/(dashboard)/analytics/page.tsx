@@ -528,36 +528,22 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-3 text-xs md:text-sm text-slate-600 dark:text-slate-400">
-            <span className="flex items-center gap-1">
-              <span className={`inline-block h-2 w-2 rounded-full ${activeSegment === "EXPENSE" ? "bg-slate-400" : "bg-emerald-500"}`} />
-              {activeSegment === "EXPENSE" ? "Di bawah rata-rata" : "Pemasukan"}
+          <div className="flex flex-wrap items-center gap-4 text-xs md:text-sm text-slate-600 dark:text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <span className={`inline-block h-2.5 w-2.5 rounded-sm ${activeSegment === "EXPENSE" ? "bg-rose-500" : "bg-emerald-500"}`} />
+              {activeSegment === "EXPENSE" ? "Pengeluaran" : "Pemasukan"}
             </span>
-            {activeSegment === "EXPENSE" && (
-              <span className="flex items-center gap-1">
-                <span className="inline-block h-2 w-2 rounded-full bg-red-500" />
-                Melewati rata-rata
-              </span>
-            )}
-            <span className="flex items-center gap-1">
-              <span className={`inline-block h-0.5 w-3 rounded-full ${activeSegment === "EXPENSE" ? "bg-indigo-500" : "bg-emerald-600"}`} />
+            <span className="flex items-center gap-1.5">
+              <span className={`inline-block h-0.5 w-3.5 rounded-full ${activeSegment === "EXPENSE" ? "bg-indigo-500" : "bg-emerald-600"}`} />
               Tren (Moving Average)
             </span>
           </div>
-          {activeSegment === "EXPENSE" && dailyAvg > 0 && (
-            <div className="flex items-center gap-1.5">
-              <div className="h-px w-5 border-t-2 border-dashed border-amber-500" />
-              <span className="text-xs md:text-sm font-semibold text-amber-600 dark:text-amber-400">
-                Rata-rata: {formatCurrency(dailyAvg)}/hari
-              </span>
-            </div>
-          )}
         </div>
 
         {isLoading ? (
           <ChartSkeleton h={280} />
         ) : (
-          <BarTrendChart data={barData} dailyAvg={dailyAvg} mode={activeSegment.toLowerCase() as "expense" | "income"} />
+          <BarTrendChart data={barData} mode={activeSegment.toLowerCase() as "expense" | "income"} />
         )}
       </div>
 
