@@ -140,11 +140,12 @@ export default function TransactionsPage() {
       if (activeRange.end && txnDate > activeRange.end) return false;
 
       if (searchQuery.trim()) {
-        const q = searchQuery.toLowerCase();
-        const cat = allCategories.find((c) => c.clientId === t.categoryId || c.id === t.categoryId);
-        const name = t.description || cat?.name || 'Transaksi';
-        const note = t.note || '';
-        if (!name.toLowerCase().includes(q) && !note.toLowerCase().includes(q)) return false;
+        const q = searchQuery.toLowerCase().trim();
+        const cat = t.category || allCategories.find((c) => c.clientId === t.categoryId || c.id === t.categoryId);
+        const desc = (t.description || '').toLowerCase();
+        const catName = (cat?.name || t.category?.name || '').toLowerCase();
+        const note = (t.note || '').toLowerCase();
+        if (!desc.includes(q) && !catName.includes(q) && !note.includes(q)) return false;
       }
       return true;
     });
@@ -232,7 +233,7 @@ export default function TransactionsPage() {
           <Search className="h-4 w-4 shrink-0 text-slate-600" />
           <input
             type="text"
-            placeholder="Cari transaksi..."
+            placeholder="Cari transaksi atau kategori..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="ml-2.5 w-full border-none bg-transparent p-0 text-sm font-semibold text-slate-700 placeholder-slate-400 focus:outline-none focus:ring-0 dark:text-slate-200"
@@ -324,7 +325,7 @@ export default function TransactionsPage() {
               </div>
               <div className="divide-y divide-slate-100 overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm dark:divide-slate-800/60 dark:border-slate-800 dark:bg-slate-900">
                 {items.map((txn) => {
-                  const cat = allCategories.find((c) => c.clientId === txn.categoryId || c.id === txn.categoryId);
+                  const cat = txn.category || allCategories.find((c) => c.clientId === txn.categoryId || c.id === txn.categoryId);
                   return (
                     <TransactionItem
                       key={txn.clientId}

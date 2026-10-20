@@ -5,8 +5,8 @@
 
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Transaction, TransactionType } from "@/types/models.types";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Transaction, TransactionType, Category, Wallet } from "@/types/models.types";
 import {
   addTransaction as addTransactionDb,
   updateTransaction as updateTransactionDb,
@@ -74,6 +74,9 @@ export function useTransactions(): UseTransactionsReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
+  const categoriesMapRef = useRef<Map<string, Category>>(new Map());
+  const walletsMapRef = useRef<Map<string, Wallet>>(new Map());
+
   /* Memuat data transaksi dan kategori dari IndexedDB */
   const loadTransactions = useCallback(async () => {
     try {
@@ -95,8 +98,19 @@ export function useTransactions(): UseTransactionsReturn {
         getAllWalletsIncludingDeleted(user.id),
       ]);
 
-      const categoriesMap = new Map(allCategories.map(c => [c.clientId, c]));
-      const walletsMap = new Map(allWallets.map(w => [w.clientId, w]));
+      const categoriesMap = new Map<string, Category>();
+      for (const c of allCategories) {
+        if (c.clientId) categoriesMap.set(c.clientId, c);
+        if (c.id) categoriesMap.set(c.id, c);
+      }
+      const walletsMap = new Map<string, Wallet>();
+      for (const w of allWallets) {
+        if (w.clientId) walletsMap.set(w.clientId, w);
+        if (w.id) walletsMap.set(w.id, w);
+      }
+
+      categoriesMapRef.current = categoriesMap;
+      walletsMapRef.current = walletsMap;
       
       const recentWithCategories = recent.map(txn => ({
         ...txn,
@@ -149,8 +163,17 @@ export function useTransactions(): UseTransactionsReturn {
       errorMessage: "Failed to record transaction",
       onSuccess: (created) => {
         if (!created) return;
+        const cat = created.categoryId ? categoriesMapRef.current.get(created.categoryId) : undefined;
+        const wal = created.walletId ? walletsMapRef.current.get(created.walletId) : undefined;
+        const targetWal = created.targetWalletId ? walletsMapRef.current.get(created.targetWalletId) : undefined;
+        const createdWithJoins = {
+          ...created,
+          category: cat,
+          wallet: wal,
+          targetWallet: targetWal,
+        };
         /* Pembaruan optimistik — tambahkan transaksi baru ke posisi teratas daftar */
-        setTransactions((prev) => [created, ...prev]);
+        setTransactions((prev) => [createdWithJoins, ...prev]);
 
         /* Perbarui total bulanan secara optimistik — transaksi jenis TRANSFER diabaikan dari laba rugi */
         setMonthlyTotals((prev) => {

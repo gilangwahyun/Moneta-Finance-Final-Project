@@ -79,6 +79,12 @@ export function TransactionItem({
           </div>
           <p className="truncate text-xs text-slate-600 dark:text-slate-400 mt-0.5">
             {formatDate(transaction.date, transaction.createdAt)}
+            {!isTransfer && categoryName && categoryName !== 'Transaksi' && transaction.description && (
+              <>
+                {' • '}
+                <span>{categoryName}</span>
+              </>
+            )}
             {transaction.wallet && (
               <>
                 {' • '}

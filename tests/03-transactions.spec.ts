@@ -246,10 +246,17 @@ test.describe.serial('2.3 Transactions (Transaksi)', () => {
     await expect(modal).not.toBeVisible();
   });
 
-  test('[AU-04-04_01] Tampil Transaksi: User can view transaction list and filter by time period', async () => {
+  test('[AU-04-04_01] Tampil Transaksi: User can view transaction list and search by category', async () => {
     await page.goto('/transactions');
     await expect(page.locator('h1', { hasText: 'Transaksi' })).toBeVisible();
     await expect(page.locator('div.group.relative').first()).toBeVisible({ timeout: 10000 });
+
+    // Test search by category name
+    const searchInput = page.locator('input[placeholder*="Cari transaksi"]');
+    await searchInput.fill('Makanan');
+    await expect(page.locator('div.group.relative').filter({ hasText: 'Makan Siang QA' })).toBeVisible();
+
+    await searchInput.clear();
   });
 
   test('[AU-04-02_01] Ubah Transaksi: Updating amounts reflects correctly', async () => {
