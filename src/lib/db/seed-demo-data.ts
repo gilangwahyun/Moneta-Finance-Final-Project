@@ -115,9 +115,25 @@ export async function seedDemoDataForUser(userId: string, db: any) {
     });
   }
 
+  // Anggaran Jajan Rp200.000 (Memicu Ambient Visual Priming ≥85%)
+  const jajanCatId = getCatId("Jajan");
+  if (jajanCatId) {
+    await db.budget.create({
+      data: {
+        clientId: randomUUID(),
+        amount: 200000,
+        period: currentPeriod,
+        categoryId: jajanCatId,
+        userId,
+        syncStatus: "SYNCED",
+      },
+    });
+  }
 
+  // 4. Buat Target Finansial (Revisi Sidang: 1:N Category-to-Target & Direct Allocation)
+  const investasiCatId = getCatId("Investasi");
 
-  // 4. Buat Target Finansial (FT-01: Target Belum Ada Progres)
+  // Target 1: FT-01 (Target Belum Ada Progres - Stagnan)
   await db.financialTarget.create({
     data: {
       clientId: randomUUID(),
@@ -127,6 +143,7 @@ export async function seedDemoDataForUser(userId: string, db: any) {
       period: "CUSTOM",
       startDate: dayjs().startOf("day").subtract(12, "day").toDate(), // Memaksa >30% waktu berjalan
       endDate: dayjs().startOf("day").add(18, "day").toDate(),
+      categoryId: investasiCatId,
       isActive: true,
       note: "Target menabung bulanan (Simulasi Pengujian)",
       userId,
@@ -134,7 +151,54 @@ export async function seedDemoDataForUser(userId: string, db: any) {
     },
   });
 
+  // Target 2: Target Baru dengan Progres Aktif 50% via Direct Transaction Allocation
+  const targetAktifDemo = await db.financialTarget.create({
+    data: {
+      clientId: randomUUID(),
+      name: "Tabungan Investasi Masa Depan",
+      type: "SAVING_TARGET",
+      targetAmount: 5000000,
+      period: "CUSTOM",
+      startDate: dayjs().startOf("month").toDate(),
+      endDate: dayjs().add(2, "month").endOf("month").toDate(),
+      categoryId: investasiCatId, // ⭐️ 1:N Category-to-Target (keduanya berbagi kategori Investasi)
+      isActive: true,
+      note: "Target portofolio investasi dengan alokasi transaksi langsung",
+      userId,
+      syncStatus: "SYNCED",
+    },
+  });
+
   const txns: any[] = [];
+
+  // 🎯 Pemasukan dengan alokasi langsung ke Target 2 (Fitur Revisi Sidang)
+  txns.push({
+    clientId: randomUUID(),
+    amount: 1500000,
+    type: "INCOME",
+    description: "Alokasi Bonus Project ke Portofolio Investasi",
+    date: dayjs().subtract(4, "day").toDate(),
+    createdAt: dayjs().subtract(4, "day").toDate(),
+    walletId,
+    categoryId: investasiCatId,
+    financialTargetId: targetAktifDemo.id, // ⭐️ Direct transaction allocation
+    userId,
+    syncStatus: "SYNCED",
+  });
+
+  txns.push({
+    clientId: randomUUID(),
+    amount: 1000000,
+    type: "INCOME",
+    description: "Penyisihan Gaji untuk Tabungan Investasi",
+    date: dayjs().subtract(1, "day").toDate(),
+    createdAt: dayjs().subtract(1, "day").toDate(),
+    walletId,
+    categoryId: investasiCatId,
+    financialTargetId: targetAktifDemo.id, // ⭐️ Direct transaction allocation
+    userId,
+    syncStatus: "SYNCED",
+  });
 
   // 🎯 Gaji Bulan Lalu (25 bulan lalu) agar cashflow historis & akumulasi saldo positif
   const lastMonthPayday = dayjs().subtract(1, "month").date(25);

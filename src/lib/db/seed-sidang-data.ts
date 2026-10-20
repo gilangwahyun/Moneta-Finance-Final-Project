@@ -74,7 +74,7 @@ export async function seedSidangDataForUser(userId: string, db: any) {
   await db.financialTarget.deleteMany({ where: { userId } });
   await db.wallet.deleteMany({ where: { userId } });
 
-  // ─── 3. Buat Dompet Utama ────────────────────────────────────────────────
+  // ─── 3. Buat Dompet Utama & Dompet Tabungan Investasi ──────────────────
   console.log("  → Membuat dompet...");
   const wallet = await db.wallet.create({
     data: {
@@ -88,14 +88,33 @@ export async function seedSidangDataForUser(userId: string, db: any) {
   });
   const walletId = wallet.id;
 
-  // ─── 4. Buat Anggaran Bulan Ini ──────────────────────────────────────────
-  // BG-00c: Anggaran Makanan Rp 300.000 → akan terlampaui oleh transaksi seed (Rp 350.000)
-  // Belanja Harian Rp 5.000.000 → sisa banyak (kandidat sumber subsidi silang)
+  const walletTabungan = await db.wallet.create({
+    data: {
+      clientId: randomUUID(),
+      name: "Tabungan Investasi (Bibit / Rekening Jago)",
+      type: "INVESTASI",
+      initialBalance: 2_500_000,
+      userId,
+      syncStatus: "SYNCED",
+    },
+  });
+  const walletTabunganId = walletTabungan.id;
+
+  // ─── 4. Buat Anggaran Bulan Ini (Choice Architecture & Spatial Ordering) ──
+  // Gradasi anggaran untuk mendemonstrasikan Spatial Ordering & Ambient Priming:
+  //   1. Belanja Harian (Rp 4.000.000, terpakai Rp 500.000 = 12.5%) → Sisa Rp 3.500.000 (Top #1 Spatial)
+  //   2. Transportasi   (Rp 1.000.000, terpakai Rp 150.000 = 15%)   → Sisa Rp 850.000 (Top #2 Spatial)
+  //   3. Hiburan        (Rp 600.000, terpakai Rp 350.000 = 58.3%)   → Sisa Rp 250.000 (Mid)
+  //   4. Jajan          (Rp 200.000, terpakai Rp 190.000 = 95%)     → Sisa Rp 10.000 (≥85% → Ambient Priming amber tint)
+  //   5. Makanan        (Rp 300.000, terpakai Rp 380.000 = 126.7%)  → Defisit Rp 80.000 (BG-00c Subsidi Silang)
   const currentPeriod = dayjs().format("YYYY-MM");
-  console.log("  → Membuat anggaran...");
+  console.log("  → Membuat anggaran bulan ini...");
 
   let budgetMakanan: any = null;
   let budgetBelanja: any = null;
+  let budgetTransp: any = null;
+  let budgetHiburan: any = null;
+  let budgetJajan: any = null;
 
   if (catMakanan) {
     budgetMakanan = await db.budget.create({
@@ -114,7 +133,7 @@ export async function seedSidangDataForUser(userId: string, db: any) {
     budgetBelanja = await db.budget.create({
       data: {
         clientId: randomUUID(),
-        amount: 5_000_000,
+        amount: 4_000_000,
         period: currentPeriod,
         categoryId: catBelanja,
         userId,
@@ -123,9 +142,50 @@ export async function seedSidangDataForUser(userId: string, db: any) {
     });
   }
 
-  // ─── 5. Buat Target Finansial (FT-01: sudah >67% periode, kontribusi Rp 0) ──
+  if (catTransp) {
+    budgetTransp = await db.budget.create({
+      data: {
+        clientId: randomUUID(),
+        amount: 1_000_000,
+        period: currentPeriod,
+        categoryId: catTransp,
+        userId,
+        syncStatus: "SYNCED",
+      },
+    });
+  }
+
+  if (catHiburan) {
+    budgetHiburan = await db.budget.create({
+      data: {
+        clientId: randomUUID(),
+        amount: 600_000,
+        period: currentPeriod,
+        categoryId: catHiburan,
+        userId,
+        syncStatus: "SYNCED",
+      },
+    });
+  }
+
+  if (catJajan) {
+    budgetJajan = await db.budget.create({
+      data: {
+        clientId: randomUUID(),
+        amount: 200_000,
+        period: currentPeriod,
+        categoryId: catJajan,
+        userId,
+        syncStatus: "SYNCED",
+      },
+    });
+  }
+
+  // ─── 5. Buat Target Finansial (Revisi Sidang: 1:N Category & Direct Link) ──
   console.log("  → Membuat target finansial...");
-  await db.financialTarget.create({
+
+  // Target 1: FT-01 (Target Belum Ada Progres - Stagnan >67% waktu berjalan, Rp 0 kontribusi)
+  const targetStagnan = await db.financialTarget.create({
     data: {
       clientId: randomUUID(),
       name: "Dana Darurat & Liburan Akhir Tahun",
@@ -134,9 +194,30 @@ export async function seedSidangDataForUser(userId: string, db: any) {
       period: "CUSTOM",
       startDate: dayjs().subtract(20, "day").startOf("day").toDate(),
       endDate: dayjs().add(10, "day").startOf("day").toDate(),
-      categoryId: catInvestasi, // Terhubung ke kategori Investasi (belum ada transaksi = kontribusi Rp 0)
+      categoryId: catInvestasi, // Terhubung ke kategori Investasi
+      walletId,
       isActive: true,
-      note: "Target menabung untuk keperluan darurat dan liburan (Demo Sidang)",
+      note: "Target menabung untuk keperluan darurat dan liburan (Demo Sidang - FT-01 Stagnan)",
+      userId,
+      syncStatus: "SYNCED",
+    },
+  });
+
+  // Target 2: Target Baru dengan Progres Aktif 50% via Direct Transaction Allocation (financialTargetId)
+  // Menunjukkan relasi 1:N Category-to-Target (keduanya berbagi kategori 'Investasi')
+  const targetAktif = await db.financialTarget.create({
+    data: {
+      clientId: randomUUID(),
+      name: "Tabungan Investasi Masa Depan",
+      type: "SAVING_TARGET",
+      targetAmount: 5_000_000,
+      period: "CUSTOM",
+      startDate: dayjs().startOf("month").toDate(),
+      endDate: dayjs().add(2, "month").endOf("month").toDate(),
+      categoryId: catInvestasi, // ⭐️ 1:N Category-to-Target: Sama-sama kategori Investasi dengan Target 1
+      walletId: walletTabunganId,
+      isActive: true,
+      note: "Target portofolio investasi dengan alokasi transaksi langsung (Fitur Revisi Sidang)",
       userId,
       syncStatus: "SYNCED",
     },
@@ -148,15 +229,6 @@ export async function seedSidangDataForUser(userId: string, db: any) {
 
   // ══════════════════════════════════════════════════════════════════════════
   // BLOK A: GAJI HARI INI — KUNCI PEMICU SP-01 SAAT DEMO
-  //
-  // Syarat paydayLeak (local-engine.ts baris 157-173):
-  //   1. Ada INCOME dalam 30 hari terakhir              ✅ gaji = hari ini
-  //   2. daysSincePayday >= 0 && daysSincePayday <= 3   ✅ hari ini = 0 hari
-  //   3. current.expense > totalAnggaran * 0.4          ✅ (setelah pengeluaran demo)
-  //      Total anggaran = 300.000 + 5.000.000 = 5.300.000
-  //      Threshold 40% = 2.120.000
-  //      Pengeluaran sudah ada (makanan) = 350.000
-  //      → Tambahkan pengeluaran >= 1.800.000 saat demo agar total > 2.120.000
   // ══════════════════════════════════════════════════════════════════════════
   txns.push({
     clientId: randomUUID(),
@@ -172,8 +244,41 @@ export async function seedSidangDataForUser(userId: string, db: any) {
   });
 
   // ══════════════════════════════════════════════════════════════════════════
-  // BLOK B: PENGELUARAN MAKANAN BULAN INI — melampaui anggaran Rp 300.000
-  //   Total = 200.000 + 150.000 (Blok B) + 30.000 (Blok D) = 380.000 > 300.000
+  // BLOK B: PEMASUKAN DENGAN ALOKASI LANGSUNG KE TARGET 2 (Revisi Sidang)
+  //   Total = 1.500.000 + 1.000.000 = Rp 2.500.000 (Tepat 50% dari target Rp 5.000.000)
+  //   Membuktikan Direct Transaction-to-Target link (financialTargetId)
+  // ══════════════════════════════════════════════════════════════════════════
+  txns.push({
+    clientId: randomUUID(),
+    amount: 1_500_000,
+    type: "INCOME",
+    description: "Alokasi Bonus Project ke Tabungan Investasi",
+    date: dayjs().subtract(5, "day").toDate(),
+    createdAt: dayjs().subtract(5, "day").set("hour", 10).toDate(),
+    walletId: walletTabunganId,
+    categoryId: catInvestasi,
+    financialTargetId: targetAktif.id, // ⭐️ FK relasi langsung ke FinancialTarget
+    userId,
+    syncStatus: "SYNCED",
+  });
+
+  txns.push({
+    clientId: randomUUID(),
+    amount: 1_000_000,
+    type: "INCOME",
+    description: "Penyisihan Gaji untuk Investasi Berkala",
+    date: dayjs().subtract(1, "day").toDate(),
+    createdAt: dayjs().subtract(1, "day").set("hour", 14).toDate(),
+    walletId: walletTabunganId,
+    categoryId: catInvestasi,
+    financialTargetId: targetAktif.id, // ⭐️ FK relasi langsung ke FinancialTarget
+    userId,
+    syncStatus: "SYNCED",
+  });
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // BLOK C: PENGELUARAN MAKANAN BULAN INI — melampaui anggaran Rp 300.000
+  //   Total = 200.000 + 150.000 + 30.000 = 380.000 > 300.000
   //   Defisit = Rp 80.000 → BG-00c (Rekomendasi Subsidi Silang Rp 80.000)
   // ══════════════════════════════════════════════════════════════════════════
   if (catMakanan) {
@@ -204,7 +309,45 @@ export async function seedSidangDataForUser(userId: string, db: any) {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // BLOK C: HISTORI 3 BULAN — membangun profil perilaku untuk WL-04 & AN-09
+  // BLOK D: BELANJA HARIAN BULAN INI (Donor Subsidi Silang & Spatial Rank #1)
+  //   Rp 500.000 terpakai dari anggaran Rp 4.000.000 → Sisa Rp 3.500.000 (87.5% sisa)
+  // ══════════════════════════════════════════════════════════════════════════
+  if (catBelanja) {
+    txns.push({
+      clientId: randomUUID(),
+      amount: 500_000,
+      type: "EXPENSE",
+      description: "Belanja Bulanan Supermarket",
+      date: dayjs().subtract(4, "day").toDate(),
+      createdAt: dayjs().subtract(4, "day").set("hour", 16).toDate(),
+      walletId,
+      categoryId: catBelanja,
+      userId,
+      syncStatus: "SYNCED",
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // BLOK E: HIBURAN BULAN INI
+  //   Rp 350.000 terpakai dari anggaran Rp 600.000 → Sisa Rp 250.000
+  // ══════════════════════════════════════════════════════════════════════════
+  if (catHiburan) {
+    txns.push({
+      clientId: randomUUID(),
+      amount: 350_000,
+      type: "EXPENSE",
+      description: "Aktivitas Hiburan & Rekreasi Akhir Pekan",
+      date: dayjs().subtract(3, "day").toDate(),
+      createdAt: dayjs().subtract(3, "day").set("hour", 15).toDate(),
+      walletId,
+      categoryId: catHiburan,
+      userId,
+      syncStatus: "SYNCED",
+    });
+  }
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // BLOK F: HISTORI 3 BULAN — membangun profil perilaku untuk WL-04 & AN-09
   //   WL-04: 100% transaksi Jajan selalu dari dompet yang sama
   //   AN-09: frekuensi transaksi Jajan >= 5 kali/bulan → proyeksi tahunan muncul
   // ══════════════════════════════════════════════════════════════════════════
@@ -281,16 +424,20 @@ export async function seedSidangDataForUser(userId: string, db: any) {
     }
   }
 
-  // Jajan bulan ini (≥5 kali → trigger AN-09 proyeksi kebiasaan)
+  // ══════════════════════════════════════════════════════════════════════════
+  // BLOK G: JAJAN BULAN INI (Memicu Ambient Visual Priming ≥85% & AN-09)
+  //   7 transaksi @ Rp 25.000 = Rp 175.000 + Rp 15.000 di Blok H = Rp 190.000
+  //   Anggaran Jajan = Rp 200.000 → Terpakai 95% (≥85% → Warm Amber Tint)
+  // ══════════════════════════════════════════════════════════════════════════
   for (let i = 1; i <= 7; i++) {
     const d = dayjs().startOf("month").add(i * 2, "day");
     if (d.isAfter(dayjs())) break;
     if (catJajan) {
       txns.push({
         clientId: randomUUID(),
-        amount: 20_000 + Math.floor(Math.random() * 5_000),
+        amount: 25_000,
         type: "EXPENSE",
-        description: "Es Kopi Susu",
+        description: "Es Kopi Susu & Snack",
         date: d.toDate(),
         createdAt: d.set("hour", 10).toDate(),
         walletId,
@@ -302,15 +449,16 @@ export async function seedSidangDataForUser(userId: string, db: any) {
   }
 
   // ══════════════════════════════════════════════════════════════════════════
-  // BLOK D: PENGELUARAN KECIL 7 HARI TERAKHIR
-  //   Net 7 hari terakhir positif → PR-01 valid
-  //   (gaji Rp 5.000.000 masuk hari ini, pengeluaran 7 hari hanya ~Rp 120.000)
+  // BLOK H: PENGELUARAN KECIL 7 HARI TERAKHIR (Transportasi, Makan, Jajan)
+  //   Transportasi total = 25k + 50k + 75k = Rp 150.000 / Anggaran Rp 1.000.000 (Sisa 85% → Spatial Rank #2)
+  //   Net 7 hari terakhir tetap positif → PR-01 valid
   // ══════════════════════════════════════════════════════════════════════════
   const pengeluaranKecil = [
     { desc: "Transportasi Grab", amount: 25_000, cat: catTransp, mundur: 6 },
     { desc: "Makan Siang",       amount: 30_000, cat: catMakanan, mundur: 5 },
     { desc: "Parkir & Bensin",   amount: 50_000, cat: catTransp, mundur: 4 },
     { desc: "Jajan Kantor",      amount: 15_000, cat: catJajan,  mundur: 3 },
+    { desc: "Tiket KRL Commuter", amount: 75_000, cat: catTransp, mundur: 2 },
   ];
   for (const p of pengeluaranKecil) {
     if (!p.cat) continue;
@@ -333,13 +481,13 @@ export async function seedSidangDataForUser(userId: string, db: any) {
   console.log(`  ✅ ${txns.length} transaksi berhasil disuntikkan.`);
 
   // ─── 7. Suntikkan 5 Log Notifikasi Pre-seeded ────────────────────────────
-  console.log("  → Menyuntikkan log notifikasi pre-seeded sesuai standar sistem (local-engine)...");
+  console.log("  → Menyuntikkan log notifikasi pre-seeded sesuai standar sistem (Calm Nudge)...");
   const now = new Date();
   const currentMonthStr = dayjs().format("YYYY-MM");
   const currentWeekStr = dayjs().format("YYYY-ww");
 
   const notifLogs = [
-    // ① FT-01 — Target Belum Ada Progres (Priority 2.3, warning)
+    // ① FT-01 — Target Belum Ada Progres (Priority 2.3, warning/reflective)
     {
       clientId: randomUUID(),
       dedupeKey: `GENERIC_NUDGE:${userId}:TargetBelumAdaProgres:${currentMonthStr}`,
@@ -349,7 +497,7 @@ export async function seedSidangDataForUser(userId: string, db: any) {
       type: "2.3",
       eventType: "SPENDING_INSIGHT",
       status: "delivered",
-      severity: "warning",
+      severity: "neutral",
       source: "local-engine",
       ctaRoute: "/targets",
       ctaLabel: "Lihat Target",
@@ -375,17 +523,17 @@ export async function seedSidangDataForUser(userId: string, db: any) {
       updatedAt: now,
     },
 
-    // ③ AN-09 — Proyeksi Kebiasaan / wantsProjection (Priority 2.5, warning)
+    // ③ AN-09 — Proyeksi Kebiasaan / wantsProjection (Priority 2.5, neutral)
     {
       clientId: randomUUID(),
       dedupeKey: `WANTS_PROJECTION:${userId}:${currentMonthStr}`,
       userId,
       title: "Proyeksi Kebiasaan",
-      body: "Bulan ini kategori Jajan menjadi salah satu pengeluaran terbesar dengan total Rp 160.000. Kamu sudah melakukan transaksi ini sebanyak 8 kali secara berulang. Jika pola ini berlanjut, estimasi tahunannya dapat mencapai Rp 1.920.000. Pertimbangkan memantau pola pengeluaran ini agar tetap terkendali.",
+      body: "Bulan ini kategori Jajan menjadi salah satu pengeluaran terbesar dengan total Rp 190.000. Kamu sudah melakukan transaksi ini sebanyak 8 kali secara berulang. Jika pola ini berlanjut, estimasi tahunannya dapat mencapai Rp 2.280.000. Pertimbangkan memantau pola pengeluaran ini agar tetap terkendali.",
       type: "2.5",
       eventType: "SPENDING_INSIGHT",
       status: "delivered",
-      severity: "warning",
+      severity: "neutral",
       source: "local-engine",
       ctaRoute: "/analytics",
       ctaLabel: "Lihat Tren",
@@ -399,7 +547,7 @@ export async function seedSidangDataForUser(userId: string, db: any) {
       dedupeKey: `WEEKLY_SAVINGS:${userId}:${currentWeekStr}`,
       userId,
       title: "Kamu Berhasil Berhemat!",
-      body: "Hebat! Kamu berhasil menyisakan Rp 4.880.000 pada 7 hari terakhir. Pertahankan kebiasaan baik ini.",
+      body: "Hebat! Kamu berhasil menyisakan saldo positif pada 7 hari terakhir. Pertahankan kebiasaan baik ini.",
       type: "3.5",
       eventType: "SPENDING_INSIGHT",
       status: "delivered",
@@ -411,7 +559,7 @@ export async function seedSidangDataForUser(userId: string, db: any) {
       updatedAt: now,
     },
 
-    // ⑤ BG-00c — Batas Anggaran Terlampaui & Rekomendasi Subsidi Silang (Priority 0.1, critical)
+    // ⑤ BG-00c — Batas Anggaran Terlampaui & Rekomendasi Subsidi Silang (Calm UI)
     {
       clientId: randomUUID(),
       dedupeKey: budgetMakanan
@@ -424,7 +572,7 @@ export async function seedSidangDataForUser(userId: string, db: any) {
       eventType: "BUDGET_CRITICAL",
       actionType: "REALLOCATE_BUDGET",
       status: "delivered",
-      severity: "critical",
+      severity: "neutral",
       source: "local-engine",
       relatedBudgetId: budgetMakanan?.clientId,
       relatedCategoryId: catMakanan ?? undefined,
@@ -451,32 +599,29 @@ export async function seedSidangDataForUser(userId: string, db: any) {
   console.log(`  ✅ ${notifLogs.length} log notifikasi berhasil disuntikkan.`);
 
   console.log(`
-╔═══════════════════════════════════════════════════════════════════════╗
-║          ✅  SEED SIDANG SELESAI — PANDUAN DEMO SP-01                 ║
-╠═══════════════════════════════════════════════════════════════════════╣
-║  5 rule yang sudah muncul di halaman Notifikasi:                      ║
-║    ① FT-01  → "Target Belum Ada Progres"                              ║
-║    ② WL-04  → "Pola Penggunaan Dompet"                                ║
-║    ③ AN-09  → "Proyeksi Kebiasaan"                                    ║
-║    ④ PR-01  → "Kamu Berhasil Berhemat!"                               ║
-║    ⑤ BG-00c → "Rekomendasi Subsidi Silang" (Makanan ← Belanja Harian) ║
-╠═══════════════════════════════════════════════════════════════════════╣
-║  DEMO LIVE — Memicu SP-01 (Pengeluaran Awal Bulan):                   ║
-║  1. Login & klik "Tarik Data" agar IndexedDB sinkron                  ║
-║  2. Buka halaman Transaksi → Tambah Transaksi Baru                    ║
-║  3. Isi:  Kategori   = Transportasi (JANGAN pilih Belanja Harian      ║
-║                        agar donor Subsidi Silang tetap sisa >= 70%!)  ║
-║           Nominal    = Rp 1.800.000 (atau lebih)                      ║
-║           Tanggal    = Hari ini                                        ║
-║  4. Simpan → kartu "Pengeluaran Awal Bulan" (SP-01) langsung muncul,  ║
-║     DAN "Rekomendasi Subsidi Silang" (BG-00c) tetap aktif!            ║
-║                                                                       ║
-║  Cara hitung threshold 40%:                                           ║
-║    Total anggaran = Rp 300.000 + Rp 5.000.000 = Rp 5.300.000         ║
-║    Batas 40%      = Rp 5.300.000 × 0,4 = Rp 2.120.000                ║
-║    Sudah ada      = Rp 350.000 (makanan)                              ║
-║    Kurang         = Rp 2.120.000 - Rp 350.000 = Rp 1.770.001         ║
-║    → Input Rp 1.800.000 untuk margin keamanan demo                   ║
-╚═══════════════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════════════════════╗
+║               ✅  SEED DATA REVISI SIDANG MONETA FINANCE SELESAI                ║
+╠══════════════════════════════════════════════════════════════════════════════════╣
+║  🎯 FITUR BARU 1: MULTI-TARGET & DIRECT ALLOCATION (REVISI SIDANG)              ║
+║    • 1:N Category-to-Target: 'Investasi' terhubung ke 2 Target sekaligus!        ║
+║      ① "Dana Darurat & Liburan Akhir Tahun" (0% - FT-01 Stagnan)                 ║
+║      ② "Tabungan Investasi Masa Depan"      (50% - Terisi Rp 2.500.000 via        ║
+║                                              2 transaksi alokasi langsung)       ║
+║    • Uji Coba: Tambah transaksi PEMASUKAN di UI → Pilih salah satu target       ║
+║      di chip alokasi → Progres target langsung bertambah real-time!              ║
+║                                                                                  ║
+║  🧘 FITUR BARU 2: CHOICE ARCHITECTURE & CALM NUDGE                              ║
+║    • Spatial Ordering: Buka Tambah Transaksi (Pengeluaran) → Belanja Harian     ║
+║      (sisa Rp 3.5jt) & Transportasi (sisa Rp 850rb) di posisi paling atas;       ║
+║      Makanan (defisit) terdorong ke bawah.                                       ║
+║    • Ambient Visual Priming: Pilih kategori 'Jajan' (95%) atau 'Makanan' (126%) ║
+║      → Kotak input nominal bertransisi halus ke aksen hangat (Warm Amber Tint).  ║
+║    • In-Situ Budget Cues: Garis indikator 1px di bawah tiap kategori.           ║
+║                                                                                  ║
+║  ⚡ FITUR BARU 3: LIVE DEMO SP-01 (PENGELUARAN AWAL BULAN)                       ║
+║    1. Login (user_sidang / sidang123) lalu klik 'Tarik Data' (Sinkronisasi).     ║
+║    2. Tambah Transaksi Pengeluaran: Nominal ≥ Rp 1.000.000 (misal Transportasi). ║
+║    3. Simpan → Kartu reflektif SP-01 langsung muncul di Dashboard & Notifikasi!  ║
+╚══════════════════════════════════════════════════════════════════════════════════╝
 `);
 }
