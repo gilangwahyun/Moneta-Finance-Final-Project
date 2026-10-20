@@ -567,7 +567,7 @@ export async function seedSidangDataForUser(userId: string, db: any) {
         : `BUDGET_USAGE:${userId}:makanan:${currentMonthStr}:101:none`,
       userId,
       title: "Rekomendasi Subsidi Silang",
-      body: "Anggaran Makanan telah melewati batas sebesar Rp 80.000. Kamu dapat mempertimbangkan memindahkan Rp 80.000 dari Belanja Harian. Keputusan tetap ada di tanganmu.",
+      body: "Tersedia sisa Rp 80.000 di kategori Belanja Harian untuk mendukung kategori Makanan.",
       type: "0.1",
       eventType: "BUDGET_CRITICAL",
       actionType: "REALLOCATE_BUDGET",
