@@ -52,6 +52,8 @@ next-env.d.ts
 !/docs/DOKUMENTASI_REVISI_CALM_NUDGING.md
 !/docs/screenshots/
 !/docs/screenshots/*
+!/docs/rules/
+!/docs/rules/*
 
 # prisma generated client (di-generate ulang saat npm install via postinstall)
 /src/generated/
