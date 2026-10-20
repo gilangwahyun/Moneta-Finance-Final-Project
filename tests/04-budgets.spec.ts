@@ -70,7 +70,7 @@ test.describe.serial('2.4 Budgets (Anggaran)', () => {
     await expect(page.locator('span:has-text("Aman")').first()).toBeVisible();
   });
 
-  test('[AU-08-05_01] Pengujian Progress Bar Anggaran: User can see visual nudging via progress bar', async () => {
+  test('[AU-08-06_01] Tampil Progress Bar Anggaran: User can see visual nudging via progress bar', async () => {
     await page.goto('/budgets');
     
     // Ensure "Makanan" budget is visible
@@ -85,6 +85,27 @@ test.describe.serial('2.4 Budgets (Anggaran)', () => {
     
     // Check the text "Aman" which is part of the nudging
     await expect(row.locator('span', { hasText: 'Aman' }).first()).toBeVisible();
+  });
+
+  test('[AU-08-04_01] Tampil Anggaran: User can view list of monthly budgets', async () => {
+    await page.goto('/budgets');
+    await expect(page.locator('h1', { hasText: 'Anggaran' })).toBeVisible();
+    await expect(page.locator('div.group.relative').first()).toBeVisible({ timeout: 10000 });
+  });
+
+  test('[AU-08-02_01] Ubah Anggaran: User can edit budget limit', async () => {
+    await page.goto('/budgets');
+    const row = page.locator('div.group.relative').filter({ hasText: 'Makanan' });
+    await row.locator('button[aria-label="Buka menu aksi"]').click();
+    await page.locator('button:has-text("Ubah")').and(page.locator(':visible')).first().click();
+    const modal = page.locator('h2:has-text("Ubah Batas Anggaran")');
+    await expect(modal).toBeVisible();
+    const amountInput = page.locator('input[placeholder="0"]');
+    await amountInput.clear();
+    await amountInput.pressSequentially('2500000', { delay: 10 });
+    await page.click('button[type="submit"]:has-text("Simpan Perubahan")');
+    await expect(modal).not.toBeVisible();
+    await expect(page.locator('span', { hasText: '2.500.000' }).first()).toBeVisible();
   });
 
   test('[AU-08-01_02] Tambah Anggaran Invalid: Cannot select a category that already has a budget', async () => {
@@ -102,7 +123,7 @@ test.describe.serial('2.4 Budgets (Anggaran)', () => {
     await page.click('button:has-text("Batal")');
   });
 
-  test('[AU-08-04_01] Realokasi Anggaran: User can transfer budget limits to another category', async () => {
+  test('[AU-08-05_01] Realokasi Anggaran: User can transfer budget limits to another category', async () => {
     // Create an empty budget for Transportasi first
     await page.goto('/budgets');
     await page.click('button:has-text("Atur Anggaran")');
@@ -117,30 +138,31 @@ test.describe.serial('2.4 Budgets (Anggaran)', () => {
     await row.locator('button[aria-label="Buka menu aksi"]').first().click();
     await page.locator('button:has-text("Subsidi Silang")').and(page.locator(':visible')).first().click();
     
-    const reallocateModal = page.locator('h2:has-text("Subsidi Silang")');
+    const reallocateModal = page.locator('div.fixed.inset-0').filter({ hasText: 'Subsidi Silang' });
     await expect(reallocateModal).toBeVisible();
     
     // Source should be Makanan. Select Destination "Transportasi"
-    await page.locator('button:has-text("Pilih anggaran tujuan...")').click();
-    await page.locator('button:has-text("Transportasi")').click();
+    await reallocateModal.locator('button:has-text("Pilih anggaran tujuan...")').click();
+    await reallocateModal.locator('button:has-text("Transportasi")').click();
     
     // Try to transfer 200.000
-    await page.locator('input[placeholder="0"]').clear();
-    await page.locator('input[placeholder="0"]').pressSequentially('200000', { delay: 10 });
+    const reallocateInput = reallocateModal.locator('input[placeholder="0"]');
+    await reallocateInput.clear();
+    await reallocateInput.pressSequentially('200000', { delay: 10 });
     
     // Confirm
-    await page.click('button[type="submit"]:has-text("Konfirmasi")');
+    await reallocateModal.locator('button[type="submit"]:has-text("Konfirmasi")').click();
     
-    await expect(reallocateModal).not.toBeVisible();
+    await expect(page.locator('h2:has-text("Subsidi Silang")')).not.toBeVisible();
     
-    // Verify Makanan limit decreased from 2.000.000 to 1.800.000
-    await expect(page.locator('div.group.relative').filter({ hasText: 'Makanan' }).locator('span', { hasText: '1.800.000' }).first()).toBeVisible();
+    // Verify Makanan limit decreased from 2.500.000 to 2.300.000
+    await expect(page.locator('div.group.relative').filter({ hasText: 'Makanan' }).locator('span', { hasText: '2.300.000' }).first()).toBeVisible();
     
     // Verify Transportasi limit increased from 500.000 to 700.000
     await expect(page.locator('div.group.relative').filter({ hasText: 'Transportasi' }).locator('span', { hasText: '700.000' }).first()).toBeVisible();
   });
 
-  test('[AU-08-04_02] Realokasi Anggaran Invalid: Cannot exceed safe limit', async () => {
+  test('[AU-08-05_02] Realokasi Anggaran Invalid: Cannot exceed safe limit', async () => {
     await page.goto('/budgets');
     
     // Start reallocation from Makanan
@@ -148,23 +170,24 @@ test.describe.serial('2.4 Budgets (Anggaran)', () => {
     await row.locator('button[aria-label="Buka menu aksi"]').first().click();
     await page.locator('button:has-text("Subsidi Silang")').and(page.locator(':visible')).first().click();
     
-    const reallocateModal = page.locator('h2:has-text("Subsidi Silang")');
+    const reallocateModal = page.locator('div.fixed.inset-0').filter({ hasText: 'Subsidi Silang' });
     await expect(reallocateModal).toBeVisible();
     
-    await page.locator('button:has-text("Pilih anggaran tujuan...")').click();
-    await page.locator('button:has-text("Transportasi")').click();
+    await reallocateModal.locator('button:has-text("Pilih anggaran tujuan...")').click();
+    await reallocateModal.locator('button:has-text("Transportasi")').click();
     
-    // Try to transfer more than allowed. Limit is 1.800.000, spent is 500.000. 
-    // Remaining is 1.300.000. Safe limit requires 20% of 1.800.000 = 360.000.
-    // Let's try to transfer 1.500.000
-    await page.locator('input[placeholder="0"]').clear();
-    await page.locator('input[placeholder="0"]').pressSequentially('1500000', { delay: 10 });
+    // Try to transfer more than allowed. Limit is 2.300.000, spent is 500.000. 
+    // Remaining is 1.800.000. Safe limit requires 20% of 2.300.000 = 460.000.
+    // Let's try to transfer 1.500.000 (remaining would be 300.000 < 460.000)
+    const invalidAmountInput = reallocateModal.locator('input[placeholder="0"]');
+    await invalidAmountInput.clear();
+    await invalidAmountInput.pressSequentially('1500000', { delay: 10 });
     
     // Expect the submit button to be disabled
-    await expect(page.locator('button[type="submit"]:has-text("Konfirmasi")')).toBeDisabled();
+    await expect(reallocateModal.locator('button[type="submit"]:has-text("Konfirmasi")')).toBeDisabled();
     
     // Close modal
-    await page.click('button:has-text("Batal")');
+    await reallocateModal.locator('button:has-text("Batal")').click();
   });
 
   test('[DEFENSIVE-GUARD] Realokasi Anggaran: Cannot submit zero or negative amount', async () => {
@@ -175,21 +198,22 @@ test.describe.serial('2.4 Budgets (Anggaran)', () => {
     await row.locator('button[aria-label="Buka menu aksi"]').first().click();
     await page.locator('button:has-text("Subsidi Silang")').and(page.locator(':visible')).first().click();
     
-    const reallocateModal = page.locator('h2:has-text("Subsidi Silang")');
+    const reallocateModal = page.locator('div.fixed.inset-0').filter({ hasText: 'Subsidi Silang' });
     await expect(reallocateModal).toBeVisible();
     
-    await page.locator('button:has-text("Pilih anggaran tujuan...")').click();
-    await page.locator('button:has-text("Transportasi")').click();
+    await reallocateModal.locator('button:has-text("Pilih anggaran tujuan...")').click();
+    await reallocateModal.locator('button:has-text("Transportasi")').click();
     
     // Try to transfer 0 amount
-    await page.locator('input[placeholder="0"]').clear();
-    await page.locator('input[placeholder="0"]').pressSequentially('0', { delay: 10 });
+    const zeroAmountInput = reallocateModal.locator('input[placeholder="0"]');
+    await zeroAmountInput.clear();
+    await zeroAmountInput.pressSequentially('0', { delay: 10 });
     
     // Expect the submit button to be disabled
-    await expect(page.locator('button[type="submit"]:has-text("Konfirmasi")')).toBeDisabled();
+    await expect(reallocateModal.locator('button[type="submit"]:has-text("Konfirmasi")')).toBeDisabled();
     
     // Close modal
-    await page.click('button:has-text("Batal")');
+    await reallocateModal.locator('button:has-text("Batal")').click();
   });
 
   test('[AU-08-03_01] Hapus Anggaran: User can delete a budget', async () => {

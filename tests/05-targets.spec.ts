@@ -142,7 +142,7 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
     await expect(row2.locator('span', { hasText: '5.000.000' }).first()).toBeVisible();
   });
 
-  test('[AU-09-04_01] Pengujian Progress Bar Target: Visual tracking reflects target-specific percentage', async () => {
+  test('[AU-09-05_01] Pengujian Progress Bar Target: Visual tracking reflects target-specific percentage', async () => {
     await page.goto('/targets');
 
     // Target 1: 5.000.000 / 10.000.000 = 50%
@@ -156,6 +156,12 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
     await expect(row2).toBeVisible();
     const progressBar2 = row2.locator('div.rounded-full[style*="width:"]');
     await expect(progressBar2).toHaveAttribute('style', /width:\s*0%/);
+  });
+
+  test('[AU-09-04_01] Tampil Target Finansial: User can view list of financial targets', async () => {
+    await page.goto('/targets');
+    await expect(page.locator('h1', { hasText: 'Target Keuangan' })).toBeVisible();
+    await expect(page.locator('div.group.relative').filter({ hasText: 'Target Gaji Pokok' })).toBeVisible({ timeout: 10000 });
   });
 
   test('[AU-09-02_01] Ubah Target Finansial: User can edit an existing target', async () => {

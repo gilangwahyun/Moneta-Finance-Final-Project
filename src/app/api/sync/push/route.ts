@@ -221,9 +221,10 @@ export async function POST(request: NextRequest) {
               });
             }
           } else {
-            /********** Rekod baru — buat di DB. */
-            const newCat = await tx.category.create({
-              data: {
+            /********** Rekod baru — buat di DB (gunakan upsert agar aman dari race condition konkurensi). */
+            const newCat = await tx.category.upsert({
+              where: { clientId: cat.clientId },
+              create: {
                 clientId: cat.clientId,
                 name: cat.name,
                 type: cat.type,
@@ -233,6 +234,14 @@ export async function POST(request: NextRequest) {
                 userId,
                 syncStatus: "SYNCED",
                 deletedAt: cat.deletedAt ? new Date(cat.deletedAt) : null,
+              },
+              update: {
+                name: cat.name,
+                type: cat.type,
+                icon: cat.icon,
+                color: cat.color,
+                deletedAt: cat.deletedAt ? new Date(cat.deletedAt) : null,
+                syncStatus: "SYNCED",
               },
             });
             categoryByClientId.set(cat.clientId, newCat); /* Simpan ke map untuk relasi berikutnya. */
@@ -285,8 +294,9 @@ export async function POST(request: NextRequest) {
               });
             }
           } else {
-            const newWlt = await tx.wallet.create({
-              data: {
+            const newWlt = await tx.wallet.upsert({
+              where: { clientId: wlt.clientId },
+              create: {
                 clientId: wlt.clientId,
                 name: wlt.name,
                 type: normalizeWalletType(wlt.type),
@@ -294,6 +304,13 @@ export async function POST(request: NextRequest) {
                 userId,
                 syncStatus: "SYNCED",
                 deletedAt: wlt.deletedAt ? new Date(wlt.deletedAt) : null,
+              },
+              update: {
+                name: wlt.name,
+                type: normalizeWalletType(wlt.type),
+                initialBalance: Number(wlt.initialBalance) || 0,
+                deletedAt: wlt.deletedAt ? new Date(wlt.deletedAt) : null,
+                syncStatus: "SYNCED",
               },
             });
             walletByClientId.set(wlt.clientId, newWlt);
@@ -396,13 +413,21 @@ export async function POST(request: NextRequest) {
               });
             }
           } else {
-            const newBdg = await tx.budget.create({
-              data: {
+            const newBdg = await tx.budget.upsert({
+              where: { clientId: bdg.clientId },
+              create: {
                 clientId: bdg.clientId,
                 amount: bdg.amount ?? 0,
                 period: bdg.period,
                 categoryId: category.id,
                 userId,
+                syncStatus: "SYNCED",
+                deletedAt: bdg.deletedAt ? new Date(bdg.deletedAt) : null,
+              },
+              update: {
+                amount: bdg.amount ?? 0,
+                period: bdg.period,
+                categoryId: category.id,
                 syncStatus: "SYNCED",
                 deletedAt: bdg.deletedAt ? new Date(bdg.deletedAt) : null,
               },
@@ -513,8 +538,9 @@ export async function POST(request: NextRequest) {
               });
             }
           } else {
-            const newTgt = await tx.financialTarget.create({
-              data: {
+            const newTgt = await tx.financialTarget.upsert({
+              where: { clientId: tgt.clientId },
+              create: {
                 clientId: tgt.clientId,
                 name: tgt.name,
                 type: tgt.type,
@@ -527,6 +553,20 @@ export async function POST(request: NextRequest) {
                 isActive: tgt.isActive ?? true,
                 note: tgt.note,
                 userId,
+                syncStatus: "SYNCED",
+                deletedAt: tgt.deletedAt ? new Date(tgt.deletedAt) : null,
+              },
+              update: {
+                name: tgt.name,
+                type: tgt.type,
+                targetAmount: tgt.targetAmount ?? 0,
+                period: tgt.period,
+                startDate: new Date(tgt.startDate),
+                endDate: tgt.endDate ? new Date(tgt.endDate) : null,
+                categoryId: category?.id,
+                walletId: wallet?.id,
+                isActive: tgt.isActive ?? true,
+                note: tgt.note,
                 syncStatus: "SYNCED",
                 deletedAt: tgt.deletedAt ? new Date(tgt.deletedAt) : null,
               },
@@ -681,8 +721,9 @@ export async function POST(request: NextRequest) {
               });
             }
           } else {
-            const newTxn = await tx.transaction.create({
-              data: {
+            const newTxn = await tx.transaction.upsert({
+              where: { clientId: txn.clientId },
+              create: {
                 clientId: txn.clientId,
                 amount: txn.amount ?? 0,
                 type: txn.type,
@@ -696,6 +737,19 @@ export async function POST(request: NextRequest) {
                 userId,
                 syncStatus: "SYNCED",
                 deletedAt: txn.deletedAt ? new Date(txn.deletedAt) : null,
+              },
+              update: {
+                amount: txn.amount ?? 0,
+                type: txn.type,
+                description: txn.description,
+                note: txn.note,
+                date: new Date(txn.date),
+                categoryId: category?.id,
+                walletId: wallet.id,
+                targetWalletId: targetWallet?.id,
+                financialTargetId: financialTarget?.id ?? (txn.financialTargetId === null ? null : undefined),
+                deletedAt: txn.deletedAt ? new Date(txn.deletedAt) : null,
+                syncStatus: "SYNCED",
               },
             });
             transactionByClientId.set(txn.clientId, newTxn);

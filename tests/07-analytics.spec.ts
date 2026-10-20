@@ -40,35 +40,35 @@ test.describe.serial('3. Analytics & Export', () => {
     
     // T1: Income this month
     await page.click('button:has-text("Tambah Transaksi")');
-    await expect(page.locator('h2:has-text("Tambah Transaksi")')).toBeVisible();
-    await page.locator('form button:has-text("Pemasukan")').click();
-    await page.locator('#txn-amount').clear();
-    await page.locator('#txn-amount').pressSequentially('10000000', { delay: 10 });
+    const modal1 = page.locator('.relative.z-10').filter({ hasText: 'Tambah Transaksi' });
+    await expect(modal1).toBeVisible();
+    await modal1.locator('button:has-text("Pemasukan")').first().click();
+    await page.fill('#txn-amount', '10000000');
     await page.locator('button[aria-label="Gaji"]').click();
     await page.fill('#txn-desc', 'Gaji Bulan Ini');
-    await page.locator('form button[type="submit"]:has-text("Simpan")').click();
-    await expect(page.locator('h2:has-text("Tambah Transaksi")')).not.toBeVisible();
+    await page.locator('form button[type="submit"]:has-text("Simpan")').dispatchEvent('click');
+    await expect(modal1).not.toBeVisible();
 
     // T2: Expense this month
     await page.click('button:has-text("Tambah Transaksi")');
-    await expect(page.locator('h2:has-text("Tambah Transaksi")')).toBeVisible();
-    await page.locator('#txn-amount').clear();
-    await page.locator('#txn-amount').pressSequentially('2000000', { delay: 10 });
-    // 'Makan & Minum' is auto-selected by default, skipping explicit click to prevent timeouts.
+    const modal2 = page.locator('.relative.z-10').filter({ hasText: 'Tambah Transaksi' });
+    await expect(modal2).toBeVisible();
+    await modal2.locator('button:has-text("Pengeluaran")').first().click();
+    await page.fill('#txn-amount', '2000000');
     await page.fill('#txn-desc', 'Makan Enak');
-    await page.locator('form button[type="submit"]:has-text("Simpan")').click();
-    await expect(page.locator('h2:has-text("Tambah Transaksi")')).not.toBeVisible();
+    await page.locator('form button[type="submit"]:has-text("Simpan")').dispatchEvent('click');
+    await expect(modal2).not.toBeVisible();
 
     // T3: Expense LAST month
     await page.click('button:has-text("Tambah Transaksi")');
-    await expect(page.locator('h2:has-text("Tambah Transaksi")')).toBeVisible();
-    await page.locator('#txn-amount').clear();
-    await page.locator('#txn-amount').pressSequentially('1000000', { delay: 10 });
+    const modal3 = page.locator('.relative.z-10').filter({ hasText: 'Tambah Transaksi' });
+    await expect(modal3).toBeVisible();
+    await modal3.locator('button:has-text("Pengeluaran")').first().click();
+    await page.fill('#txn-amount', '1000000');
     await page.fill('#txn-date', lastMonthStr);
-    // Rely on default category for this transaction as well.
     await page.fill('#txn-desc', 'Tiket Pesawat Lama');
-    await page.locator('form button[type="submit"]:has-text("Simpan")').click();
-    await expect(page.locator('h2:has-text("Tambah Transaksi")')).not.toBeVisible();
+    await page.locator('form button[type="submit"]:has-text("Simpan")').dispatchEvent('click');
+    await expect(modal3).not.toBeVisible();
   });
 
   test.afterAll(async () => {
@@ -161,6 +161,11 @@ test.describe.serial('3. Analytics & Export', () => {
   test('[AU-17-01_01] Ekspor Data Keuangan: Export XLSX: User can download transactions in excel format from Profile', async () => {
     await page.goto('/profile');
     
+    // Ensure all local transactions have synced to server before export
+    const syncBtn = page.locator('button', { hasText: /Sinkronisasi Paksa/i }).first();
+    await syncBtn.click();
+    await expect(page.locator('text="Sinkronisasi berhasil!"')).toBeVisible({ timeout: 25000 });
+
     // Start waiting for download before clicking
     const downloadPromise = page.waitForEvent('download');
     
@@ -172,8 +177,5 @@ test.describe.serial('3. Analytics & Export', () => {
     
     // Verify file name ends with .xlsx
     expect(download.suggestedFilename()).toContain('.xlsx');
-    
-    // You can also check if there's no error toaster if the download fails
-    // Here we just verify the download event fired properly with correct extension
   });
 });

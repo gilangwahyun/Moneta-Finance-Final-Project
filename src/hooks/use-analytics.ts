@@ -129,21 +129,84 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
   }, [currentTxns, donutMode, allCategories, budgets]);
 
   const { barData, dailyAvg } = useMemo(() => {
-    const days: { label: string; income: number; expense: number }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const dateStr = d.toISOString().split('T')[0];
-      const label = d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric' });
-      const dayTxns = allTxns.filter((t) => t.date.startsWith(dateStr) && !t.deletedAt && t.type !== 'TRANSFER');
-      const { income, expense } = sumByType(dayTxns);
-      days.push({ label, income, expense });
+    const startStr = comparison?.currentPeriod?.start;
+    const endStr = comparison?.currentPeriod?.end;
+    const isIncome = donutMode === 'INCOME';
+
+    let startDate = startStr ? dayjs(startStr) : dayjs().subtract(6, 'day');
+    let endDate = endStr ? dayjs(endStr) : dayjs();
+
+    if (startDate.isAfter(endDate)) {
+      startDate = endDate.subtract(6, 'day');
     }
-    const totalExpenses = days.reduce((s, d) => s + d.expense, 0);
-    const activeDays = days.filter((d) => d.expense > 0).length;
+
+    const totalDays = endDate.diff(startDate, 'day') + 1;
+    const days: { label: string; date: string; income: number; expense: number }[] = [];
+
+    if (totalDays <= 31) {
+      let cur = startDate;
+      while (!cur.isAfter(endDate, 'day')) {
+        const dateStr = cur.format('YYYY-MM-DD');
+        const label = totalDays <= 7 
+          ? cur.locale('id').format('ddd, D') 
+          : cur.locale('id').format('D MMM');
+        const dayTxns = allTxns.filter((t) => t.date.startsWith(dateStr) && !t.deletedAt && t.type !== 'TRANSFER');
+        const { income, expense } = sumByType(dayTxns);
+        days.push({ label, date: dateStr, income, expense });
+        cur = cur.add(1, 'day');
+      }
+    } else if (totalDays <= 120) {
+      let cur = startDate;
+      let weekIndex = 1;
+      while (!cur.isAfter(endDate, 'day')) {
+        const nextWeek = cur.add(6, 'day');
+        const endOfChunk = nextWeek.isAfter(endDate) ? endDate : nextWeek;
+        const curStr = cur.format('YYYY-MM-DD');
+        const nextStr = endOfChunk.format('YYYY-MM-DD');
+        const label = `M${weekIndex} (${cur.format('D/M')})`;
+        const chunkTxns = allTxns.filter((t) => {
+          if (t.deletedAt || t.type === 'TRANSFER') return false;
+          const d = t.date.split('T')[0];
+          return d >= curStr && d <= nextStr;
+        });
+        const { income, expense } = sumByType(chunkTxns);
+        days.push({ label, date: curStr, income, expense });
+        cur = cur.add(7, 'day');
+        weekIndex++;
+      }
+    } else {
+      let cur = startDate.startOf('month');
+      const finalMonth = endDate.startOf('month');
+      while (!cur.isAfter(finalMonth, 'month')) {
+        const mStr = cur.format('YYYY-MM');
+        const label = cur.locale('id').format('MMM YYYY');
+        const chunkTxns = allTxns.filter((t) => {
+          if (t.deletedAt || t.type === 'TRANSFER') return false;
+          return t.date.startsWith(mStr);
+        });
+        const { income, expense } = sumByType(chunkTxns);
+        days.push({ label, date: cur.format('YYYY-MM-DD'), income, expense });
+        cur = cur.add(1, 'month');
+      }
+    }
+
+    const windowSize = days.length <= 7 ? 3 : days.length <= 31 ? 5 : 3;
+    const chartData = days.map((day, idx) => {
+      const wStart = Math.max(0, idx - windowSize + 1);
+      const slice = days.slice(wStart, idx + 1);
+      const sum = slice.reduce((acc, curr) => acc + (isIncome ? curr.income : curr.expense), 0);
+      const movingAvg = Math.round(sum / slice.length);
+      return {
+        ...day,
+        movingAvg,
+      };
+    });
+
+    const totalExpenses = chartData.reduce((s, d) => s + d.expense, 0);
+    const activeDays = chartData.filter((d) => d.expense > 0).length;
     const avg = activeDays > 0 ? Math.round(totalExpenses / activeDays) : 0;
-    return { barData: days, dailyAvg: avg };
-  }, [allTxns]);
+    return { barData: chartData, dailyAvg: avg };
+  }, [allTxns, comparison?.currentPeriod, donutMode]);
 
   const topExpenseCategory = useMemo(() => {
     if (donutData.length === 0) return null;

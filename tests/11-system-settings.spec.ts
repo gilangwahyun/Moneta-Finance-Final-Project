@@ -56,10 +56,8 @@ test.describe.serial('7. System Settings & Technical Features', () => {
     await page.evaluate(() => window.dispatchEvent(new Event('offline')));
 
     // Verify that the app indicates offline status if present
-    const offlineIndicator = page.locator('text="Kamu sedang luring"');
-    if (await offlineIndicator.count() > 0) {
-      await expect(offlineIndicator.first()).toBeVisible();
-    }
+    const offlineIndicator = page.getByText(/Kamu sedang luring/i);
+    await expect(offlineIndicator.first()).toBeVisible({ timeout: 10000 });
 
     // Create a wallet offline
     const addWalletBtn = page.locator('button:has-text("Tambah Dompet")');
@@ -67,7 +65,9 @@ test.describe.serial('7. System Settings & Technical Features', () => {
     if (await addWalletBtn.isVisible()) {
       await addWalletBtn.click();
       await page.fill('input[placeholder="contoh: BCA, GoPay"]', 'Offline Wallet');
-      await page.fill('input[placeholder="0"]', '1000000');
+      const amountInput = page.locator('input[placeholder="0"]');
+      await amountInput.clear();
+      await amountInput.pressSequentially('1000000', { delay: 10 });
       await page.click('button[type="submit"]:has-text("Simpan Dompet")');
       
       // Should save successfully to IndexedDB
@@ -102,6 +102,26 @@ test.describe.serial('7. System Settings & Technical Features', () => {
       expect(hasDarkClass).not.toBe(hasDarkClassAfter);
     }
     
+    await page.close();
+  });
+
+  test('[AU-18-01_02] Pengaturan Visual: Theme preference persists after page reload', async () => {
+    const page = await context.newPage();
+    await setupFreshUser(page, 'sys_pers');
+
+    await page.goto('/profile');
+    const themeBtn = page.locator('button[aria-label="Ubah tema tampilan"]').first();
+    if (await themeBtn.isVisible()) {
+      await themeBtn.click();
+      const htmlElement = page.locator('html');
+      const isDark = await htmlElement.evaluate((el: HTMLElement) => el.classList.contains('dark'));
+
+      // Reload page and check persistence
+      await page.reload();
+      const isDarkAfterReload = await htmlElement.evaluate((el: HTMLElement) => el.classList.contains('dark'));
+      expect(isDarkAfterReload).toBe(isDark);
+    }
+
     await page.close();
   });
 

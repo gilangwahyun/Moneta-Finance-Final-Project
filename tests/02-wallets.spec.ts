@@ -113,6 +113,13 @@ test.describe.serial('2.1 Wallets (Dompet)', () => {
     await expect(page.locator('p:text-is("Dompet BCA QA")')).not.toBeVisible();
   });
 
+  test('[AU-06-04_01] Tampil data dompet: User can view list of wallets and total balance', async () => {
+    await page.goto('/wallets');
+    await expect(page.locator('h1', { hasText: 'Manajemen Dompet' })).toBeVisible();
+    await expect(page.locator('div.group.relative').filter({ hasText: 'Dompet BCA QA Edited' })).toBeVisible();
+    await expect(page.locator('text=Total Saldo')).toBeVisible();
+  });
+
   test('[AU-06-03_01] Hapus Dompet: User can delete a wallet', async () => {
     await page.goto('/wallets');
     

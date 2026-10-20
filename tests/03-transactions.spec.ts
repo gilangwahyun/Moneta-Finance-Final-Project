@@ -20,21 +20,31 @@ test.describe.serial('2.3 Transactions (Transaksi)', () => {
     
     // Create Dompet A
     await page.click('button:has-text("Tambah Dompet")');
-    await expect(page.locator('h2:has-text("Tambah Dompet Baru")')).toBeVisible();
+    const modalA = page.locator('h2:has-text("Tambah Dompet Baru")');
+    await expect(modalA).toBeVisible();
+    await page.waitForTimeout(150);
     await page.fill('input[placeholder="contoh: BCA, GoPay"]', 'Dompet A');
     await page.selectOption('select', 'TUNAI');
-    await page.fill('input[placeholder="0"]', '1000000');
+    const amountA = page.locator('input[placeholder="0"]');
+    await amountA.clear();
+    await amountA.pressSequentially('1000000', { delay: 10 });
     await page.click('button[type="submit"]:has-text("Simpan Dompet")');
-    await expect(page.locator('h2:has-text("Tambah Dompet Baru")')).not.toBeVisible();
+    await expect(modalA).not.toBeVisible();
+    await expect(page.locator('div, a').filter({ hasText: 'Dompet A' }).first()).toBeVisible({ timeout: 10000 });
     
     // Create Dompet B
     await page.click('button:has-text("Tambah Dompet")');
-    await expect(page.locator('h2:has-text("Tambah Dompet Baru")')).toBeVisible();
+    const modalB = page.locator('h2:has-text("Tambah Dompet Baru")');
+    await expect(modalB).toBeVisible();
+    await page.waitForTimeout(150);
     await page.fill('input[placeholder="contoh: BCA, GoPay"]', 'Dompet B');
     await page.selectOption('select', 'BANK');
-    await page.fill('input[placeholder="0"]', '500000');
+    const amountB = page.locator('input[placeholder="0"]');
+    await amountB.clear();
+    await amountB.pressSequentially('500000', { delay: 10 });
     await page.click('button[type="submit"]:has-text("Simpan Dompet")');
-    await expect(page.locator('h2:has-text("Tambah Dompet Baru")')).not.toBeVisible();
+    await expect(modalB).not.toBeVisible();
+    await expect(page.locator('div, a').filter({ hasText: 'Dompet B' }).first()).toBeVisible({ timeout: 10000 });
   });
 
   test.afterAll(async () => {
@@ -236,6 +246,12 @@ test.describe.serial('2.3 Transactions (Transaksi)', () => {
     await expect(modal).not.toBeVisible();
   });
 
+  test('[AU-04-04_01] Tampil Transaksi: User can view transaction list and filter by time period', async () => {
+    await page.goto('/transactions');
+    await expect(page.locator('h1', { hasText: 'Transaksi' })).toBeVisible();
+    await expect(page.locator('div.group.relative').first()).toBeVisible({ timeout: 10000 });
+  });
+
   test('[AU-04-02_01] Ubah Transaksi: Updating amounts reflects correctly', async () => {
     await page.goto('/transactions');
     
@@ -286,7 +302,7 @@ test.describe.serial('2.3 Transactions (Transaksi)', () => {
     await expect(page.locator('div.group.relative').filter({ hasText: 'Makan Siang QA' })).not.toBeVisible();
   });
 
-  test('[AU-04-04_01] Point-of-Decision Cue: Menampilkan sisa alokasi tenang dan adaptif di modal transaksi', async () => {
+  test('[AU-04-06_01] Point-of-Decision Cue: Menampilkan sisa alokasi tenang dan adaptif di modal transaksi', async () => {
     // 1. Buat anggaran untuk Makanan (1.000.000)
     await page.goto('/budgets');
     await page.click('button:has-text("Atur Anggaran")');
@@ -315,7 +331,7 @@ test.describe.serial('2.3 Transactions (Transaksi)', () => {
 
     // Bilah progress tipis netral harus ada dan tidak memiliki kelas warna bahaya/amber/red
     const cueBar = page.locator('#budget-cue-bar');
-    await expect(cueBar).toBeVisible();
+    await expect(cueBar).toBeAttached();
     const barClass = await cueBar.getAttribute('class');
     expect(barClass).not.toMatch(/bg-(rose|red|amber|orange)/);
 

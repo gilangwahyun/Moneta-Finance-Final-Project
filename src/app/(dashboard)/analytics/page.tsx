@@ -528,10 +528,10 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-3 text-xs md:text-sm text-slate-600">
+          <div className="flex flex-wrap items-center gap-3 text-xs md:text-sm text-slate-600 dark:text-slate-400">
             <span className="flex items-center gap-1">
               <span className={`inline-block h-2 w-2 rounded-full ${activeSegment === "EXPENSE" ? "bg-slate-400" : "bg-emerald-500"}`} />
-              {activeSegment === "EXPENSE" ? "Di bawah rata-rata" : "Pemasukan harian"}
+              {activeSegment === "EXPENSE" ? "Di bawah rata-rata" : "Pemasukan"}
             </span>
             {activeSegment === "EXPENSE" && (
               <span className="flex items-center gap-1">
@@ -539,6 +539,10 @@ export default function AnalyticsPage() {
                 Melewati rata-rata
               </span>
             )}
+            <span className="flex items-center gap-1">
+              <span className={`inline-block h-0.5 w-3 rounded-full ${activeSegment === "EXPENSE" ? "bg-indigo-500" : "bg-emerald-600"}`} />
+              Tren (Moving Average)
+            </span>
           </div>
           {activeSegment === "EXPENSE" && dailyAvg > 0 && (
             <div className="flex items-center gap-1.5">

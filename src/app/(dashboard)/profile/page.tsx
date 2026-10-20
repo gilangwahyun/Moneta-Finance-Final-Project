@@ -179,8 +179,12 @@ export default function ProfilePage() {
       a.download = match?.[1] || 'moneta-transaksi.xlsx';
       document.body.appendChild(a);
       a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+        if (a.parentNode) {
+          a.parentNode.removeChild(a);
+        }
+      }, 1000);
 
       setMessage({ type: 'success', text: 'Laporan berhasil diunduh!' });
     } catch (err: any) {

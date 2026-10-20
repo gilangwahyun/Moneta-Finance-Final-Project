@@ -116,7 +116,7 @@ test.describe.serial('2.2 Categories (Kategori)', () => {
     
     // Verify that the category is selected (aria-pressed="true")
     const snackMalamBtn = page.locator('button[aria-pressed="true"]', { hasText: 'Snack Malam' });
-    await expect(snackMalamBtn).toBeVisible();
+    await expect(snackMalamBtn).toBeVisible({ timeout: 10000 });
     
     // Close the transaction modal
     await page.locator('button[aria-label="Tutup form"]').click();

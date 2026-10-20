@@ -6,7 +6,7 @@
 "use client";
 
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ComposedChart, Bar, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine, Cell,
 } from "recharts";
 
@@ -14,6 +14,7 @@ export interface BarDay {
   label: string;
   income: number;
   expense: number;
+  movingAvg?: number;
 }
 
 interface BarTrendChartProps {
@@ -49,36 +50,42 @@ function CustomTooltip({
   mode,
 }: {
   active?: boolean;
-  payload?: { name: string; value: number; fill: string }[];
+  payload?: { name: string; value: number; color?: string; fill?: string }[];
   label?: string;
   dailyAvg?: number;
   mode?: "expense" | "income";
 }) {
   if (!active || !payload?.length) return null;
   const isExpense = mode === undefined || mode === "expense";
-  const entry = payload[0];
+  const mainEntry = payload.find((p) => p.name === "expense" || p.name === "income");
   const isOverAvg =
-    isExpense && dailyAvg !== undefined && (entry?.value ?? 0) > dailyAvg;
+    isExpense && dailyAvg !== undefined && ((mainEntry?.value ?? 0) > dailyAvg);
 
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-xl dark:border-slate-700 dark:bg-slate-800">
       <p className="mb-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
         {label}
       </p>
-      {payload.map((p, i) => (
-        <div key={i} className="flex items-center gap-2 text-xs mb-1">
-          <span
-            className="h-2 w-2 flex-shrink-0 rounded-full"
-            style={{ background: p.fill }}
-          />
-          <span className="text-slate-600 dark:text-slate-400">
-            {p.name === "income" ? "Pemasukan" : "Pengeluaran"}:
-          </span>
-          <span className="font-bold text-slate-900 dark:text-slate-50">
-            {fmtRp(p.value)}
-          </span>
-        </div>
-      ))}
+      {payload.map((p, i) => {
+        let labelName = p.name === "income" ? "Pemasukan" : "Pengeluaran";
+        if (p.name === "movingAvg") {
+          labelName = "Tren (Moving Avg)";
+        }
+        return (
+          <div key={i} className="flex items-center gap-2 text-xs mb-1">
+            <span
+              className="h-2 w-2 flex-shrink-0 rounded-full"
+              style={{ background: p.color || p.fill }}
+            />
+            <span className="text-slate-600 dark:text-slate-400">
+              {labelName}:
+            </span>
+            <span className="font-bold text-slate-900 dark:text-slate-50">
+              {fmtRp(p.value)}
+            </span>
+          </div>
+        );
+      })}
       {isOverAvg && (
         <p className="mt-1.5 text-[10px] font-medium text-rose-500 dark:text-rose-400">
           Melewati rata-rata harian
@@ -98,7 +105,8 @@ const EXPENSE_OVER = "#ef4444";
 const INCOME_COLOR = "#10b981";
 
 /**
- * Merender grafik batang tren pengeluaran atau pemasukan harian dengan indikator rata-rata harian.
+ * Merender grafik batang tren pengeluaran atau pemasukan harian dengan indikator rata-rata harian
+ * serta garis tren rata-rata bergerak (Moving Average).
  *
  * @param props - Properti konfigurasi grafik tren batang
  * @returns Elemen JSX grafik Recharts responsif
@@ -109,9 +117,8 @@ export function BarTrendChart({ data, dailyAvg, mode = "expense" }: BarTrendChar
   /********** [START: Perenderan Grafik Tren Batang Recharts] **********/
   return (
     <ResponsiveContainer width="100%" height={220} minWidth={0} minHeight={0}>
-      <BarChart
+      <ComposedChart
         data={data}
-        barSize={32}
         margin={{ top: 8, right: 4, bottom: 0, left: 0 }}
       >
         <CartesianGrid
@@ -159,7 +166,7 @@ export function BarTrendChart({ data, dailyAvg, mode = "expense" }: BarTrendChar
 
         {/* Batang bersyarat berdasarkan mode pengeluaran atau pemasukan */}
         {isExpense ? (
-          <Bar dataKey="expense" name="expense" radius={[4, 4, 0, 0]}>
+          <Bar dataKey="expense" name="expense" radius={[4, 4, 0, 0]} maxBarSize={32}>
             {data.map((entry, i) => {
               const isOver =
                 dailyAvg !== undefined && entry.expense > dailyAvg;
@@ -174,13 +181,24 @@ export function BarTrendChart({ data, dailyAvg, mode = "expense" }: BarTrendChar
             })}
           </Bar>
         ) : (
-          <Bar dataKey="income" name="income" radius={[4, 4, 0, 0]}>
+          <Bar dataKey="income" name="income" radius={[4, 4, 0, 0]} maxBarSize={32}>
             {data.map((_, i) => (
               <Cell key={i} fill={INCOME_COLOR} />
             ))}
           </Bar>
         )}
-      </BarChart>
+
+        {/* Garis tren Moving Average dinamis */}
+        <Line
+          type="monotone"
+          dataKey="movingAvg"
+          name="movingAvg"
+          stroke={isExpense ? "#6366f1" : "#059669"}
+          strokeWidth={2.5}
+          dot={false}
+          activeDot={{ r: 4, strokeWidth: 1 }}
+        />
+      </ComposedChart>
     </ResponsiveContainer>
   );
   /********** [END: Perenderan Grafik Tren Batang Recharts] **********/
