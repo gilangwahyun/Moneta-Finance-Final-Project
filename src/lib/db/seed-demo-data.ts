@@ -132,6 +132,7 @@ export async function seedDemoDataForUser(userId: string, db: any) {
 
   // 4. Buat Target Finansial (Revisi Sidang: 1:N Category-to-Target & Direct Allocation)
   const investasiCatId = getCatId("Investasi");
+  const freelanceCatId = getCatId("Freelance");
 
   // Target 1: FT-01 (Target Belum Ada Progres - Stagnan)
   await db.financialTarget.create({
@@ -169,6 +170,48 @@ export async function seedDemoDataForUser(userId: string, db: any) {
     },
   });
 
+  // Target 3 & 4: Multi-Target di Kategori Freelance
+  let targetFreelanceLaptopDemo: any = null;
+  let targetFreelanceCertDemo: any = null;
+
+  if (freelanceCatId) {
+    targetFreelanceLaptopDemo = await db.financialTarget.create({
+      data: {
+        clientId: randomUUID(),
+        name: "Upgrade Laptop Kerja",
+        type: "SAVING_TARGET",
+        targetAmount: 8000000,
+        period: "CUSTOM",
+        startDate: dayjs().startOf("month").toDate(),
+        endDate: dayjs().add(1, "month").endOf("month").toDate(),
+        categoryId: freelanceCatId, // ⭐️ Kategori Freelance
+        walletId,
+        isActive: true,
+        note: "Target pengadaan laptop baru dari proyek freelance (Progres 75% Hampir Tercapai)",
+        userId,
+        syncStatus: "SYNCED",
+      },
+    });
+
+    targetFreelanceCertDemo = await db.financialTarget.create({
+      data: {
+        clientId: randomUUID(),
+        name: "Sertifikasi Cloud Professional",
+        type: "SAVING_TARGET",
+        targetAmount: 3000000,
+        period: "CUSTOM",
+        startDate: dayjs().subtract(15, "day").startOf("day").toDate(),
+        endDate: dayjs().add(15, "day").startOf("day").toDate(),
+        categoryId: freelanceCatId, // ⭐️ Kategori Freelance
+        walletId,
+        isActive: true,
+        note: "Target sertifikasi profesional (Progres 100% Tercapai)",
+        userId,
+        syncStatus: "SYNCED",
+      },
+    });
+  }
+
   const txns: any[] = [];
 
   // 🎯 Pemasukan dengan alokasi langsung ke Target 2 (Fitur Revisi Sidang)
@@ -199,6 +242,39 @@ export async function seedDemoDataForUser(userId: string, db: any) {
     userId,
     syncStatus: "SYNCED",
   });
+
+  // 🎯 Pemasukan dengan alokasi langsung ke Target Freelance 3 & 4
+  if (freelanceCatId && targetFreelanceLaptopDemo) {
+    txns.push({
+      clientId: randomUUID(),
+      amount: 6000000,
+      type: "INCOME",
+      description: "Pembayaran Termin 1 Proyek Freelance",
+      date: dayjs().subtract(7, "day").toDate(),
+      createdAt: dayjs().subtract(7, "day").toDate(),
+      walletId,
+      categoryId: freelanceCatId,
+      financialTargetId: targetFreelanceLaptopDemo.id, // ⭐️ Alokasi ke Target Laptop (75%)
+      userId,
+      syncStatus: "SYNCED",
+    });
+  }
+
+  if (freelanceCatId && targetFreelanceCertDemo) {
+    txns.push({
+      clientId: randomUUID(),
+      amount: 3000000,
+      type: "INCOME",
+      description: "Honor Pelatihan Cloud Architecture",
+      date: dayjs().subtract(3, "day").toDate(),
+      createdAt: dayjs().subtract(3, "day").toDate(),
+      walletId,
+      categoryId: freelanceCatId,
+      financialTargetId: targetFreelanceCertDemo.id, // ⭐️ Alokasi ke Target Sertifikasi (100%)
+      userId,
+      syncStatus: "SYNCED",
+    });
+  }
 
   // 🎯 Gaji Bulan Lalu (25 bulan lalu) agar cashflow historis & akumulasi saldo positif
   const lastMonthPayday = dayjs().subtract(1, "month").date(25);

@@ -65,6 +65,7 @@ export async function seedSidangDataForUser(userId: string, db: any) {
   const catGaji      = getCatId("Gaji");
   const catTransp    = getCatId("Transportasi");
   const catInvestasi = getCatId("Investasi");
+  const catFreelance = getCatId("Freelance");
 
   // ─── 2. Bersihkan data lama agar proses seeding idempotent (bisa diulang berkali-kali) ───
   console.log("  → Membersihkan transaksi, notifikasi, anggaran, target, dan dompet lama...");
@@ -223,6 +224,51 @@ export async function seedSidangDataForUser(userId: string, db: any) {
     },
   });
 
+  // Target 3: Target Freelance 1 (Progres 75% - Status Hampir Tercapai)
+  // ⭐️ Menunjukkan relasi 1:N Category-to-Target di Kategori Lain ('Freelance')
+  let targetFreelanceLaptop: any = null;
+  let targetFreelanceCert: any = null;
+
+  if (catFreelance) {
+    targetFreelanceLaptop = await db.financialTarget.create({
+      data: {
+        clientId: randomUUID(),
+        name: "Upgrade Laptop Kerja",
+        type: "SAVING_TARGET",
+        targetAmount: 8_000_000,
+        period: "CUSTOM",
+        startDate: dayjs().startOf("month").toDate(),
+        endDate: dayjs().add(1, "month").endOf("month").toDate(),
+        categoryId: catFreelance, // ⭐️ Kategori Freelance
+        walletId,
+        isActive: true,
+        note: "Target pengadaan laptop baru dari hasil proyek freelance (Revisi Sidang: Progres 75% Hampir Tercapai)",
+        userId,
+        syncStatus: "SYNCED",
+      },
+    });
+
+    // Target 4: Target Freelance 2 (Progres 100% - Status Tercapai Penuh)
+    // ⭐️ Berbagi kategori 'Freelance' dengan Target 3
+    targetFreelanceCert = await db.financialTarget.create({
+      data: {
+        clientId: randomUUID(),
+        name: "Sertifikasi Cloud Professional",
+        type: "SAVING_TARGET",
+        targetAmount: 3_000_000,
+        period: "CUSTOM",
+        startDate: dayjs().subtract(15, "day").startOf("day").toDate(),
+        endDate: dayjs().add(15, "day").startOf("day").toDate(),
+        categoryId: catFreelance, // ⭐️ Kategori Freelance
+        walletId,
+        isActive: true,
+        note: "Target tabungan sertifikasi IT profesional (Revisi Sidang: Progres 100% Tercapai)",
+        userId,
+        syncStatus: "SYNCED",
+      },
+    });
+  }
+
   // ─── 6. Bangun array transaksi ───────────────────────────────────────────
   console.log("  → Menyuntikkan transaksi historis...");
   const txns: any[] = [];
@@ -275,6 +321,43 @@ export async function seedSidangDataForUser(userId: string, db: any) {
     userId,
     syncStatus: "SYNCED",
   });
+
+  // ══════════════════════════════════════════════════════════════════════════
+  // BLOK B2: PEMASUKAN DENGAN ALOKASI LANGSUNG KE TARGET FREELANCE (Revisi Sidang)
+  //   - Target 3 (Upgrade Laptop): Terisi Rp 6.000.000 (75% - Status Hampir Tercapai)
+  //   - Target 4 (Sertifikasi Cloud): Terisi Rp 3.000.000 (100% - Status Tercapai)
+  // ══════════════════════════════════════════════════════════════════════════
+  if (catFreelance && targetFreelanceLaptop) {
+    txns.push({
+      clientId: randomUUID(),
+      amount: 6_000_000,
+      type: "INCOME",
+      description: "Pembayaran Termin 1 Proyek Web Redesign",
+      date: dayjs().subtract(7, "day").toDate(),
+      createdAt: dayjs().subtract(7, "day").set("hour", 11).toDate(),
+      walletId,
+      categoryId: catFreelance,
+      financialTargetId: targetFreelanceLaptop.id, // ⭐️ FK relasi langsung ke Target Laptop
+      userId,
+      syncStatus: "SYNCED",
+    });
+  }
+
+  if (catFreelance && targetFreelanceCert) {
+    txns.push({
+      clientId: randomUUID(),
+      amount: 3_000_000,
+      type: "INCOME",
+      description: "Honor Konsultasi Arsitektur Cloud",
+      date: dayjs().subtract(3, "day").toDate(),
+      createdAt: dayjs().subtract(3, "day").set("hour", 15).toDate(),
+      walletId,
+      categoryId: catFreelance,
+      financialTargetId: targetFreelanceCert.id, // ⭐️ FK relasi langsung ke Target Sertifikasi
+      userId,
+      syncStatus: "SYNCED",
+    });
+  }
 
   // ══════════════════════════════════════════════════════════════════════════
   // BLOK C: PENGELUARAN MAKANAN BULAN INI — melampaui anggaran Rp 300.000
