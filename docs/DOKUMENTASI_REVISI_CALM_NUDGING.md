@@ -98,7 +98,7 @@ Rangkaian pengujian otomatis dijalankan pada seluruh berkas spesifikasi pengujia
 | 2 | `tests/02-wallets.spec.ts` | Manajemen Dompet, Mutasi Kas, Perhitungan Saldo | 6 | **100% Passed** |
 | 3 | `tests/03-transactions.spec.ts` | Pencatatan Transaksi, Search Kategori, Point-of-Decision Cue | 11 | **100% Passed** |
 | 4 | `tests/04-budgets.spec.ts` | Alokasi Anggaran, Batas Kategori, Kalkulasi Sisa | 9 | **100% Passed** |
-| 5 | `tests/05-targets.spec.ts` | Target Tabungan, Monitoring Capaian | 7 | **100% Passed** |
+| 5 | `tests/05-targets.spec.ts` | Target Keuangan, Multi-Target per Kategori, Direct Link, Siklus Hidup | 10 | **100% Passed** |
 | 6 | `tests/06-categories.spec.ts` | Manajemen Kategori Finansial (Default & Custom) | 5 | **100% Passed** |
 | 7 | `tests/07-analytics.spec.ts` | Analitik Finansial & Grafik Dinamis Moving Average | 5 | **100% Passed** |
 | 8 | `tests/08-insight-engine.spec.ts` | **Rule Automation Engine (Seluruh 37 Aturan)** | **79** | **100% Passed** |
@@ -106,11 +106,12 @@ Rangkaian pengujian otomatis dijalankan pada seluruh berkas spesifikasi pengujia
 | 10 | `tests/10-notifications.spec.ts` | Web Push, In-App Notification Center, Batas Harian | 6 | **100% Passed** |
 | 11 | `tests/11-system-settings.spec.ts` | Pengaturan Sistem, Mode Gelap, Luring (PWA), Cache | 6 | **100% Passed** |
 | 12 | `tests/12-sync-conflicts.spec.ts` | Resolusi Konflik Sinkronisasi & Antrean Penghapusan | 3 | **100% Passed** |
-| **Total** | **12 Berkas Pengujian Sistem** | **Seluruh Fungsionalitas Aplikasi Moneta Finance** | **145** | **145 Passed (100% Hijau)** |
+| **Total** | **12 Berkas Pengujian Sistem (+ Screenshot Suite)** | **Seluruh Fungsionalitas Aplikasi Moneta Finance** | **154** | **154 Passed (100% Hijau)** |
 
 ### Penjelasan Sinkronisasi Angka Uji:
 - **Klarifikasi Angka 98 Skenario**: Angka 98 skenario pada laporan sebelumnya merupakan hasil eksekusi parsial pada 4 berkas uji terkait langsung dengan *nudging* (`03-transactions`: 11, `08-insight-engine`: 79, `09-insight-ui-e2e`: 3, `10-notifications`: 5 → 11 + 79 + 3 + 5 = 98).
 - **Korelasi 79 Butir Uji `tests/08-insight-engine.spec.ts`**: Berkas `08-insight-engine.spec.ts` berisi **tepat 79 butir uji**, yang berkorespondensi 1-ke-1 secara presisi dengan **79 butir uji aturan pada Lampiran Naskah Skripsi / Bab IV**, mencakup uji valid (*threshold met*), uji invalid (*negative testing*), sorting prioritas ascending, dan penanganan konkurensi aturan ganda.
+- **Peningkatan Berkas Target (`05-targets.spec.ts`)**: Jumlah butir uji meningkat dari 7 menjadi **10 butir uji**, menambahkan verifikasi isolasi transaksi pemasukan umum (non-bleeding), pemotongan bilah progres 100% saat pemasukan berlebih, dan kalkulasi ulang otomatis saat transaksi dihapus.
 
 ---
 
@@ -139,6 +140,24 @@ Rangkaian pengujian otomatis dijalankan pada seluruh berkas spesifikasi pengujia
      - `SP-05`: Mengakses `/transactions?search=...` langsung mengisolasi daftar transaksi pada merchant berulang yang sering dikunjungi.
      - `AN-04`: Mengakses `/transactions?search=...` langsung mengisolasi daftar transaksi pada kategori baru untuk inspeksi transparan.
    - **Point-of-Decision Cue di Modal Transaksi (`BG-00`, `BG-00b`)**: Menampilkan sisa alokasi bulanan dan estimasi sisa harian adaptif saat kategori beranggaran dipilih. Saat alokasi telah habis, menampilkan cermin objektif: `"Alokasi bulan ini sudah terpakai penuh"`.
+
+---
+
+## 5.1 Aturan Bisnis Siklus Hidup Target Keuangan (Multi-Target per Kategori)
+
+Berikut adalah aturan bisnis resmi pengelolaan siklus hidup target keuangan yang diselaraskan dengan naskah Bab IV tugas akhir:
+
+1. **Visibilitas Target pada Modal Transaksi Pemasukan:**
+   - **Target Kedaluwarsa (`isExpired = true`)**: Secara otomatis disembunyikan dari daftar *chip* alokasi transaksi baru agar pengguna tidak mengalokasikan pemasukan pada periode yang telah lewat. Namun, apabila transaksi historis yang telah terhubung sedang disunting (*edit*), target tersebut tetap dimuat untuk menjamin integritas data riwayat.
+   - **Target Tercapai Penuh (`percentage >= 100%`)**: Tetap ditampilkan di modal dengan label persentase (misal: `· 100%`) dan tetap dapat dipilih, guna memfasilitasi pengguna yang ingin menyisihkan dana tabungan berlebih (*over-saving*).
+2. **Penghapusan Target (*Target Deletion*):**
+   - Transaksi pemasukan yang terhubung **TIDAK DIHAPUS**. Dalam arsitektur *Offline-First* dan integritas keuangan Moneta, riwayat mutasi kas adalah data primer. Transaksi tetap ada di riwayat mutasi kas umum (saldo dompet tidak terganggu), sementara relasi targetnya ditandai menuju target yang telah `deletedAt`.
+3. **Penyuntingan dan Penghapusan Transaksi (*Transaction Edit/Delete*):**
+   - Perubahan nominal transaksi atau penghapusan transaksi pemasukan akan **menghitung ulang progres target secara otomatis dan seketika (*real-time reactive query*)**. Nilai akumulasi target selalu merupakan fungsi matematis murni dari transaksi aktif yang memiliki `financialTargetId` target terkait.
+4. **Pemasukan Melebihi Batas Nominal Target (*Over-achievement*):**
+   - Persentase visual bilah kemajuan (*progress bar*) dikunci maksimal sebesar `100%` (`Math.min(100, pct)`) demi kepatuhan tampilan antarmuka, namun nominal agregasi riil tetap disajikan secara jujur dan transparan (misal: *"Rp 7.000.000 dari Rp 5.000.000"* dengan lencana status *"Tercapai"*).
+5. **Independensi Kategori (*Zero-Bleeding Integrity*):**
+   - Transaksi pemasukan yang dicatat dengan kategori sama namun memilih opsi *"Tanpa Target (Umum)"* tidak akan pernah menambah progres target mana pun di kategori tersebut. Target hanya bertambah jika foreign key `financialTargetId` terpasang secara eksplisit.
 
 ---
 

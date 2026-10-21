@@ -213,12 +213,14 @@ export function TransactionModal({
     if (formType !== 'INCOME') return [];
     return targets.filter((t) => {
       if (!t.isActive || t.deletedAt) return false;
+      // Jangan tampilkan target yang sudah lewat tenggat kecuali jika target tersebut sedang terpilih
+      if (t.progress?.isExpired && t.clientId !== formFinancialTargetId) return false;
       if (formCategoryId) {
         return !t.categoryId || t.categoryId === formCategoryId;
       }
       return true;
     });
-  }, [targets, formType, formCategoryId]);
+  }, [targets, formType, formCategoryId, formFinancialTargetId]);
   /********** [END: Inisialisasi State Form Transaksi & Hook] **********/
 
   /********** [START: Logika Default Cerdas & Pengisian Otomatis (Smart Defaults)] **********/
@@ -844,11 +846,21 @@ export function TransactionModal({
 
                     {matchingTargets.map((tgt) => {
                       const isActive = tgt.clientId === formFinancialTargetId;
+                      const pct = tgt.progress?.percentage ?? 0;
                       return (
                         <button
                           key={tgt.clientId}
                           type="button"
-                          onClick={() => setFormFinancialTargetId(tgt.clientId)}
+                          onClick={() => {
+                            if (isActive) {
+                              setFormFinancialTargetId('');
+                            } else {
+                              setFormFinancialTargetId(tgt.clientId);
+                              // Alur terbalik: Memilih target otomatis mengisi kategori dan dompetnya
+                              if (tgt.categoryId) setFormCategoryId(tgt.categoryId);
+                              if (tgt.walletId) setFormWalletId(tgt.walletId);
+                            }
+                          }}
                           className={[
                             'inline-flex items-center gap-1.5 rounded-xl border px-3 py-2 text-xs font-medium transition-all active:scale-95',
                             isActive
@@ -858,6 +870,9 @@ export function TransactionModal({
                         >
                           <Target className="h-3.5 w-3.5 text-indigo-500 shrink-0" />
                           <span className="font-semibold">{tgt.name}</span>
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-normal ml-0.5">
+                            · {pct}%
+                          </span>
                         </button>
                       );
                     })}
@@ -867,6 +882,47 @@ export function TransactionModal({
                     Belum ada target aktif untuk kategori ini. Pemasukan akan dicatat sebagai pemasukan umum.
                   </p>
                 )}
+
+                {/* Point-of-Decision Cue: Dampak Alokasi Pemasukan ke Target */}
+                {(() => {
+                  const selectedTgt = formFinancialTargetId
+                    ? matchingTargets.find((t) => t.clientId === formFinancialTargetId) || targets.find((t) => t.clientId === formFinancialTargetId)
+                    : null;
+                  if (!selectedTgt) return null;
+
+                  const rawInput = parseInt(formAmount.replace(/\D/g, ''), 10) || 0;
+                  const cur = selectedTgt.progress?.currentAmount || 0;
+                  const projected = cur + rawInput;
+                  const projectedPct = selectedTgt.targetAmount > 0
+                    ? Math.round((projected / selectedTgt.targetAmount) * 100)
+                    : 0;
+
+                  return (
+                    <div className="mt-2.5 rounded-xl border border-indigo-100 bg-indigo-50/60 p-3 dark:border-indigo-900/40 dark:bg-indigo-950/20 animate-in fade-in duration-200">
+                      <div className="flex items-center justify-between text-xs text-indigo-950 dark:text-indigo-200">
+                        <span className="flex items-center gap-1.5 font-medium">
+                          <Target className="h-3.5 w-3.5 text-indigo-500" />
+                          {rawInput > 0 ? 'Setelah dicatat:' : 'Status saat ini:'}
+                        </span>
+                        <span className="font-bold">{projectedPct}% tercapai</span>
+                      </div>
+                      <div className="mt-1 flex items-baseline justify-between text-xs text-slate-600 dark:text-slate-400">
+                        <span>{formatCurrency(projected)} dari {formatCurrency(selectedTgt.targetAmount)}</span>
+                        {projected < selectedTgt.targetAmount ? (
+                          <span>Sisa {formatCurrency(selectedTgt.targetAmount - projected)}</span>
+                        ) : (
+                          <span className="text-emerald-600 dark:text-emerald-400 font-semibold">Target Terpenuhi</span>
+                        )}
+                      </div>
+                      <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-indigo-100 dark:bg-indigo-900/50">
+                        <div
+                          className="h-full rounded-full bg-indigo-500 transition-all duration-300"
+                          style={{ width: `${Math.min(100, projectedPct)}%` }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             )}
 

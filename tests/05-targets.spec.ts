@@ -134,12 +134,42 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
     // 1. Target 1 ('Target Gaji Pokok') should reflect the 5.000.000 achievement (50%)
     await expect(row1.locator('span', { hasText: '5.000.000' }).first()).toBeVisible({ timeout: 10000 });
     await expect(row1.locator('span', { hasText: '10.000.000' }).first()).toBeVisible();
-    await expect(row1.locator('span:has-text("Belum Tercapai")').first()).toBeVisible();
+    await expect(row1.locator('span:has-text("Berjalan")').first()).toBeVisible();
 
     // 2. Target 2 ('Target Bonus Kinerja') MUST STAY AT 0 (even though it shares the category 'Gaji')
     const row2 = page.locator('div.group.relative').filter({ hasText: 'Target Bonus Kinerja' });
     await expect(row2.locator('span', { hasText: 'Rp 0' }).first()).toBeVisible();
     await expect(row2.locator('span', { hasText: '5.000.000' }).first()).toBeVisible();
+  });
+
+  test('[AU-09-01_04] Pemasukan Kategori Sama Tanpa Target: Recording general income does NOT alter any target progress', async () => {
+    // Navigate to /transactions and record income for category 'Gaji' with 'Tanpa Target (Umum)'
+    await page.goto('/transactions');
+    await page.click('button:has-text("Tambah Transaksi")');
+    const txnModal = page.locator('.relative.z-10').filter({ hasText: 'Tambah Transaksi' });
+    await expect(txnModal).toBeVisible();
+
+    await txnModal.locator('button:has-text("Pemasukan")').first().click();
+    await page.fill('#txn-amount', '2000000');
+    await page.locator('button[aria-label="Gaji"]').click();
+    await page.fill('#txn-desc', 'Bonus Lepas Non-Target');
+
+    // Ensure 'Tanpa Target (Umum)' is selected
+    const unallocatedChip = txnModal.locator('button:has-text("Tanpa Target (Umum)")');
+    await unallocatedChip.click();
+
+    await page.click('button[type="submit"]:has-text("Simpan")');
+    await expect(txnModal).not.toBeVisible();
+
+    // Now return to /targets and verify BOTH Target 1 and Target 2 remain completely unchanged
+    await page.goto('/targets');
+    const row1 = page.locator('div.group.relative').filter({ hasText: 'Target Gaji Pokok' });
+    const row2 = page.locator('div.group.relative').filter({ hasText: 'Target Bonus Kinerja' });
+
+    // Target 1 must STILL be 5.000.000 (50%)
+    await expect(row1.locator('span', { hasText: '5.000.000' }).first()).toBeVisible({ timeout: 10000 });
+    // Target 2 must STILL be Rp 0 (0%)
+    await expect(row2.locator('span', { hasText: 'Rp 0' }).first()).toBeVisible();
   });
 
   test('[AU-09-05_01] Pengujian Progress Bar Target: Visual tracking reflects target-specific percentage', async () => {
@@ -184,6 +214,52 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
 
     // Verify target is now achieved ("Tercapai")
     await expect(row.locator('span:has-text("Tercapai")').first()).toBeVisible();
+  });
+
+  test('[AU-09-01_05] Pemasukan Melebihi Target: Progress bar is clamped to 100% while actual amount is fully displayed', async () => {
+    await page.goto('/targets');
+    const row2 = page.locator('div.group.relative').filter({ hasText: 'Target Bonus Kinerja' });
+    await expect(row2).toBeVisible();
+
+    // Click "Catat Pemasukan" directly on Target 2 (target amount is 5.000.000)
+    await row2.locator('button:has-text("Catat Pemasukan")').click();
+
+    const txnModal = page.locator('.relative.z-10').filter({ hasText: 'Tambah Transaksi' });
+    await expect(txnModal).toBeVisible();
+
+    // Input nominal 7.000.000 (exceeds 5.000.000)
+    await page.fill('#txn-amount', '7000000');
+    await page.fill('#txn-desc', 'Bonus Kinerja Melebihi Ekspektasi');
+    await page.click('button[type="submit"]:has-text("Simpan")');
+    await expect(txnModal).not.toBeVisible();
+
+    // Verify Target 2 displays 7.000.000, status "Tercapai", and progress bar clamped at 100%
+    await expect(row2.locator('span', { hasText: '7.000.000' }).first()).toBeVisible({ timeout: 10000 });
+    await expect(row2.locator('span', { hasText: '5.000.000' }).first()).toBeVisible();
+    await expect(row2.locator('span:has-text("Tercapai")').first()).toBeVisible();
+    const progressBar2 = row2.locator('div.rounded-full[style*="width:"]');
+    await expect(progressBar2).toHaveAttribute('style', /width:\s*100%/);
+  });
+
+  test('[AU-09-01_06] Siklus Hidup Transaksi Target: Deleting income transaction automatically recalculates target progress', async () => {
+    await page.goto('/transactions');
+    const row = page.locator('div.group.relative').filter({ hasText: 'Gaji Pokok Bulan Ini' });
+    await expect(row).toBeVisible();
+
+    // Delete the transaction linked to Target 1
+    await row.locator('button[aria-label="Buka menu aksi"]').click();
+    await page.locator('button:has-text("Hapus")').and(page.locator(':visible')).first().click();
+
+    const confirmModal = page.locator('h3:has-text("Hapus Transaksi?")');
+    await expect(confirmModal).toBeVisible();
+    const dialogContainer = page.locator('.fixed.inset-0.z-\\[200\\]');
+    await dialogContainer.locator('button:has-text("Hapus")').click();
+    await expect(confirmModal).not.toBeVisible();
+
+    // Return to /targets and verify Target 1 has recalculated back to Rp 0
+    await page.goto('/targets');
+    const row1 = page.locator('div.group.relative').filter({ hasText: 'Target Gaji Pokok' });
+    await expect(row1.locator('span', { hasText: 'Rp 0' }).first()).toBeVisible({ timeout: 10000 });
   });
 
   test('[AU-09-03_01] Hapus Target Finansial: User can delete targets', async () => {

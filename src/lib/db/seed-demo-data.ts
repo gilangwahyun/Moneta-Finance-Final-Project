@@ -170,7 +170,28 @@ export async function seedDemoDataForUser(userId: string, db: any) {
     },
   });
 
-  // Target 3 & 4: Multi-Target di Kategori Freelance
+  // Target 3: Target ke-3 di Kategori Investasi (Progres 100% - Status Tercapai)
+  let targetReksadanaDemo: any = null;
+  if (investasiCatId) {
+    targetReksadanaDemo = await db.financialTarget.create({
+      data: {
+        clientId: randomUUID(),
+        name: "Portofolio Reksadana Pasar Uang",
+        type: "SAVING_TARGET",
+        targetAmount: 2000000,
+        period: "CUSTOM",
+        startDate: dayjs().subtract(10, "day").startOf("day").toDate(),
+        endDate: dayjs().add(20, "day").startOf("day").toDate(),
+        categoryId: investasiCatId, // ⭐️ Kategori Investasi (Target ke-3)
+        isActive: true,
+        note: "Target investasi reksadana (100% Tercapai)",
+        userId,
+        syncStatus: "SYNCED",
+      },
+    });
+  }
+
+  // Target 4 & 5: Multi-Target di Kategori Freelance
   let targetFreelanceLaptopDemo: any = null;
   let targetFreelanceCertDemo: any = null;
 
@@ -242,6 +263,22 @@ export async function seedDemoDataForUser(userId: string, db: any) {
     userId,
     syncStatus: "SYNCED",
   });
+
+  if (investasiCatId && targetReksadanaDemo) {
+    txns.push({
+      clientId: randomUUID(),
+      amount: 2000000,
+      type: "INCOME",
+      description: "Alokasi Keuntungan Dividen ke Reksadana",
+      date: dayjs().subtract(2, "day").toDate(),
+      createdAt: dayjs().subtract(2, "day").toDate(),
+      walletId,
+      categoryId: investasiCatId,
+      financialTargetId: targetReksadanaDemo.id, // ⭐️ Alokasi ke Target Reksadana (100%)
+      userId,
+      syncStatus: "SYNCED",
+    });
+  }
 
   // 🎯 Pemasukan dengan alokasi langsung ke Target Freelance 3 & 4
   if (freelanceCatId && targetFreelanceLaptopDemo) {

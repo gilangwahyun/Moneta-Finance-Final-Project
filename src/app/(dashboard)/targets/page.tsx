@@ -64,7 +64,7 @@ export default function TargetsPage() {
   const statusOptions = useMemo(
     () => [
       { value: 'ALL', label: 'Semua Status' },
-      { value: 'SAFE', label: 'Belum Tercapai' },
+      { value: 'SAFE', label: 'Berjalan' },
       { value: 'WARNING', label: 'Hampir Tercapai' },
       { value: 'DANGER', label: 'Tercapai' },
       { value: 'EXPIRED', label: 'Periode Berakhir' },
@@ -76,7 +76,7 @@ export default function TargetsPage() {
 
   /********** [START: Kalkulasi Status Pencapaian & Filter Target Keuangan (Derived State)] **********/
   const targetsWithStats = useMemo(() => {
-    return targets.map((target) => {
+    const list = targets.map((target) => {
       let status: 'NOT_STARTED' | 'SAFE' | 'WARNING' | 'DANGER' | 'EXPIRED' = 'SAFE';
 
       if (target.progress.isNotStarted) {
@@ -89,10 +89,39 @@ export default function TargetsPage() {
         status = 'WARNING';
       }
 
+      // Hitung sisa hari dan persentase durasi waktu yang telah berjalan
+      let daysRemaining: number | null = null;
+      let timeElapsedPct = 0;
+
+      if (target.period === 'CUSTOM' && target.endDate) {
+        const start = target.startDate ? new Date(target.startDate).getTime() : Date.now();
+        const end = new Date(target.endDate).getTime();
+        const now = Date.now();
+        const diffMs = end - now;
+        daysRemaining = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+
+        const totalDuration = end - start;
+        if (totalDuration > 0) {
+          timeElapsedPct = Math.min(100, Math.max(0, Math.round(((now - start) / totalDuration) * 100)));
+        }
+      }
+
       return {
         ...target,
         status,
+        daysRemaining,
+        timeElapsedPct,
       };
+    });
+
+    // Urutkan: Target aktif (WARNING / SAFE) berdasarkan tenggat terdekat terlebih dahulu, lalu DANGER, lalu EXPIRED
+    return list.sort((a, b) => {
+      const rank = (s: string) => (s === 'WARNING' ? 0 : s === 'SAFE' ? 1 : s === 'DANGER' ? 2 : 3);
+      if (rank(a.status) !== rank(b.status)) return rank(a.status) - rank(b.status);
+      if (a.daysRemaining !== null && b.daysRemaining !== null) {
+        return a.daysRemaining - b.daysRemaining;
+      }
+      return 0;
     });
   }, [targets]);
 
@@ -240,7 +269,7 @@ export default function TargetsPage() {
             const clampedPercentage = Math.min(100, target.progress.percentage);
 
             let progressColor = 'bg-indigo-500';
-            let statusText = 'Belum Tercapai';
+            let statusText = 'Berjalan';
 
             if (target.progress.isNotStarted) {
               progressColor = 'bg-slate-300 dark:bg-slate-600';
@@ -324,13 +353,31 @@ export default function TargetsPage() {
                       <span className="text-slate-600 dark:text-slate-400">dari</span>
                       <span className="font-medium text-slate-600 dark:text-slate-400">{formatCurrency(target.targetAmount)}</span>
                     </div>
+                    <div className="text-right text-xs text-slate-500 dark:text-slate-400">
+                      {target.progress.remainingAmount > 0 ? (
+                        <span>
+                          Sisa {formatCurrency(target.progress.remainingAmount)}
+                          {target.daysRemaining !== null && ` · ${target.daysRemaining} hari lagi`}
+                        </span>
+                      ) : (
+                        <span className="font-medium text-emerald-600 dark:text-emerald-400">Target Terpenuhi</span>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="mt-2.5 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                  {/* Bilah Progres dengan Penanda Waktu (Ambient Time Cue) */}
+                  <div className="relative mt-2.5 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
                     <div
                       className={`h-full rounded-full transition-all duration-500 ease-out ${progressColor}`}
                       style={{ width: `${clampedPercentage}%` }}
                     />
+                    {target.timeElapsedPct > 0 && target.timeElapsedPct < 100 && (
+                      <div
+                        className="absolute top-0 bottom-0 w-1 rounded-full bg-slate-400/80 z-10 dark:bg-slate-500/80"
+                        style={{ left: `${target.timeElapsedPct}%` }}
+                        title={`Waktu periode berjalan: ${target.timeElapsedPct}%`}
+                      />
+                    )}
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
