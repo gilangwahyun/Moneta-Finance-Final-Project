@@ -334,7 +334,7 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
         fresh = {
           type: 'info',
           title: 'Mulai Mencatat',
-          message: 'Anggaran bulan ini sudah siap. Catat setiap transaksi agar kamu bisa terus memantau keuanganmu.',
+          message: 'Anggaran bulan ini sudah siap. Catat setiap transaksi agar pergerakan keuangan terus terpantau rapi.',
         };
       } else if (spentPct <= timePassedPct) {
         fresh = {
@@ -346,7 +346,7 @@ export function useDashboard({ transactions, allCategories }: UseDashboardProps)
     } else {
       fresh = {
         type: 'info',
-        title: 'Belum Ada Anggaran',
+        title: 'Pengaturan Anggaran',
         message: 'Atur alokasi anggaran bulanan untuk mengaktifkan panduan pengeluaran.',
       };
     }

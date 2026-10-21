@@ -1,11 +1,11 @@
 # Kelompok 2: Pola Pengeluaran (Spending Patterns)
 
-Kelompok ini mencakup aturan-aturan yang mendeteksi anomali dan pola pengeluaran jangka pendek (bulan berjalan atau minggu berjalan). Dalam paradigma **Choice Architecture (Richard Thaler)**, aturan-aturan ini menyajikan cermin data (*objective data mirror*) yang membangkitkan kesadaran pengguna secara mandiri (*subconscious realization*) tanpa menggunakan bahasa bernada menghakimi atau alarmist.
+Kelompok ini mencakup aturan-aturan yang mendeteksi variasi dan kecenderungan pengeluaran jangka pendek (dalam skala mingguan atau bulanan). Seluruh informasi disajikan secara faktual dan netral dengan pendekatan antarmuka tenang (*Calm UI*), sehingga pengguna dapat memahami kebiasaan belanjanya secara mandiri tanpa merasa dihakimi.
 
 Sesuai kerangka evaluasi tugas akhir, luaran diklasifikasikan ke dalam **Taksonomi 3 Tingkat**:
-1. **Tingkat 1: Insight Pola** — Cermin data faktual/deskriptif murni.
-2. **Tingkat 2: Nudge (Choice Architecture)** — Dorongan halus berupa cermin data preventif/apresiatif dan penataan pilihan.
-3. **Tingkat 3: Saran Eksekutif** — Rekomendasi resolusi spesifik dan terukur yang langsung dapat dieksekusi pengguna (*actionable recommendation*).
+1. **Tingkat 1: Insight Pola** — Informasi faktual atau deskriptif mengenai pola dan posisi keuangan.
+2. **Tingkat 2: Nudge** — Pengingat atau dorongan halus berbasis data untuk membantu pengguna mengelola keuangan secara mandiri.
+3. **Tingkat 3: Saran Eksekutif** — Rekomendasi tindakan spesifik yang dapat langsung dieksekusi oleh pengguna.
 
 ---
 
@@ -49,13 +49,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Dinamika Arus Kas"
-- **Isi Pesan (Cermin Data Faktual):** `"{persentase}% dari alokasi pemasukan bulan ini telah dialokasikan dalam {selisihHari} hari pertama."`
-- **Tingkat Urgensi:** _critical_ (Disajikan tenang dengan palet slate/indigo reflektif dan ikon Compass netral)
-- **Tombol Aksi:** `"Lihat Transaksi"` → `/transactions`
-
-**Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Preventif — Payday Momentum)**. Mengidentifikasi alokasi pasca penerimaan penghasilan dan memantulkan rasio alokasi secara objektif agar pengguna mengatur ritme alokasi secara mandiri.
+**Keluaran:** Judul *"Dinamika Arus Kas"*, tingkat urgensi *critical*, pesan: *"{persentase}% dari alokasi pemasukan telah terpakai dalam {selisihHari} hari sejak pemasukan terbesar dalam 30 hari terakhir"*, dan tombol aksi *"Lihat Transaksi"* (`/transactions`).
+**Jenis keluaran:** Tingkat 2: Nudge. Menginformasikan bahwa porsi belanja telah mencapai lebih dari 40% dalam waktu singkat setelah pemasukan besar diterima, membantu pengguna menjaga ritme pengeluaran di awal periode.
 
 ---
 
@@ -75,9 +70,9 @@ Deklarasi
     persentase       : bilangan bulat
 
 Algoritma
-    { Kondisi A: belum ada pemasukan tapi sudah ada pengeluaran }
+    { Kondisi A: catatan pemasukan kosong tapi sudah ada pengeluaran }
     IF totalPemasukan <= 0 AND totalPengeluaran > 0 THEN
-        OUTPUT Insight("Selisih Arus Kas", urgensi=critical)
+        OUTPUT Insight("Catatan Pemasukan Bulan Ini", urgensi=critical)
         RETURN
 
     { Kondisi B: pengeluaran sudah melebihi pemasukan }
@@ -97,24 +92,11 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Kondisi A (Pemasukan Belum Tercatat):**
-  - **Judul:** "Selisih Arus Kas"
-  - **Isi Pesan:** `"Belum ada catatan pemasukan bulan ini untuk melengkapi analisis arus kas."`
-  - **Urgensi:** _critical_ | **Tombol Aksi:** `"Catat Pemasukan"` → `/transactions`
-  - **Jenis Keluaran:** **Tingkat 3: Saran Eksekutif (Actionable Recommendation)**.
-- **Kondisi B (Pengeluaran Melampaui Pemasukan):**
-  - **Judul:** "Selisih Arus Kas"
-  - **Isi Pesan:** `"Total pengeluaran bulan ini tercatat melampaui pemasukan dengan selisih Rp {kelebihan}."`
-  - **Urgensi:** _critical_ | **Tombol Aksi:** `"Analisis Kategori"` → `/analytics`
-  - **Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Refleksi Arus Kas)**.
-- **Kondisi C (Rasio Pengeluaran Tinggi >= 80%):**
-  - **Judul:** "Selisih Arus Kas"
-  - **Isi Pesan:** `"Pengeluaran bulan ini telah mencapai {persentase}% dari total pemasukan tercatat."`
-  - **Urgensi:** _warning_ | **Tombol Aksi:** `"Analisis Kategori"` → `/analytics`
-  - **Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Preventif — Ambang Batas 80%)**.
-
-Ketiga kondisi dievaluasi secara berurutan (A → B → C) dan hanya satu kartu yang aktif per siklus evaluasi.
+**Keluaran:**
+- *Kondisi A (Catatan Pemasukan Masih Kosong):* Judul *"Catatan Pemasukan Bulan Ini"*, tingkat urgensi *critical*, pesan: *"Catatan pemasukan bulan ini masih kosong; menambahkannya akan melengkapi analisis arus kas"*, dan tombol aksi *"Catat Pemasukan"* (`/transactions`). Jenis: Tingkat 3: Saran Eksekutif (mendorong pencatatan pemasukan agar data keuangan lengkap).
+- *Kondisi B (Pengeluaran Melampaui Pemasukan):* Judul *"Selisih Arus Kas"*, tingkat urgensi *critical*, pesan: *"Total pengeluaran bulan ini tercatat melampaui pemasukan dengan selisih Rp {kelebihan}"*, dan tombol aksi *"Analisis Kategori"* (`/analytics`). Jenis: Tingkat 2: Nudge (menampilkan fakta selisih pengeluaran terhadap pemasukan).
+- *Kondisi C (Rasio Pengeluaran Tinggi >= 80%):* Judul *"Selisih Arus Kas"*, tingkat urgensi *warning*, pesan: *"Pengeluaran bulan ini telah mencapai {persentase}% dari total pemasukan tercatat"*, dan tombol aksi *"Analisis Kategori"* (`/analytics`). Jenis: Tingkat 2: Nudge (mengingatkan bahwa pengeluaran sudah mendekati total pemasukan).
+*(Ketiga kondisi dievaluasi berurutan A → B → C; hanya satu kartu yang aktif per siklus evaluasi).*
 
 ---
 
@@ -150,13 +132,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Distribusi Waktu"
-- **Isi Pesan (Cermin Data Faktual):** `"Sekitar {persentase}% pengeluaran minggu ini tercatat pada akhir pekan (Sabtu & Minggu)."`
-- **Tingkat Urgensi:** _warning_
-- **Tombol Aksi:** `"Cek Transaksi"` → `/transactions`
-
-**Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Preventif Temporal)**. Memantulkan fakta sebaran belanja liburan tanpa kalimat menegur, memicu pengguna merefleksikan alokasi waktu secara mandiri.
+**Keluaran:** Judul *"Distribusi Waktu"*, tingkat urgensi *warning*, pesan: *"Sekitar {persentase}% pengeluaran minggu ini tercatat pada akhir pekan (Sabtu & Minggu)"*, dan tombol aksi *"Lihat Transaksi"* (`/transactions`).
+**Jenis keluaran:** Tingkat 2: Nudge. Menampilkan persentase belanja di akhir pekan yang dominan (>70% dari total mingguan), membantu pengguna mengenali kebiasaan belanja di hari libur.
 
 ---
 
@@ -194,13 +171,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Pola Pengeluaran Malam Hari"
-- **Isi Pesan (Cermin Data Faktual):** `"Tercatat pengeluaran sebesar Rp {totalBelanjaMalam} pada rentang waktu malam hingga dini hari (22.00–04.00) bulan ini."`
-- **Tingkat Urgensi:** _warning_
-- **Tombol Aksi:** `"Lihat Pola"` → `/analytics`
-
-**Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Preventif Konteks Waktu)**. Mengekspos pengeluaran larut malam pada pos fleksibel sebagai cermin perilaku reflektif.
+**Keluaran:** Judul *"Pola Pengeluaran Malam Hari"*, tingkat urgensi *warning*, pesan: *"Tercatat pengeluaran sebesar Rp {totalBelanjaMalam} pada rentang waktu malam hingga dini hari (22.00–04.00) bulan ini"*, dan tombol aksi *"Lihat Pola"* (`/analytics`).
+**Jenis keluaran:** Tingkat 2: Nudge. Menginformasikan akumulasi belanja pada malam hingga dini hari (22.00–04.00) untuk kategori hiburan atau gaya hidup, membantu pengguna menyadari kecenderungan belanja spontan.
 
 ---
 
@@ -235,13 +207,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Frekuensi Pengeluaran Rutin"
-- **Isi Pesan (Cermin Data Faktual):** `"Terdapat {namaTertinggi.jumlahKali} transaksi tercatat untuk '{namaTertinggi.nama}' bulan ini dengan akumulasi Rp {namaTertinggi.totalNominal}."`
-- **Tingkat Urgensi:** _info_
-- **Tombol Aksi:** `"Lihat Transaksi"` → `/transactions`
-
-**Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Preventif — Kesadaran Agregat Mikro)**. Mengagregasi nominal kecil berulang (Latte Factor) agar total kumulatifnya terlihat jelas oleh pengguna secara faktual.
+**Keluaran:** Judul *"Frekuensi Pengeluaran Rutin"*, tingkat urgensi *info*, pesan: *"Terdapat {namaTertinggi.jumlahKali} transaksi tercatat untuk '{namaTertinggi.nama}' bulan ini dengan akumulasi Rp {namaTertinggi.totalNominal}"*, dan tombol aksi *"Lihat Rincian"* (`/transactions`).
+**Jenis keluaran:** Tingkat 2: Nudge. Merangkum total akumulasi dari transaksi bernominal kecil yang dilakukan berulang kali (lebih dari 10 kali), memperlihatkan dampak kumulatifnya terhadap pengeluaran bulanan.
 
 ---
 
@@ -271,7 +238,7 @@ Algoritma
             nominal = transaksi.nominal
             AND kategoriId = transaksi.kategoriId
             AND |selisih tanggal| <= 3 hari
-            AND id BELUM ADA dalam sudahDicocokkan
+            AND id TIDAK ADA dalam sudahDicocokkan
 
         IF pasangan DITEMUKAN THEN
             sudahDicocokkan ← sudahDicocokkan + pasangan.id
@@ -286,13 +253,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Evaluasi Langganan Rutin"
-- **Isi Pesan (Cermin Data Faktual):** `"Terdapat {jumlahLangganan} tagihan rutin berulang yang mengambil porsi {persentaseDariPemasukan}% dari total pemasukan tercatat."`
-- **Tingkat Urgensi:** _warning_
-- **Tombol Aksi:** `"Cek Pengeluaran"` → `/transactions`
-
-**Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Preventif — Kewajiban Berkala)**. Menampilkan porsi komitmen berkala terhadap pendapatan agar pengguna dapat meninjau alokasi rutin secara mandiri.
+**Keluaran:** Judul *"Evaluasi Langganan Rutin"*, tingkat urgensi *warning*, pesan: *"Terdapat {jumlahLangganan} tagihan rutin berulang yang mengambil porsi {persentaseDariPemasukan}% dari total pemasukan tercatat"*, dan tombol aksi *"Lihat Transaksi"* (`/transactions`).
+**Jenis keluaran:** Tingkat 2: Nudge. Menghitung persentase tagihan langganan rutin terhadap total pemasukan, memudahkan pengguna mengevaluasi apakah layanan berulang tersebut masih diperlukan.
 
 ---
 
@@ -344,13 +306,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Dinamika Transaksi Rutin"
-- **Isi Pesan (Cermin Data Faktual):** `"Frekuensi transaksi pada '{merchantTerbaik.nama}' tercatat {merchantTerbaik.jumlahSekarang} kali bulan ini (dibanding {merchantTerbaik.jumlahLalu} kali bulan lalu) dengan total Rp {totalNominal}."`
-- **Tingkat Urgensi:** _info_
-- **Tombol Aksi:** `"Lihat Transaksi"` → `/transactions`
-
-**Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Preventif — Eskalasi Frekuensi)**.
+**Keluaran:** Judul *"Dinamika Transaksi Rutin"*, tingkat urgensi *info*, pesan: *"Frekuensi transaksi pada '{merchantTerbaik.nama}' tercatat {merchantTerbaik.jumlahSekarang} kali bulan ini (dibanding {merchantTerbaik.jumlahLalu} kali bulan lalu) dengan total Rp {totalNominal}"*, dan tombol aksi *"Lihat Transaksi"* (`/transactions`).
+**Jenis keluaran:** Tingkat 2: Nudge. Menginformasikan kenaikan frekuensi transaksi pada nama tempat belanja yang sama hingga dua kali lipat dibanding bulan lalu.
 
 ---
 
@@ -381,10 +338,5 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Momentum Arus Kas Masuk"
-- **Isi Pesan (Cermin Data Faktual):** `"Hingga pertengahan bulan, catatan pemasukan (Rp {pemasukanBulanIni}) berada di bawah rata-rata historis (Rp {rataRataHistoris})."`
-- **Tingkat Urgensi:** _warning_
-- **Tombol Aksi:** `"Catat Pemasukan"` → `/transactions`
-
-**Jenis Keluaran:** **Tingkat 1: Insight Pola (Faktual / Deskriptif)**. Menyajikan perbandingan data historis arus kas masuk untuk meningkatkan kelengkapan pencatatan dan kesadaran likuiditas.
+**Keluaran:** Judul *"Momentum Arus Kas Masuk"*, tingkat urgensi *warning*, pesan: *"Hingga pertengahan bulan, catatan pemasukan (Rp {pemasukanBulanIni}) berada di bawah total pemasukan bulan lalu (Rp {rataRataHistoris})"*, dan tombol aksi *"Catat Pemasukan"* (`/transactions`).
+**Jenis keluaran:** Tingkat 1: Insight Pola. Menampilkan perbandingan akumulasi pemasukan hingga pertengahan bulan terhadap periode lalu, mendorong kelengkapan pencatatan pemasukan.

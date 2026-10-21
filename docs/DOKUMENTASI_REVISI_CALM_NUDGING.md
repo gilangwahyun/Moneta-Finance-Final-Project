@@ -19,72 +19,74 @@ Berikut adalah katalog lengkap 37 aturan yang diimplementasikan pada `src/lib/nu
 
 | ID Rule | Nama di Naskah TA (Konsep Asal) | Nama Resmi Calm UI | Judul Luaran Tunggal | Pesan Reflektif (Choice Architecture) | Label Tindakan (CTA) | Tingkat Taksonomi |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **BG-00** | Budget Threshold 50% | Penggunaan Anggaran Berjalan | **Penggunaan Anggaran Berjalan** *(Push: Progres Alokasi)* | Alokasi {catName} tercatat sudah terpakai 50%. Tersisa {sisa} untuk periode berjalan. | `Lihat Anggaran` | Tingkat 2: Nudge |
+| **BG-00** | Budget Threshold 50% | Penggunaan Anggaran Berjalan | **Penggunaan Anggaran Berjalan** *(Push: Progres Alokasi)* | Alokasi {catName} tercatat sudah terpakai 50%. Tersisa {sisa} untuk periode berjalan. *(Push: Alokasi {catName} telah terpakai {ratio}%, tersisa {sisa})* | `Lihat Anggaran` | Tingkat 2: Nudge |
 | **BG-00b** | Budget Threshold 80% (Burn Rate) | Progres Alokasi Berjalan | **Progres Alokasi Berjalan** *(Push: Progres Alokasi)* | Alokasi {catName} telah terpakai 80% (tersisa {sisa}). Tersedia opsi peninjauan alokasi. | `Lihat Anggaran` | Tingkat 2: Nudge |
-| **BG-00c** | Budget Threshold 100% (Subsidi Silang) | Kilas Penyesuaian Alokasi | **Kilas Penyesuaian** | Alokasi {catName} telah terpakai penuh. Tersedia sisa {nominal} di kategori {sourceCat} untuk mendukung kategori {catName}. | `Tinjau Opsi Penyeimbangan` | Tingkat 3: Saran Eksekutif |
-| **BG-00c** | Budget Threshold 100% (Tanpa Donor) | Alokasi Penuh Tercapai | **Alokasi Penuh Tercapai** | Alokasi {catName} bulan ini sudah terpakai penuh ({spent} dari {limit}). | `Lihat Anggaran` | Tingkat 2: Nudge |
-| **BG-01** | Budget Runway Projection | Proyeksi Daya Tahan Alokasi | **Proyeksi Daya Tahan Alokasi** | Berdasarkan ritme pengeluaran, alokasi '{catName}' diproyeksikan bertahan {hariHabis} hari ke depan (tersisa {sisaHari} hari dalam periode ini). | `Lihat Anggaran` | Tingkat 2: Nudge |
+| **BG-00c** | Budget Threshold 100% (Subsidi Silang) | Kilas Penyesuaian Alokasi | **Kilas Penyesuaian** *(Push: Kilas Penyesuaian)* | Alokasi {catName} telah terpakai penuh. Tersedia opsi mengalihkan {nominal} dari kategori {sourceCat}. | `Tinjau Opsi Penyeimbangan` | Tingkat 3: Saran Eksekutif |
+| **BG-00c** | Budget Threshold 100% (Tanpa Donor) | Alokasi Penuh Tercapai | **Alokasi Penuh Tercapai** *(Push: Alokasi Penuh Tercapai)* | Alokasi {catName} bulan ini sudah terpakai penuh ({spent} dari {limit}). | `Lihat Anggaran` | Tingkat 2: Nudge |
+| **BG-01** | Budget Runway Projection | Proyeksi Daya Tahan Alokasi | **Proyeksi Daya Tahan Alokasi** | Alokasi '{catName}' diperkirakan bertahan {daysRemaining} hari ke depan (tersisa {daysLeftInMonth} hari dalam bulan ini). | `Lihat Anggaran` | Tingkat 2: Nudge |
 | **BG-02** | Budget Recovery (Pemulihan Alokasi) | Pemulihan Alokasi Anggaran | **Pemulihan Alokasi Anggaran** | Bulan lalu realisasi pengeluaran '{categoryName}' kembali berada dalam batas alokasi anggaran (selisih {savedAmount} dibanding bulan sebelumnya). | `Lihat Anggaran` | Tingkat 2: Nudge (Apresiasi) |
-| **BG-03** | Zero Budget Category | Pengeluaran Tanpa Anggaran | **Pengeluaran Tanpa Anggaran** | Tercatat pengeluaran {nominal} pada kategori '{catName}' tanpa alokasi aktif. Tersedia opsi penetapan anggaran baru. | `Buat Anggaran` | Tingkat 2: Nudge |
+| **BG-03** | Zero Budget Category | Pengeluaran Tanpa Anggaran | **Pengeluaran Tanpa Anggaran** | Tercatat pengeluaran sebesar {nominal} pada '{catName}' bulan ini tanpa batas alokasi anggaran yang aktif. | `Buat Anggaran` | Tingkat 2: Nudge |
 | **BG-04** | Smart Budget Suggestion | Saran Alokasi Anggaran | **Saran Alokasi Anggaran** | Rata-rata pengeluaran bulanan pada '{catName}' tercatat {nominal}/bulan berdasarkan riwayat transaksi. | `Buat Anggaran` | Tingkat 3: Saran Eksekutif |
-| **BG-05** | Budget Accuracy Alert | Realisasi vs Anggaran | **Realisasi vs Anggaran** | Realisasi pengeluaran '{catName}' berada di atas batas alokasi selama 3 periode berturut-turut (rata-rata {rataRata} vs batas {batas}). | `Sesuaikan Anggaran` | Tingkat 3: Saran Eksekutif |
-| **SP-01** | Payday Leak (Pengeluaran Awal Bulan) | Dinamika Arus Kas | **Dinamika Arus Kas** | {persen}% dari alokasi pemasukan bulan ini telah dialokasikan dalam {hari} hari pertama. | `Lihat Transaksi` | Tingkat 2: Nudge |
-| **SP-02** | Weekend Trap (Belanja Akhir Pekan) | Distribusi Waktu Belanja | **Distribusi Waktu** | Sekitar {persen}% pengeluaran minggu ini tercatat pada akhir pekan (Sabtu & Minggu). | `Cek Transaksi` | Tingkat 1: Insight Pola |
+| **BG-05** | Budget Accuracy Alert | Realisasi vs Anggaran | **Realisasi vs Anggaran** | Realisasi pengeluaran '{catName}' berada di atas batas alokasi selama 3 periode berturut-turut (rata-rata {rataRata} vs batas {batas}). | `Tinjau Anggaran` | Tingkat 3: Saran Eksekutif |
+| **SP-01** | Payday Leak (Pengeluaran Awal Bulan) | Dinamika Arus Kas | **Dinamika Arus Kas** | {persen}% dari alokasi pemasukan telah terpakai dalam {hari} hari sejak pemasukan terbesar dalam 30 hari terakhir. | `Lihat Transaksi` | Tingkat 2: Nudge |
+| **SP-02** | Weekend Trap (Belanja Akhir Pekan) | Distribusi Waktu Belanja | **Distribusi Waktu** | Sekitar {persen}% pengeluaran minggu ini tercatat pada akhir pekan (Sabtu & Minggu). | `Lihat Transaksi` | Tingkat 1: Insight Pola |
 | **SP-03** | Night Owl (Malam Hari 22.00–04.00) | Pola Pengeluaran Malam Hari | **Pola Pengeluaran Malam Hari** | Tercatat pengeluaran sebesar {nominal} pada rentang waktu malam hingga dini hari (22.00–04.00) bulan ini. | `Lihat Pola` | Tingkat 1: Insight Pola |
-| **SP-04** | Category Spike (Lonjakan Kategori) | Dinamika Pengeluaran Kategori | **Dinamika Pengeluaran Kategori** | Pengeluaran kategori '{catName}' ({current}) tercatat {spikePct}% lebih tinggi dari rata-rata sebelumnya ({avg}). | `Analisis Kategori` | Tingkat 1: Insight Pola |
-| **SP-05** | Latte Factor (Pengeluaran Mikro Rutin) | Frekuensi Pengeluaran Rutin | **Frekuensi Pengeluaran Rutin** | Tercatat transaksi berulang pada '{merchant}' sebanyak {count} kali dengan akumulasi {total}. | `Cek Rincian` | Tingkat 1: Insight Pola |
-| **SP-06** | Subscription Analysis (Langganan) | Evaluasi Langganan Rutin | **Evaluasi Langganan Rutin** | Terdeteksi {count} transaksi rutin berulang dengan total {total} ({pct}% dari pengeluaran). | `Kelola Langganan` | Tingkat 1: Insight Pola |
-| **SP-07** | Recurring Merchant Growth | Dinamika Transaksi Rutin | **Dinamika Transaksi Rutin** | Transaksi pada '{merchant}' tercatat {count} kali bulan ini (meningkat dari {prevCount} kali bulan lalu). | `Lihat Merchant` | Tingkat 1: Insight Pola |
-| **SP-08** | Morning vs Evening Spending | Pola Waktu Pengeluaran | **Pola Waktu Pengeluaran** | Aktivitas pengeluaran tercatat lebih dominan pada sesi {session} ({pct}% dari total transaksi). | `Lihat Analisis` | Tingkat 1: Insight Pola |
-| **SP-09** | Day-of-Month Clustering | Konsentrasi Tanggal Belanja | **Konsentrasi Tanggal Belanja** | Sebesar {pct}% pengeluaran bulan ini terkonsentrasi pada tanggal {days}. | `Lihat Pola` | Tingkat 1: Insight Pola |
-| **AN-01** | Peak Spending Day | Pola Hari Transaksi | **Pola Hari Transaksi** | Hari {dayName} mencatat porsi pengeluaran terbesar ({pct}% dari total mingguan). | `Lihat Hari Puncak` | Tingkat 1: Insight Pola |
-| **AN-02** | Category Creep | Tren Pengeluaran Kategori | **Tren Pengeluaran Kategori** | Pengeluaran '{catName}' menunjukkan tren peningkatan bertahap selama 3 bulan berturut-turut (+{growth}%). | `Analisis Tren` | Tingkat 1: Insight Pola |
-| **AN-03** | Savings Gap Trend (Margin Menipis) | Dinamika Saldo Bersih | **Dinamika Saldo Bersih** | Selisih bersih (pemasukan - pengeluaran) menunjukkan dinamika penurunan dalam 3 bulan terakhir (-{dropPct}%). | `Lihat Anggaran` | Tingkat 1: Insight Pola |
-| **AN-04** | New Category Emergence | Kategori Pengeluaran Baru | **Kategori Pengeluaran Baru** | Tercatat transaksi baru pada kategori '{catName}' ({nominal}) yang belum pernah tercatat dalam 3 bulan terakhir. | `Lihat Transaksi` | Tingkat 1: Insight Pola |
+| **SP-04** | Category Spike (Lonjakan Kategori) | Dinamika Pengeluaran Kategori | **Dinamika Pengeluaran Kategori** | Pengeluaran '{catName}' bulan ini tercatat {current}, lebih tinggi {spikePct}% dari rata-rata 3 bulan terakhir ({avg}). *(Catatan: Priority 2.2 juga menggunakan judul ini: "Pengeluaran kategori {name} tercatat naik {spike}% (+{selisih}) dibanding bulan lalu")* | `Lihat Transaksi` / `Lihat Tren` | Tingkat 1: Insight Pola |
+| **SP-05** | Latte Factor (Pengeluaran Mikro Rutin) | Frekuensi Pengeluaran Rutin | **Frekuensi Pengeluaran Rutin** | Tercatat transaksi rutin pada '{merchant}' sebanyak {count} kali ({total}). | `Lihat Rincian` | Tingkat 1: Insight Pola |
+| **SP-06** | Subscription Analysis (Langganan) | Evaluasi Langganan Rutin | **Evaluasi Langganan Rutin** | Terdeteksi {count} transaksi rutin berulang dengan total {total} ({pct}% dari pemasukan). | `Lihat Transaksi` | Tingkat 1: Insight Pola |
+| **SP-07** | Recurring Merchant Growth | Dinamika Transaksi Rutin | **Dinamika Transaksi Rutin** | Transaksi pada '{merchant}' tercatat {count} kali bulan ini (meningkat dari {prevCount} kali bulan lalu). | `Lihat Transaksi` | Tingkat 1: Insight Pola |
+| **SP-08** | Morning vs Evening Spending | Pola Waktu Pengeluaran | **Pola Waktu Pengeluaran** | Dari pengeluaran pada jam pagi dan malam, {pct}% tercatat pada sesi {session}. | `Lihat Analisis` | Tingkat 1: Insight Pola |
+| **SP-09** | Day-of-Month Clustering | Konsentrasi Tanggal Belanja | **Konsentrasi Tanggal Belanja** | Sebesar {pct}% pengeluaran bulan ini terpusat pada tanggal {days}. | `Lihat Analisis` | Tingkat 1: Insight Pola |
+| **AN-01** | Peak Spending Day | Pola Hari Transaksi | **Pola Hari Transaksi** | Hari {dayName} mencatat porsi pengeluaran terbesar ({pct}% dari total mingguan). | `Lihat Tren` | Tingkat 1: Insight Pola |
+| **AN-02** | Category Creep | Tren Pengeluaran Kategori | **Tren Pengeluaran Kategori** | Pengeluaran '{catName}' menunjukkan tren peningkatan bertahap selama 3 bulan berturut-turut. | `Lihat Analisis` | Tingkat 1: Insight Pola |
+| **AN-03** | Savings Gap Trend (Margin Menipis) | Dinamika Saldo Bersih | **Dinamika Saldo Bersih** | Selisih bersih (pemasukan - pengeluaran) tercatat menurun dalam 3 bulan terakhir (-{dropPct}%). | `Tinjau Alokasi` | Tingkat 1: Insight Pola |
+| **AN-04** | New Category Emergence | Kategori Pengeluaran Baru | **Kategori Pengeluaran Baru** | Tercatat transaksi baru pada kategori '{catName}' ({nominal} bulan ini) yang tidak tercatat dalam 3 bulan terakhir. | `Lihat Transaksi` | Tingkat 1: Insight Pola |
 | **AN-05** | Category Dominance Shift | Pergeseran Kategori Terbesar | **Pergeseran Kategori Terbesar** | Porsi pengeluaran terbesar bulan ini beralih ke '{newTopName}' (naik {growthPct}% dibanding bulan lalu). | `Lihat Analisis` | Tingkat 1: Insight Pola |
 | **AN-06** | Expense-to-Income Volatility | Variasi Rasio Pengeluaran | **Variasi Rasio Pengeluaran** | Rasio pengeluaran terhadap pemasukan tercatat berfluktuasi dalam 3 bulan terakhir ({r1}% → {r2}% → {r3}%). | `Lihat Analisis` | Tingkat 1: Insight Pola |
 | **AN-07** | Discretionary Drift (Gaya Hidup) | Dinamika Pengeluaran Gaya Hidup | **Dinamika Pengeluaran Gaya Hidup** | Porsi pengeluaran diskresioner tercatat di angka {ratio}% dari total pengeluaran bulan ini (bergeser {diffPct} poin). | `Analisis Kategori` | Tingkat 1: Insight Pola |
-| **AN-08** | Income Momentum Alert | Momentum Arus Kas Masuk | **Momentum Arus Kas Masuk** | Pemasukan tercatat hingga saat ini ({income}) berada di bawah rata-rata periode sebelumnya ({avgPrev}). | `Lihat Arus Kas` | Tingkat 2: Nudge |
+| **AN-08** | Income Momentum Alert | Momentum Arus Kas Masuk | **Momentum Arus Kas Masuk** | Pemasukan tercatat hingga saat ini ({income}) berada di bawah total pemasukan bulan lalu ({avgPrev}). | `Catat Pemasukan` | Tingkat 2: Nudge |
 | **AN-09** | Annualized Snowball Projection | Proyeksi Kebiasaan | **Proyeksi Kebiasaan** | Bulan ini kategori {catName} mencatat {total}. Dengan pola saat ini, akumulasi diproyeksikan mencapai {annualized} dalam setahun. | `Lihat Tren` | Tingkat 2: Nudge |
-| **AN-10 (A)** | Cashflow Dynamics (Pemasukan 0) | Data Pemasukan Kosong | **Selisih Arus Kas** | Belum ada catatan pemasukan bulan ini untuk melengkapi analisis arus kas. | `Catat Pemasukan` | Tingkat 2: Nudge |
+| **AN-10 (A)** | Cashflow Dynamics (Pemasukan 0) | Catatan Pemasukan Bulan Ini | **Catatan Pemasukan Bulan Ini** | Catatan pemasukan bulan ini masih kosong; menambahkannya akan melengkapi analisis arus kas. | `Catat Pemasukan` | Tingkat 2: Nudge |
 | **AN-10 (B)** | Cashflow Dynamics (Pengeluaran > Pemasukan) | Selisih Arus Kas | **Selisih Arus Kas** | Total pengeluaran bulan ini tercatat melampaui pemasukan dengan selisih {selisih}. | `Analisis Kategori` | Tingkat 2: Nudge |
 | **AN-10 (C)** | Cashflow Dynamics (Rasio Belanja >= 80%) | Rasio Pengeluaran | **Selisih Arus Kas** | Pengeluaran bulan ini telah mencapai {ratio}% dari total pemasukan tercatat. | `Analisis Kategori` | Tingkat 2: Nudge |
 | **WL-01** | Wallet Drain Rate | Dinamika Pengeluaran Dompet | **Dinamika Pengeluaran Dompet** | Laju pengeluaran dari dompet '{walletName}' bulan ini tercatat 1,5× lebih cepat dibanding bulan sebelumnya. | `Lihat Dompet` | Tingkat 2: Nudge |
-| **WL-02** | Low Cash Snapshot | Kilas Saldo Dompet | **Kilas Saldo Dompet** | Saldo dompet '{walletName}' saat ini tercatat {saldo}. | `Lihat Dompet` | Tingkat 2: Nudge |
+| **WL-02** | Low Cash Snapshot | Kilas Saldo Dompet | **Kilas Saldo Dompet** | Saldo dompet '{walletName}' saat ini tercatat {saldo} (di bawah ambang {threshold}). | `Lihat Dompet` | Tingkat 2: Nudge |
 | **WL-03** | Single Wallet Usage | Penggunaan Dompet Dominan | **Penggunaan Dompet Dominan** | Sebagian besar transaksi bulan ini ({persen}%) dicatat menggunakan dompet '{walletName}'. | `Lihat Dompet` | Tingkat 1: Insight Pola |
 | **WL-04** | Wallet-Category Usage Pattern | Pola Penggunaan Dompet | **Pola Penggunaan Dompet** | Sebesar {percentage}% pengeluaran '{categoryName}' tercatat menggunakan dompet '{walletName}'. | `Lihat Dompet` | Tingkat 1: Insight Pola |
-| **FT-01** | Target Gap Alert | Target Belum Ada Progres | **Target Belum Ada Progres** | Target '{targetName}' telah memasuki {elapsedPct}% dari periode waktunya. | `Lihat Target` | Tingkat 2: Nudge |
-| **FT-02** | Target Progress Impact | Pengeluaran vs Target Keuangan | **Pengeluaran vs Target Keuangan** | Total pengeluaran ({exp}) telah mencapai proporsi signifikan terhadap sasaran Target Keuangan '{targetName}' ({target}). | `Lihat Target` | Tingkat 2: Nudge |
-| **FT-03** | Target Streak | Konsistensi Target Terjaga | **Konsistensi Target Terjaga** | Target Keuangan '{targetName}' berhasil tercapai selama {streak} periode berturut-turut. | `Lihat Target` | Tingkat 2: Nudge (Apresiasi) |
-| **PR-01** | Weekly Savings | Surplus Mingguan | **Surplus Mingguan** | Kamu berhasil menyisakan saldo positif {weeklySavings} pada 7 hari terakhir. Kebiasaan pencatatan berjalan teratur. | `Lihat Rincian` | Tingkat 2: Nudge (Apresiasi) |
-| **PR-02** | Income Expansion | Pemasukan Meningkat | **Pemasukan Meningkat** | Pemasukan naik {pct}% (+{selisih}). Tersedia ruang tambahan untuk mempercepat pencapaian target keuangan. | `Kelola Dompet` | Tingkat 2: Nudge (Apresiasi) |
+| **FT-01** | Target Gap Alert | Posisi Progres Target | **Posisi Progres Target** | Target '{targetName}' berada di {elapsedPct}% periode waktunya, dengan progres {progressPct}%. *(Dipilih target dengan elapsedPct terbesar jika multi-target)* | `Lihat Target` | Tingkat 2: Nudge |
+| **FT-02** | Target Progress Impact | Pengeluaran vs Target Keuangan | **Pengeluaran vs Target Keuangan** | Total pengeluaran ({exp}) setara {pct}% dari sasaran Target Keuangan '{targetName}' ({target}). *(Konteks alokasi perbandingan)* | `Lihat Target` | Tingkat 2: Nudge |
+| **FT-03** | Target Streak | Konsistensi Target Terjaga | **Konsistensi Target Terjaga** | Target Keuangan '{targetName}' tercapai selama {streak} bulan berturut-turut. *(Khusus target berulang MONTHLY)* | `Lihat Target` | Tingkat 2: Nudge (Apresiasi) |
+| **PR-01** | Weekly Savings | Surplus Mingguan | **Surplus Mingguan** | Selisih pemasukan dan pengeluaran 7 hari terakhir tercatat positif sebesar {weeklySavings}. *(Dihitung murni dari 7 hari kalender terakhir)* | `Lihat Rincian` | Tingkat 2: Nudge (Apresiasi) |
+| **PR-02** | Income Expansion | Pemasukan Meningkat | **Pemasukan Meningkat** | Pemasukan naik {pct}% (+{selisih}). Tersedia ruang tambahan untuk mempercepat pencapaian target keuangan. | `Lihat Target` | Tingkat 2: Nudge (Apresiasi) |
 | **FB-01** | Empathetic Default (Fallback) | Pola Pengeluaran Stabil | **Pola Pengeluaran Stabil** | Arus kas bulan ini berjalan stabil. Tinjauan berkala membantu memastikan perencanaan tetap pada jalurnya. | `Lihat Transaksi` | Tingkat 1: Insight Pola |
 
 > **Catatan Klarifikasi ID:**
 > - ID `PR-03`, `PR-04`, `PR-05` **tidak ada** dalam sistem maupun Bab IV naskah skripsi. Pemulihan alokasi anggaran adalah rule resmi **`BG-02`** (*Budget Recovery*), konsistensi capaian target tabungan adalah rule resmi **`FT-03`** (*Target Streak*), dan surplus simpanan mingguan adalah rule resmi **`PR-01`** (*Weekly Savings*).
+> - Judul notifikasi push `local-engine.ts` menggunakan nama ringkas yang tenang: `Progres Alokasi` (untuk ambang 50% dan 80%), `Kilas Penyesuaian` (untuk realokasi 100%), dan `Alokasi Penuh Tercapai` (untuk alokasi 100% tanpa donor).
 
 ---
 
 ## 3. Hasil Audit Komprehensif Seluruh Repositori
 
-Audit komprehensif dijalankan pada seluruh **174 berkas** dalam direktori `src/`, `public/`, dan `tests/` tanpa batasan regular expression sempit:
+Audit komprehensif dijalankan pada seluruh berkas sistem dengan hasil sebagai berikut:
 
-### A. Audit Teks Vonis & Imperatif
-- **Cakupan Pemindaian**: Seluruh variabel, konstanta, objek, pesan, label, deskripsi, CTA, *template literals*, serta komentar kode.
+### A. Audit Teks Vonis & Imperatif (User-Facing Insight Copy)
+- **Cakupan Pemindaian**: Seluruh teks luaran wawasan pengguna (*user-facing insight copy*), mencakup properti `title`, `body`, `ctaLabel`, `mergedTitle`, `mergedBody`, `mergedCtaLabel`, dan `comparisonText` pada `src/lib/nudging.ts`, `src/lib/notifications/local-engine.ts`, dan `src/hooks/use-analytics.ts`.
 - **Hasil Pemindaian Token**:
-  - Ditemukan `0` kemunculan kata vonis (`menipis`, `kritis`, `jebol`, `defisit`, `tidak realistis`, `bahaya`, `peringatan`, `awas`, `tahan`, `segera`, `periksa`, `waspada`) pada seluruh teks luaran pengguna (*user-facing strings*).
+  - Ditemukan `0` kemunculan kata terlarang (`menipis`, `kritis`, `jebol`, `defisit`, `tidak realistis`, `bahaya`, `peringatan`, `awas`, `segera`, `periksa`, `waspada`, `waspadai`, `cek`, `sesuaikan`, `berhasil`, `kamu`, `belum`) pada seluruh teks luaran pengguna.
   - Kata `tahan` hanya muncul pada frasa kata benda deskriptif non-imperatif: `"Proyeksi Daya Tahan Alokasi"` (`BG-01`, padanan *budget runway capacity*).
-  - Kata `warning` dan `critical` hanya digunakan secara internal pada enum TypeScript (`type NudgeSeverity = 'warning' | 'positive' | 'neutral' | 'critical' | 'info'`) dan logging internal Prisma client.
-  - Frasa penutup direktif *"Keputusan tetap berada di tanganmu"* pada `seed-sidang-data.ts` telah dibersihkan secara permanen dan disederhanakan menjadi cermin ketersediaan dana murni:  
-    `"Tersedia sisa Rp 80.000 di kategori Belanja Harian untuk mendukung kategori Makanan."`
+  - Kata `warning` dan `critical` tetap digunakan secara internal pada enum TypeScript (`type NudgeSeverity = 'warning' | 'positive' | 'neutral' | 'critical' | 'info'`) dan logging internal Prisma client tanpa bocor ke antarmuka pengguna.
+  - Komentar kode internal pengembang tetap dapat mempertahankan istilah teknis (seperti `// Priority 1: Deficit` atau `critical rules`) untuk dokumentasi arsitektur internal.
+  - Frasa penutup direktif *"Keputusan tetap berada di tanganmu"* dan kata *"kamu"* telah dibersihkan secara permanen dan disederhanakan menjadi cermin pilihan murni:  
+    `"Tersedia opsi mengalihkan Rp 80.000 dari kategori Belanja Harian untuk mendukung kategori Makanan."`
 
-### B. Audit Pewarnaan Visual (No Rose/Red Alarm & No Warm Amber Tint)
-- **Cakupan Pemindaian**: Seluruh file di `src/components/`, `src/app/`, `TransactionModal.tsx`, `UrgentBudgetProgressBar.tsx`, halaman Notifikasi, dan Dashboard.
+### B. Audit Pewarnaan Visual Komponen Nudging
+- **Cakupan Pemindaian**: Komponen *nudging* digital dan kartu wawasan keuangan (`TransactionModal.tsx`, `UrgentBudgetProgressBar.tsx`, halaman Notifikasi, dan Dashboard Insight Cards).
 - **Hasil**:
   - **Modal Transaksi (`TransactionModal.tsx`)**: Bilah kemajuan sisa alokasi (`#budget-cue-bar`) menggunakan kelas indigo/slate tenang (`bg-indigo-500/80 dark:bg-indigo-400/80`). Bebas 100% dari aksen merah (`rose-`, `red-`) maupun kuning/oranye (`amber-`, `orange-`).
   - **Bilah Anggaran (`UrgentBudgetProgressBar.tsx`)**: Menggunakan pewarnaan slate tenang (`bg-slate-600 dark:bg-slate-400`) dengan lencana netral `"Alokasi penuh"`.
   - **Pusat Notifikasi (`notifications/page.tsx`)**: Lencana kategori `BUDGET_CRITICAL` dan `BUDGET_WARNING` menggunakan kelas netral `bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300` dengan label teks `"Alokasi Penuh"` dan `"Progres Alokasi"`.
-  - **Halaman Analitik (`analytics/page.tsx`)**: Ikon alarm `AlertTriangle` dan pemisahan blok merah telah digantikan sepenuhnya dengan ikon penunjuk arah `Compass` (*"Wawasan & Panduan Arah"*).
+  - **Halaman Analitik (`analytics/page.tsx`)**: Ikon alarm `AlertTriangle` dan pemisahan blok merah telah digantikan sepenuhnya dengan ikon penunjuk arah `Compass` (*"Wawasan & Panduan Arah"*). Palet `CHART_PALETTE` pada grafik visual tetap mempertahankan variasi warna kategori agar grafik multi-kategori terbaca jelas.
 
 ---
 
@@ -108,11 +110,31 @@ Rangkaian pengujian otomatis dijalankan pada seluruh 12 berkas spesifikasi pengu
 | 12 | `tests/12-sync-conflicts.spec.ts` | Resolusi Konflik Sinkronisasi & Antrean Penghapusan | 3 | **100% Passed** |
 | **Total** | **12 Berkas Pengujian Sistem (Core E2E Suite)** | **Seluruh Fungsionalitas Aplikasi Moneta Finance** | **148** | **148 Passed (100% Hijau)** |
 
-### Penjelasan Sinkronisasi Angka Uji:
-- **Klarifikasi Angka 148 vs 154 Skenario**: Angka **148** adalah jumlah butir uji inti sistem pada 12 berkas spesifikasi `tests/`. Angka **154** sebelumnya muncul ketika berkas runner pembantu penangkap tangkapan layar audit (`tests/screenshot-capture.spec.ts`, 6 skenario) dieksekusi bersamaan. Berkas pembantu tersebut kini telah dibersihkan pasca-persetujuan penguji.
-- **Klarifikasi Angka 98 vs 99 Skenario**: Angka 98 skenario merupakan hasil eksekusi parsial pada 4 berkas uji terkait *nudging* terdahulu (`03-transactions`: 11, `08-insight-engine`: 79, `09-insight-ui-e2e`: 3, `10-notifications`: 5 → 11 + 79 + 3 + 5 = 98). Dengan penyempurnaan uji batas harian pada notifikasi menjadi 6 butir uji, total uji integrasi alur nudging adalah **99 butir uji**.
-- **Korelasi 79 Butir Uji `tests/08-insight-engine.spec.ts`**: Berkas `08-insight-engine.spec.ts` berisi **tepat 79 butir uji**, yang berkorespondensi 1-ke-1 secara presisi dengan **79 butir uji aturan pada Lampiran Naskah Skripsi / Bab IV**, mencakup uji valid (*threshold met*), uji invalid (*negative testing*), sorting prioritas ascending, dan penanganan konkurensi aturan ganda.
-- **Peningkatan Berkas Target (`05-targets.spec.ts`)**: Jumlah butir uji meningkat dari 7 menjadi **10 butir uji**, memvalidasi multi-target per kategori, isolasi alokasi non-bleeding (`targetId`), visual clamping 100%, dan kalkulasi ulang reaktif saat transaksi dihapus.
+### Penjelasan Rinci Struktur 79 Butir Uji `tests/08-insight-engine.spec.ts`:
+Untuk keperluan Lampiran dan Bab IV Tugas Akhir, 79 butir uji pada `tests/08-insight-engine.spec.ts` terdistribusi secara terstruktur sebagai berikut:
+1. **74 Butir Uji Kondisi Aturan** (`[BG-03]` hingga `[FALLBACK] INVALID`):
+   - Menguji pemicu kondisi valid dan invalid dari aturan wawasan. Jumlah butir per aturan bervariasi sesuai kompleksitas logika matematisnya (contoh: `BG-00c` mencakup 3 butir termasuk pengujian algoritma subsidi silang, `AN-10` mencakup 6 butir mencakup 3 skenario arus kas A/B/C dan varian negatifnya, `PR-02` mencakup 3 butir termasuk penanganan basis `prev.income = 0`, dan `FALLBACK` mencakup 2 butir).
+   - *Catatan teknis*: Uji berlabel `[BG-00]` pada berkas ini memvalidasi pemicu lonjakan kategori teratas (*top expense category spike* priority 2.2), sementara uji batas alokasi anggaran 50% dan 80% serta aturan lokal `WL-01` (*Wallet Drain Rate*) dan `WL-02` (*Low Cash*) diuji secara dinamis pada `local-engine.ts` dan `tests/10-notifications.spec.ts`.
+2. **2 Butir Uji Pengurutan Prioritas (*Priority Ordering*)**:
+   - Memastikan wawasan terurut secara *ascending* berdasarkan nilai prioritas (angka terkecil = urgensi tertinggi).
+   - Memastikan wawasan prioritas tinggi (seperti `SP-03` priority 2.1) muncul sebelum wawasan prioritas rendah (seperti `SP-07` priority 3.2).
+3. **1 Butir Uji Koeksistensi Kritis (*Critical Coexistence*)**:
+   - Memvalidasi bahwa beberapa aturan kritis dapat aktif bersamaan tanpa saling mengeliminasi atau merusak status wawasan.
+4. **1 Butir Uji Ketahanan & Audit Bahasa (*Smoke Test & Static Calm Copy Audit*)**:
+   - Mengaktifkan seluruh aturan secara simultan untuk memastikan mesin wawasan stabil (*no crash*).
+   - Menjalankan audit statis otomatis pada 5 berkas inti wawasan & notifikasi (`nudging.ts`, `local-engine.ts`, `use-analytics.ts`, `use-dashboard.ts`, dan `seed-sidang-data.ts`) mencakup properti baris tunggal maupun *template literal* multi-baris, memverifikasi 0 kata terlarang pada seluruh luaran wawasan pengguna.
+5. **1 Butir Uji Integritas Mutasi Dompet (*Dual-ID Matching & Soft-Deleted Txns*)**:
+   - Memvalidasi fungsi `calculateWalletBalance` agar mengabaikan transaksi terhapus (*soft-deleted*) dan mengenali pencocokan ID ganda (`clientId` dan `id` server).
+
+### Catatan Keterbatasan Teknis & Pertimbangan Sidang (Bab V):
+- **FT-02 (Pengeluaran vs Target Keuangan)**:
+  Logika aturan FT-02 membandingkan total pengeluaran berjalan terhadap nominal sasaran target tabungan (ambang > 80%). Secara konseptual, ini bukan pengukuran progres tabungan (*saving accumulation progress*), melainkan menghadirkan **perspektif opportunity cost (biaya peluang alokasi)**: memperlihatkan seberapa besar dana yang telah dibelanjakan dibandingkan dengan cita-cita sasaran keuangan pengguna. Pemilihan multi-target pada FT-02 telah dibuat deterministik dengan memprioritaskan target yang memiliki rasio pengeluaran terhadap sasaran tertinggi.
+- **SP-01 (Dinamika Arus Kas)**:
+  Logika pencarian pemasukan terbesar beroperasi pada rentang 30 hari kalender terakhir (`dayjs().subtract(30, 'day')`), sehingga teks reflektif merujuk secara akurat ke *'sejak pemasukan terbesar dalam 30 hari terakhir'*.
+- **SP-08 (Pola Waktu Pengeluaran Pagi vs Malam)**:
+  Pengelompokan jam transaksi menggunakan stempel waktu pencatatan sistem (`createdAt` dengan fallback ke `date`). Bila pencatatan transaksi dilakukan tertunda (*retroactive entry*), jam yang terdeteksi mencerminkan waktu pengguna membuka aplikasi dan mencatat, bukan jam riil belanja terjadi di dunia nyata. Ini merupakan keterbatasan yang dicatat pada Bab V.
+- **Filter Periode Analitik**:
+  Kalkulasi analitik wawasan pada `use-analytics.ts` mengikuti filter periode yang sedang aktif dipilih pengguna pada antarmuka. Saat demonstrasi sidang, pastikan dropdown periode berada pada posisi *Bulan Berjalan* agar konteks pembacaan wawasan selaras.
 
 ---
 

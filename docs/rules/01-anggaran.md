@@ -1,17 +1,17 @@
 # Kelompok 1: Anggaran (Budgeting)
 
-Kelompok ini mencakup semua aturan yang berkaitan dengan pengawasan anggaran finansial pengguna — mulai dari cermin data penggunaan batas, proyeksi laju pengeluaran, hingga rekomendasi alokasi dana secara adaptif. Seluruh luaran pada kelompok ini mengikuti paradigma **Choice Architecture (Richard Thaler)** dan disajikan dalam **Calm UI** tanpa intervensi teks yang mendikte.
+Kelompok ini mencakup aturan-aturan yang berkaitan dengan pemantauan anggaran keuangan pengguna, meliputi pengawasan batas pemakaian, proyeksi laju pengeluaran, hingga saran alokasi dana antar-kategori. Seluruh luaran disajikan dengan prinsip antarmuka tenang (*Calm UI*), berfokus pada penyajian fakta yang objektif tanpa menggunakan kalimat yang mendikte atau menghakimi pengguna.
 
 Sesuai kerangka evaluasi tugas akhir, luaran diklasifikasikan ke dalam **Taksonomi 3 Tingkat**:
-1. **Tingkat 1: Insight Pola** — Cermin data faktual/deskriptif murni.
-2. **Tingkat 2: Nudge (Choice Architecture)** — Dorongan halus berupa cermin data preventif/apresiatif dan penataan pilihan (*spatial ordering* & *ambient priming*).
-3. **Tingkat 3: Saran Eksekutif** — Rekomendasi resolusi spesifik dan terukur yang langsung dapat dieksekusi pengguna (*actionable recommendation*).
+1. **Tingkat 1: Insight Pola** — Informasi faktual atau deskriptif mengenai pola dan posisi keuangan.
+2. **Tingkat 2: Nudge** — Pengingat atau dorongan halus berbasis data untuk membantu pengguna mengelola keuangan secara mandiri.
+3. **Tingkat 3: Saran Eksekutif** — Rekomendasi tindakan spesifik yang dapat langsung dieksekusi oleh pengguna.
 
 ---
 
 ## Rule BG-00 — Anggaran Terpakai Setengah
 
-**Entitas yang dipantau:** Anggaran × Transaksi × Kategori
+**Entitas yang dipantau:** Anggaran × Transaksi × Kategori (periode bulan berjalan)
 
 **Kondisi pemicu (pseudocode):**
 
@@ -35,13 +35,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Penggunaan Anggaran Berjalan"
-- **Isi Pesan (Cermin Data Faktual):** `"Anggaran {catName} tercatat sudah terpakai 50%. Pantau ritme pengeluaran agar sisa anggaran mencukupi hingga akhir periode."`
-- **Tingkat Urgensi:** _info_ (Ikon Info netral, palet tenang)
-- **Tombol Aksi:** `"Lihat Anggaran"` → `/budgets`
-
-**Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Preventif — Refleksi Tengah Periode)**. Rule ini memberikan umpan balik netral yang berfungsi sebagai pengingat ritme alokasi tanpa membatasi kebebasan belanja pengguna.
+**Keluaran:** Judul *"Penggunaan Anggaran Berjalan"* (push: *"Progres Alokasi"*), tingkat urgensi *info*, pesan: *"Alokasi {catName} tercatat sudah terpakai 50%. Tersisa Rp {sisa} untuk periode berjalan"*, serta tombol aksi *"Lihat Anggaran"* (`/budgets`).
+**Jenis keluaran:** Tingkat 2: Nudge. Mengingatkan pengguna secara netral saat anggaran telah terpakai separuh (50%) agar pengguna dapat mengantisipasi sisa dana untuk hari-hari berikutnya.
 
 ---
 
@@ -77,7 +72,7 @@ Algoritma
                          WHERE tipe = 'EXPENSE' AND tanggal >= (hari ini - 7 hari) / 7
 
         IF pengeluaranHariIni > rataRata7Hari THEN
-            judul ← "Pengeluaran {nama kategori} Lebih Cepat"
+            judul ← "Progres Alokasi Berjalan"
         ELSE
             judul ← "Progres Alokasi Berjalan"
         END IF
@@ -86,19 +81,9 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Progres Alokasi Berjalan" (Notifikasi Push: "Progres Alokasi")
-- **Isi Pesan (Cermin Data Faktual):** `"Alokasi {catName} telah terpakai 80% (tersisa Rp {sisa}). Tersedia opsi peninjauan alokasi."`
-- **Tingkat Urgensi:** _warning_ (Visual tenang dengan palet slate/indigo netral, tanpa badge alarm merah)
-- **Tombol Aksi:** `"Lihat Anggaran"` → `/budgets`
-
-**Penyajian Choice Architecture (Point-of-Decision Cue di Antarmuka Modal Transaksi):**
-Selain kartu insight di analitik/notifikasi, informasi alokasi disajikan langsung tepat di saat keputusan belanja dibuat (*point-of-decision cue*):
-1. **Urutan Tombol Stabil (*Spatial Stability*):** Urutan tombol kategori dipertahankan tetap sesuai preferensi pengguna (`availableCategories`) tanpa pengacakan posisi, menjaga memori spasial pengguna.
-2. **Ketiadaan Pewarnaan Menghakimi (*Non-judgmental Design*):** Input nominal tidak menggunakan aksen warna peringatan (*no amber tint*).
-3. **Point-of-Decision Budget Cue:** Menampilkan sisa alokasi bulanan dan estimasi sisa harian adaptif yang sinkron dengan rumus ritme anggaran (`calculateBudgetRhythm`), disertai bilah mikro tipis netral indigo/slate tanpa warna peringatan.
-
-**Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Preventif & Choice Architecture)**.
+**Keluaran:** Judul *"Progres Alokasi Berjalan"* (push: *"Progres Alokasi"*), tingkat urgensi *warning*, pesan: *"Alokasi {catName} telah terpakai 80% (tersisa Rp {sisa}). Tersedia opsi peninjauan alokasi"*, serta tombol aksi *"Lihat Anggaran"* (`/budgets`).
+**Penyajian Point-of-Decision Cue:** Saat pengguna mencatat transaksi, modal input menampilkan kartu ringkasan berisi sisa alokasi bulanan dan estimasi rata-rata dana harian yang aman digunakan.
+**Jenis keluaran:** Tingkat 2: Nudge. Menyajikan fakta pemakaian anggaran yang mendekati batas (80%) tepat pada saat pengguna hendak bertransaksi, membantu pengguna mempertimbangkan pengeluaran berikutnya secara bijak.
 
 ---
 
@@ -111,11 +96,11 @@ Selain kartu insight di analitik/notifikasi, informasi alokasi disajikan langsun
 ```
 Program Evaluasi Batas Anggaran Tercapai / Terlampaui (BG-00c)
 Deklarasi
-    anggaran      : data anggaran yang dievaluasi
-    totalTerpakai : bilangan real
-    rasio         : bilangan real
-    defisit       : bilangan real  { selisih pengeluaran melebihi batas }
-    kandidat      : data anggaran  { sumber subsidi terbaik yang ditemukan }
+    anggaran             : data anggaran yang dievaluasi
+    totalTerpakai        : bilangan real
+    rasio                : bilangan real
+    kelebihanPengeluaran : bilangan real  { selisih pengeluaran melebihi batas }
+    kandidat             : data anggaran  { sumber subsidi terbaik yang ditemukan }
 
 Algoritma
     totalTerpakai ← SUM transaksi.nominal
@@ -123,8 +108,8 @@ Algoritma
                     AND kategoriId = anggaran.kategoriId
                     AND periode = bulan berjalan
 
-    rasio   ← totalTerpakai / anggaran.batasNominal
-    defisit ← totalTerpakai - anggaran.batasNominal
+    rasio                ← totalTerpakai / anggaran.batasNominal
+    kelebihanPengeluaran ← totalTerpakai - anggaran.batasNominal
 
     IF rasio = 1,0 THEN
         OUTPUT Insight("Alokasi Penuh Tercapai", urgensi=info)
@@ -169,15 +154,10 @@ Algoritma
     RETURN kandidatTerbaik
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Alokasi Penuh Tercapai" (atau "Kilas Penyesuaian" jika rekomendasi subsidi silang ditemukan)
-- **Isi Pesan (Cermin Data Faktual):**
-  - *Tanpa Donor:* `"Alokasi {catName} bulan ini sudah terpakai penuh ({spent} dari {limit})."`
-  - *Dengan Rekomendasi Penyeimbangan:* `"Tersedia sisa {nominal} di kategori {sourceCat} untuk mendukung kategori {catName}."`
-- **Tingkat Urgensi:** _critical_ / _info_ (Disajikan tenang dengan aksen slate/indigo reflektif, tanpa warna merah alarm)
-- **Tombol Aksi:** `"Tinjau Opsi Penyeimbangan"` atau `"Lihat Anggaran"` → `/budgets?action=reallocate&sourceBudgetId=...&targetBudgetId=...&amount=...` (membuka modal realokasi dengan data pre-filled)
-
-**Jenis Keluaran:** **Tingkat 3: Saran Eksekutif (Actionable Recommendation)**. Memberikan jalur resolusi terukur dan spesifik secara langsung (pre-fill form transfer anggaran) dengan tetap menjunjung prinsip *freedom of choice* (*libertarian paternalism*).
+**Keluaran:**
+- *Dengan Rekomendasi Penyeimbangan:* Judul *"Kilas Penyesuaian"*, tingkat urgensi *info*, pesan: *"Alokasi {catName} telah terpakai penuh. Tersedia opsi mengalihkan Rp {nominal} dari kategori {sourceCat}"*, dan tombol aksi *"Tinjau Opsi Penyeimbangan"* (`/budgets?action=reallocate...`).
+- *Tanpa Donor:* Judul *"Alokasi Penuh Tercapai"*, tingkat urgensi *info*, pesan: *"Alokasi {catName} bulan ini sudah terpakai penuh ({spent} dari {limit})"*, dan tombol aksi *"Lihat Anggaran"* (`/budgets`).
+**Jenis keluaran:** Tingkat 3: Saran Eksekutif. Memberikan opsi pemindahan sisa anggaran dari kategori lain yang masih longgar melalui tombol aksi yang membuka formulir siap pakai, tanpa memaksa atau mengubah alokasi secara sepihak.
 
 ---
 
@@ -204,7 +184,7 @@ Algoritma
     totalHariBulan ← jumlah hari dalam bulan berjalan
     sisaHari       ← totalHariBulan - hariIni
 
-    IF hariIni < 7 THEN RETURN    { data belum representatif }
+    IF hariIni < 7 THEN RETURN    { data awal bulan masih minim }
     IF sisaHari <= 0 THEN RETURN  { bulan hampir selesai }
 
     totalTerpakai ← SUM transaksi.nominal
@@ -225,13 +205,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Proyeksi Daya Tahan Alokasi"
-- **Isi Pesan (Cermin Data Faktual):** `"Berdasarkan ritme pengeluaran, alokasi '{catName}' diproyeksikan bertahan {hariSampaiHabis} hari ke depan (tersisa {sisaHari} hari dalam periode ini)."`
-- **Tingkat Urgensi:** _warning_
-- **Tombol Aksi:** `"Lihat Anggaran"` → `/budgets`
-
-**Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Preventif — Proyeksi Temporal)**. Menghubungkan kecepatan belanja hari ini dengan hari ke depan agar pengguna terdorong menyesuaikan ritme secara mandiri.
+**Keluaran:** Judul *"Proyeksi Daya Tahan Alokasi"*, tingkat urgensi *warning*, pesan: *"Dengan laju harian saat ini, alokasi '{catName}' dapat mencukupi hingga {daysUntilExhausted} hari ke depan (sisa periode: {daysRemaining} hari)"*, dan tombol aksi *"Lihat Anggaran"* (`/budgets`).
+**Jenis keluaran:** Tingkat 2: Nudge. Memproyeksikan daya tahan anggaran berdasarkan kecepatan belanja harian saat ini, membantu pengguna mengetahui apakah anggaran berpotensi habis sebelum akhir bulan.
 
 ---
 
@@ -266,13 +241,8 @@ Algoritma
     END FOR
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Pengeluaran Tanpa Anggaran"
-- **Isi Pesan:** `"Tercatat pengeluaran Rp {totalNominal} pada kategori '{catName}' tanpa alokasi anggaran aktif. Membuat anggaran dapat membantu membatasi pengeluaran ini secara terencana."`
-- **Tingkat Urgensi:** _info_
-- **Tombol Aksi:** `"Buat Anggaran"` → `/budgets` (otomatis membuka form pembuatan anggaran dengan kategori terpilih)
-
-**Jenis Keluaran:** **Tingkat 3: Saran Eksekutif (Actionable Recommendation)**. Mengidentifikasi celah perencanaan dan menyediakan jalan pintas langsung untuk menutup celah tersebut.
+**Keluaran:** Judul *"Pengeluaran Tanpa Anggaran"*, tingkat urgensi *info*, pesan: *"Tercatat pengeluaran sebesar Rp {totalNominal} pada '{catName}' bulan ini tanpa batas alokasi anggaran yang aktif"*, dan tombol aksi *"Buat Anggaran"* (`/budgets?action=create&categoryId=...`).
+**Jenis keluaran:** Tingkat 3: Saran Eksekutif. Mengidentifikasi kategori dengan akumulasi belanja besar yang belum memiliki anggaran, serta menyediakan tombol cepat untuk langsung membuat anggaran baru.
 
 ---
 
@@ -311,13 +281,8 @@ Algoritma
     END FOR
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Saran Alokasi Anggaran"
-- **Isi Pesan:** `"Rata-rata pengeluaran bulanan pada '{catName}' tercatat Rp {rataRata}/bulan berdasarkan riwayat transaksi."`
-- **Tingkat Urgensi:** _info_
-- **Tombol Aksi:** `"Buat Anggaran"` → `/budgets`
-
-**Jenis Keluaran:** **Tingkat 3: Saran Eksekutif (Actionable Recommendation)**. Memberikan nilai acuan realistis berbasis histori pengeluaran pengguna sendiri (*data-driven personalization*).
+**Keluaran:** Judul *"Saran Alokasi Anggaran"*, tingkat urgensi *info*, pesan: *"Rata-rata pengeluaran bulanan pada '{catName}' tercatat Rp {rataRata}/bulan berdasarkan riwayat transaksi"*, dan tombol aksi *"Buat Anggaran"* (`/budgets?action=create&categoryId=...&amount=...`).
+**Jenis keluaran:** Tingkat 3: Saran Eksekutif. Merekomendasikan nominal anggaran baru berdasarkan rata-rata riwayat pengeluaran 3 bulan terakhir, memudahkan pengguna menetapkan batas alokasi yang realistis.
 
 ---
 
@@ -355,17 +320,12 @@ Algoritma
     END FOR
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Realisasi vs Anggaran"
-- **Isi Pesan:** `"Realisasi pengeluaran '{catName}' berada di atas batas alokasi selama 3 periode berturut-turut (rata-rata Rp {rataRataRealisasi} vs batas Rp {batasNominal}). Tersedia opsi penyesuaian target alokasi."`
-- **Tingkat Urgensi:** _warning_
-- **Tombol Aksi:** `"Sesuaikan Anggaran"` → `/budgets`
-
-**Jenis Keluaran:** **Tingkat 3: Saran Eksekutif (Actionable Recommendation)**. Mengkritisi batas alokasi itu sendiri dan mengusulkan evaluasi parameter anggaran agar kembali kredibel dan efektif sebagai panduan belanja.
+**Keluaran:** Judul *"Realisasi vs Anggaran"*, tingkat urgensi *warning*, pesan: *"Realisasi pengeluaran '{catName}' tercatat melebihi alokasi >20% dalam 3 bulan berturut-turut (rata-rata Rp {rataRataRealisasi} dari batas Rp {batasNominal})"*, dan tombol aksi *"Tinjau Anggaran"* (`/budgets?action=edit&budgetId=...&amount=...`).
+**Jenis keluaran:** Tingkat 3: Saran Eksekutif. Menyarankan peninjauan dan penyesuaian batas anggaran bagi kategori yang realisasi belanjanya konsisten melampaui rencana selama 3 bulan berturut-turut.
 
 ---
 
 ## Hubungan dengan Rule Pemulihan Alokasi Anggaran (BG-02)
 
-Pemantauan anggaran juga mencakup aturan penguatan positif atas kedisiplinan alokasi:
-- **Rule BG-02 — Pemulihan Alokasi Anggaran (Budget Recovery)**: Memberikan apresiasi objektif saat kategori yang pada bulan sebelumnya melampaui batas alokasi (*over-budget*), pada bulan berjalan berhasil kembali berada dalam koridor anggaran yang aman. Dokumentasi lengkap rule ini berada di [Kelompok 6: Reinforcement Positif & Fallback](file:///c:/moneta-finance-final-project/docs/rules/06-reinforcement-positif-dan-fallback.md#rule-bg-02--pemulihan-alokasi-anggaran-budget-recovery) karena berfungsi sebagai **Tingkat 2: Nudge (Nudge Apresiasi)**.
+Pemantauan anggaran juga mencakup aturan apresiasi atas perbaikan pola belanja:
+- **Rule BG-02 — Pemulihan Alokasi Anggaran (Budget Recovery)**: Memberikan notifikasi positif saat kategori yang pada bulan sebelumnya melampaui batas, di bulan ini berhasil dijaga dalam batas aman. Dokumentasi lengkap aturan ini dibahas pada [Kelompok 6: Reinforcement Positif & Fallback](file:///c:/moneta-finance-final-project/docs/rules/06-reinforcement-positif-dan-fallback.md#rule-bg-02--pemulihan-alokasi-anggaran-budget-recovery) sebagai **Tingkat 2: Nudge**.

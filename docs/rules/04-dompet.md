@@ -1,17 +1,17 @@
 # Kelompok 4: Dompet (Wallets)
 
-Kelompok ini mencakup aturan-aturan yang memantau kesehatan likuiditas dompet pengguna dan kebiasaan penggunaan instrumen pembayaran. Penerapan prinsip **Calm UI** dan **Choice Architecture (Richard Thaler)** pada kelompok dompet berfokus pada penyajian cermin data likuiditas yang tenang tanpa memicu kecemasan finansial saat saldo mendekati batas bawah, melainkan memberikan kesadaran (*ambient liquidity awareness*) dan menjaga ketersediaan dana operasional.
+Kelompok ini mencakup aturan-aturan yang memantau saldo dompet pengguna dan kebiasaan pemilihan sumber dana saat bertransaksi. Seluruh informasi disajikan dengan pendekatan antarmuka tenang (*Calm UI*), berfokus pada penyampaian fakta posisi dana secara objektif tanpa menimbulkan kekhawatiran.
 
-Seluruh luaran diklasifikasikan ke dalam **Taksonomi 3 Tingkat Luaran** hasil revisi sidang:
-1. **Tingkat 1: Insight Pola (Faktual/Deskriptif)** — Mengidentifikasi afinitas atau konsentrasi penggunaan dompet tanpa atribusi benar/salah.
-2. **Tingkat 2: Nudge (Choice Architecture)** — Menghadirkan *salience* terhadap kondisi likuiditas atau percepatan laju pengeluaran kas (*burn rate*) secara objektif.
-3. **Tingkat 3: Saran Eksekutif (Rekomendasi Tindakan)** — Memberikan opsi relokasi likuiditas atau penyesuaian dompet sumber saat terdeteksi selisih alokasi.
+Sesuai kerangka evaluasi tugas akhir, luaran diklasifikasikan ke dalam **Taksonomi 3 Tingkat**:
+1. **Tingkat 1: Insight Pola** — Informasi faktual atau deskriptif mengenai pola dan posisi keuangan.
+2. **Tingkat 2: Nudge** — Pengingat atau dorongan halus berbasis data untuk membantu pengguna mengelola keuangan secara mandiri.
+3. **Tingkat 3: Saran Eksekutif** — Rekomendasi tindakan spesifik yang dapat langsung dieksekusi oleh pengguna.
 
 ---
 
 ## Rule WL-02 — Kilas Saldo Dompet (Low Cash Snapshot)
 
-> **Catatan Pembaruan Calm UI:** Menggunakan judul netral *"Kilas Saldo Dompet"* dengan severity informatif netral (`info`) untuk memberikan kesadaran likuiditas objektif tanpa alarmisme.
+> **Catatan Pembaruan Calm UI:** Menggunakan judul netral *"Kilas Saldo Dompet"* dengan tingkat urgensi informatif (*info*) untuk menyajikan posisi saldo secara objektif tanpa alarmisme.
 
 **Entitas yang dipantau:** Dompet × Seluruh Riwayat Transaksi
 
@@ -51,7 +51,7 @@ Algoritma
 
         IF saldo < batasAman THEN
             OUTPUT Nudge("Kilas Saldo Dompet", 
-                         "Saldo dompet '" + dompet.nama + "' saat ini tercatat " + formatMataUang(saldo) + ".",
+                         "Saldo dompet '" + dompet.nama + "' saat ini tercatat " + formatMataUang(saldo) + " (di bawah ambang " + formatMataUang(batasAman) + ").",
                          urgensi=info,
                          ctaLabel="Lihat Dompet",
                          ctaRoute="/wallets")
@@ -60,19 +60,14 @@ Algoritma
     END FOR
 ```
 
-**Keluaran UI:**
-- **Judul:** `"Kilas Saldo Dompet"`
-- **Pesan:** `"Saldo dompet '{namaDompet}' saat ini tercatat {saldo}."`
-- **Tingkat Urgensi / Severity:** `info` (Prioritas evaluasi: 0.5)
-- **Tombol Aksi (CTA):** `"Lihat Dompet"` &rarr; `/wallets`
-
-**Klasifikasi Luaran:** **Tingkat 2: Nudge (Digital Nudging — Refleksi Likuiditas Faktual)**. Rule ini menghitung saldo riil dompet dengan menelusuri seluruh riwayat transaksi (termasuk mutasi transfer antar-dompet). Pendekatan Calm UI memastikan fakta saldo disajikan secara jernih tanpa kalimat menghakimi, sehingga pengguna secara mandiri memutuskan apakah perlu melakukan isi ulang saldo (*top up*) atau mengalihkan pengeluaran harian.
+**Keluaran:** Judul *"Kilas Saldo Dompet"*, tingkat urgensi *info*, pesan: *"Saldo dompet '{namaDompet}' saat ini tercatat Rp {saldo} (di bawah ambang Rp {batasAman})"*, dan tombol aksi *"Lihat Dompet"* (`/wallets`).
+**Jenis keluaran:** Tingkat 2: Nudge. Menginformasikan bahwa saldo dompet berada di bawah ambang batas aman (10% dari rata-rata pengeluaran bulanan atau minimal Rp100.000), membantu pengguna memperhatikan ketersediaan dana operasional.
 
 ---
 
 ## Rule WL-01 — Dinamika Pengeluaran Dompet (Wallet Drain Rate)
 
-> **Catatan Pembaruan Calm UI:** Sebelumnya berjudul *"Saldo Dompet Turun Cepat"*. Diperbarui menjadi *"Dinamika Pengeluaran Dompet"* dengan severity informatif (`info`) yang memaparkan fakta rasio laju pengeluaran harian (*burn rate*) secara terukur.
+> **Catatan Pembaruan Calm UI:** Sebelumnya berjudul *"Saldo Dompet Turun Cepat"*. Diperbarui menjadi *"Dinamika Pengeluaran Dompet"* dengan tingkat urgensi informatif (*info*) yang menyajikan perbandingan laju pengeluaran secara terukur.
 
 **Entitas yang dipantau:** Dompet × Transaksi Pengeluaran (bulan ini vs bulan lalu)
 
@@ -93,7 +88,7 @@ Algoritma
     hariIni           ← tanggal hari ini dalam bulan
     hariDalamBulanLalu← jumlah hari dalam bulan lalu
 
-    IF hariIni < 7 THEN RETURN  { data bulan ini belum representatif }
+    IF hariIni < 7 THEN RETURN  { data transaksi masih minim }
 
     FOR EACH dompet DO
         IF dompet.tipe = 'INVESTASI' THEN SKIP
@@ -120,13 +115,8 @@ Algoritma
     END FOR
 ```
 
-**Keluaran UI:**
-- **Judul:** `"Dinamika Pengeluaran Dompet"`
-- **Pesan:** `"Laju pengeluaran dari dompet '{namaDompet}' bulan ini tercatat 1,5× lebih cepat dibanding bulan sebelumnya."`
-- **Tingkat Urgensi / Severity:** `info` (Prioritas evaluasi: 1.8)
-- **Tombol Aksi (CTA):** `"Lihat Dompet"` &rarr; `/wallets`
-
-**Klasifikasi Luaran:** **Tingkat 2: Nudge (Digital Nudging — Pemantauan Akselerasi Pengeluaran / Burn Rate)**. Rule ini tidak mengevaluasi saldo absolut, melainkan akselerasi tempo pengurasan dana. Dengan menyajikan kelipatan laju (1,5× lipat) secara objektif, pengguna terbantu untuk mengantisipasi dinamika ketersediaan kas sebelum siklus pemasukan berikutnya tiba.
+**Keluaran:** Judul *"Dinamika Pengeluaran Dompet"*, tingkat urgensi *info*, pesan: *"Laju pengeluaran dari dompet '{namaDompet}' bulan ini tercatat 1,5× lebih cepat dibanding bulan sebelumnya"*, dan tombol aksi *"Lihat Dompet"* (`/wallets`).
+**Jenis keluaran:** Tingkat 2: Nudge. Menginformasikan jika laju pengeluaran harian suatu dompet tercatat 1,5 kali lebih cepat dibanding bulan sebelumnya, membantu pengguna mengantisipasi ketersediaan saldo hingga akhir bulan.
 
 ---
 
@@ -161,7 +151,7 @@ Algoritma
 
         IF rasio > 0,9 THEN
             OUTPUT Insight("Penggunaan Dompet Dominan",
-                           "Sebagian besar transaksimu bulan ini (" + ROUND(rasio * 100) + "%) dicatat menggunakan dompet '" + dompet.nama + "'.",
+                           "Sebagian besar transaksi bulan ini (" + ROUND(rasio * 100) + "%) dicatat menggunakan dompet '" + dompet.nama + "'.",
                            urgensi=neutral,
                            ctaLabel="Lihat Dompet",
                            ctaRoute="/wallets")
@@ -170,13 +160,8 @@ Algoritma
     END FOR
 ```
 
-**Keluaran UI:**
-- **Judul:** `"Penggunaan Dompet Dominan"`
-- **Pesan:** `"Sebagian besar transaksimu bulan ini ({persentase}%) dicatat menggunakan dompet '{namaDompet}'."`
-- **Tingkat Urgensi / Severity:** `neutral` (Prioritas evaluasi: 3.9)
-- **Tombol Aksi (CTA):** `"Lihat Dompet"` &rarr; `/wallets`
-
-**Klasifikasi Luaran:** **Tingkat 1: Insight Pola (Faktual/Deskriptif — Observasi Kebiasaan Instrumen Pembayaran)**. Rule ini mengidentifikasi konsentrasi transaksi pada satu dompet utama (misal rekening gaji atau satu e-wallet tertentu) di antara beberapa dompet yang terdaftar, berguna bagi pengguna untuk meninjau apakah pemisahan pos rekening fungsional telah berjalan efektif.
+**Keluaran:** Judul *"Penggunaan Dompet Dominan"*, tingkat urgensi *neutral*, pesan: *"Sebagian besar transaksi bulan ini ({persentase}%) dicatat menggunakan dompet '{namaDompet}'"*, dan tombol aksi *"Lihat Dompet"* (`/wallets`).
+**Jenis keluaran:** Tingkat 1: Insight Pola. Mengidentifikasi jika lebih dari 90% transaksi terpusat pada satu dompet saja, memberikan gambaran mengenai kebiasaan pemilihan metode pembayaran.
 
 ---
 
@@ -215,7 +200,7 @@ Algoritma
             rasioDompet ← nominalDompet / totalPerKategori[kategoriId]
             IF rasioDompet >= 0,8 THEN
                 OUTPUT Insight("Pola Penggunaan Dompet",
-                               "Sekadar info: " + ROUND(rasioDompet * 100) + "% pengeluaran '" + kategori.nama + "'-mu selalu menggunakan dompet '" + dompet.nama + "'.",
+                               "Sebesar " + ROUND(rasioDompet * 100) + "% pengeluaran '" + kategori.nama + "' tercatat menggunakan dompet '" + dompet.nama + "'.",
                                urgensi=neutral,
                                ctaLabel="Lihat Dompet",
                                ctaRoute="/wallets")
@@ -225,10 +210,5 @@ Algoritma
     END FOR
 ```
 
-**Keluaran UI:**
-- **Judul:** `"Pola Penggunaan Dompet"`
-- **Pesan:** `"Sekadar info: {persentase}% pengeluaran '{kategori}'-mu selalu menggunakan dompet '{namaDompet}'."`
-- **Tingkat Urgensi / Severity:** `neutral` (Prioritas evaluasi: 3.8)
-- **Tombol Aksi (CTA):** `"Lihat Dompet"` &rarr; `/wallets`
-
-**Klasifikasi Luaran:** **Tingkat 1: Insight Pola (Faktual/Deskriptif — Observasi Afinitas Kategori-Dompet)**. Menangkap kebiasaan implisit pengguna (misalnya: alokasi pesan-antar makanan 90% selalu dibayar lewat GoPay), membantu pengguna memahami *mental accounting* sehari-hari tanpa memaksakan perubahan perilaku untuk memastikan strategi alokasi dana tetap sesuai rencana.
+**Keluaran:** Judul *"Pola Penggunaan Dompet"*, tingkat urgensi *neutral*, pesan: *"Sebesar {persentase}% pengeluaran '{kategori}' tercatat menggunakan dompet '{namaDompet}'"*, dan tombol aksi *"Lihat Dompet"* (`/wallets`).
+**Jenis keluaran:** Tingkat 1: Insight Pola. Menampilkan hubungan kebiasaan antara kategori belanja tertentu dengan dompet yang paling sering digunakan untuk membayarnya.

@@ -570,13 +570,13 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
       expect(rule).toBeUndefined();
     });
 
-    // AN-10 (a): Data Pemasukan Kosong -> Selisih Arus Kas
-    test('[AN-10a] VALID: income=0, expense>0 triggers "Selisih Arus Kas" (critical)', async () => {
+    // AN-10 (a): Data Pemasukan Kosong -> Catatan Pemasukan Bulan Ini
+    test('[AN-10a] VALID: income=0, expense>0 triggers "Catatan Pemasukan Bulan Ini" (critical)', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         current: { income: 0, expense: 2_000_000, net: -2_000_000 },
       });
-      const rule = insights.find((i: any) => i.title === 'Selisih Arus Kas');
+      const rule = insights.find((i: any) => i.title === 'Catatan Pemasukan Bulan Ini');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('critical');
     });
@@ -614,13 +614,13 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
     });
 
     // AN-10a INVALID
-    test('[AN-10a] INVALID: income=0 AND expense=0 does NOT trigger "Selisih Arus Kas"', async () => {
+    test('[AN-10a] INVALID: income=0 AND expense=0 does NOT trigger "Catatan Pemasukan Bulan Ini"', async () => {
       // Kondisi: income <= 0 && expense > 0 — jika expense juga 0, rule tidak terpicu
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         current: { income: 0, expense: 0, net: 0 },
       });
-      const rule = insights.find((i: any) => i.title === 'Selisih Arus Kas');
+      const rule = insights.find((i: any) => i.title === 'Catatan Pemasukan Bulan Ini');
       expect(rule).toBeUndefined();
     });
 
@@ -689,12 +689,12 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
   test.describe('Kelompok E — Target Keuangan', () => {
 
     // FT-01: Target Gap Alert
-    test('[FT-01] VALID: targetGapAlert (>30% elapsed, income=0) triggers "Target Belum Ada Progres"', async () => {
+    test('[FT-01] VALID: targetGapAlert (>30% elapsed, income=0) triggers "Posisi Progres Target"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         targetGapAlert: { targetName: 'Tabungan Darurat', targetId: 'tgt-1', elapsedPct: 0.45 },
       });
-      const rule = insights.find((i: any) => i.title === 'Target Belum Ada Progres');
+      const rule = insights.find((i: any) => i.title === 'Posisi Progres Target');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('warning');
       expect(rule.priority).toBe(2.3);
@@ -702,24 +702,24 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
 
     test('[FT-01] INVALID: null targetGapAlert does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, targetGapAlert: null });
-      const rule = insights.find((i: any) => i.title === 'Target Belum Ada Progres');
+      const rule = insights.find((i: any) => i.title === 'Posisi Progres Target');
       expect(rule).toBeUndefined();
     });
 
     // FT-02: Target Progress Impact
-    test('[FT-02] VALID: targetProgressImpact (expense > 80% target) triggers "Pengeluaran vs Target Pemasukan"', async () => {
+    test('[FT-02] VALID: targetProgressImpact (expense > 80% target) triggers "Pengeluaran vs Target Keuangan"', async () => {
       const insights = await evalNudges(page, {
         ...EMPTY_PARAMS,
         targetProgressImpact: { targetName: 'Gaji Bulanan', targetId: 'tgt-2', expenseAmount: 4_200_000, targetAmount: 5_000_000, periodType: 'MONTHLY' },
       });
-      const rule = insights.find((i: any) => i.title === 'Pengeluaran vs Target Pemasukan');
+      const rule = insights.find((i: any) => i.title === 'Pengeluaran vs Target Keuangan');
       expect(rule).toBeDefined();
       expect(rule.severity).toBe('info');
     });
 
     test('[FT-02] INVALID: null targetProgressImpact does NOT trigger rule', async () => {
       const insights = await evalNudges(page, { ...EMPTY_PARAMS, targetProgressImpact: null });
-      const rule = insights.find((i: any) => i.title === 'Pengeluaran vs Target Pemasukan');
+      const rule = insights.find((i: any) => i.title === 'Pengeluaran vs Target Keuangan');
       expect(rule).toBeUndefined();
     });
 
@@ -895,6 +895,64 @@ test.describe('4. Insight Engine — Rule Automation (30+ Rules)', () => {
       // Must be sorted ascending
       for (let i = 1; i < insights.length; i++) {
         expect(insights[i].priority).toBeGreaterThanOrEqual(insights[i - 1].priority);
+      }
+
+      // Calm Language Audit: Verifikasi 0 kata vonis/alarm/imperatif pada seluruh luaran wawasan
+      const forbiddenWords = [
+        'menipis', 'kritis', 'jebol', 'defisit', 'tidak realistis', 'bahaya',
+        'peringatan', 'awas', 'segera', 'periksa', 'waspada', 'waspadai',
+        'cek', 'sesuaikan', 'berhasil', 'kamu', 'belum'
+      ];
+
+      for (const ins of insights) {
+        const textToAudit = `${ins.title} ${ins.body || ''} ${ins.message || ''} ${ins.ctaLabel || ''}`.toLowerCase();
+        for (const word of forbiddenWords) {
+          const re = new RegExp(`\\b${word}\\b`, 'i');
+          expect(re.test(textToAudit), `Insight '${ins.title}' contains forbidden word '${word}'`).toBe(false);
+        }
+      }
+
+      // Audit Statis Seluruh Berkas Mesin Aturan & Notifikasi (5 Berkas Inti)
+      const fs = require('fs');
+      const path = require('path');
+      const filesToAudit = [
+        path.resolve(__dirname, '../src/lib/nudging.ts'),
+        path.resolve(__dirname, '../src/lib/notifications/local-engine.ts'),
+        path.resolve(__dirname, '../src/hooks/use-analytics.ts'),
+        path.resolve(__dirname, '../src/hooks/use-dashboard.ts'),
+        path.resolve(__dirname, '../src/lib/db/seed-sidang-data.ts'),
+      ];
+      const keyRe = /\b(title|body|bodyText|message|ctaLabel|mergedTitle|mergedBody|mergedCtaLabel|comparisonText)\b\s*[:=+]|\b(title|body|bodyText|message|ctaLabel)\b/;
+
+      for (const filePath of filesToAudit) {
+        const fileContent = fs.readFileSync(filePath, 'utf8');
+
+        // 1. Line-by-line inspection
+        const lines = fileContent.split('\n');
+        for (let idx = 0; idx < lines.length; idx++) {
+          const line = lines[idx];
+          const trimmed = line.trim();
+          if (trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*')) continue;
+          if (!keyRe.test(line)) continue;
+          const lower = line.toLowerCase();
+          for (const word of forbiddenWords) {
+            const re = new RegExp(`\\b${word}\\b`, 'i');
+            expect(re.test(lower), `${path.basename(filePath)}:${idx + 1} contains forbidden word '${word}': ${trimmed}`).toBe(false);
+          }
+        }
+
+        // 2. Multiline template literal / string literal inspection
+        const multilineRegex = /\b(title|body|bodyText|message|ctaLabel|mergedTitle|mergedBody|mergedCtaLabel|comparisonText)\b\s*(?:[:=]|\+=)\s*(`[\s\S]*?`|'[\s\S]*?'|"[\s\S]*?")/g;
+        let match;
+        while ((match = multilineRegex.exec(fileContent)) !== null) {
+          const key = match[1];
+          const val = match[2];
+          const lower = val.toLowerCase();
+          for (const word of forbiddenWords) {
+            const re = new RegExp(`\\b${word}\\b`, 'i');
+            expect(re.test(lower), `${path.basename(filePath)} multiline property '${key}' contains forbidden word '${word}': ${val.slice(0, 100)}`).toBe(false);
+          }
+        }
       }
     });
   });

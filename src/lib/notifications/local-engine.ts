@@ -317,7 +317,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
         const balance = calculateWalletBalance(w, allTxns);
 
         if (balance < threshold) {
-          return { walletName: w.name, currentBalance: balance, walletId: w.clientId! };
+          return { walletName: w.name, currentBalance: balance, walletId: w.clientId!, threshold };
         }
       }
       return null;
@@ -464,7 +464,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
             dedupeKeyOverride = `BUDGET_REALLOCATION_RECOMMENDATION:${userId}:${currentPeriodStr}:${recommendation.targetBudgetId}:${recommendation.sourceBudgetId}:${contextHash}`;
 
             mergedTitle = 'Kilas Penyesuaian';
-            mergedBody = `Tersedia sisa ${formatCurrency(recommendation.recommendedAmount)} di kategori ${recommendation.sourceCategoryName} untuk mendukung kategori ${catName}.`;
+            mergedBody = `Alokasi ${catName} telah terpakai penuh. Tersedia opsi mengalihkan ${formatCurrency(recommendation.recommendedAmount)} dari kategori ${recommendation.sourceCategoryName}.`;
             mergedCtaLabel = 'Tinjau Opsi Penyeimbangan';
             mergedCtaRoute = `/budgets?action=reallocate&sourceBudgetId=${recommendation.sourceBudgetId}&targetBudgetId=${recommendation.targetBudgetId}&amount=${recommendation.recommendedAmount}`;
             actionType = 'REALLOCATE_BUDGET';
@@ -535,7 +535,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
           priority: BUDGET_INFO_PRIORITY,
           severity: 'info',
           title: 'Progres Alokasi',
-          body: `Alokasi ${catName} tersisa ${formatCurrency(budgetLimit - spent)} (50% dari total alokasi awal).`,
+          body: `Alokasi ${catName} telah terpakai ${Math.round(ratio * 100)}%, tersisa ${formatCurrency(budgetLimit - spent)}.`,
           ctaLabel: 'Lihat Anggaran',
           ctaRoute: '/budgets',
           relatedBudgetId: budget.clientId,
@@ -554,7 +554,7 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
         priority: 0.5,
         severity: 'info',
         title: 'Kilas Saldo Dompet',
-        body: `Saldo dompet '${lowCashWarning.walletName}' saat ini tercatat ${formatCurrency(lowCashWarning.currentBalance)}.`,
+        body: `Saldo dompet '${lowCashWarning.walletName}' saat ini tercatat ${formatCurrency(lowCashWarning.currentBalance)} (di bawah ambang ${formatCurrency(lowCashWarning.threshold)}).`,
         ctaLabel: 'Lihat Dompet',
         ctaRoute: '/wallets',
       });
@@ -752,16 +752,14 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
         const isCritical = insight.priority === BUDGET_CRITICAL_PRIORITY || insight.severity === 'critical';
         const nowMs = Date.now();
 
-        /********** Cooldown 1: Inter-rule gap 30 menit — skip untuk critical. */
-        if (!isCritical) {
-          const lastPushIso = readLastPushTsFromLS();
-          if (lastPushIso) {
-            const lastPushMs = new Date(lastPushIso).getTime();
-            const gapMinutes = (nowMs - lastPushMs) / 60000;
-            if (gapMinutes < 30) {
-              console.log(`[LocalEngine] Push skipped — reason: inter_rule_gap_active (gap: ${gapMinutes.toFixed(1)}m < 30m)`);
-              break;
-            }
+        /********** Cooldown 1: Inter-rule gap (30 menit) untuk seluruh push notifikasi. */
+        const lastPushIso = readLastPushTsFromLS();
+        if (lastPushIso) {
+          const lastPushMs = new Date(lastPushIso).getTime();
+          const gapMinutes = (nowMs - lastPushMs) / 60000;
+          if (gapMinutes < 30) {
+            console.log(`[LocalEngine] Push skipped — reason: inter_rule_gap_active (gap: ${gapMinutes.toFixed(1)}m < 30m)`);
+            break;
           }
         }
 
@@ -788,13 +786,13 @@ export async function evaluateAndTriggerNudges(createdTxn: Transaction): Promise
             icon: '/icons/icon-192x192.png',
             tag: dedupeKey, // Prevent duplicate OS banners for same event
             renotify: true, // Force banner even if same tag was reused
-            requireInteraction: isCritical, // Keep critical alerts on screen
+            requireInteraction: false, // Calm Nudge: tidak memaku notifikasi di layar pengguna
             data: {
               clientId: logId,
               logId: logId,
               ctaRoute: insight.ctaRoute || '/notifications',
               url: insight.ctaRoute || '/notifications',
-              type: isCritical ? 'DEFICIT' : 'INSTANT',
+              type: 'INSTANT',
               relatedBudgetId: insight.relatedBudgetId,
               relatedCategoryId: insight.relatedCategoryId,
               actionType: insight.actionType,
@@ -875,11 +873,11 @@ export async function evaluateTargetNudges(createdTxn: Transaction): Promise<voi
       if (progress.percentage >= 100) {
         threshold = '100';
         title = `Target Tercapai: "${target.name}"`;
-        body = `Selamat, target pemasukanmu telah tercapai (${formatCurrency(progress.currentAmount)} dari ${formatCurrency(target.targetAmount)}).`;
+        body = `Target Keuangan tercapai penuh (${formatCurrency(progress.currentAmount)} dari ${formatCurrency(target.targetAmount)}).`;
       } else if (progress.percentage >= 80) {
         threshold = '80';
-        title = `Hampir Tercapai: "${target.name}"`;
-        body = `Pemasukanmu sudah mencapai ${progress.percentage}% dari target (${formatCurrency(progress.currentAmount)} dari ${formatCurrency(target.targetAmount)}).`;
+        title = `Progres Target: "${target.name}"`;
+        body = `Akumulasi alokasi mencapai ${progress.percentage}% dari target (${formatCurrency(progress.currentAmount)} dari ${formatCurrency(target.targetAmount)}).`;
       }
 
       if (threshold) {
@@ -935,13 +933,13 @@ export async function evaluateTargetNudges(createdTxn: Transaction): Promise<voi
                   icon: '/icons/icon-192x192.png',
                   tag: dedupeKey,
                   renotify: true,
-                  requireInteraction: progress.percentage >= 100,
+                  requireInteraction: false,
                   data: {
                     clientId: logId,
                     logId: logId,
                     ctaRoute: '/targets',
                     url: '/targets',
-                    type: progress.percentage >= 100 ? 'DEFICIT' : 'INSTANT',
+                    type: 'INSTANT',
                     actionType: 'VIEW_TARGET',
                     ctaLabel: 'Lihat Target',
                   },

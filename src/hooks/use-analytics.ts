@@ -219,9 +219,12 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
   }, [donutData, prevTxns, allCategories]);
 
   const weeklySavings = useMemo(() => {
-    const net = barData.reduce((s, d) => s + d.income - d.expense, 0);
+    const since = dayjs().subtract(6, 'day').startOf('day');
+    const net = allTxns
+      .filter((t) => !t.deletedAt && t.type !== 'TRANSFER' && !dayjs(t.date).isBefore(since))
+      .reduce((s, t) => s + (t.type === 'INCOME' ? Number(t.amount) : -Number(t.amount)), 0);
     return Math.max(0, net);
-  }, [barData]);
+  }, [allTxns]);
 
   // Analytics Nudge Indicators
   const paydayLeak = useMemo(() => {
@@ -496,7 +499,7 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
     let eveningTotal = 0;
 
     for (const t of expenses) {
-      const hour = dayjs(t.date).hour();
+      const hour = dayjs(t.createdAt || t.date).hour();
       if (hour >= 5 && hour <= 11) morningTotal += Number(t.amount);
       else if (hour >= 17 && hour <= 21) eveningTotal += Number(t.amount);
     }
@@ -629,7 +632,7 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
       const balance = calculateWalletBalance(w, allTxns);
 
       if (balance < threshold) {
-        return { walletName: w.name, currentBalance: balance, walletId: w.clientId! };
+        return { walletName: w.name, currentBalance: balance, walletId: w.clientId!, threshold };
       }
     }
     return null;
@@ -791,6 +794,8 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
     const today = new Date();
     const todayDayjs = dayjs(today);
 
+    let bestCandidate: { targetName: string; targetId: string; elapsedPct: number; progressPct: number } | null = null;
+
     for (const target of allTargets) {
       if (!target.isActive) continue;
 
@@ -824,10 +829,12 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
         .reduce((s, t) => s + Number(t.amount), 0);
 
       if (currentAmount === 0) {
-        return { targetName: target.name, targetId: target.clientId!, elapsedPct };
+        if (!bestCandidate || elapsedPct > bestCandidate.elapsedPct) {
+          bestCandidate = { targetName: target.name, targetId: target.clientId!, elapsedPct, progressPct: 0 };
+        }
       }
     }
-    return null;
+    return bestCandidate;
   }, [allTargets, allTxns]);
 
   const targetProgressImpact = useMemo(() => {
@@ -835,9 +842,19 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
     const today = new Date();
     const todayDayjs = dayjs(today);
 
+    let bestCandidate: {
+      targetName: string;
+      targetId: string;
+      expenseAmount: number;
+      targetAmount: number;
+      periodType: string;
+      ratio: number;
+    } | null = null;
+
     for (const target of allTargets) {
       if (!target.isActive) continue;
       const targetAmount = Number(target.targetAmount);
+      if (targetAmount <= 0) continue;
 
       // Use the effective period for the CURRENT date (handles rollover correctly)
       const effectiveRange = getTargetEffectiveDateRange(target, today);
@@ -859,18 +876,31 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
         })
         .reduce((s, t) => s + Number(t.amount), 0);
 
-      // Trigger if expense > 80% of target income amount
-      if (expenseInTargetPeriod > targetAmount * 0.8) {
-        return {
-          targetName: target.name,
-          targetId: target.clientId!,
-          expenseAmount: expenseInTargetPeriod,
-          targetAmount,
-          periodType: target.period,
-        };
+      const ratio = expenseInTargetPeriod / targetAmount;
+
+      // Trigger if expense > 80% of target income amount (opportunity cost perspective)
+      if (ratio > 0.8) {
+        if (!bestCandidate || ratio > bestCandidate.ratio) {
+          bestCandidate = {
+            targetName: target.name,
+            targetId: target.clientId!,
+            expenseAmount: expenseInTargetPeriod,
+            targetAmount,
+            periodType: target.period,
+            ratio,
+          };
+        }
       }
     }
-    return null;
+
+    if (!bestCandidate) return null;
+    return {
+      targetName: bestCandidate.targetName,
+      targetId: bestCandidate.targetId,
+      expenseAmount: bestCandidate.expenseAmount,
+      targetAmount: bestCandidate.targetAmount,
+      periodType: bestCandidate.periodType,
+    };
   }, [allTargets, allTxns]);
 
   /********** Indikator Phase 3 — Histori Multi-Bulan **********/
@@ -1203,10 +1233,10 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
       if (recommendation) {
         reallocationInsight = {
           priority: -1,
-          severity: 'critical' as const, // Ensures it sorts to the top
-          title: 'Rekomendasi Subsidi Silang',
-          body: `Moneta menemukan opsi subsidi silang dari anggaran ${recommendation.sourceCategoryName} ke ${recommendation.targetCategoryName} sebesar ${formatCurrency(recommendation.recommendedAmount)}. Rekomendasi ini dibuat berdasarkan sisa anggaran yang masih cukup besar, tetapi prioritas penggunaan anggaran tetap kamu yang menentukan.`,
-          ctaLabel: 'Subsidi Silang',
+          severity: 'info' as const, // urutan tetap aman karena priority -1
+          title: 'Kilas Penyesuaian',
+          body: `Alokasi ${recommendation.targetCategoryName} telah terpakai penuh. Tersedia opsi mengalihkan ${formatCurrency(recommendation.recommendedAmount)} dari kategori ${recommendation.sourceCategoryName}.`,
+          ctaLabel: 'Tinjau Opsi Penyeimbangan',
           ctaRoute: `/budgets?action=reallocate&sourceBudgetId=${recommendation.sourceBudgetId}&targetBudgetId=${recommendation.targetBudgetId}&amount=${recommendation.recommendedAmount}`,
           actionType: 'REALLOCATE_BUDGET',
           sourceBudgetId: recommendation.sourceBudgetId,

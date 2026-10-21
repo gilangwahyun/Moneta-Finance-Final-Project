@@ -604,13 +604,13 @@ export async function seedSidangDataForUser(userId: string, db: any) {
   const currentWeekStr = dayjs().format("YYYY-ww");
 
   const notifLogs = [
-    // ① FT-01 — Target Belum Ada Progres (Priority 2.3, warning/reflective)
+    // ① FT-01 — Posisi Progres Target (Priority 2.3, warning/reflective)
     {
       clientId: randomUUID(),
-      dedupeKey: `GENERIC_NUDGE:${userId}:TargetBelumAdaProgres:${currentMonthStr}`,
+      dedupeKey: `GENERIC_NUDGE:${userId}:PosisiProgresTarget:${currentMonthStr}`,
       userId,
-      title: "Target Belum Ada Progres",
-      body: "Target 'Dana Darurat & Liburan Akhir Tahun' sudah berjalan 67% dari periodenya, namun belum ada pemasukan yang tercatat. Pastikan target sudah sesuai rencanamu.",
+      title: "Posisi Progres Target",
+      body: "Target 'Dana Darurat & Liburan Akhir Tahun' berada di 67% periode waktunya, dengan progres 0%.",
       type: "2.3",
       eventType: "SPENDING_INSIGHT",
       status: "delivered",
@@ -628,7 +628,7 @@ export async function seedSidangDataForUser(userId: string, db: any) {
       dedupeKey: `GENERIC_NUDGE:${userId}:PolaPenggunaanDompet:${currentMonthStr}`,
       userId,
       title: "Pola Penggunaan Dompet",
-      body: "Sekadar info: 94% pengeluaran 'Jajan'-mu selalu menggunakan dompet 'Dompet Utama (BCA)'.",
+      body: "Sekadar info: 94% pengeluaran 'Jajan' selalu menggunakan dompet 'Dompet Utama (BCA)'.",
       type: "3.8",
       eventType: "SPENDING_INSIGHT",
       status: "delivered",
@@ -646,7 +646,7 @@ export async function seedSidangDataForUser(userId: string, db: any) {
       dedupeKey: `WANTS_PROJECTION:${userId}:${currentMonthStr}`,
       userId,
       title: "Proyeksi Kebiasaan",
-      body: "Bulan ini kategori Jajan menjadi salah satu pengeluaran terbesar dengan total Rp 190.000. Kamu sudah melakukan transaksi ini sebanyak 8 kali secara berulang. Jika pola ini berlanjut, estimasi tahunannya dapat mencapai Rp 2.280.000. Pertimbangkan memantau pola pengeluaran ini agar tetap terkendali.",
+      body: "Bulan ini kategori Jajan menjadi salah satu pengeluaran terbesar dengan total Rp 190.000. Transaksi tercatat sebanyak 8 kali secara berulang. Jika pola ini berlanjut, estimasi tahunannya dapat mencapai Rp 2.280.000. Pola pengeluaran ini dapat dipantau agar tetap berimbang.",
       type: "2.5",
       eventType: "SPENDING_INSIGHT",
       status: "delivered",
@@ -658,13 +658,13 @@ export async function seedSidangDataForUser(userId: string, db: any) {
       updatedAt: now,
     },
 
-    // ④ PR-01 — Berhasil Berhemat / Weekly Savings (Priority 3.5, positive)
+    // ④ PR-01 — Surplus Mingguan / Weekly Savings (Priority 3.5, positive)
     {
       clientId: randomUUID(),
       dedupeKey: `WEEKLY_SAVINGS:${userId}:${currentWeekStr}`,
       userId,
-      title: "Kamu Berhasil Berhemat!",
-      body: "Hebat! Kamu berhasil menyisakan saldo positif pada 7 hari terakhir. Pertahankan kebiasaan baik ini.",
+      title: "Surplus Mingguan",
+      body: "Selisih pemasukan dan pengeluaran 7 hari terakhir tercatat positif sebesar Rp 350.000.",
       type: "3.5",
       eventType: "SPENDING_INSIGHT",
       status: "delivered",

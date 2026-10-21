@@ -1,11 +1,11 @@
 # Kelompok 3: Analitik Pola (Pattern Analytics)
 
-Kelompok ini mencakup aturan-aturan yang menggali pola pengeluaran jangka panjang, pergeseran tren historis, dan proyeksi kebiasaan di masa depan. Seluruh luaran pada kelompok ini dirancang sebagai **Cermin Data Objektif (Objective Data Mirror)** dalam paradigma **Choice Architecture (Richard Thaler)** dan disajikan dalam **Calm UI** tanpa menghakimi atau mendikte pengguna.
+Kelompok ini mencakup aturan-aturan yang menggali pola pengeluaran jangka panjang, pergeseran tren historis, dan proyeksi kebiasaan di masa depan. Seluruh informasi disajikan dengan pendekatan antarmuka tenang (*Calm UI*) berbasis data faktual yang objektif untuk membantu pengguna memahami kebiasaan keuangannya secara mandiri tanpa merasa dihakimi.
 
 Sesuai kerangka evaluasi tugas akhir, luaran diklasifikasikan ke dalam **Taksonomi 3 Tingkat**:
-1. **Tingkat 1: Insight Pola** — Cermin data faktual/deskriptif murni (ritme temporal, komposisi, klusterisasi).
-2. **Tingkat 2: Nudge (Choice Architecture)** — Dorongan halus berupa cermin data preventif (proyeksi efek snowball, creeping, margin tabungan).
-3. **Tingkat 3: Saran Eksekutif** — Rekomendasi resolusi spesifik dan terukur yang langsung dapat dieksekusi pengguna (*actionable recommendation*).
+1. **Tingkat 1: Insight Pola** — Informasi faktual atau deskriptif mengenai pola dan posisi keuangan.
+2. **Tingkat 2: Nudge** — Pengingat atau dorongan halus berbasis data untuk membantu pengguna mengelola keuangan secara mandiri.
+3. **Tingkat 3: Saran Eksekutif** — Rekomendasi tindakan spesifik yang dapat langsung dieksekusi oleh pengguna.
 
 ---
 
@@ -45,13 +45,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Pola Hari Transaksi"
-- **Isi Pesan (Cermin Data Faktual):** `"Akumulasi pengeluaran tertinggi bulan ini tercatat pada hari {hariPuncak} ({persentaseHariPuncak}% dari total pengeluaran, dominan pada kategori {kategoriDominan.nama})."`
-- **Tingkat Urgensi:** _neutral_
-- **Tombol Aksi:** `"Lihat Tren"` → `/analytics`
-
-**Jenis Keluaran:** **Tingkat 1: Insight Pola (Faktual / Deskriptif — Observasi Temporal)**. Menyajikan peta ritme mingguan belanja pengguna secara netral untuk mempermudah perencanaan jadwal pengeluaran.
+**Keluaran:** Judul *"Pola Hari Transaksi"*, tingkat urgensi *neutral*, pesan: *"Akumulasi pengeluaran tertinggi bulan ini tercatat pada hari {hariPuncak} ({persentaseHariPuncak}% dari total pengeluaran, dominan pada kategori {kategoriDominan.nama})"*, dan tombol aksi *"Lihat Tren"* (`/analytics`).
+**Jenis keluaran:** Tingkat 1: Insight Pola. Menampilkan hari dengan total belanja tertinggi dalam seminggu beserta kategori yang mendominasi, membantu pengguna mengenali jadwal pengeluaran rutin.
 
 ---
 
@@ -88,13 +83,8 @@ Algoritma
     END FOR
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Tren Pengeluaran Kategori"
-- **Isi Pesan (Cermin Data Faktual):** `"Pengeluaran pada kategori '{kategori.nama}' tercatat meningkat bertahap dalam 3 bulan terakhir (saat ini Rp {pengeluaranM1})."`
-- **Tingkat Urgensi:** _warning_
-- **Tombol Aksi:** `"Lihat Analisis"` → `/analytics`
-
-**Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Preventif — Deteksi Inflasi Gaya Hidup)**. Memantulkan tren kenaikan bertahap (*lifestyle creep*) yang kerap tidak disadari secara tenang dan terukur.
+**Keluaran:** Judul *"Tren Pengeluaran Kategori"*, tingkat urgensi *warning*, pesan: *"Pengeluaran pada kategori '{kategori.nama}' tercatat meningkat bertahap dalam 3 bulan terakhir (saat ini Rp {pengeluaranM1})"*, dan tombol aksi *"Lihat Analisis"* (`/analytics`).
+**Jenis keluaran:** Tingkat 2: Nudge. Menginformasikan kategori yang pengeluarannya bertambah secara bertahap selama 3 bulan berturut-turut, membantu pengguna menyadari tren peningkatan biaya hidup.
 
 ---
 
@@ -133,13 +123,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Dinamika Saldo Bersih"
-- **Isi Pesan (Cermin Data Faktual):** `"Selisih bersih (pemasukan - pengeluaran) menunjukkan dinamika penurunan dalam 3 bulan terakhir. Data ini berguna untuk evaluasi margin alokasi."`
-- **Tingkat Urgensi:** _warning_
-- **Tombol Aksi:** `"Lihat Anggaran"` → `/budgets`
-
-**Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Refleksi — Pengawasan Margin Tabungan)**.
+**Keluaran:** Judul *"Dinamika Saldo Bersih"*, tingkat urgensi *warning*, pesan: *"Selisih bersih (pemasukan - pengeluaran) tercatat menurun dalam 3 bulan terakhir (-{penurunan}%)"*, dan tombol aksi *"Tinjau Alokasi"* (`/budgets`).
+**Jenis keluaran:** Tingkat 2: Nudge. Menampilkan fakta penurunan selisih bersih (pemasukan dikurangi pengeluaran) selama 3 bulan berturut-turut, mengingatkan pengguna mengenai sisa dana yang dapat ditabung.
 
 ---
 
@@ -175,13 +160,8 @@ Algoritma
     END FOR
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Kategori Pengeluaran Baru"
-- **Isi Pesan (Cermin Data Faktual):** `"Kategori '{kategori.nama}' mencatat pengeluaran Rp {totalNominal} bulan ini setelah sebelumnya tidak aktif. Data ini menandai pos baru dalam alokasi Anda."`
-- **Tingkat Urgensi:** _info_
-- **Tombol Aksi:** `"Lihat Transaksi"` → `/transactions`
-
-**Jenis Keluaran:** **Tingkat 1: Insight Pola (Faktual / Deskriptif — Deteksi Pos Baru)**.
+**Keluaran:** Judul *"Kategori Pengeluaran Baru"*, tingkat urgensi *info*, pesan: *"Tercatat transaksi baru pada kategori '{kategori.nama}' (Rp {totalNominal} bulan ini) yang tidak tercatat dalam 3 bulan terakhir"*, dan tombol aksi *"Lihat Transaksi"* (`/transactions`).
+**Jenis keluaran:** Tingkat 1: Insight Pola. Mendeteksi kemunculan kategori baru dengan nilai transaksi cukup besar (>Rp100.000) yang sebelumnya tidak pernah digunakan dalam 3 bulan terakhir.
 
 ---
 
@@ -229,13 +209,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Pergeseran Kategori Terbesar"
-- **Isi Pesan (Cermin Data Faktual):** `"Porsi pengeluaran terbesar bulan ini beralih ke '{kategoriTeratasSekarang.nama}' (naik {pertumbuhan}% dibanding bulan lalu)."`
-- **Tingkat Urgensi:** _info_
-- **Tombol Aksi:** `"Lihat Analisis"` → `/analytics`
-
-**Jenis Keluaran:** **Tingkat 1: Insight Pola (Faktual / Deskriptif — Pergeseran Prioritas)**.
+**Keluaran:** Judul *"Pergeseran Kategori Terbesar"*, tingkat urgensi *info*, pesan: *"Porsi pengeluaran terbesar bulan ini beralih ke '{kategoriTeratasSekarang.nama}' (naik {pertumbuhan}% dibanding bulan lalu)"*, dan tombol aksi *"Lihat Analisis"* (`/analytics`).
+**Jenis keluaran:** Tingkat 1: Insight Pola. Menginformasikan perubahan posisi kategori pengeluaran terbesar dari bulan lalu ke bulan ini.
 
 ---
 
@@ -272,13 +247,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Variasi Rasio Pengeluaran"
-- **Isi Pesan (Cermin Data Faktual):** `"Rasio pengeluaran terhadap pemasukan tercatat berfluktuasi dalam 3 bulan terakhir ({r1}% → {r2}% → {r3}%)."`
-- **Tingkat Urgensi:** _neutral_
-- **Tombol Aksi:** `"Lihat Analisis"` → `/analytics`
-
-**Jenis Keluaran:** **Tingkat 1: Insight Pola (Faktual / Deskriptif — Volatilitas Arus Kas)**.
+**Keluaran:** Judul *"Variasi Rasio Pengeluaran"*, tingkat urgensi *neutral*, pesan: *"Rasio pengeluaran terhadap pemasukan tercatat berfluktuasi dalam 3 bulan terakhir ({r1}% → {r2}% → {r3}%)"*, dan tombol aksi *"Lihat Analisis"* (`/analytics`).
+**Jenis keluaran:** Tingkat 1: Insight Pola. Menampilkan variasi rasio perbandingan pengeluaran terhadap pemasukan selama 3 bulan terakhir.
 
 ---
 
@@ -317,13 +287,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Dinamika Pengeluaran Gaya Hidup"
-- **Isi Pesan (Cermin Data Faktual):** `"Porsi pengeluaran diskresioner tercatat di angka {rasioSekarang*100}% dari total pengeluaran bulan ini (bergeser {selisih} poin dari 3 bulan lalu)."`
-- **Tingkat Urgensi:** _neutral_
-- **Tombol Aksi:** `"Analisis Kategori"` → `/analytics`
-
-**Jenis Keluaran:** **Tingkat 1: Insight Pola (Faktual / Deskriptif — Pergeseran Proporsi)**.
+**Keluaran:** Judul *"Dinamika Pengeluaran Gaya Hidup"*, tingkat urgensi *neutral*, pesan: *"Porsi pengeluaran diskresioner tercatat di angka {rasioSekarang*100}% dari total pengeluaran bulan ini (bergeser {selisih} poin dari 3 bulan lalu)"*, dan tombol aksi *"Analisis Kategori"* (`/analytics`).
+**Jenis keluaran:** Tingkat 1: Insight Pola. Menunjukkan pergeseran persentase belanja kategori gaya hidup atau hiburan dibanding kondisi 3 bulan lalu.
 
 ---
 
@@ -360,13 +325,8 @@ Algoritma
     END FOR
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Dinamika Pengeluaran Kategori"
-- **Isi Pesan (Cermin Data Faktual):** `"Pengeluaran '{kategori.nama}' bulan ini tercatat Rp {pengeluaranBulanIni}, {persentaseLonjakan}% dibanding rata-rata 3 bulan terakhir."`
-- **Tingkat Urgensi:** _warning_
-- **Tombol Aksi:** `"Lihat Transaksi"` → `/transactions`
-
-**Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Preventif — Refleksi Variasi Historis)**.
+**Keluaran:** Judul *"Dinamika Pengeluaran Kategori"*, tingkat urgensi *warning*, pesan: *"Pengeluaran '{kategori.nama}' bulan ini tercatat Rp {pengeluaranBulanIni}, lebih tinggi {persentaseLonjakan}% dari rata-rata 3 bulan terakhir (Rp {rataRataHistoris})"*, dan tombol aksi *"Lihat Transaksi"* (`/transactions`).
+**Jenis keluaran:** Tingkat 2: Nudge. Memberitahukan adanya kenaikan pengeluaran yang signifikan (>50%) pada suatu kategori dibanding rata-rata 3 bulan sebelumnya.
 
 ---
 
@@ -411,13 +371,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Pola Waktu Pengeluaran"
-- **Isi Pesan (Cermin Data Faktual):** `"Sebesar {ratio*100}% pengeluaran bulan ini tercatat pada sesi {pagi/malam} hari (total Rp {total})."`
-- **Tingkat Urgensi:** _neutral_
-- **Tombol Aksi:** `"Lihat Analisis"` → `/analytics`
-
-**Jenis Keluaran:** **Tingkat 1: Insight Pola (Faktual / Deskriptif — Kronologi Belanja)**.
+**Keluaran:** Judul *"Pola Waktu Pengeluaran"*, tingkat urgensi *neutral*, pesan: *"Dari pengeluaran pada jam pagi dan malam, {ratio*100}% tercatat pada sesi {pagi/malam} hari (total Rp {total})"*, dan tombol aksi *"Lihat Analisis"* (`/analytics`).
+**Jenis keluaran:** Tingkat 1: Insight Pola. Mengelompokkan waktu transaksi untuk melihat apakah pengguna lebih dominan berbelanja di sesi pagi atau malam hari.
 
 ---
 
@@ -457,13 +412,8 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Konsentrasi Tanggal Belanja"
-- **Isi Pesan (Cermin Data Faktual):** `"Sebesar {rasioKonsentrasi*100}% pengeluaran bulan ini terpusat pada {top3Tanggal.length} hari transaksi tertentu."`
-- **Tingkat Urgensi:** _neutral_
-- **Tombol Aksi:** `"Lihat Analisis"` → `/analytics`
-
-**Jenis Keluaran:** **Tingkat 1: Insight Pola (Faktual / Deskriptif — Klusterisasi Belanja)**.
+**Keluaran:** Judul *"Konsentrasi Tanggal Belanja"*, tingkat urgensi *neutral*, pesan: *"Sebesar {rasioKonsentrasi*100}% pengeluaran bulan ini terpusat pada tanggal {daftarTanggal}"*, dan tombol aksi *"Lihat Analisis"* (`/analytics`).
+**Jenis keluaran:** Tingkat 1: Insight Pola. Mengidentifikasi tanggal-tanggal tertentu yang menyumbang lebih dari separuh total pengeluaran dalam satu bulan.
 
 ---
 
@@ -476,7 +426,7 @@ Algoritma
 Program Evaluasi Proyeksi Kebiasaan Tahunan (AN-09)
 Deklarasi
     kategoriDiskresioner        : kumpulan kategori { hiburan, jajan, pribadi,
-                                                      gaya hidup, hobi }
+                                                       gaya hidup, hobi }
     totalPerKategoriDiskresioner: kamus { kategoriId → total nominal }
     jumlahPerKategori           : kamus { kategoriId → jumlah transaksi }
     kategoriTerpilih            : data kategori diskresioner dengan total tertinggi
@@ -516,10 +466,5 @@ Algoritma
     END IF
 ```
 
-**Keluaran Aktual:**
-- **Judul:** "Proyeksi Kebiasaan"
-- **Isi Pesan (Cermin Data Faktual):** `"Bulan ini kategori {kategoriTerpilih.nama} mencatat total pengeluaran Rp {total}. {teksKonteks}Dengan pola saat ini, akumulasi kategori ini diproyeksikan mencapai Rp {proyeksiTahunan} dalam setahun."`
-- **Tingkat Urgensi:** _warning_ / _neutral_
-- **Tombol Aksi:** `"Lihat Tren"` → `/analytics`
-
-**Jenis Keluaran:** **Tingkat 2: Nudge (Nudge Preventif — Efek Snowball / Proyeksi Tahunan)**. Menghubungkan kebiasaan rutin bulan ini ke proyeksi tahunan untuk mengatasi bias kognitif *hyperbolic discounting* secara objektif.
+**Keluaran:** Judul *"Proyeksi Kebiasaan"*, tingkat urgensi *warning*, pesan: *"Bulan ini kategori {kategoriTerpilih.nama} mencatat total pengeluaran Rp {total}. {teksKonteks}Dengan pola saat ini, akumulasi kategori ini diproyeksikan mencapai Rp {proyeksiTahunan} dalam setahun"*, dan tombol aksi *"Lihat Tren"* (`/analytics`).
+**Jenis keluaran:** Tingkat 2: Nudge. Menghitung estimasi total akumulasi belanja suatu kategori dalam satu tahun berdasarkan pengeluaran bulan ini, membantu pengguna melihat gambaran jangka panjang dari kebiasaan belanja rutin.
