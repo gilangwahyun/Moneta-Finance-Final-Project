@@ -1,5 +1,5 @@
 # Laporan Dokumentasi Revisi Sistem Nudging: Calm UI & Choice Architecture
-> **Status Verifikasi**: Terverifikasi Lengkap (Kode Sumber Aktif, 37 Rule Bab IV, 145 Tes Playwright, 6 Tangkapan Layar Riil)  
+> **Status Verifikasi**: Terverifikasi Lengkap (Kode Sumber Aktif, 37 Rule Bab IV, 148 Tes Playwright Core E2E)  
 > **Dasar Teori**: Choice Architecture (*Libertarian Paternalism*, Richard Thaler) & Calm Technology (*Mark Weiser*)  
 > **Cakupan Repositori**: `src/` (Komponen, Layanan, Hooks), `public/` (Service Worker), `tests/` (12 Suite E2E)
 
@@ -88,9 +88,9 @@ Audit komprehensif dijalankan pada seluruh **174 berkas** dalam direktori `src/`
 
 ---
 
-## 4. Hasil Pengujian Otomatis Playwright (145 Skenario Uji 100% Lulus)
+## 4. Hasil Pengujian Otomatis Playwright (148 Skenario Uji 100% Lulus)
 
-Rangkaian pengujian otomatis dijalankan pada seluruh berkas spesifikasi pengujian sistem (`tests/*.spec.ts`) secara sekuensial (`workers: 1`, port 3001) terhadap *production bundle* Next.js:
+Rangkaian pengujian otomatis dijalankan pada seluruh 12 berkas spesifikasi pengujian sistem (`tests/*.spec.ts`) secara sekuensial (`workers: 1`, port 3001) terhadap *production bundle* Next.js:
 
 | No | Berkas Spesifikasi Pengujian | Fokus Modul & Fitur | Jumlah Skenario | Status |
 | :---: | :--- | :--- | :---: | :---: |
@@ -106,12 +106,13 @@ Rangkaian pengujian otomatis dijalankan pada seluruh berkas spesifikasi pengujia
 | 10 | `tests/10-notifications.spec.ts` | Web Push, In-App Notification Center, Batas Harian | 6 | **100% Passed** |
 | 11 | `tests/11-system-settings.spec.ts` | Pengaturan Sistem, Mode Gelap, Luring (PWA), Cache | 6 | **100% Passed** |
 | 12 | `tests/12-sync-conflicts.spec.ts` | Resolusi Konflik Sinkronisasi & Antrean Penghapusan | 3 | **100% Passed** |
-| **Total** | **12 Berkas Pengujian Sistem (+ Screenshot Suite)** | **Seluruh Fungsionalitas Aplikasi Moneta Finance** | **154** | **154 Passed (100% Hijau)** |
+| **Total** | **12 Berkas Pengujian Sistem (Core E2E Suite)** | **Seluruh Fungsionalitas Aplikasi Moneta Finance** | **148** | **148 Passed (100% Hijau)** |
 
 ### Penjelasan Sinkronisasi Angka Uji:
-- **Klarifikasi Angka 98 Skenario**: Angka 98 skenario pada laporan sebelumnya merupakan hasil eksekusi parsial pada 4 berkas uji terkait langsung dengan *nudging* (`03-transactions`: 11, `08-insight-engine`: 79, `09-insight-ui-e2e`: 3, `10-notifications`: 5 → 11 + 79 + 3 + 5 = 98).
+- **Klarifikasi Angka 148 vs 154 Skenario**: Angka **148** adalah jumlah butir uji inti sistem pada 12 berkas spesifikasi `tests/`. Angka **154** sebelumnya muncul ketika berkas runner pembantu penangkap tangkapan layar audit (`tests/screenshot-capture.spec.ts`, 6 skenario) dieksekusi bersamaan. Berkas pembantu tersebut kini telah dibersihkan pasca-persetujuan penguji.
+- **Klarifikasi Angka 98 vs 99 Skenario**: Angka 98 skenario merupakan hasil eksekusi parsial pada 4 berkas uji terkait *nudging* terdahulu (`03-transactions`: 11, `08-insight-engine`: 79, `09-insight-ui-e2e`: 3, `10-notifications`: 5 → 11 + 79 + 3 + 5 = 98). Dengan penyempurnaan uji batas harian pada notifikasi menjadi 6 butir uji, total uji integrasi alur nudging adalah **99 butir uji**.
 - **Korelasi 79 Butir Uji `tests/08-insight-engine.spec.ts`**: Berkas `08-insight-engine.spec.ts` berisi **tepat 79 butir uji**, yang berkorespondensi 1-ke-1 secara presisi dengan **79 butir uji aturan pada Lampiran Naskah Skripsi / Bab IV**, mencakup uji valid (*threshold met*), uji invalid (*negative testing*), sorting prioritas ascending, dan penanganan konkurensi aturan ganda.
-- **Peningkatan Berkas Target (`05-targets.spec.ts`)**: Jumlah butir uji meningkat dari 7 menjadi **10 butir uji**, menambahkan verifikasi isolasi transaksi pemasukan umum (non-bleeding), pemotongan bilah progres 100% saat pemasukan berlebih, dan kalkulasi ulang otomatis saat transaksi dihapus.
+- **Peningkatan Berkas Target (`05-targets.spec.ts`)**: Jumlah butir uji meningkat dari 7 menjadi **10 butir uji**, memvalidasi multi-target per kategori, isolasi alokasi non-bleeding (`targetId`), visual clamping 100%, dan kalkulasi ulang reaktif saat transaksi dihapus.
 
 ---
 
@@ -200,42 +201,3 @@ Untuk keperluan verifikasi dan demonstrasi langsung di hadapan dosen penguji, te
      - `Upgrade Laptop Kerja`: Batas Rp 8.000.000 \| Terkumpul: **Rp 6.000.000 (75%)** \| Status: **Berjalan** \| Tenggat: 20 Des 2026
      - `Sertifikasi Cloud Professional`: Batas Rp 3.000.000 \| Terkumpul: **Rp 3.000.000 (100%)** \| Status: **Tercapai** \| Tenggat: 10 Nov 2026
 
----
-
-## 6. Bukti Visual: Tangkapan Layar Riil (Real Screenshots)
-
-Seluruh tangkapan layar di bawah ini direkam langsung dari eksekusi aplikasi menggunakan peramban Chromium:
-
-### 1. Modal Transaksi — Sisa Alokasi Positif
-Menampilkan *in-situ point-of-decision cue* dengan sisa alokasi bulanan dan estimasi sisa harian adaptif serta bilah tipis netral (tanpa warna merah/amber):
-![Modal Transaksi Sisa Positif](screenshots/01-modal-transaksi-sisa-positif.png)
-
----
-
-### 2. Modal Transaksi — Alokasi Sudah Terpakai Penuh
-Menampilkan teks netral faktual `"Alokasi bulan ini sudah terpakai penuh"` tanpa kata penghakiman atau warna peringatan:
-![Modal Transaksi Alokasi Penuh](screenshots/02-modal-transaksi-alokasi-penuh.png)
-
----
-
-### 3. Dasbor — Kartu Wawasan (Calm UI)
-Menampilkan kartu wawasan reflektif dengan ikon kompas tanpa kotak alarm merah, serta bilah kemajuan anggaran berstatus tenang `"Alokasi penuh"`:
-![Dashboard Insight Cards](screenshots/03-dashboard-insight-cards.png)
-
----
-
-### 4. Halaman Analitik — Moving Average & Panduan Arah
-Menampilkan kurva dinamis *Moving Average* yang bersih tanpa garis rata-rata harian statis yang membingungkan, serta kartu wawasan faktual di bagian atas:
-![Halaman Analitik Moving Average](screenshots/04-halaman-analitik.png)
-
----
-
-### 5. Halaman Notifikasi — Lencana "Alokasi Penuh"
-Menampilkan daftar notifikasi dengan lencana berwarna slate tenang `"Alokasi Penuh"` dan judul netral `"Kilas Alokasi"`:
-![Halaman Notifikasi](screenshots/05-halaman-notifikasi.png)
-
----
-
-### 6. Tampilan Responsif Mobile (375px — iPhone SE Viewport)
-Menampilkan kepatuhan layout pada layar ponsel sempit (375px): teks cue beradaptasi dengan rapi tanpa *horizontal overflow* atau teks terpotong:
-![Tampilan Mobile 375px](screenshots/06-tampilan-mobile-375px.png)
