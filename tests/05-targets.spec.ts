@@ -49,7 +49,7 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
 
     // --- 1. Create Target 1: 'Target Gaji Pokok' under category 'Gaji' ---
     await page.click('button:has-text("Tambah Target Pemasukan")');
-    const modal = page.locator('h2:has-text("Buat Target Baru")');
+    const modal = page.locator('div.fixed.inset-0').filter({ hasText: 'Buat Target Baru' });
     await expect(modal).toBeVisible();
 
     await page.fill('input[placeholder="Gaji bulanan"]', 'Target Gaji Pokok');
@@ -57,8 +57,8 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
     await amountInput.clear();
     await amountInput.fill('10000000'); // 10 Million
 
-    await page.locator('span:text-is("Gaji")').locator('..').dispatchEvent('click');
-    await page.click('button[type="submit"]:has-text("Simpan Target")');
+    await modal.locator('button', { hasText: 'Gaji' }).click();
+    await modal.locator('button[type="submit"]:has-text("Simpan Target")').click();
     await expect(modal).not.toBeVisible();
 
     // Verify Target 1 is listed and starts at Rp 0 (unlinked transactions are not counted)
@@ -77,8 +77,8 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
     await amountInput2.fill('5000000'); // 5 Million
 
     // Select the SAME category 'Gaji'
-    await page.locator('span:text-is("Gaji")').locator('..').dispatchEvent('click');
-    await page.click('button[type="submit"]:has-text("Simpan Target")');
+    await modal.locator('button', { hasText: 'Gaji' }).click();
+    await modal.locator('button[type="submit"]:has-text("Simpan Target")').click();
     await expect(modal).not.toBeVisible();
 
     // Verify Target 2 is also listed under Category Gaji
@@ -92,7 +92,7 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
     await page.goto('/targets');
     await page.click('button:has-text("Tambah Target Pemasukan")');
 
-    const modal = page.locator('h2:has-text("Buat Target Baru")');
+    const modal = page.locator('div.fixed.inset-0').filter({ hasText: 'Buat Target Baru' });
     await expect(modal).toBeVisible();
 
     await page.fill('input[placeholder="Gaji bulanan"]', 'Target Invalid');
@@ -100,12 +100,12 @@ test.describe.serial('2.5 Financial Targets (Target Keuangan)', () => {
     await amountInput.clear();
     await amountInput.pressSequentially('0', { delay: 10 });
 
-    await page.locator('span:text-is("Gaji")').locator('..').click();
+    await modal.locator('button', { hasText: 'Gaji' }).click();
 
     // The submit button should be disabled because amount is 0
-    await expect(page.locator('button[type="submit"]:has-text("Simpan Target")')).toBeDisabled();
+    await expect(modal.locator('button[type="submit"]:has-text("Simpan Target")')).toBeDisabled();
 
-    await page.click('button:has-text("Batal")');
+    await modal.locator('button:has-text("Batal")').click();
   });
 
   test('[AU-09-01_03] Alokasi Transaksi ke Target Spesifik: User can record income directly to a target', async () => {

@@ -817,7 +817,7 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
       const periodEndMs = periodEnd.getTime();
       const currentAmount = allTxns
         .filter((t) => {
-          if (t.type !== 'INCOME' || t.categoryId !== target.categoryId) return false;
+          if (t.type !== 'INCOME' || t.financialTargetId !== target.clientId) return false;
           const tMs = dayjs(t.date).valueOf();
           return tMs >= periodStartMs && tMs <= periodEndMs;
         })
@@ -1045,13 +1045,13 @@ export function useAnalytics(donutMode: 'EXPENSE' | 'INCOME') {
       const tAmount = Number(target.targetAmount);
 
       const inc1 = allTxns
-        .filter((t) => t.categoryId === target.categoryId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m1)
+        .filter((t) => t.financialTargetId === target.clientId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m1)
         .reduce((s, t) => s + Number(t.amount), 0);
       const inc2 = allTxns
-        .filter((t) => t.categoryId === target.categoryId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m2)
+        .filter((t) => t.financialTargetId === target.clientId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m2)
         .reduce((s, t) => s + Number(t.amount), 0);
       const inc3 = allTxns
-        .filter((t) => t.categoryId === target.categoryId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m3)
+        .filter((t) => t.financialTargetId === target.clientId && t.type === 'INCOME' && dayjs(t.date).format('YYYY-MM') === m3)
         .reduce((s, t) => s + Number(t.amount), 0);
 
       if (inc1 >= tAmount && inc2 >= tAmount && inc3 >= tAmount) {
