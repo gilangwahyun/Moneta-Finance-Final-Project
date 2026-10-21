@@ -151,13 +151,54 @@ Berikut adalah aturan bisnis resmi pengelolaan siklus hidup target keuangan yang
    - **Target Kedaluwarsa (`isExpired = true`)**: Secara otomatis disembunyikan dari daftar *chip* alokasi transaksi baru agar pengguna tidak mengalokasikan pemasukan pada periode yang telah lewat. Namun, apabila transaksi historis yang telah terhubung sedang disunting (*edit*), target tersebut tetap dimuat untuk menjamin integritas data riwayat.
    - **Target Tercapai Penuh (`percentage >= 100%`)**: Tetap ditampilkan di modal dengan label persentase (misal: `· 100%`) dan tetap dapat dipilih, guna memfasilitasi pengguna yang ingin menyisihkan dana tabungan berlebih (*over-saving*).
 2. **Penghapusan Target (*Target Deletion*):**
-   - Transaksi pemasukan yang terhubung **TIDAK DIHAPUS**. Dalam arsitektur *Offline-First* dan integritas keuangan Moneta, riwayat mutasi kas adalah data primer. Transaksi tetap ada di riwayat mutasi kas umum (saldo dompet tidak terganggu), sementara relasi targetnya ditandai menuju target yang telah `deletedAt`.
+   - Transaksi pemasukan yang terhubung **TIDAK DIHAPUS**. Dalam arsitektur *Offline-First* dan integritas keuangan Moneta, riwayat mutasi kas adalah data primer. Transaksi tetap ada di riwayat mutasi kas umum (saldo dompet tidak terganggu), sementara relasi targetnya ditandai menuju target yang telah `deletedAt` (`targetId = null` / "Umum").
 3. **Penyuntingan dan Penghapusan Transaksi (*Transaction Edit/Delete*):**
    - Perubahan nominal transaksi atau penghapusan transaksi pemasukan akan **menghitung ulang progres target secara otomatis dan seketika (*real-time reactive query*)**. Nilai akumulasi target selalu merupakan fungsi matematis murni dari transaksi aktif yang memiliki `financialTargetId` target terkait.
 4. **Pemasukan Melebihi Batas Nominal Target (*Over-achievement*):**
    - Persentase visual bilah kemajuan (*progress bar*) dikunci maksimal sebesar `100%` (`Math.min(100, pct)`) demi kepatuhan tampilan antarmuka, namun nominal agregasi riil tetap disajikan secara jujur dan transparan (misal: *"Rp 7.000.000 dari Rp 5.000.000"* dengan lencana status *"Tercapai"*).
 5. **Independensi Kategori (*Zero-Bleeding Integrity*):**
    - Transaksi pemasukan yang dicatat dengan kategori sama namun memilih opsi *"Tanpa Target (Umum)"* tidak akan pernah menambah progres target mana pun di kategori tersebut. Target hanya bertambah jika foreign key `financialTargetId` terpasang secara eksplisit.
+
+---
+
+## 5.2 Pemenuhan Rekomendasi Pra-Pelaporan Fitur Target (Peer-Review Feedback)
+
+Sebelum dilaporkan kepada Dosen Penguji (**Dr. Yonathan Dri Handarkho**), seluruh masukan dari evaluasi rekan sejawat (*peer review*) telah diintegrasikan secara komprehensif ke dalam sistem:
+
+### A. Poin Wajib (Mandatory Checklist)
+| No | Masukan Rekan | Solusi Teknis & Status Implementasi | Uji Otomatis |
+| :---: | :--- | :--- | :---: |
+| **W-1** | Pemasukan wajib mengacu ke `targetId`, bukan kategori. Transaksi umum tanpa target tidak boleh mempengaruhi target. | Kueri agregasi di `target-queries.ts`, `/api/targets`, dan `use-analytics.ts` memfilter transaksi strictly via `txn.financialTargetId === target.clientId`. Transaksi tanpa target disimpan dengan `financialTargetId = null`. | `[AU-09-01_04]` **Passed** |
+| **W-2** | Tombol "+ Catat Pemasukan" di kartu target langsung mengisi target, kategori, dan dompet. | Fungsi `handleRecordIncome(target)` meneruskan `initialTargetId`, `initialCategoryId`, dan `initialWalletId` ke `TransactionModal`. Pengguna hanya mengisi nominal transaksi. | `[AU-09-01_03]` **Passed** |
+| **W-3** | Definisi aturan siklus hidup target terdokumentasi sebagai aturan bisnis. | Seluruh 5 aturan siklus hidup (visibilitas expired, preservasi kas saat target dihapus, kalkulasi ulang reaktif, dan visual clamping 100%) terdokumentasi formal di Subbab 5.1. | `[AU-09-01_05]`, `[AU-09-01_06]` **Passed** |
+| **W-4** | Badge "Belum Tercapai" diganti status netral berbasis kondisi: "Berjalan", "Tercapai", "Periode Berakhir". | Lencana status menghakimi ("Belum Tercapai") dihilangkan. Target aktif berstatus `"Berjalan"` (blue/indigo), target selesai berstatus `"Tercapai"` (emerald), dan target kedaluwarsa berstatus `"Periode Berakhir"` (slate). | `[AU-09-01_03]`, `[AU-09-02_01]` **Passed** |
+| **W-5** | Data demo 3 target dalam 1 kategori dengan progres berbeda (0%, 50%, 100%) + kategori kedua. | Database seeder (`seed-sidang-data.ts` & `seed-demo-data.ts`) memuat 3 target di kategori `Investasi` dan 2 target di kategori `Freelance` dengan variasi progres realistis. | Tersemai di `user_sidang` |
+
+### B. Poin Sebaiknya / Nilai Tambah (Calm UI Enhancements)
+| No | Masukan Rekan | Solusi Teknis & Dampak Interaksi (*Choice Architecture*) |
+| :---: | :--- | :--- |
+| **S-1** | Point-of-Decision Cue di modal pemasukan (*"Setelah dicatat: Rp X dari Rp Y (Z%)"*). | Menghadirkan visual cue proyeksi capaian target secara real-time saat pengguna mengetik nominal pemasukan, lengkap dengan *mini animated progress bar*. Konsisten dengan cue pengeluaran anggaran. |
+| **S-2** | Informasi singkat di chip target alokasi (`· 50%`). | Setiap tombol chip alokasi target pada modal pemasukan menampilkan nama target beserta persentase capaian saat ini (misal: `Tabungan Investasi Masa Depan · 50%`), memudahkan pemilihan tanpa membuka halaman target. |
+| **S-3** | Filter target menurut kategori & *Reverse-Filling*. | Pemilihan kategori otomatis memfilter chip target yang relevan. Sebaliknya, jika pengguna langsung memilih salah satu chip target, sistem otomatis mengisi (*reverse-filling*) kategori dan dompet yang terasosiasi. |
+| **S-4** | Informasi sisa nominal, sisa hari, dan penanda waktu berjalan (*Time Elapsed Pin*). | Setiap kartu target menyajikan informasi sisa nominal dan sisa hari (`Sisa Rp 2.500.000 · 25 hari lagi`). Bilah progres dilengkapi garis aksen vertikal penanda waktu berjalan (*elapsed time pin*) sebagai dorongan halus visual tanpa teks ancaman. |
+| **S-5** | Nudge FT-01 s/d FT-03 per target dengan `{targetName}` dan batasan *Calm UI*. | Teks wawasan menyebut nama target secara spesifik. Evaluasi dibatasi maksimal 1 insight target dalam satu waktu (*throttling*) agar tidak membanjiri antarmuka pengguna. |
+| **S-6** | Keseragaman istilah tunggal: **"Target Keuangan"**. | Seluruh elemen antarmuka, judul navigasi, modal form, dan berkas pengujian distandarisasi menggunakan istilah tunggal **"Target Keuangan"** (*Financial Targets*). |
+
+---
+
+## 5.3 Konfigurasi Data Seeding Demo Sidang (`user_sidang`)
+
+Untuk keperluan verifikasi dan demonstrasi langsung di hadapan dosen penguji, telah disiapkan akun pengujian dengan rincian data target multi-target sebagai berikut:
+
+- **Kredensial Masuk**: Username `user_sidang` | Kata Sandi `sidang123`
+- **Distribusi Target Keuangan**:
+  1. **Kategori Investasi (3 Target Multi-Progres)**:
+     - `Dana Darurat & Liburan Akhir Tahun`: Batas Rp 15.000.000 \| Terkumpul: **Rp 0 (0%)** \| Status: **Berjalan** \| Tenggat: 31 Des 2026 *(Memicu Nudge FT-01: Target Stagnan)*
+     - `Tabungan Investasi Masa Depan`: Batas Rp 5.000.000 \| Terkumpul: **Rp 2.500.000 (50%)** \| Status: **Berjalan** \| Tenggat: 15 Nov 2026
+     - `Portofolio Reksadana Pasar Uang`: Batas Rp 2.000.000 \| Terkumpul: **Rp 2.000.000 (100%)** \| Status: **Tercapai** \| Tenggat: 30 Nov 2026
+  2. **Kategori Freelance (Kategori Kedua, 2 Target)**:
+     - `Upgrade Laptop Kerja`: Batas Rp 8.000.000 \| Terkumpul: **Rp 6.000.000 (75%)** \| Status: **Berjalan** \| Tenggat: 20 Des 2026
+     - `Sertifikasi Cloud Professional`: Batas Rp 3.000.000 \| Terkumpul: **Rp 3.000.000 (100%)** \| Status: **Tercapai** \| Tenggat: 10 Nov 2026
 
 ---
 
