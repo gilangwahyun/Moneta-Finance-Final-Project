@@ -94,40 +94,85 @@ Lapisan sinkronisasi kompleks yang mengorkestrasi urutan *pull/push* secara asin
 
 ## PANDUAN PENGEMBANGAN LOKAL
 
-### Prasyarat
-- Node.js >= 20
-- Instance PostgreSQL (Misal: Supabase / Neon)
-- Kunci VAPID untuk Web Push Notifications
+### Catatan Awal Mengenai Struktur Berkas
+Jika Anda mengunduh proyek ini dari GitHub (baik melalui `git clone` maupun unduhan berkas ZIP), beberapa folder seperti `node_modules/`, `.next/`, serta berkas `.env.local` tidak akan langsung terlihat karena terdaftar pada aturan pengabaian `.gitignore`. Folder dependensi `node_modules/` akan diunduh secara otomatis ketika Anda menjalankan perintah `npm install`, sedangkan folder kompilasi `.next/` akan dibuat secara otomatis saat server lokal dijalankan.
 
-### Inisialisasi Proyek
+### Prasyarat Sistem
+1. **Node.js**: Versi 20 atau lebih baru (dapat diunduh secara resmi melalui `https://nodejs.org`). Pemasangan Node.js sudah otomatis menyertakan program `npm`.
+2. **Basis Data PostgreSQL**: Dapat menggunakan instans *cloud* gratis (seperti Supabase atau Neon) maupun instalasi PostgreSQL lokal pada komputer Anda.
 
+---
+
+### Langkah Inisialisasi Proyek
+
+#### 1. Kloning atau Ekstrak Repositori
+Buka terminal dan masuk ke dalam folder proyek:
 ```bash
-# 1. Kloning repositori
 git clone https://github.com/gilangwahyun/Moneta-Finance-Final-Project.git
 cd Moneta-Finance-Final-Project
+```
+*(Atau ekstrak arsip ZIP jika mengunduh repositori secara manual, lalu buka terminal pada direktori hasil ekstraksi).*
 
-# 2. Instalasi dependensi (akan memicu prisma generate)
+#### 2. Instalasi Dependensi Pustaka
+Jalankan perintah instalasi dependensi:
+```bash
 npm install
+```
+Perintah ini akan mengunduh seluruh dependensi proyek (termasuk Next.js, React, Prisma, dan Tailwind CSS) ke dalam folder `node_modules/` sekaligus mengompilasi Prisma Client secara otomatis melalui skrip *postinstall*. Anda tidak perlu memasang Next.js secara terpisah.
 
-# 3. Konfigurasi Environment Variables
-cp .env.example .env.local
-# (Lengkapi DATABASE_URL dan VAPID Keys)
+#### 3. Pembuatan Berkas Konfigurasi Lingkungan (`.env.local`)
+Salin berkas cetak biru `.env.example` menjadi `.env.local`:
+* **Linux, macOS, atau Windows PowerShell**:
+  ```bash
+  cp .env.example .env.local
+  ```
+* **Windows Command Prompt (CMD)**:
+  ```cmd
+  copy .env.example .env.local
+  ```
 
-# 4. Pembuatan Kunci VAPID
+#### 4. Pengaturan Basis Data pada `.env.local`
+Buka berkas `.env.local` yang baru dibuat menggunakan editor teks, lalu lengkapi URL koneksi basis data:
+* **Jika menggunakan Supabase**:
+  Salin string koneksi dari menu *Project Settings > Database > Connection String (URI)* pada dashboard Supabase Anda. Gunakan mode *Transaction Pooler* pada `DATABASE_URL` dan mode *Direct Connection* pada `DIRECT_URL`.
+* **Jika menggunakan PostgreSQL lokal**:
+  ```env
+  DATABASE_URL="postgresql://postgres:password_anda@localhost:5432/moneta?schema=public"
+  DIRECT_URL="postgresql://postgres:password_anda@localhost:5432/moneta?schema=public"
+  ```
+  *(Pada instalasi lokal, nilai `DIRECT_URL` cukup disamakan dengan `DATABASE_URL`).*
+
+#### 5. Pembuatan Kunci Kriptografi Notifikasi (VAPID Keys)
+Jalankan perintah berikut di terminal untuk menghasilkan sepasang kunci keamanan Web Push tanpa perlu mendaftar ke layanan luar:
+```bash
 npx web-push generate-vapid-keys
-# (Masukkan public & private keys ke .env.local)
+```
+Terminal akan mencetak sepasang kunci kriptografi. Salin hasilnya ke dalam `.env.local`:
+```env
+NEXT_PUBLIC_VAPID_PUBLIC_KEY="salin_nilai_public_key_di_sini"
+VAPID_PRIVATE_KEY="salin_nilai_private_key_di_sini"
+VAPID_SUBJECT="mailto:email_anda@example.com"
+```
 
-# 5. Migrasi Skema Database
+#### 6. Sinkronisasi Skema Basis Data
+Terapkan skema tabel dan relasi data ke basis data Anda:
+```bash
 npx prisma db push
+```
 
-# 6. (Opsional) Injeksi Data Awal
+#### 7. (Opsional) Injeksi Data Awal Pengujian
+Untuk mengisi basis data dengan data awal (*dummy data*) yang siap diuji:
+```bash
 npx prisma db seed
+```
 
-# 7. Mulai Server Pengembangan
+#### 8. Menjalankan Server Pengembangan
+Jalankan aplikasi pada lingkungan lokal:
+```bash
 npm run dev
 ```
 
-Aplikasi dapat diakses melalui `http://localhost:3000`.
+Aplikasi siap diakses melalui peramban pada alamat `http://localhost:3000`. Folder `.next/` akan otomatis terbuat saat server pertama kali melakukan kompilasi halaman.
 
 ---
 
